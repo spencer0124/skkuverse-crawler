@@ -1,0 +1,42 @@
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+
+
+@dataclass
+class NoticeListItem:
+    articleNo: int
+    title: str
+    category: str
+    author: str
+    date: str  # YYYY-MM-DD
+    views: int
+    detailPath: str  # relative or absolute URL to detail page
+
+
+@dataclass
+class NoticeDetail:
+    content: str
+    contentText: str
+    attachments: list[dict[str, str]] = field(default_factory=list)  # [{name, url}]
+
+
+@dataclass
+class Notice:
+    articleNo: int
+    title: str
+    category: str
+    author: str
+    department: str
+    date: str  # YYYY-MM-DD
+    views: int
+    content: str | None
+    contentText: str | None
+    cleanHtml: str | None
+    attachments: list[dict[str, str]]  # [{name, url}]
+    sourceUrl: str
+    detailPath: str
+    sourceDeptId: str
+    crawledAt: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    lastModified: str | None = None

@@ -1,0 +1,30 @@
+# Secrets / Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+
+# Node.js
+node_modules/
+dist/
+coverage/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+.eggs/
+build/
+dist/
+*.whl
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+htmlcov/
+
+# Logs
+*.log
