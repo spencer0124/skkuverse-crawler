@@ -59,11 +59,25 @@ async def _start_scheduler(module_filter: str | None = None) -> None:
         loop.add_signal_handler(sig, stop_event.set)
     await stop_event.wait()
 
-    # Graceful shutdown
-    scheduler.shutdown()
-    for mod in registry.all_modules():
+    # Graceful shutdown with 5s timeout
+    from .shared.logger import get_logger
+    logger = get_logger("shutdown")
+
+    scheduler.shutdown(wait=False)
+    try:
+        await asyncio.wait_for(
+            _shutdown_modules(registry.all_modules()),
+            timeout=5.0,
+        )
+    except asyncio.TimeoutError:
+        logger.warning("force_exit_after_timeout")
+    finally:
+        await close_client()
+
+
+async def _shutdown_modules(modules: list) -> None:
+    for mod in modules:
         await mod.shutdown()
-    await close_client()
 
 
 # Register notices CLI subcommand
