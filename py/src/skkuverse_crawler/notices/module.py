@@ -13,8 +13,8 @@ class NoticesModule:
     def config(self) -> ModuleConfig:
         return ModuleConfig(
             name="notices",
-            cron_schedule="*/30 * * * *",
             collection_name="notices",
+            cron_schedule="*/30 * * * *",
         )
 
     async def run(self, incremental: bool = True, **kwargs: Any) -> dict:

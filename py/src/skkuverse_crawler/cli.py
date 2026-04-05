@@ -28,21 +28,38 @@ async def _start_scheduler(module_filter: str | None = None) -> None:
 
     from apscheduler.schedulers.asyncio import AsyncIOScheduler
     from apscheduler.triggers.cron import CronTrigger
+    from apscheduler.triggers.interval import IntervalTrigger
 
     from .modules import registry
     from .shared.db import close_client
 
-    # Register notices module
+    # Register modules
     from .notices.module import NoticesModule
+    from .bus_hssc.module import BusHsscModule
+    from .bus_jongro.module import BusJongroModule
+
     registry.register(NoticesModule())
+    registry.register(BusHsscModule())
+    registry.register(BusJongroModule())
 
     scheduler = AsyncIOScheduler()
 
     for mod in registry.all_modules():
         if module_filter and mod.config.name != module_filter:
             continue
-        trigger = CronTrigger.from_crontab(mod.config.cron_schedule)
-        scheduler.add_job(mod.run, trigger, kwargs={"incremental": True})
+        if mod.config.cron_schedule:
+            trigger = CronTrigger.from_crontab(mod.config.cron_schedule)
+        elif mod.config.interval_seconds:
+            trigger = IntervalTrigger(seconds=mod.config.interval_seconds)
+        else:
+            continue
+        scheduler.add_job(
+            mod.run, trigger,
+            kwargs={"incremental": True},
+            max_instances=1,
+            coalesce=True,
+            misfire_grace_time=10,
+        )
 
     scheduler.start()
 
