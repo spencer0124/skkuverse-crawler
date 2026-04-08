@@ -4,22 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-SKKU 관련 데이터 크롤링 + 콘텐츠 정제 서비스. TypeScript(공지 크롤러)와 Python(공지+버스 크롤러) 두 구현이 공존하는 모노레포.
+SKKU 관련 데이터 크롤링 + 콘텐츠 정제 서비스. Python 구현 (`py/`).
 
 ## Commands
-
-### TypeScript (root)
-
-```bash
-npm start                    # 모든 모듈 cron 실행 (30분 간격)
-npm run notices              # 공지 1회 실행 (incremental)
-npm run notices:all          # 공지 전체 크롤 (non-incremental)
-npx tsx src/notices/cli.ts --once --dept skku-main --pages 3
-npm run verify:selectors     # CSS 셀렉터 검증
-npm run backfill:cleanhtml   # cleanHtml 필드 백필
-```
-
-### Python (py/)
 
 ```bash
 cd py
@@ -39,7 +26,7 @@ mypy src/                                   # 타입 체크
 
 ## Architecture
 
-### 공통 패턴 (TS/Python 동일)
+### 공통 패턴
 
 **모듈형 구조**: `shared/` (DB, logger, HTTP 클라이언트) + 각 모듈 디렉토리 (notices, bus_hssc, bus_jongro)
 
@@ -47,9 +34,9 @@ mypy src/                                   # 타입 체크
 
 **Incremental Crawl**: title+date 변경 감지 → 변경분만 상세 fetch. 페이지 내 전부 DB에 존재하면 early-stop. content:null 기사 자동 재크롤링.
 
-**HTML Cleaning**: 5단계 파이프라인 (BS4 junk 제거 → semantic 정규화 → URL 절대경로 → nh3 태그/스타일 필터링 → 빈 요소 제거). TS는 sanitize-html 사용.
+**HTML Cleaning**: 5단계 파이프라인 (BS4 junk 제거 → semantic 정규화 → URL 절대경로 → nh3 태그/스타일 필터링 → 빈 요소 제거).
 
-### Python 모듈 시스템 (`py/src/skkuverse_crawler/`)
+### 모듈 시스템 (`py/src/skkuverse_crawler/`)
 
 - `modules/base.py` — `ModuleConfig` (name, collection_name, cron_schedule 또는 interval_seconds) + `CrawlModule` Protocol
 - `modules/registry.py` — 전역 모듈 레지스트리
@@ -67,7 +54,7 @@ mypy src/                                   # 타입 체크
 
 ### DB 이름 규칙
 
-`CRAWLER_ENV=production` → `skku_notices` (suffix 없음), `development` → `skku_notices_dev`, `test` → `skku_notices_test`. TS는 `NODE_ENV` 사용.
+`CRAWLER_ENV=production` → `skku_notices` (suffix 없음), `development` → `skku_notices_dev`, `test` → `skku_notices_test`.
 
 ## Environment
 
