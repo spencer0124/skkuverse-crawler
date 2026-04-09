@@ -420,12 +420,11 @@ class TestCutoffFloorDate:
     """SERVICE_START_DATE와 window_days의 max 처리."""
 
     def test_floor_date_wins_when_window_is_wider(self):
-        # window_days=14일이 SERVICE_START_DATE보다 이전이면 floor date 사용
         from skkuverse_crawler.notices.constants import SERVICE_START_DATE
-        # "2026-01-01"보다 14일 전 = 더 이전 → max는 SERVICE_START_DATE
-        assert max(SERVICE_START_DATE, "2025-12-20") == SERVICE_START_DATE
+        # window cutoff가 floor date보다 이전 → floor date 사용
+        assert max(SERVICE_START_DATE, "2026-03-01") == SERVICE_START_DATE
 
     def test_window_wins_when_narrower(self):
         from skkuverse_crawler.notices.constants import SERVICE_START_DATE
-        # 2026-01-18 > 2026-01-01 → max는 window cutoff
-        assert max(SERVICE_START_DATE, "2026-01-18") == "2026-01-18"
+        # window cutoff가 floor date보다 이후 → window cutoff 사용
+        assert max(SERVICE_START_DATE, "2026-05-01") == "2026-05-01"

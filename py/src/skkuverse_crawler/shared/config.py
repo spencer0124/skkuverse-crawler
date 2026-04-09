@@ -20,6 +20,7 @@ class Config:
     mongo_url: str | None
     mongo_db_name: str
     log_format: str
+    dept_filter: tuple[str, ...] | None
 
     @property
     def is_production(self) -> bool:
@@ -36,10 +37,14 @@ class Config:
     @property
     def mode_label(self) -> str:
         if self.is_production:
-            return "PRODUCTION (prod DB)"
-        if self.is_development:
-            return "DEVELOPMENT (dev DB)"
-        return "TEST"
+            base = "PRODUCTION (prod DB)"
+        elif self.is_development:
+            base = "DEVELOPMENT (dev DB)"
+        else:
+            base = "TEST"
+        if self.dept_filter:
+            base += f" [dept_filter: {','.join(self.dept_filter)}]"
+        return base
 
 
 _config: Config | None = None
@@ -63,11 +68,15 @@ def load_config() -> Config:
 
     base_db = os.getenv("MONGO_DB_NAME", "skku_notices")
 
+    raw_dept = os.getenv("CRAWL_DEPT_FILTER", "").strip()
+    dept_filter = tuple(d.strip() for d in raw_dept.split(",") if d.strip()) or None
+
     return Config(
         env=env,
         mongo_url=os.getenv("MONGO_URL"),
         mongo_db_name=_db_name(base_db, env),
         log_format=os.getenv("LOG_FORMAT", "json"),
+        dept_filter=dept_filter,
     )
 
 

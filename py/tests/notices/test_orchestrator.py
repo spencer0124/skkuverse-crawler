@@ -10,7 +10,7 @@ from skkuverse_crawler.notices.orchestrator import (
 )
 
 
-def _make_item(article_no: int = 1, date: str = "2026-03-01", title: str = "제목") -> NoticeListItem:
+def _make_item(article_no: int = 1, date: str = "2026-04-15", title: str = "제목") -> NoticeListItem:
     return NoticeListItem(
         articleNo=article_no,
         title=title,
@@ -46,7 +46,7 @@ class TestFloorDateItemSkip:
     @patch("skkuverse_crawler.notices.orchestrator.upsert_notice", new_callable=AsyncMock)
     @patch("skkuverse_crawler.notices.orchestrator.build_notice")
     async def test_smart_processes_after_floor_date(self, mock_build, mock_upsert, mock_collection):
-        item = _make_item(date="2026-03-01")
+        item = _make_item(date="2026-04-15")
         strategy = AsyncMock()
         strategy.crawl_detail.return_value = MOCK_DETAIL
         mock_build.return_value = MagicMock(articleNo=1, sourceDeptId="test-dept", contentHash="abc")
@@ -120,7 +120,7 @@ class TestThreeWayBranch:
     ):
         """existing + has_changed → update_with_history with source=tier1."""
         item = _make_item(article_no=1, title="새 제목")
-        existing_meta = {1: {"articleNo": 1, "title": "옛 제목", "date": "2026-03-01", "contentHash": "old_hash"}}
+        existing_meta = {1: {"articleNo": 1, "title": "옛 제목", "date": "2026-04-15", "contentHash": "old_hash"}}
         strategy = AsyncMock()
         strategy.crawl_detail.return_value = MOCK_DETAIL
         mock_build.return_value = MagicMock(articleNo=1, sourceDeptId="test-dept", contentHash="new_hash")
@@ -139,8 +139,8 @@ class TestThreeWayBranch:
     @patch("skkuverse_crawler.notices.orchestrator.bulk_touch_notices", new_callable=AsyncMock)
     async def test_unchanged_item_goes_to_touch(self, mock_touch, mock_collection):
         """existing + not changed → bulk_touch_notices."""
-        item = _make_item(article_no=1, title="동일 제목", date="2026-03-01")
-        existing_meta = {1: {"articleNo": 1, "title": "동일 제목", "date": "2026-03-01", "contentHash": "hash"}}
+        item = _make_item(article_no=1, title="동일 제목", date="2026-04-15")
+        existing_meta = {1: {"articleNo": 1, "title": "동일 제목", "date": "2026-04-15", "contentHash": "hash"}}
         strategy = AsyncMock()
         result = DeptResult()
         logger = MagicMock()

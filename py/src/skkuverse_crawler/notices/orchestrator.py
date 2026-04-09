@@ -78,6 +78,13 @@ async def run_crawl(
     fetcher = Fetcher(delay_ms=options.delay_ms or 500)
 
     if options.dept_filter:
+        valid_ids = {d["id"] for d in departments}
+        unknown = [did for did in options.dept_filter if did not in valid_ids]
+        if unknown:
+            raise ValueError(
+                f"Unknown department ID(s) in CRAWL_DEPT_FILTER: {unknown}. "
+                f"Check departments.json for valid IDs."
+            )
         filtered = [d for d in departments if d["id"] in options.dept_filter]
     else:
         filtered = departments

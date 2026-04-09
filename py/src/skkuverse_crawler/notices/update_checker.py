@@ -64,6 +64,13 @@ async def run_update_check(
     dept_lookup: dict[str, dict[str, Any]] = {d["id"]: d for d in departments}
 
     if dept_filter:
+        valid_ids = set(dept_lookup)
+        unknown = [did for did in dept_filter if did not in valid_ids]
+        if unknown:
+            raise ValueError(
+                f"Unknown department ID(s) in CRAWL_DEPT_FILTER: {unknown}. "
+                f"Check departments.json for valid IDs."
+            )
         by_dept = {k: v for k, v in by_dept.items() if k in dept_filter}
 
     logger.info(

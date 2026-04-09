@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from ..modules.base import ModuleConfig
+from ..shared.config import get_config
 from ..shared.db import close_client
 from .config.loader import load_and_validate
 from .orchestrator import CrawlOptions, run_crawl
@@ -20,7 +21,10 @@ class NoticesModule:
 
     async def run(self, incremental: bool = True, **kwargs: Any) -> dict:
         departments = load_and_validate()
-        options = CrawlOptions(incremental=incremental)
+        options = CrawlOptions(
+            incremental=incremental,
+            dept_filter=get_config().dept_filter,
+        )
         results = await run_crawl(departments, options)
         return {
             "departments": len(results),
@@ -45,7 +49,10 @@ class NoticesUpdateCheckModule:
 
     async def run(self, incremental: bool = True, **kwargs: Any) -> dict:
         departments = load_and_validate()
-        results = await run_update_check(departments)
+        results = await run_update_check(
+            departments,
+            dept_filter=get_config().dept_filter,
+        )
         return {
             "departments": len(results),
             "checked": sum(r.total_checked for r in results),
