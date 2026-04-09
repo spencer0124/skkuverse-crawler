@@ -48,7 +48,7 @@ ALLOWED_STYLE_PROPERTIES = {
     "font-weight", "font-style",
 }
 
-ALLOWED_URL_SCHEMES = {"http", "https", "data", "mailto", "tel"}
+ALLOWED_URL_SCHEMES = {"http", "https", "mailto", "tel"}
 
 # Step 5: Elements to check for emptiness
 REMOVABLE_EMPTY_TAGS = {
@@ -128,6 +128,10 @@ def clean_html(raw_html: str, base_url: str) -> str | None:
         for sel in REMOVE_SELECTORS:
             for el in soup.select(sel):
                 el.decompose()
+
+        # ── Step 1.5: Strip data URI images ─────────────
+        for img in soup.select("img[src^='data:']"):
+            img.decompose()
 
         # ── Step 2: Semantic tag normalization ────────────
         for el in soup.select("[style]"):
