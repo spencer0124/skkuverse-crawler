@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import httpx
+from pymongo import ReturnDocument
 
 from ..shared.db import get_db
 from ..shared.fetcher import Fetcher
@@ -244,16 +245,29 @@ async def _check_department(
         )
     else:
         for doc in not_found_docs:
-            # read-then-write (race 확률 낮음: Tier 1과 10분 오프셋)
-            new_failures = doc.get("consecutiveFailures", 0) + 1
-            update: dict[str, Any] = {"$set": {"consecutiveFailures": new_failures}}
-            if new_failures >= 3:
-                update["$set"]["isDeleted"] = True
-                result.soft_deleted += 1
-            await collection.update_one(
+            was_deleted = doc.get("isDeleted", False)
+            updated = await collection.find_one_and_update(
                 {"articleNo": doc["articleNo"], "sourceDeptId": dept["id"]},
-                update,
+                [
+                    {"$set": {
+                        "consecutiveFailures": {
+                            "$add": [{"$ifNull": ["$consecutiveFailures", 0]}, 1]
+                        },
+                    }},
+                    {"$set": {
+                        "isDeleted": {
+                            "$cond": {
+                                "if": {"$gte": ["$consecutiveFailures", 3]},
+                                "then": True,
+                                "else": {"$ifNull": ["$isDeleted", False]},
+                            }
+                        },
+                    }},
+                ],
+                return_document=ReturnDocument.AFTER,
             )
+            if updated and updated.get("isDeleted") and not was_deleted:
+                result.soft_deleted += 1
 
     result.elapsed_seconds = round(time.monotonic() - start, 2)
     logger.info(

@@ -2,4 +2,20 @@ services:
   crawler:
     build: .
     env_file: .env
+    environment:
+      - CRAWLER_ENV=production
+      - LOG_FORMAT=json
     restart: unless-stopped
+    mem_limit: 512m
+    cpus: 0.5
+    networks:
+      - skkuverse
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  skkuverse:
+    external: true

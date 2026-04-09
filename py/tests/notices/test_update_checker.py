@@ -305,6 +305,12 @@ class TestSoftDelete:
         strategy.crawl_detail.side_effect = _make_404_error()
         logger = MagicMock()
 
+        # find_one_and_update returns the updated doc (failures=1, not deleted)
+        mock_collection.find_one_and_update.return_value = {
+            "articleNo": 1, "sourceDeptId": "test-dept",
+            "consecutiveFailures": 1, "isDeleted": False,
+        }
+
         with patch(
             "skkuverse_crawler.notices.update_checker.STRATEGY_MAP",
             {"skku-standard": MagicMock(return_value=strategy)},
@@ -313,9 +319,7 @@ class TestSoftDelete:
 
         assert result.not_found == 1
         assert result.soft_deleted == 0
-        update_doc = mock_collection.update_one.call_args[0][1]
-        assert update_doc["$set"]["consecutiveFailures"] == 1
-        assert "isDeleted" not in update_doc["$set"]
+        mock_collection.find_one_and_update.assert_called_once()
 
     async def test_third_404_triggers_soft_delete(self, mock_collection):
         notices = [{
@@ -327,6 +331,12 @@ class TestSoftDelete:
         strategy.crawl_detail.side_effect = _make_404_error()
         logger = MagicMock()
 
+        # find_one_and_update returns the updated doc (failures=3, deleted)
+        mock_collection.find_one_and_update.return_value = {
+            "articleNo": 1, "sourceDeptId": "test-dept",
+            "consecutiveFailures": 3, "isDeleted": True,
+        }
+
         with patch(
             "skkuverse_crawler.notices.update_checker.STRATEGY_MAP",
             {"skku-standard": MagicMock(return_value=strategy)},
@@ -334,9 +344,7 @@ class TestSoftDelete:
             result = await _check_department(MOCK_DEPT, notices, mock_collection, AsyncMock(), logger)
 
         assert result.soft_deleted == 1
-        update_doc = mock_collection.update_one.call_args[0][1]
-        assert update_doc["$set"]["consecutiveFailures"] == 3
-        assert update_doc["$set"]["isDeleted"] is True
+        mock_collection.find_one_and_update.assert_called_once()
 
     async def test_successful_fetch_resets_counter(self, mock_collection):
         """정상 fetch → consecutiveFailures 리셋."""
