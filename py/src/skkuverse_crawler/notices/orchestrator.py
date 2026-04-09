@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import time
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
 
@@ -18,8 +18,11 @@ from .dedup import (
     find_null_content,
     has_changed,
     should_continue,
+    update_with_history,
     upsert_notice,
 )
+from .constants import SERVICE_START_DATE
+from .hashing import compute_content_hash
 from .models import NoticeListItem
 from .normalizer import build_notice
 from .strategies.skku_standard import SkkuStandardStrategy
@@ -75,6 +78,13 @@ async def run_crawl(
     fetcher = Fetcher(delay_ms=options.delay_ms or 500)
 
     if options.dept_filter:
+        valid_ids = {d["id"] for d in departments}
+        unknown = [did for did in options.dept_filter if did not in valid_ids]
+        if unknown:
+            raise ValueError(
+                f"Unknown department ID(s) in CRAWL_DEPT_FILTER: {unknown}. "
+                f"Check departments.json for valid IDs."
+            )
         filtered = [d for d in departments if d["id"] in options.dept_filter]
     else:
         filtered = departments
@@ -142,12 +152,14 @@ async def _crawl_department(
                 {"articleNo": ref["articleNo"], "detailPath": ref["detailPath"]}, dept
             )
             if detail:
+                cleaned = clean_html(detail.content, dept["baseUrl"])
                 await collection.update_one(
                     {"articleNo": ref["articleNo"], "sourceDeptId": dept["id"]},
                     {"$set": {
                         "content": detail.content,
                         "contentText": detail.contentText,
-                        "cleanHtml": clean_html(detail.content, dept["baseUrl"]),
+                        "cleanHtml": cleaned,
+                        "contentHash": compute_content_hash(cleaned),
                         "attachments": detail.attachments,
                         "crawledAt": datetime.now(timezone.utc),
                     }},
@@ -168,6 +180,10 @@ async def _crawl_department(
 
         if not list_items:
             logger.info("empty_list_page", dept_id=dept["id"], page=page)
+            break
+
+        if all(item.date and item.date < SERVICE_START_DATE for item in list_items):
+            logger.info("floor_date_stopping", page=page, dept_id=dept["id"])
             break
 
         is_first_page = page == 0
@@ -222,6 +238,10 @@ async def _process_page_smart(
 
     for item in list_items:
         try:
+            if item.date and item.date < SERVICE_START_DATE:
+                result.skipped += 1
+                continue
+
             existing = existing_meta.get(item.articleNo)
 
             if existing and not has_changed(item, existing):
@@ -233,14 +253,6 @@ async def _process_page_smart(
                 result.skipped += 1
                 continue
 
-            if existing:
-                logger.info(
-                    "change_detected",
-                    articleNo=item.articleNo,
-                    old_title=existing["title"],
-                    new_title=item.title,
-                )
-
             detail = await strategy.crawl_detail(
                 {"articleNo": item.articleNo, "detailPath": item.detailPath}, dept
             )
@@ -250,10 +262,33 @@ async def _process_page_smart(
                 source_dept_id=dept["id"],
                 base_url=dept["baseUrl"],
             )
-            action = await upsert_notice(collection, notice)
-            if action == "inserted":
-                result.inserted += 1
+
+            if not existing:
+                action = await upsert_notice(collection, notice)
+                if action == "inserted":
+                    result.inserted += 1
+                else:
+                    result.updated += 1
             else:
+                logger.info(
+                    "change_detected",
+                    articleNo=item.articleNo,
+                    old_title=existing["title"],
+                    new_title=item.title,
+                )
+                old_hash = existing.get("contentHash")
+                new_hash = notice.contentHash
+                edit_entry = {
+                    "detectedAt": datetime.now(timezone.utc),
+                    "oldHash": old_hash,
+                    "newHash": new_hash,
+                    "oldTitle": existing["title"],
+                    "newTitle": item.title,
+                    "titleChanged": existing["title"] != item.title,
+                    "contentChanged": old_hash is not None and old_hash != new_hash,
+                    "source": "tier1",
+                }
+                await update_with_history(collection, notice, edit_entry)
                 result.updated += 1
 
         except Exception as exc:
@@ -274,6 +309,10 @@ async def _process_page_full(
 ) -> None:
     for item in list_items:
         try:
+            if item.date and item.date < SERVICE_START_DATE:
+                result.skipped += 1
+                continue
+
             detail = await strategy.crawl_detail(
                 {"articleNo": item.articleNo, "detailPath": item.detailPath}, dept
             )

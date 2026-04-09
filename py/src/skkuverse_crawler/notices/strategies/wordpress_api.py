@@ -8,7 +8,7 @@ from urllib.parse import urljoin
 from ...shared.fetcher import Fetcher
 from ...shared.logger import get_logger
 from ..models import NoticeDetail, NoticeListItem
-from ..parser import load_html, extract_text, extract_attr
+from ..parser import load_html
 from ..types import DetailRef
 
 logger = get_logger("wordpress_api")
@@ -28,7 +28,7 @@ class WordPressApiStrategy:
             href = a.get("href", "")
             if isinstance(href, list):
                 href = href[0]
-            if FILE_EXTENSIONS.search(href):
+            if href and FILE_EXTENSIONS.search(href):
                 name = a.get_text(strip=True) or href.rsplit("/", 1)[-1] or "unknown"
                 full_url = href if href.startswith("http") else urljoin(base_url, href)
                 attachments.append({"name": name, "url": full_url})

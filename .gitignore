@@ -6,11 +6,6 @@
 # OS
 .DS_Store
 
-# Node.js
-node_modules/
-dist/
-coverage/
-
 # Python
 __pycache__/
 *.py[cod]

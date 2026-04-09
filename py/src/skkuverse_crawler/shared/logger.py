@@ -1,23 +1,21 @@
 from __future__ import annotations
 
 import logging
-import os
 
 import structlog
 
+from .config import get_config
+
 
 def configure_logging() -> None:
-    env = os.getenv("CRAWLER_ENV", "production")
-    log_format = os.getenv("LOG_FORMAT", "json")
+    cfg = get_config()
 
-    if env == "test":
-        level = logging.CRITICAL
-    else:
-        level = logging.INFO
+    level = logging.CRITICAL if cfg.is_test else logging.INFO
 
     structlog.reset_defaults()
 
-    if log_format == "dev":
+    renderer: structlog.types.Processor
+    if cfg.log_format == "dev":
         renderer = structlog.dev.ConsoleRenderer()
     else:
         renderer = structlog.processors.JSONRenderer()
@@ -36,6 +34,10 @@ def configure_logging() -> None:
         logger_factory=structlog.PrintLoggerFactory(),
         cache_logger_on_first_use=True,
     )
+
+    if not cfg.is_test:
+        logger = structlog.get_logger("config")
+        logger.info("crawler_mode", mode=cfg.mode_label)
 
 
 def get_logger(name: str = "", **initial_context: object) -> structlog.stdlib.BoundLogger:

@@ -3,28 +3,25 @@
 ## Commands
 
 ```bash
+cd py
+
 # 1회 incremental 크롤링 (새 글만)
-npx tsx src/index.ts --once
+python -m skkuverse_crawler notices --once
 
 # 1회 전체 크롤링 (incremental 무시)
-npx tsx src/index.ts --once --all
+python -m skkuverse_crawler notices --once --all
 
 # 특정 학과만, 지정 페이지 수
-npx tsx src/index.ts --once --dept skku-main --pages 3
+python -m skkuverse_crawler notices --once --dept skku-main --pages 3
 
 # 요청 간 딜레이 변경 (기본 500ms)
-npx tsx src/index.ts --once --delay 1000
+python -m skkuverse_crawler notices --once --delay 1000
 
-# cron 모드 (30분 간격, incremental)
-npx tsx src/index.ts
-```
+# 스케줄러
+python -m skkuverse_crawler start
 
-## npm scripts
-
-```bash
-npm run crawl          # --once
-npm run crawl:all      # --once --all
-npm start              # cron 모드
+# 단일 모듈만 스케줄링
+python -m skkuverse_crawler start --module notices
 ```
 
 ## Options

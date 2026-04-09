@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from urllib.parse import urljoin, urlparse, urlencode, parse_qs, urlunparse
+from urllib.parse import urlparse, urlencode, parse_qs
 
 from ...shared.fetcher import Fetcher
 from ...shared.logger import get_logger

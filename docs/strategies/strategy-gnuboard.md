@@ -529,13 +529,13 @@ https://nano.skku.edu/bbs/board.php?tbl=bbs42&mode=VIEW&num=416&...&page=1
 | 상세 컨텐츠 | `div.board_content` | `#bo_v_con` | `#DivContents` |
 | 전역 JS 변수 | 없음 | `g5_bo_table` 등 | 없음 |
 
-### 권장 전략 구조
+### 전략 구조 (구현 완료)
 
 ```
-strategies/
-  gnuboard.ts        # C2-gnuboard (bio, pharm 등)
-  gnuboard-custom.ts # C2-custom (nano 등 GnCommon 기반)
-  custom-php.ts      # C1 (cal 등 자체 PHP)
+py/src/skkuverse_crawler/notices/strategies/
+  gnuboard.py         # C2-gnuboard (bio, pharm 등)
+  gnuboard_custom.py  # C2-custom (nano 등 GnCommon 기반)
+  custom_php.py       # C1 (cal 등 자체 PHP)
 ```
 
 **C2-gnuboard 내부에서는 스킨별 셀렉터 차이를 departments.json의 selectors로 처리.**

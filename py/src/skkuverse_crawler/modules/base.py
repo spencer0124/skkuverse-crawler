@@ -7,8 +7,9 @@ from typing import Any, Protocol, runtime_checkable
 @dataclass
 class ModuleConfig:
     name: str
-    cron_schedule: str
     collection_name: str
+    cron_schedule: str | None = None
+    interval_seconds: int | None = None
 
 
 @runtime_checkable

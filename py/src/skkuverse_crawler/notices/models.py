@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from typing import Any
 
 
 @dataclass
@@ -40,3 +41,8 @@ class Notice:
     sourceDeptId: str
     crawledAt: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     lastModified: str | None = None
+    contentHash: str | None = None
+    editHistory: list[dict[str, Any]] = field(default_factory=list)
+    editCount: int = 0
+    isDeleted: bool = False
+    consecutiveFailures: int = 0

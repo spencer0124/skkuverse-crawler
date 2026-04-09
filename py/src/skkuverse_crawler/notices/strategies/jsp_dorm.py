@@ -34,9 +34,11 @@ class JspDormStrategy:
                 # Skip pinned on page > 0
                 is_pinned = tr.select_one(pinned_selector.split(" ")[-1]) is not None if pinned_selector else False
                 # More robust: check if tr matches the pinned selector pattern
-                style = tr.get("style", "")
-                if isinstance(style, list):
-                    style = " ".join(style)
+                style_val = tr.get("style", "")
+                if isinstance(style_val, list):
+                    style = " ".join(style_val)
+                else:
+                    style = style_val or ""
                 is_pinned = "background:#f4f4f4" in style.replace(" ", "")
                 if is_pinned and page > 0:
                     continue

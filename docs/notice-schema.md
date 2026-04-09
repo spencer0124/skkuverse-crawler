@@ -2,26 +2,23 @@
 
 ## MongoDB Document
 
-```typescript
-interface Notice {
-  articleNo: number;        // 게시글 번호 (SKKU 원본)
-  title: string;            // 제목
-  category: string;         // 카테고리 (행사/세미나, 채용/모집 등)
-  author: string;           // 작성자
-  department: string;       // 학과/부서 이름 (한글)
-  date: string;             // 작성일 YYYY-MM-DD
-  lastModified?: string;    // 최종 수정일
-  views: number;            // 조회수
-  content: string | null;   // 본문 HTML (fetch 실패 시 null)
-  contentText: string | null; // 본문 plain text (cheerio .text())
-  attachments: {            // 첨부파일 목록
-    name: string;           // 파일명
-    url: string;            // 다운로드 URL (절대 경로)
-  }[];
-  sourceUrl: string;        // 원본 상세 페이지 URL
-  sourceDeptId: string;     // departments.json의 id (e.g. "skku-main")
-  crawledAt: Date;          // 크롤링 시각
-}
+```python
+@dataclass
+class Notice:
+    article_no: int           # 게시글 번호 (SKKU 원본)
+    title: str                # 제목
+    category: str             # 카테고리 (행사/세미나, 채용/모집 등)
+    author: str               # 작성자
+    department: str           # 학과/부서 이름 (한글)
+    date: str                 # 작성일 YYYY-MM-DD
+    last_modified: str | None # 최종 수정일
+    views: int                # 조회수
+    content: str | None       # 본문 HTML (fetch 실패 시 None)
+    content_text: str | None  # 본문 plain text (bs4 .get_text())
+    attachments: list[dict]   # 첨부파일 목록 [{"name": str, "url": str}]
+    source_url: str           # 원본 상세 페이지 URL
+    source_dept_id: str       # departments.json의 id (e.g. "skku-main")
+    crawled_at: datetime      # 크롤링 시각
 ```
 
 ## Index
@@ -32,8 +29,8 @@ interface Notice {
 ## content vs contentText
 
 - `content`: 원본 HTML (이미지 태그, 링크 등 보존)
-- `contentText`: cheerio `.text()`로 추출한 순수 텍스트 (검색/요약용)
-- fetch 실패 시 둘 다 `null` → 다음 크롤링에서 재시도 대상
+- `contentText`: BeautifulSoup `.get_text()`로 추출한 순수 텍스트 (검색/요약용)
+- fetch 실패 시 둘 다 `None` → 다음 크롤링에서 재시도 대상
 
 ## Upsert 동작
 
