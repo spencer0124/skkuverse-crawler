@@ -6,10 +6,13 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+import httpx
+
 from ..shared.db import get_db
 from ..shared.fetcher import Fetcher
 from ..shared.html_cleaner import clean_html
 from ..shared.logger import get_logger
+from .constants import SERVICE_START_DATE
 from .dedup import ensure_indexes
 from .hashing import compute_content_hash
 from .orchestrator import STRATEGY_MAP
@@ -23,6 +26,8 @@ class UpdateCheckResult:
     hash_backfilled: int = 0
     fetch_errors: int = 0
     skipped_no_detail: int = 0
+    not_found: int = 0
+    soft_deleted: int = 0
     elapsed_seconds: float = 0.0
 
 
@@ -39,14 +44,14 @@ async def run_update_check(
 
     fetcher = Fetcher(delay_ms=500)
 
-    # Query DB for notices within the time window
-    cutoff = datetime.now(timezone.utc) - timedelta(days=window_days)
-    cutoff_date_str = cutoff.strftime("%Y-%m-%d")
+    # Query DB for notices within the time window (floored by SERVICE_START_DATE)
+    window_cutoff = (datetime.now(timezone.utc) - timedelta(days=window_days)).strftime("%Y-%m-%d")
+    cutoff_date_str = max(SERVICE_START_DATE, window_cutoff)
 
     cursor = collection.find(
-        {"date": {"$gte": cutoff_date_str}},
+        {"date": {"$gte": cutoff_date_str}, "isDeleted": {"$ne": True}},
         {"articleNo": 1, "sourceDeptId": 1, "detailPath": 1,
-         "contentHash": 1, "title": 1},
+         "contentHash": 1, "title": 1, "consecutiveFailures": 1},
     )
 
     # Group by sourceDeptId
@@ -97,6 +102,8 @@ async def run_update_check(
         total_content_changed=sum(r.content_changed for r in results),
         total_backfilled=sum(r.hash_backfilled for r in results),
         total_errors=sum(r.fetch_errors for r in results),
+        total_not_found=sum(r.not_found for r in results),
+        total_soft_deleted=sum(r.soft_deleted for r in results),
     )
 
     await fetcher.close()
@@ -119,6 +126,7 @@ async def _check_department(
         return result
 
     strategy = strategy_cls(fetcher)
+    not_found_docs: list[dict[str, Any]] = []
 
     for doc in notices:
         detail_path = doc.get("detailPath", "")
@@ -130,6 +138,18 @@ async def _check_department(
             detail = await strategy.crawl_detail(
                 {"articleNo": doc["articleNo"], "detailPath": detail_path}, dept,
             )
+        except httpx.HTTPStatusError as exc:
+            if exc.response.status_code == 404:
+                not_found_docs.append(doc)
+                continue
+            logger.warning(
+                "update_check_fetch_failed",
+                articleNo=doc["articleNo"],
+                dept_id=dept["id"],
+                error=str(exc),
+            )
+            result.fetch_errors += 1
+            continue
         except Exception as exc:
             logger.warning(
                 "update_check_fetch_failed",
@@ -145,6 +165,7 @@ async def _check_department(
             continue
 
         result.total_checked += 1
+        doc_filter = {"articleNo": doc["articleNo"], "sourceDeptId": dept["id"]}
 
         new_clean_html = clean_html(detail.content, dept["baseUrl"])
         new_hash = compute_content_hash(new_clean_html)
@@ -154,9 +175,10 @@ async def _check_department(
         if old_hash is None:
             now = datetime.now(timezone.utc)
             await collection.update_one(
-                {"articleNo": doc["articleNo"], "sourceDeptId": dept["id"]},
+                doc_filter,
                 {"$set": {
                     "contentHash": new_hash,
+                    "consecutiveFailures": 0,
                     "crawledAt": now,
                 }},
             )
@@ -165,6 +187,10 @@ async def _check_department(
 
         # No change
         if old_hash == new_hash:
+            if doc.get("consecutiveFailures", 0) > 0:
+                await collection.update_one(
+                    doc_filter, {"$set": {"consecutiveFailures": 0}},
+                )
             continue
 
         # Content changed
@@ -177,13 +203,14 @@ async def _check_department(
             "source": "tier2",
         }
         await collection.update_one(
-            {"articleNo": doc["articleNo"], "sourceDeptId": dept["id"]},
+            doc_filter,
             {
                 "$set": {
                     "content": detail.content,
                     "contentText": detail.contentText,
                     "cleanHtml": new_clean_html,
                     "contentHash": new_hash,
+                    "consecutiveFailures": 0,
                     "crawledAt": now,
                 },
                 "$push": {
@@ -197,6 +224,30 @@ async def _check_department(
         )
         result.content_changed += 1
 
+    # 2-pass: 404 처리 — 대량 404 안전장치 (최소 5건 이상일 때만 비율 판정)
+    result.not_found = len(not_found_docs)
+    total_attempted = result.total_checked + result.not_found + result.fetch_errors
+    mass_404 = total_attempted >= 5 and result.not_found / total_attempted > 0.5
+    if mass_404:
+        logger.error(
+            "mass_404_detected",
+            source_dept_id=dept["id"],
+            not_found=result.not_found,
+            total_attempted=total_attempted,
+        )
+    else:
+        for doc in not_found_docs:
+            # read-then-write (race 확률 낮음: Tier 1과 10분 오프셋)
+            new_failures = doc.get("consecutiveFailures", 0) + 1
+            update: dict[str, Any] = {"$set": {"consecutiveFailures": new_failures}}
+            if new_failures >= 3:
+                update["$set"]["isDeleted"] = True
+                result.soft_deleted += 1
+            await collection.update_one(
+                {"articleNo": doc["articleNo"], "sourceDeptId": dept["id"]},
+                update,
+            )
+
     result.elapsed_seconds = round(time.monotonic() - start, 2)
     logger.info(
         "update_check_dept_done",
@@ -206,6 +257,30 @@ async def _check_department(
         hash_backfilled=result.hash_backfilled,
         fetch_errors=result.fetch_errors,
         skipped_no_detail=result.skipped_no_detail,
+        not_found=result.not_found,
+        soft_deleted=result.soft_deleted,
         elapsed_seconds=result.elapsed_seconds,
     )
+
+    # Anomaly detection: backfill 제외 후 변경 비율 체크
+    checked_non_backfill = result.total_checked - result.hash_backfilled
+    if checked_non_backfill > 0:
+        change_rate = result.content_changed / checked_non_backfill
+        if change_rate > 0.8:
+            logger.error(
+                "likely_determinism_bug",
+                source_dept_id=result.source_dept_id,
+                rate=round(change_rate, 2),
+                content_changed=result.content_changed,
+                checked=checked_non_backfill,
+            )
+        elif change_rate > 0.3:
+            logger.warning(
+                "high_change_rate",
+                source_dept_id=result.source_dept_id,
+                rate=round(change_rate, 2),
+                content_changed=result.content_changed,
+                checked=checked_non_backfill,
+            )
+
     return result

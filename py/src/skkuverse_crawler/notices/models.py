@@ -44,3 +44,5 @@ class Notice:
     contentHash: str | None = None
     editHistory: list[dict[str, Any]] = field(default_factory=list)
     editCount: int = 0
+    isDeleted: bool = False
+    consecutiveFailures: int = 0

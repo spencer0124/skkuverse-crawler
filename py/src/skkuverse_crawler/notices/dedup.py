@@ -57,11 +57,18 @@ async def upsert_notice(
     doc = asdict(notice)
     edit_history = doc.pop("editHistory", [])
     edit_count = doc.pop("editCount", 0)
+    is_deleted = doc.pop("isDeleted", False)
+    consecutive_failures = doc.pop("consecutiveFailures", 0)
     result = await collection.update_one(
         {"articleNo": notice.articleNo, "sourceDeptId": notice.sourceDeptId},
         {
             "$set": doc,
-            "$setOnInsert": {"editHistory": edit_history, "editCount": edit_count},
+            "$setOnInsert": {
+                "editHistory": edit_history,
+                "editCount": edit_count,
+                "isDeleted": is_deleted,
+                "consecutiveFailures": consecutive_failures,
+            },
         },
         upsert=True,
     )
@@ -76,6 +83,8 @@ async def update_with_history(
     doc = asdict(notice)
     doc.pop("editHistory", None)
     doc.pop("editCount", None)
+    doc.pop("isDeleted", None)
+    doc.pop("consecutiveFailures", None)
     await collection.update_one(
         {"articleNo": notice.articleNo, "sourceDeptId": notice.sourceDeptId},
         {
