@@ -21,6 +21,7 @@ from .dedup import (
     update_with_history,
     upsert_notice,
 )
+from .constants import SERVICE_START_DATE
 from .hashing import compute_content_hash
 from .models import NoticeListItem
 from .normalizer import build_notice
@@ -174,6 +175,10 @@ async def _crawl_department(
             logger.info("empty_list_page", dept_id=dept["id"], page=page)
             break
 
+        if all(item.date and item.date < SERVICE_START_DATE for item in list_items):
+            logger.info("floor_date_stopping", page=page, dept_id=dept["id"])
+            break
+
         is_first_page = page == 0
 
         if options.incremental:
@@ -226,6 +231,10 @@ async def _process_page_smart(
 
     for item in list_items:
         try:
+            if item.date and item.date < SERVICE_START_DATE:
+                result.skipped += 1
+                continue
+
             existing = existing_meta.get(item.articleNo)
 
             if existing and not has_changed(item, existing):
@@ -293,6 +302,10 @@ async def _process_page_full(
 ) -> None:
     for item in list_items:
         try:
+            if item.date and item.date < SERVICE_START_DATE:
+                result.skipped += 1
+                continue
+
             detail = await strategy.crawl_detail(
                 {"articleNo": item.articleNo, "detailPath": item.detailPath}, dept
             )
