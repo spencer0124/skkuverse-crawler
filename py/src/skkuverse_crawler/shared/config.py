@@ -21,6 +21,7 @@ class Config:
     mongo_db_name: str
     log_format: str
     dept_filter: tuple[str, ...] | None
+    ai_service_url: str
 
     @property
     def is_production(self) -> bool:
@@ -58,6 +59,12 @@ def _db_name(base: str, env: CrawlerEnv) -> str:
     return base
 
 
+def _ai_service_url(env: CrawlerEnv) -> str:
+    if env == CrawlerEnv.PRODUCTION:
+        return "http://ai:4000"
+    return "http://127.0.0.1:4000"
+
+
 def load_config() -> Config:
     """Build a Config from os.environ. Does not cache."""
     raw_env = os.getenv("CRAWLER_ENV", "production").lower()
@@ -77,6 +84,7 @@ def load_config() -> Config:
         mongo_db_name=_db_name(base_db, env),
         log_format=os.getenv("LOG_FORMAT", "json"),
         dept_filter=dept_filter,
+        ai_service_url=os.getenv("AI_SERVICE_URL") or _ai_service_url(env),
     )
 
 

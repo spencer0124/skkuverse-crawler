@@ -14,6 +14,8 @@ python -m skkuverse_crawler start                        # 스케줄러 실행
 python -m skkuverse_crawler start --module notices       # 단일 모듈
 python -m skkuverse_crawler notices --once               # 공지 1회 실행
 python -m skkuverse_crawler notices --once --dept skku-main --pages 3
+python -m skkuverse_crawler summarize                      # AI 요약 1회 실행
+python -m skkuverse_crawler summarize --batch-size 500     # 초기 backfill
 
 # 테스트 & 린트
 python -m pytest tests/ -v                  # 전체 테스트
@@ -27,7 +29,7 @@ mypy src/                                   # 타입 체크
 
 ### 공통 패턴
 
-**모듈형 구조**: `shared/` (config, DB, logger, HTTP 클라이언트) + 각 모듈 디렉토리 (notices)
+**모듈형 구조**: `shared/` (config, DB, logger, HTTP 클라이언트) + 각 모듈 디렉토리 (notices, notices_summary)
 
 **Strategy Pattern**: `CrawlStrategy` 인터페이스 + `departments.json` config-driven. 7개 전략: skku-standard, wordpress-api, skkumed-asp, jsp-dorm, custom-php, gnuboard, gnuboard-custom.
 
@@ -48,6 +50,7 @@ mypy src/                                   # 타입 체크
 | 모듈 | 타입 | 주기 |
 |------|------|------|
 | notices | CronTrigger | `*/30 * * * *` (30분) |
+| notices-summary | CronTrigger | `20 * * * *` (매시 20분) |
 
 ### DB 이름 규칙
 
@@ -65,6 +68,7 @@ mypy src/                                   # 타입 체크
 - `MONGO_DB_NAME` — 기본: `skku_notices`
 - `CRAWLER_ENV` — `production` / `development` / `test` (case-insensitive)
 - `LOG_FORMAT` — `json` (기본) / `dev` (컬러 콘솔)
+- `AI_SERVICE_URL` — AI 요약 서비스 URL. 환경별 자동 결정: `production` → `http://ai:4000`, `development`/`test` → `http://127.0.0.1:4000`. 직접 지정 시 우선
 
 
 ## Testing
