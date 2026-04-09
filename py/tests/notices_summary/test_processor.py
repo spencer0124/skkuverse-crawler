@@ -65,6 +65,7 @@ class TestRunSummaryBatch:
         assert result["errors"] == 0
         mock_client.summarize.assert_called_once_with(
             title="테스트 공지", category="일반", clean_text="본문 텍스트",
+            date=None,
         )
         mock_collection.update_one.assert_called_once()
         update_doc = mock_collection.update_one.call_args[0][1]
