@@ -35,9 +35,11 @@ async def _start_scheduler(module_filter: str | None = None) -> None:
 
     # Register modules
     from .notices.module import NoticesModule, NoticesUpdateCheckModule
+    from .notices_summary.module import NoticesSummaryModule
 
     registry.register(NoticesModule())
     registry.register(NoticesUpdateCheckModule())
+    registry.register(NoticesSummaryModule())
 
     scheduler = AsyncIOScheduler()
 
@@ -94,7 +96,9 @@ async def _shutdown_modules(modules: list) -> None:
         await mod.shutdown()
 
 
-# Register notices CLI subcommands
+# Register CLI subcommands
 from .notices.cli import notices_cli, update_check_cli  # noqa: E402
+from .notices_summary.cli import summarize_cli  # noqa: E402
 main.add_command(notices_cli)
 main.add_command(update_check_cli)
+main.add_command(summarize_cli)
