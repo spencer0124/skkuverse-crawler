@@ -18,14 +18,14 @@ def main() -> None:
 @click.option("--module", "-m", default=None, help="Run specific module only")
 def start(module: str | None) -> None:
     """Start the cron scheduler for all (or one) module."""
+    from .shared.config import init_config
+
+    init_config()
     configure_logging()
     asyncio.run(_start_scheduler(module))
 
 
 async def _start_scheduler(module_filter: str | None = None) -> None:
-    from dotenv import load_dotenv
-    load_dotenv()
-
     from apscheduler.schedulers.asyncio import AsyncIOScheduler
     from apscheduler.triggers.cron import CronTrigger
     from apscheduler.triggers.interval import IntervalTrigger

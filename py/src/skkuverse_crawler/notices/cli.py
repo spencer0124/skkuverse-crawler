@@ -19,6 +19,9 @@ from .update_checker import run_update_check
 @click.option("--delay", type=int, default=500, help="Delay between requests (ms)")
 def notices_cli(once: bool, full_crawl: bool, dept: tuple[str, ...], pages: int | None, delay: int) -> None:
     """Run the notices crawler."""
+    from ..shared.config import init_config
+
+    init_config()
     configure_logging()
     asyncio.run(_run(once, full_crawl, dept, pages, delay))
 
@@ -30,9 +33,6 @@ async def _run(
     max_pages: int | None,
     delay_ms: int,
 ) -> None:
-    from dotenv import load_dotenv
-    load_dotenv()
-
     departments = load_and_validate()
 
     options = CrawlOptions(
@@ -53,6 +53,9 @@ async def _run(
 @click.option("--dept", multiple=True, help="Department ID(s) to check")
 def update_check_cli(days: int, dept: tuple[str, ...]) -> None:
     """Run Tier 2 update detection on recent notices."""
+    from ..shared.config import init_config
+
+    init_config()
     configure_logging()
     asyncio.run(_run_update_check(days, dept))
 
@@ -61,9 +64,6 @@ async def _run_update_check(
     window_days: int,
     dept_filter: tuple[str, ...],
 ) -> None:
-    from dotenv import load_dotenv
-    load_dotenv()
-
     departments = load_and_validate()
 
     try:
