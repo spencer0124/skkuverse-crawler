@@ -28,7 +28,7 @@ class WordPressApiStrategy:
             href = a.get("href", "")
             if isinstance(href, list):
                 href = href[0]
-            if FILE_EXTENSIONS.search(href):
+            if href and FILE_EXTENSIONS.search(href):
                 name = a.get_text(strip=True) or href.rsplit("/", 1)[-1] or "unknown"
                 full_url = href if href.startswith("http") else urljoin(base_url, href)
                 attachments.append({"name": name, "url": full_url})

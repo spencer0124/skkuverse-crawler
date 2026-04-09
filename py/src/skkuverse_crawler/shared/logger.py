@@ -14,6 +14,7 @@ def configure_logging() -> None:
 
     structlog.reset_defaults()
 
+    renderer: structlog.types.Processor
     if cfg.log_format == "dev":
         renderer = structlog.dev.ConsoleRenderer()
     else:
