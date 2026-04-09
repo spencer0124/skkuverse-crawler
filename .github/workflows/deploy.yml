@@ -31,9 +31,22 @@ jobs:
           script: |
             set -e
             cd ${{ secrets.CRAWLER_DEPLOY_PATH }}
+
+            PREV_COMMIT=$(git rev-parse HEAD)
             git pull origin main
+
             cd py
             docker compose build
+
+            rollback() {
+              echo "Deploy failed — rolling back to $PREV_COMMIT"
+              cd ${{ secrets.CRAWLER_DEPLOY_PATH }}
+              git reset --hard "$PREV_COMMIT"
+              cd py
+              docker compose build
+              docker compose up -d
+            }
+
             docker compose up -d
             sleep 10
-            docker compose ps crawler --format '{{.State}}' | grep -q running || exit 1
+            docker compose ps crawler --format '{{.State}}' | grep -q running || { rollback; exit 1; }
