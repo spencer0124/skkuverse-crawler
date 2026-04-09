@@ -34,6 +34,9 @@ from .strategies.gnuboard import GnuboardStrategy
 from .strategies.gnuboard_custom import GnuboardCustomStrategy
 
 
+_MAX_CONTENT_BYTES = 5 * 1024 * 1024  # 5MB
+
+
 @dataclass
 class CrawlOptions:
     incremental: bool = True
@@ -153,10 +156,20 @@ async def _crawl_department(
             )
             if detail:
                 cleaned = clean_html(detail.content, dept["baseUrl"])
+                raw_content = detail.content
+                if cleaned and len(cleaned.encode()) > _MAX_CONTENT_BYTES:
+                    logger.warning(
+                        "oversized_content_dropped",
+                        articleNo=ref["articleNo"],
+                        dept=dept["id"],
+                        size=len(cleaned.encode()),
+                    )
+                    cleaned = None
+                    raw_content = None
                 await collection.update_one(
                     {"articleNo": ref["articleNo"], "sourceDeptId": dept["id"]},
                     {"$set": {
-                        "content": detail.content,
+                        "content": raw_content,
                         "contentText": detail.contentText,
                         "cleanHtml": cleaned,
                         "contentHash": compute_content_hash(cleaned),

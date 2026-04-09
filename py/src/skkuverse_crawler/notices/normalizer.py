@@ -3,8 +3,13 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from ..shared.html_cleaner import clean_html
+from ..shared.logger import get_logger
 from .hashing import compute_content_hash
 from .models import Notice, NoticeDetail, NoticeListItem
+
+logger = get_logger("normalizer")
+
+MAX_CONTENT_BYTES = 5 * 1024 * 1024  # 5MB
 
 
 def build_notice(
@@ -24,6 +29,17 @@ def build_notice(
         source_url = f"{base_url}?mode=view&articleNo={list_item.articleNo}"
 
     cleaned = clean_html(detail.content, base_url) if detail and detail.content else None
+    raw_content = detail.content if detail else None
+
+    if cleaned and len(cleaned.encode()) > MAX_CONTENT_BYTES:
+        logger.warning(
+            "oversized_content_dropped",
+            articleNo=list_item.articleNo,
+            dept=source_dept_id,
+            size=len(cleaned.encode()),
+        )
+        cleaned = None
+        raw_content = None
 
     return Notice(
         articleNo=list_item.articleNo,
@@ -33,7 +49,7 @@ def build_notice(
         department=department,
         date=list_item.date,
         views=list_item.views,
-        content=detail.content if detail else None,
+        content=raw_content,
         contentText=detail.contentText if detail else None,
         cleanHtml=cleaned,
         attachments=detail.attachments if detail else [],

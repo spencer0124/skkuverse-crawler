@@ -9,7 +9,7 @@ async def ensure_summary_indexes(collection: AsyncIOMotorCollection) -> None:
     await collection.create_index(
         [("summaryAt", 1), ("contentText", 1)],
         name="idx_summary_pending",
-        partialFilterExpression={"contentText": {"$nin": [None, ""]}},
+        partialFilterExpression={"contentText": {"$exists": True}},
     )
 
 
