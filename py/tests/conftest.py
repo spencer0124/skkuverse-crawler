@@ -4,7 +4,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from skkuverse_crawler.shared import bus_cache
 from skkuverse_crawler.shared.config import reset_config
 
 
@@ -44,10 +43,5 @@ def _mock_db(_test_env_and_config, mock_collection):
     async def fake_get_db():
         return mock_db
 
-    with (
-        patch("skkuverse_crawler.shared.db.get_db", side_effect=fake_get_db),
-        patch("skkuverse_crawler.shared.bus_cache.get_db", side_effect=fake_get_db),
-    ):
-        bus_cache._index_ensured = False
+    with patch("skkuverse_crawler.shared.db.get_db", side_effect=fake_get_db):
         yield mock_collection
-        bus_cache._index_ensured = False

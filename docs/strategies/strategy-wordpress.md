@@ -145,7 +145,7 @@ GET {baseUrl}/?rest_route=/wp/v2/categories&per_page=100&_fields=id,name,slug,co
 | REST API 필드 | NoticeDetail 필드 | 변환 |
 |---------------|-------------------|------|
 | `content.rendered` | `content` | 그대로 (HTML) |
-| `content.rendered` | `contentText` | cheerio `.text()` |
+| `content.rendered` | `contentText` | BeautifulSoup `.get_text()` |
 | `content.rendered` 내 `<a>` | `attachments` | PDF/파일 링크 추출 |
 
 **핵심:** REST API에서 `content` 필드를 포함하면 **목록과 상세를 1번의 API 호출로 모두 가져올 수 있다.**
@@ -237,72 +237,14 @@ URL 패턴: `https://cheme.skku.edu/{YYYY}/{MM}/{DD}/{slug}/`
 
 ---
 
-## 전략 구현 설계
+## 전략 구현 (구현 완료)
 
-### 권장: REST API 기반 (`wordpress-api` 전략)
+### REST API 기반 (`wordpress-api` 전략)
 
-```typescript
-// strategies/wordpress-api.ts
+구현 파일: `py/src/skkuverse_crawler/notices/strategies/wordpress_api.py`
 
-export const wordpressApiStrategy: CrawlStrategy = {
-  async crawlList(config, page) {
-    const { baseUrl, categoryId } = config;
-    const params = new URLSearchParams({
-      rest_route: '/wp/v2/posts',
-      per_page: '10',
-      page: String(page),
-      _fields: 'id,title,date,link,content,categories',
-      ...(categoryId ? { categories: String(categoryId) } : {}),
-    });
-
-    const url = `${baseUrl}/?${params}`;
-    const res = await fetcher.get(url);
-    // res.headers['x-wp-totalpages'] 로 마지막 페이지 판단
-
-    return res.data.map(post => ({
-      articleNo: post.id,
-      title: decodeEntities(post.title.rendered),
-      category: categoryMap.get(post.categories[0]) ?? '',
-      author: '',    // REST API 기본 응답에 없음
-      date: post.date.split('T')[0],  // "2026-03-25T14:55:24" → "2026-03-25"
-      views: 0,      // WordPress 기본 조회수 없음
-      detailPath: post.link,
-    }));
-  },
-
-  async crawlDetail(ref, config) {
-    // REST API에서 이미 content를 가져왔으므로,
-    // crawlList에서 content도 함께 반환하는 확장 방식 사용 가능.
-    // 또는 단건 조회:
-    const url = `${config.baseUrl}/?rest_route=/wp/v2/posts/${ref.articleNo}&_fields=content`;
-    const res = await fetcher.get(url);
-    const html = res.data.content.rendered;
-    const $ = loadHtml(html);
-    return {
-      content: html,
-      contentText: $.text().trim(),
-      attachments: extractAttachments($, config.baseUrl),
-    };
-  },
-};
-```
-
-### 최적화: 목록 + 상세 통합 크롤링
-
-REST API에서 `_fields`에 `content`를 포함하면, 목록 API 호출 1번에 모든 데이터를 가져올 수 있다.
-이 경우 `crawlDetail()`을 호출할 필요가 없어 HTTP 요청 수가 **N+1 → 1**로 줄어든다.
-
-```typescript
-// crawlList에서 content까지 포함하는 확장 인터페이스
-interface WordPressListResult {
-  items: NoticeListItem[];
-  details: Map<number, NoticeDetail>;  // articleNo → detail
-}
-```
-
-기존 `CrawlStrategy` 인터페이스와의 호환성을 위해:
-1. `crawlList()`에서 content를 메모리 캐시에 저장
-2. `crawlDetail()`에서 캐시 히트 시 즉시 반환, 미스 시 단건 API 호출
+REST API에서 `_fields`에 `content`를 포함하여 목록 API 호출 1번에 모든 데이터를 가져온다.
+`crawl_detail()`에서는 캐시된 content를 반환하므로 HTTP 요청 수가 **N+1 → 1**로 최적화되어 있다.
 
 ### Fallback: HTML 파싱 전략
 
@@ -379,37 +321,11 @@ REST API가 비활성화된 WordPress 사이트를 위한 fallback.
 
 ---
 
-## 타입 정의 확장
+## 타입 정의
 
-```typescript
-// types.ts 추가 사항
+타입 정의: `py/src/skkuverse_crawler/notices/types.py`
 
-export interface WordPressApiDepartmentConfig extends BaseDepartmentConfig {
-  strategy: 'wordpress-api';
-  categoryId?: number;          // WP 카테고리 ID (없으면 전체)
-  pagination: PageNumPaginationConfig;
-}
-
-export interface WordPressHtmlDepartmentConfig extends BaseDepartmentConfig {
-  strategy: 'wordpress-html';
-  selectors: {
-    listItem: string;
-    titleLink: string;
-    date: string;
-    excerpt: string;
-    detailContent: string;
-  };
-  pagination: {
-    type: 'wpPage';
-    pattern: string;   // "/page/{N}/"
-  };
-}
-
-export type DepartmentConfig =
-  | SkkuStandardDepartmentConfig
-  | WordPressApiDepartmentConfig
-  | WordPressHtmlDepartmentConfig;
-```
+`WordpressApiConfig` TypedDict로 정의되어 있으며, `category_id`(선택), `pagination` 등 포함.
 
 ---
 
@@ -421,30 +337,14 @@ export type DepartmentConfig =
 반드시 `?rest_route=/wp/v2/posts` 쿼리 방식을 사용해야 한다.
 새 WordPress 사이트 추가 시 두 방식 모두 체크하여 동작하는 쪽을 사용해야 한다.
 
-```typescript
-// REST API 엔드포인트 탐지 로직
-async function detectRestEndpoint(baseUrl: string): Promise<string> {
-  // 1차: 프리티 URL
-  try {
-    await fetcher.get(`${baseUrl}/wp-json/wp/v2/posts?per_page=1`);
-    return `${baseUrl}/wp-json/wp/v2/posts`;
-  } catch {
-    // 2차: 쿼리 파라미터 방식
-    const res = await fetcher.get(`${baseUrl}/?rest_route=/wp/v2/posts&per_page=1`);
-    if (res.status === 200) return `${baseUrl}/?rest_route=/wp/v2/posts`;
-    throw new Error(`REST API not available at ${baseUrl}`);
-  }
-}
-```
-
 ### 2. HTML 엔티티 디코딩
 
 `title.rendered`에 HTML 엔티티가 포함될 수 있다 (`&amp;`, `&#8211;`, `&lt;` 등).
-cheerio 또는 `he` 라이브러리로 디코딩 필요.
+`html` 모듈로 디코딩:
 
-```typescript
-import { decode } from 'he';
-const title = decode(post.title.rendered);  // "KT&amp;G" → "KT&G"
+```python
+import html
+title = html.unescape(post["title"]["rendered"])  # "KT&amp;G" → "KT&G"
 ```
 
 ### 3. 작성자 정보
@@ -470,24 +370,7 @@ WordPress 미디어 라이브러리 URL 패턴:
 https://cheme.skku.edu/wp-content/uploads/2026/03/filename.pdf
 ```
 
-```typescript
-function extractAttachments($: CheerioAPI, baseUrl: string): { name: string; url: string }[] {
-  const fileExtensions = /\.(pdf|hwp|hwpx|xlsx|xls|docx|doc|pptx|ppt|zip)$/i;
-  const attachments: { name: string; url: string }[] = [];
-
-  $('a[href]').each((_, el) => {
-    const href = $(el).attr('href') ?? '';
-    if (fileExtensions.test(href)) {
-      attachments.push({
-        name: $(el).text().trim() || href.split('/').pop() || 'unknown',
-        url: href.startsWith('http') ? href : new URL(href, baseUrl).href,
-      });
-    }
-  });
-
-  return attachments;
-}
-```
+BeautifulSoup으로 `<a>` 태그의 href에서 파일 확장자(`.pdf`, `.hwp`, `.xlsx` 등) 매칭하여 추출.
 
 ### 6. 날짜 형식
 
@@ -514,10 +397,8 @@ Notice 스키마의 `date`는 `YYYY-MM-DD`이므로 `post.date.split('T')[0]`으
 
 ---
 
-## 구현 우선순위
+## 구현 상태
 
-1. **`wordpress-api` 전략 구현** — REST API 기반, content 포함 통합 크롤링
-2. **`cheme` 설정 추가** — departments.json에 화학공학과 등록
-3. **verify-selectors 확장** — WordPress REST API 응답 검증 로직 추가
-4. **(선택) `wordpress-html` 전략** — REST API 비활성 사이트용 fallback
-5. **(선택) RSS 모니터링** — 실시간 변경 감지용 보조 수단
+- `wordpress-api` 전략: 구현 완료 (`py/src/skkuverse_crawler/notices/strategies/wordpress_api.py`)
+- `cheme` 설정: departments.json에 등록 완료
+- `wordpress-html` 전략: 미구현 (REST API 비활성 사이트용 fallback, 필요시 추가)

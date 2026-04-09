@@ -97,16 +97,16 @@
 
 ### 메타 파싱 로직
 
-```typescript
-// 표준: 위치 기반 파싱 (인덱스 의존)
-const author = infoTexts[1];      // 두 번째 li
-const date = infoTexts[2];        // 세 번째 li
-const views = infoTexts[3];       // 네 번째 li에서 숫자 추출
+```python
+# 표준: 위치 기반 파싱 (인덱스 의존)
+author = info_texts[1]      # 두 번째 li
+date = info_texts[2]        # 세 번째 li
+views = info_texts[3]       # 네 번째 li에서 숫자 추출
 
-// 화학과: 라벨 기반 파싱 필요
-// "POSTED DATE : 2026-03-20" → date = "2026-03-20"
-// "WRITER : 화학과" → author = "화학과"
-// "HIT : 280" → views = 280
+# 화학과: 라벨 기반 파싱 필요
+# "POSTED DATE : 2026-03-20" → date = "2026-03-20"
+# "WRITER : 화학과" → author = "화학과"
+# "HIT : 280" → views = 280
 ```
 
 ---
@@ -204,20 +204,18 @@ const views = infoTexts[3];       // 네 번째 li에서 숫자 추출
 
 ### 첨부파일 파싱 차이
 
-```typescript
-// 표준: <a> 태그의 href 속성
-$(config.selectors.attachmentList).each((_, el) => {
-  const name = $(el).text().trim();
-  const url = $(el).attr('href');
-});
+```python
+# 표준: <a> 태그의 href 속성
+for el in soup.select(config["selectors"]["attachmentList"]):
+    name = el.get_text(strip=True)
+    url = el.get("href", "")
 
-// 화학과: <button>의 onclick 속성에서 URL 추출 필요
-$('div.noticeViewBtnList button.fileBtn').each((_, el) => {
-  const name = $(el).text().trim();
-  const onclick = $(el).attr('onclick') || '';
-  const match = onclick.match(/location\.href='([^']+)'/);
-  const url = match ? match[1] : '';
-});
+# 화학과: <button>의 onclick 속성에서 URL 추출 필요
+for el in soup.select("div.noticeViewBtnList button.fileBtn"):
+    name = el.get_text(strip=True)
+    onclick = el.get("onclick", "")
+    match = re.search(r"location\.href='([^']+)'", onclick)
+    url = match.group(1) if match else ""
 ```
 
 ---
@@ -257,62 +255,28 @@ $('div.noticeViewBtnList button.fileBtn').each((_, el) => {
 
 ### 방안 1: skku-standard 전략에 커스텀 셀렉터만 적용
 
-departments.json에서 셀렉터를 오버라이드하는 방식:
-
-```json
-{
-  "id": "chem",
-  "name": "화학과",
-  "strategy": "skku-standard",
-  "baseUrl": "https://chem.skku.edu/chem/News/notice.do",
-  "selectors": {
-    "listItem": "ul.noticeList > li",
-    "category": "",
-    "titleLink": "h3.noticeTit a",
-    "infoList": "ul.noticeInfoList li",
-    "detailContent": "div.noticeViewCont",
-    "attachmentList": "div.noticeViewBtnList button.fileBtn"
-  },
-  "pagination": {
-    "type": "offset",
-    "param": "article.offset",
-    "limit": 10
-  }
-}
-```
+departments.json에서 셀렉터를 오버라이드하는 방식.
 
 **문제점**:
 
-1. **infoList 파싱 로직 불일치**: 표준 전략은 `infoTexts[1]` = 작성자, `infoTexts[2]` = 날짜, `infoTexts[3]` = 조회수로 인덱스 기반 파싱한다. 화학과는 `[0]` = 날짜(라벨 포함), `[1]` = 작성자(라벨 포함), `[2]` = 조회수(라벨 포함)로 순서와 형식이 다르다. **라벨 제거 + 인덱스 매핑이 필요.**
+1. **infoList 파싱 로직 불일치**: 표준 전략은 `info_texts[1]` = 작성자, `info_texts[2]` = 날짜, `info_texts[3]` = 조회수로 인덱스 기반 파싱한다. 화학과는 `[0]` = 날짜(라벨 포함), `[1]` = 작성자(라벨 포함), `[2]` = 조회수(라벨 포함)로 순서와 형식이 다르다. **라벨 제거 + 인덱스 매핑이 필요.**
 
-2. **첨부파일 파싱 불일치**: 표준은 `<a>` 태그의 `href` 속성을 읽지만, 화학과는 `<button>` 태그의 `onclick` 속성에서 URL을 추출해야 한다. `extractAttr($a, 'href')` → 실패.
+2. **첨부파일 파싱 불일치**: 표준은 `<a>` 태그의 `href` 속성을 읽지만, 화학과는 `<button>` 태그의 `onclick` 속성에서 URL을 추출해야 한다.
 
 3. **카테고리 없음**: `category` 셀렉터가 빈 문자열이면 현재 코드에서 문제없이 동작하지만, 제목에 `[학부/대학원]` 같은 접두사가 포함되어 있어 별도 추출이 가능하긴 하다.
 
 **결론**: 셀렉터만 바꿔서는 **동작하지 않는다**. infoList 파싱과 첨부파일 파싱 로직이 근본적으로 다르다.
 
-### 방안 2: skku-standard 전략을 확장하여 파싱 옵션 추가 (권장)
+### 방안 2: skku-standard 전략을 확장하여 파싱 옵션 추가 (권장, 구현됨)
 
-새로운 전략을 만들지 않고, 기존 `skku-standard` 전략에 **옵션 기반 분기**를 추가:
+기존 `skku-standard` 전략에 **옵션 기반 분기**를 추가:
 
-```typescript
-// types.ts 확장
-export interface SkkuStandardDepartmentConfig extends BaseDepartmentConfig {
-  strategy: 'skku-standard';
-  selectors: {
-    listItem: string;
-    category: string;
-    titleLink: string;
-    infoList: string;
-    detailContent: string;
-    attachmentList: string;
-  };
-  pagination: OffsetPaginationConfig;
-
-  // 새로 추가
-  infoParser?: 'standard' | 'labeled';
-  attachmentParser?: 'href' | 'onclick';
-}
+```python
+# types.py — SkkuStandardConfig TypedDict에 옵션 필드 추가
+class SkkuStandardConfig(TypedDict, total=False):
+    ...
+    info_parser: Literal["standard", "labeled"]
+    attachment_parser: Literal["href", "onclick"]
 ```
 
 ```json
@@ -345,83 +309,24 @@ export interface SkkuStandardDepartmentConfig extends BaseDepartmentConfig {
 - URL/페이지네이션/articleNo 추출 등 대부분의 로직이 동일
 
 **변경 범위**:
-- `types.ts`: `infoParser`, `attachmentParser` 옵션 필드 추가
-- `skku-standard.ts`: `crawlList()` 내 infoTexts 파싱 분기, `crawlDetail()` 내 첨부파일 파싱 분기
+- `types.py`: `info_parser`, `attachment_parser` 옵션 필드 추가
+- `skku_standard.py`: `crawl_list()` 내 info_texts 파싱 분기, `crawl_detail()` 내 첨부파일 파싱 분기
 
-### 방안 3: 별도 전략 (`skku-chem`) 생성
-
-```typescript
-// strategies/skku-chem.ts
-export class SkkuChemStrategy implements CrawlStrategy { ... }
-```
+### 방안 3: 별도 전략 생성
 
 **단점**: URL 패턴, 페이지네이션, articleNo 추출 등 90%의 코드가 `skku-standard`와 중복된다. 유지보수 비용이 커진다.
 
 ---
 
-## 권장 구현: 방안 2 (skku-standard 확장)
+## 구현: 방안 2 (skku-standard 확장, 구현 완료)
 
-### 변경 파일
+### 관련 파일
 
-1. **`src/common/types.ts`** — `SkkuStandardDepartmentConfig`에 옵션 필드 추가
-
-2. **`src/strategies/skku-standard.ts`** — 두 곳에 분기 추가:
-
-   **a) `crawlList()` — infoTexts 파싱 (line 50-63 부근)**:
-
-   ```typescript
-   // infoParser === 'labeled' 일 때
-   // "POSTED DATE : 2026-03-20" → date
-   // "WRITER : 화학과" → author
-   // "HIT : 280" → views
-   let author = '', date = '', views = 0;
-
-   if (config.infoParser === 'labeled') {
-     for (const text of infoTexts) {
-       if (text.startsWith('POSTED DATE')) {
-         date = text.replace(/^POSTED DATE\s*:\s*/, '');
-       } else if (text.startsWith('WRITER')) {
-         author = text.replace(/^WRITER\s*:\s*/, '');
-       } else if (text.startsWith('HIT')) {
-         const m = text.match(/(\d+)/);
-         views = m ? parseInt(m[1], 10) : 0;
-       }
-     }
-   } else {
-     // 기존 인덱스 기반 파싱
-     author = infoTexts[1] || '';
-     date = infoTexts[2] || '';
-     const viewsMatch = (infoTexts[3] || '0').match(/(\d+)/);
-     views = viewsMatch ? parseInt(viewsMatch[1], 10) : 0;
-   }
-   ```
-
-   **b) `crawlDetail()` — 첨부파일 파싱 (line 109-127 부근)**:
-
-   ```typescript
-   if (config.attachmentParser === 'onclick') {
-     // 화학과: <button onclick="location.href='?mode=download&...'">파일명</button>
-     $(config.selectors.attachmentList).each((_i, el) => {
-       const $btn = $(el);
-       const name = $btn.text().trim();
-       const onclick = $btn.attr('onclick') || '';
-       const match = onclick.match(/location\.href='([^']+)'/);
-       if (name && match) {
-         const fileUrl = match[1].replace(/&amp;/g, '&');
-         const origin = new URL(config.baseUrl).origin;
-         const fullUrl = fileUrl.startsWith('http') ? fileUrl
-           : fileUrl.startsWith('?') ? `${config.baseUrl}${fileUrl}`
-           : `${origin}${fileUrl.startsWith('/') ? '' : '/'}${fileUrl}`;
-         attachments.push({ name, url: fullUrl });
-       }
-     });
-   } else {
-     // 기존 <a href="..."> 파싱
-     $(config.selectors.attachmentList).each((_i, el) => { ... });
-   }
-   ```
-
-3. **`src/config/departments.json`** — 화학과 엔트리 추가
+1. **`py/src/skkuverse_crawler/notices/types.py`** — `SkkuStandardConfig`에 옵션 필드 추가
+2. **`py/src/skkuverse_crawler/notices/strategies/skku_standard.py`** — 두 곳에 분기 추가:
+   - `crawl_list()` — labeled infoParser 분기
+   - `crawl_detail()` — onclick attachmentParser 분기
+3. **`py/src/skkuverse_crawler/notices/config/departments.json`** — 화학과 엔트리
 
 ### departments.json 최종 엔트리
 
@@ -470,6 +375,6 @@ curl -s 'https://{dept}.skku.edu/...' | grep -o 'boardTy = [^,]*'
 | 새 전략 필요? | 불필요 (`skku-standard` 확장으로 충분) |
 | 셀렉터만 변경으로 해결? | 불가 (infoList 파싱 + 첨부파일 파싱 로직이 다름) |
 | 권장 방안 | `skku-standard`에 `infoParser` + `attachmentParser` 옵션 추가 |
-| 변경 파일 수 | 3개 (`types.ts`, `skku-standard.ts`, `departments.json`) |
+| 변경 파일 수 | 3개 (`types.py`, `skku_standard.py`, `departments.json`) |
 | URL/페이지네이션 호환 | 완전 호환 (동일한 SKKU CMS 기반) |
 | articleNo 추출 | 동일 (`?mode=view&articleNo=N` 패턴) |

@@ -124,9 +124,9 @@ div#jwxe_main_content
 
 ### 추출 정규식
 
-```typescript
-const match = href.match(/article_no=(\d+)/);
-const articleNo = match ? parseInt(match[1], 10) : null;
+```python
+match = re.search(r"article_no=(\d+)", href)
+article_no = int(match.group(1)) if match else None
 ```
 
 **주의:** `skku-standard`는 `articleNo` (camelCase), JSP 기숙사는 `article_no` (snake_case).
@@ -335,101 +335,13 @@ JSP 기숙사 게시판은 `article_no`(snake_case)를 사용한다.
 페이지 인코딩은 `UTF-8`이다 (`<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />`).
 특수문자는 HTML 엔티티로 이스케이프됨 (`&amp;`, `&#40;`, `&#41;` 등).
 
-## 전략 구현 방향
+## 전략 구현 (구현 완료)
 
-### 새 전략 타입 정의 (types.ts)
+### 관련 파일
 
-```typescript
-export interface JspDormDepartmentConfig extends BaseDepartmentConfig {
-  strategy: 'jsp-dorm';
-  boardNo: string;                    // "78" 또는 "16"
-  selectors: {
-    listRow: string;                   // 게시글 행
-    pinnedRow: string;                 // 상단공지 행 (필터링용)
-    titleLink: string;                 // 제목 링크
-    detailContent: string;             // 상세 본문
-    attachmentLink: string;            // 첨부파일 링크
-  };
-  pagination: OffsetPaginationConfig;  // pager.offset
-}
-```
-
-### crawlList 구현 개요
-
-```typescript
-async crawlList(config: JspDormDepartmentConfig, page: number): Promise<NoticeListItem[]> {
-  const offset = page * config.pagination.limit;
-  const url = `${config.baseUrl}?mode=list&board_no=${config.boardNo}&${config.pagination.param}=${offset}`;
-
-  const html = await this.fetcher.fetch(url);
-  const $ = loadHtml(html);
-
-  const items: NoticeListItem[] = [];
-
-  // 상단공지 제외 (상단공지는 page 0에서만 별도 수집 가능)
-  $('table.list_table tbody tr')
-    .not('[style*="background:#f4f4f4"]')
-    .each((_i, el) => {
-      const $tds = $(el).find('td');
-
-      // td 인덱스: 0=순번, 1=분류, 2=제목, 3=파일, 4=등록일, 5=조회수
-      const category = $tds.eq(1).text().trim();
-      const $titleLink = $tds.eq(2).find('a');
-      const title = $titleLink.text().trim();
-      const href = $titleLink.attr('href') || '';
-      const date = $tds.eq(4).text().trim();
-      const views = parseInt($tds.eq(5).text().trim(), 10) || 0;
-
-      const match = href.match(/article_no=(\d+)/);
-      if (!match) return;
-
-      items.push({
-        articleNo: parseInt(match[1], 10),
-        title,
-        category,
-        author: '',     // 작성자 정보 없음
-        date,
-        views,
-        detailPath: href,
-      });
-    });
-
-  return items;
-}
-```
-
-### crawlDetail 구현 개요
-
-```typescript
-async crawlDetail(ref: DetailRef, config: JspDormDepartmentConfig): Promise<NoticeDetail | null> {
-  const url = ref.detailPath.startsWith('?')
-    ? `${config.baseUrl}${ref.detailPath}`
-    : ref.detailPath;
-
-  const html = await this.fetcher.fetch(url);
-  const $ = loadHtml(html);
-
-  // 본문
-  const $content = $('div#article_text');
-  const content = $content.html()?.trim() || '';
-  const contentText = $content.text().trim();
-
-  // 첨부파일
-  const attachments: { name: string; url: string }[] = [];
-  $('table.view_table a[href*="download.jsp"]').each((_i, el) => {
-    const $a = $(el);
-    const name = $a.text().trim();
-    const fileHref = $a.attr('href') || '';
-    if (name && fileHref) {
-      const origin = new URL(config.baseUrl).origin;
-      const fullUrl = fileHref.startsWith('/') ? `${origin}${fileHref}` : `${origin}/${fileHref}`;
-      attachments.push({ name, url: fullUrl });
-    }
-  });
-
-  return { content, contentText, attachments };
-}
-```
+- `py/src/skkuverse_crawler/notices/strategies/jsp_dorm.py` — `crawl_list()` + `crawl_detail()` 구현
+- `py/src/skkuverse_crawler/notices/types.py` — `JspDormConfig` TypedDict
+- `py/src/skkuverse_crawler/notices/config/departments.json` — dorm-seoul, dorm-suwon 설정
 
 ## 두 캠퍼스의 구조적 동일성
 
@@ -492,19 +404,9 @@ async crawlDetail(ref: DetailRef, config: JspDormDepartmentConfig): Promise<Noti
 ]
 ```
 
-## config/loader.ts 검증 규칙
+## config/loader.py 검증 규칙
 
-`jsp-dorm` 전략의 필수 셀렉터:
-
-```typescript
-const JSP_DORM_REQUIRED_SELECTORS = [
-  'listRow',
-  'pinnedRow',
-  'titleLink',
-  'detailContent',
-  'attachmentLink',
-];
-```
+`jsp-dorm` 전략의 필수 셀렉터: `listRow`, `pinnedRow`, `titleLink`, `detailContent`, `attachmentLink`.
 
 추가 필수 필드: `boardNo` (문자열).
 

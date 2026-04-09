@@ -35,13 +35,9 @@ async def _start_scheduler(module_filter: str | None = None) -> None:
 
     # Register modules
     from .notices.module import NoticesModule, NoticesUpdateCheckModule
-    from .bus_hssc.module import BusHsscModule
-    from .bus_jongro.module import BusJongroModule
 
     registry.register(NoticesModule())
     registry.register(NoticesUpdateCheckModule())
-    registry.register(BusHsscModule())
-    registry.register(BusJongroModule())
 
     scheduler = AsyncIOScheduler()
 
