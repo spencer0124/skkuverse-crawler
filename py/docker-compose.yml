@@ -8,6 +8,7 @@ services:
       - LOG_FORMAT=json
       - CRAWL_DEPT_FILTER=skku-main,cal-undergrad,bio-undergrad,nano,dorm-seoul,medicine,cheme
       - AI_SERVICE_URL=http://ai:4000
+      - TZ=Asia/Seoul
     restart: unless-stopped
     mem_limit: 512m
     cpus: 0.5
