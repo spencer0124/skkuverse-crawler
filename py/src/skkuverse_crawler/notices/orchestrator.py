@@ -18,8 +18,10 @@ from .dedup import (
     find_null_content,
     has_changed,
     should_continue,
+    update_with_history,
     upsert_notice,
 )
+from .hashing import compute_content_hash
 from .models import NoticeListItem
 from .normalizer import build_notice
 from .strategies.skku_standard import SkkuStandardStrategy
@@ -142,12 +144,14 @@ async def _crawl_department(
                 {"articleNo": ref["articleNo"], "detailPath": ref["detailPath"]}, dept
             )
             if detail:
+                cleaned = clean_html(detail.content, dept["baseUrl"])
                 await collection.update_one(
                     {"articleNo": ref["articleNo"], "sourceDeptId": dept["id"]},
                     {"$set": {
                         "content": detail.content,
                         "contentText": detail.contentText,
-                        "cleanHtml": clean_html(detail.content, dept["baseUrl"]),
+                        "cleanHtml": cleaned,
+                        "contentHash": compute_content_hash(cleaned),
                         "attachments": detail.attachments,
                         "crawledAt": datetime.now(timezone.utc),
                     }},
@@ -233,14 +237,6 @@ async def _process_page_smart(
                 result.skipped += 1
                 continue
 
-            if existing:
-                logger.info(
-                    "change_detected",
-                    articleNo=item.articleNo,
-                    old_title=existing["title"],
-                    new_title=item.title,
-                )
-
             detail = await strategy.crawl_detail(
                 {"articleNo": item.articleNo, "detailPath": item.detailPath}, dept
             )
@@ -250,10 +246,33 @@ async def _process_page_smart(
                 source_dept_id=dept["id"],
                 base_url=dept["baseUrl"],
             )
-            action = await upsert_notice(collection, notice)
-            if action == "inserted":
-                result.inserted += 1
+
+            if not existing:
+                action = await upsert_notice(collection, notice)
+                if action == "inserted":
+                    result.inserted += 1
+                else:
+                    result.updated += 1
             else:
+                logger.info(
+                    "change_detected",
+                    articleNo=item.articleNo,
+                    old_title=existing["title"],
+                    new_title=item.title,
+                )
+                old_hash = existing.get("contentHash")
+                new_hash = notice.contentHash
+                edit_entry = {
+                    "detectedAt": datetime.now(timezone.utc),
+                    "oldHash": old_hash,
+                    "newHash": new_hash,
+                    "oldTitle": existing["title"],
+                    "newTitle": item.title,
+                    "titleChanged": existing["title"] != item.title,
+                    "contentChanged": old_hash is not None and old_hash != new_hash,
+                    "source": "tier1",
+                }
+                await update_with_history(collection, notice, edit_entry)
                 result.updated += 1
 
         except Exception as exc:

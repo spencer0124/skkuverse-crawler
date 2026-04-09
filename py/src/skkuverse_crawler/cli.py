@@ -34,11 +34,12 @@ async def _start_scheduler(module_filter: str | None = None) -> None:
     from .shared.db import close_client
 
     # Register modules
-    from .notices.module import NoticesModule
+    from .notices.module import NoticesModule, NoticesUpdateCheckModule
     from .bus_hssc.module import BusHsscModule
     from .bus_jongro.module import BusJongroModule
 
     registry.register(NoticesModule())
+    registry.register(NoticesUpdateCheckModule())
     registry.register(BusHsscModule())
     registry.register(BusJongroModule())
 
@@ -97,6 +98,7 @@ async def _shutdown_modules(modules: list) -> None:
         await mod.shutdown()
 
 
-# Register notices CLI subcommand
-from .notices.cli import notices_cli  # noqa: E402
+# Register notices CLI subcommands
+from .notices.cli import notices_cli, update_check_cli  # noqa: E402
 main.add_command(notices_cli)
+main.add_command(update_check_cli)

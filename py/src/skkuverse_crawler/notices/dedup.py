@@ -14,6 +14,9 @@ async def ensure_indexes(collection: AsyncIOMotorCollection) -> None:
         [("articleNo", 1), ("sourceDeptId", 1)],
         unique=True,
     )
+    await collection.create_index(
+        [("sourceDeptId", 1), ("date", -1)],
+    )
 
 
 async def find_existing_meta(
@@ -23,7 +26,7 @@ async def find_existing_meta(
 ) -> dict[int, dict[str, Any]]:
     cursor = collection.find(
         {"sourceDeptId": source_dept_id, "articleNo": {"$in": article_nos}},
-        {"articleNo": 1, "title": 1, "date": 1},
+        {"articleNo": 1, "title": 1, "date": 1, "contentHash": 1},
     )
     result: dict[int, dict[str, Any]] = {}
     async for doc in cursor:
@@ -31,6 +34,7 @@ async def find_existing_meta(
             "articleNo": doc["articleNo"],
             "title": doc["title"],
             "date": doc["date"],
+            "contentHash": doc.get("contentHash"),
         }
     return result
 
@@ -51,12 +55,35 @@ async def upsert_notice(
     notice: Notice,
 ) -> str:
     doc = asdict(notice)
+    edit_history = doc.pop("editHistory", [])
+    edit_count = doc.pop("editCount", 0)
     result = await collection.update_one(
         {"articleNo": notice.articleNo, "sourceDeptId": notice.sourceDeptId},
-        {"$set": doc},
+        {
+            "$set": doc,
+            "$setOnInsert": {"editHistory": edit_history, "editCount": edit_count},
+        },
         upsert=True,
     )
     return "inserted" if result.upserted_id is not None else "updated"
+
+
+async def update_with_history(
+    collection: AsyncIOMotorCollection,
+    notice: Notice,
+    edit_entry: dict[str, Any],
+) -> None:
+    doc = asdict(notice)
+    doc.pop("editHistory", None)
+    doc.pop("editCount", None)
+    await collection.update_one(
+        {"articleNo": notice.articleNo, "sourceDeptId": notice.sourceDeptId},
+        {
+            "$set": doc,
+            "$push": {"editHistory": {"$each": [edit_entry], "$slice": -20}},
+            "$inc": {"editCount": 1},
+        },
+    )
 
 
 async def bulk_touch_notices(
