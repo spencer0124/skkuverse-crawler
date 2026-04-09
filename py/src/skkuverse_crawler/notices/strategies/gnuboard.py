@@ -41,7 +41,6 @@ class GnuboardStrategy:
         soup = load_html(html)
 
         items: list[NoticeListItem] = []
-        selectors = config["selectors"]
 
         if config.get("skinType") == "table":
             self._parse_table_skin(soup, config, items)

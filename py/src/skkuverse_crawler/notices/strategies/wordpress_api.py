@@ -8,7 +8,7 @@ from urllib.parse import urljoin
 from ...shared.fetcher import Fetcher
 from ...shared.logger import get_logger
 from ..models import NoticeDetail, NoticeListItem
-from ..parser import load_html, extract_text, extract_attr
+from ..parser import load_html
 from ..types import DetailRef
 
 logger = get_logger("wordpress_api")

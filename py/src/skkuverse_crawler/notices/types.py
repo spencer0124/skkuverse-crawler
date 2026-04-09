@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Literal, Protocol, TypedDict
+from typing import Literal, Protocol, TypedDict
 
 from .models import NoticeDetail, NoticeListItem
 
