@@ -10,6 +10,7 @@ class ModuleConfig:
     collection_name: str
     cron_schedule: str | None = None
     interval_seconds: int | None = None
+    run_on_start: bool = False
 
 
 @runtime_checkable

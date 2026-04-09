@@ -62,9 +62,11 @@ async def _start_scheduler(module_filter: str | None = None) -> None:
 
     scheduler.start()
 
-    # Run all immediately
+    # Run modules marked with run_on_start
     for mod in registry.all_modules():
         if module_filter and mod.config.name != module_filter:
+            continue
+        if not mod.config.run_on_start:
             continue
         await mod.run(incremental=True)
 
