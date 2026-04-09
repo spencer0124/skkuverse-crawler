@@ -33,18 +33,22 @@ class AiClient:
         )
 
     async def summarize(
-        self, title: str, category: str, clean_text: str
+        self, title: str, category: str, clean_text: str,
+        date: str | None = None,
     ) -> dict:
         last_error: Exception | None = None
         for attempt in range(1, _MAX_RETRIES + 1):
             try:
+                payload: dict[str, str] = {
+                    "title": title,
+                    "category": category,
+                    "cleanText": clean_text,
+                }
+                if date:
+                    payload["date"] = date
                 resp = await self._client.post(
                     "/api/notices/summarize",
-                    json={
-                        "title": title,
-                        "category": category,
-                        "cleanText": clean_text,
-                    },
+                    json=payload,
                 )
                 resp.raise_for_status()
                 return resp.json()

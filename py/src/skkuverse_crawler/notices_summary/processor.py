@@ -78,6 +78,7 @@ async def _summarize_one(
             title=doc["title"],
             category=doc.get("category", ""),
             clean_text=doc["contentText"],
+            date=doc.get("date"),
         )
         await collection.update_one(  # type: ignore[union-attr]
             {"_id": doc["_id"]},
