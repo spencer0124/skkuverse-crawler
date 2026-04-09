@@ -12,8 +12,8 @@ class NoticesSummaryModule:
         return ModuleConfig(
             name="notices-summary",
             collection_name="notices",
-            cron_schedule="20 * * * *",
-            run_on_start=True,
+            cron_schedule=None,  # disabled until AI prompt update
+            run_on_start=False,
         )
 
     async def run(self, incremental: bool = True, **kwargs: Any) -> dict:
