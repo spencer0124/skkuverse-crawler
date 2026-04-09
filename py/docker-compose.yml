@@ -1,5 +1,6 @@
 services:
   crawler:
+    container_name: skkuverse-crawler
     build: .
     env_file: .env
     environment:
