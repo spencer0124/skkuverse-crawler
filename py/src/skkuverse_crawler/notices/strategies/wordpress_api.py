@@ -13,7 +13,14 @@ from ..types import DetailRef
 
 logger = get_logger("wordpress_api")
 
-FILE_EXTENSIONS = re.compile(r"\.(pdf|hwp|hwpx|xlsx|xls|docx|doc|pptx|ppt|zip|rar|7z)$", re.I)
+FILE_EXTENSIONS = re.compile(
+    r"\.(pdf|hwp|hwpx|xlsx|xls|docx|doc|pptx|ppt|zip|rar|7z"
+    r"|txt|csv|tsv|rtf|xml|json"
+    r"|jpg|jpeg|png|gif|webp|bmp|tiff|svg"
+    r"|mp3|mp4|mov|avi|mkv|wav)$",
+    re.I,
+)
+UPLOADS_PATH = re.compile(r"/wp-content/uploads/", re.I)
 
 
 class WordPressApiStrategy:
@@ -28,7 +35,7 @@ class WordPressApiStrategy:
             href = a.get("href", "")
             if isinstance(href, list):
                 href = href[0]
-            if href and FILE_EXTENSIONS.search(href):
+            if href and (FILE_EXTENSIONS.search(href) or UPLOADS_PATH.search(href)):
                 name = a.get_text(strip=True) or href.rsplit("/", 1)[-1] or "unknown"
                 full_url = href if href.startswith("http") else urljoin(base_url, href)
                 attachments.append({"name": name, "url": full_url})
