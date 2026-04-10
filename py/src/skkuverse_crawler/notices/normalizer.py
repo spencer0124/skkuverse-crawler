@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 
 from ..shared.html_cleaner import clean_html
 from ..shared.logger import get_logger
@@ -17,8 +17,9 @@ MAX_CONTENT_BYTES = 5 * 1024 * 1024  # 5MB
 def _text_from_clean_html(html: str) -> str:
     """cleanHtml에서 plain text 추출. 테이블 셀 사이에 공백 삽입."""
     soup = BeautifulSoup(html, "html.parser")
-    for tag in soup.find_all(["td", "th"]):
-        tag.append(" ")
+    for el in soup.find_all(["td", "th"]):
+        if isinstance(el, Tag):
+            el.append(" ")
     return soup.get_text(separator=" ", strip=True)
 
 

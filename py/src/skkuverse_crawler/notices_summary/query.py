@@ -35,6 +35,7 @@ async def find_unsummarized(
             "category": 1,
             "contentText": 1,
             "contentHash": 1,
+            "date": 1,
         },
     ).sort("crawledAt", -1).limit(batch_size)
 
@@ -61,6 +62,7 @@ async def find_stale_summaries(
             "category": 1,
             "contentText": 1,
             "contentHash": 1,
+            "date": 1,
         },
     ).sort("crawledAt", -1).limit(batch_size)
 
