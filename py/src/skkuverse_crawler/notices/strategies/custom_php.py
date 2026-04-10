@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from urllib.parse import quote
+from urllib.parse import parse_qs, quote, unquote, urlparse
 
 from ...shared.fetcher import Fetcher
 from ...shared.logger import get_logger
@@ -90,7 +90,47 @@ class CustomPhpStrategy:
             content = content_el.decode_contents().strip() if content_el else ""
             content_text = content_el.get_text(strip=True) if content_el else ""
 
-            return NoticeDetail(content=content, contentText=content_text, attachments=[])
+            attachments: list[dict[str, str]] = []
+            attachment_selector = config.get("selectors", {}).get(
+                "detailAttachment", "div.attachment a[href]"
+            )
+            parsed = urlparse(config["baseUrl"])
+            origin = f"{parsed.scheme}://{parsed.netloc}"
+            base_dir = config["baseUrl"].rsplit("/", 1)[0]
+
+            seen_urls: set[str] = set()
+            for a in soup.select(attachment_selector):
+                href = a.get("href", "")
+                if isinstance(href, list):
+                    href = href[0]
+                if not href or href == "#":
+                    continue
+                if href.startswith("http"):
+                    full_url = href
+                elif href.startswith("./"):
+                    full_url = f"{base_dir}/{href[2:]}"
+                elif href.startswith("/"):
+                    full_url = f"{origin}{href}"
+                else:
+                    full_url = f"{base_dir}/{href}"
+
+                # Prefer filename from `name` query param (nfupload_down.php pattern).
+                # Fall back to link text, then basename of URL.
+                qs = parse_qs(urlparse(full_url).query)
+                name_param = qs.get("name", [""])[0]
+                if name_param:
+                    name = unquote(name_param).replace("+", " ")
+                else:
+                    name = a.get_text(strip=True) or full_url.rsplit("/", 1)[-1]
+                if not name:
+                    continue
+
+                if full_url in seen_urls:
+                    continue
+                seen_urls.add(full_url)
+                attachments.append({"name": name, "url": full_url})
+
+            return NoticeDetail(content=content, contentText=content_text, attachments=attachments)
         except Exception as exc:
             logger.error("custom_php_detail_failed", articleNo=ref["articleNo"], error=str(exc))
             return None

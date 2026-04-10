@@ -2654,7 +2654,8 @@
       "category": "td:nth-child(2)",
       "views": "td:nth-child(5)",
       "date": "td:nth-child(6)",
-      "detailContent": "div.board_content"
+      "detailContent": "div.board_content",
+      "detailAttachment": "div.attachment a[href]"
     },
     "pagination": { "type": "pageNum", "param": "pg", "limit": 15 }
   },
@@ -2671,7 +2672,8 @@
       "category": "td:nth-child(2)",
       "views": "td:nth-child(5)",
       "date": "td:nth-child(6)",
-      "detailContent": "div.board_content"
+      "detailContent": "div.board_content",
+      "detailAttachment": "div.attachment a[href]"
     },
     "pagination": { "type": "pageNum", "param": "pg", "limit": 15 }
   },
