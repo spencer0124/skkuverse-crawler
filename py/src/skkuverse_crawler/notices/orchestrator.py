@@ -239,7 +239,7 @@ async def _crawl_department(
     return result
 
 
-async def _verify_and_log_images(notice: Notice, dept_id: str) -> None:
+async def _verify_and_log_images(notice: Notice, dept_id: str, logger: Any) -> None:
     """Best-effort image verification — never raises, only logs."""
     try:
         result = await verify_notice_images(notice.content, notice.sourceUrl)
@@ -298,7 +298,7 @@ async def _process_page_smart(
                 source_dept_id=dept["id"],
                 base_url=dept["baseUrl"],
             )
-            await _verify_and_log_images(notice, dept["id"])
+            await _verify_and_log_images(notice, dept["id"], logger)
 
             if not existing:
                 action = await upsert_notice(collection, notice)
@@ -359,7 +359,7 @@ async def _process_page_full(
                 source_dept_id=dept["id"],
                 base_url=dept["baseUrl"],
             )
-            await _verify_and_log_images(notice, dept["id"])
+            await _verify_and_log_images(notice, dept["id"], logger)
             action = await upsert_notice(collection, notice)
             if action == "inserted":
                 result.inserted += 1
