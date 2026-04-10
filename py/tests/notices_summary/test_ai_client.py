@@ -13,11 +13,22 @@ SAMPLE_RESPONSE = {
     "oneLiner": "4/30까지 등록금 납부",
     "summary": "등록금 납부 안내입니다.",
     "type": "action_required",
-    "startDate": None,
-    "endDate": "2026-04-30",
-    "startTime": None,
-    "endTime": None,
-    "details": {"target": None, "action": "등록금 납부"},
+    "periods": [
+        {
+            "label": None,
+            "startDate": None,
+            "startTime": None,
+            "endDate": "2026-04-30",
+            "endTime": None,
+        }
+    ],
+    "locations": [],
+    "details": {
+        "target": None,
+        "action": "등록금 납부",
+        "host": None,
+        "impact": None,
+    },
     "model": "openai/gpt-4.1-mini",
 }
 

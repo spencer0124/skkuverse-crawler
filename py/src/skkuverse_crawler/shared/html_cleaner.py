@@ -214,3 +214,43 @@ def clean_html(raw_html: str, base_url: str) -> str | None:
     except Exception as exc:
         logger.warning("cleanhtml_pipeline_failed", error=str(exc))
         return None
+
+
+def normalize_content_urls(raw_html: str | None, base_url: str) -> str | None:
+    """
+    Resolve relative `src` and `href` attributes in raw notice HTML to
+    absolute URLs, leaving everything else (tags, classes, inline styles,
+    structure) untouched.
+
+    Unlike `clean_html`, this is a non-destructive transform meant for the
+    `content` field that consumers (mobile app, server transform) display
+    directly. The mobile renderer cannot resolve `src="_attach/..."` against
+    the page URL on its own (no DOM, no `<base>` tag), and SKKU's image
+    server rejects raw paths anyway — so we have to bake absolute URLs into
+    the stored HTML at crawl time.
+
+    `cleanHtml` already does URL resolution as part of its pipeline; this
+    helper does ONLY that step on the raw input.
+    """
+    if raw_html is None:
+        return None
+    if raw_html == "":
+        return ""
+
+    try:
+        soup = BeautifulSoup(raw_html, "html.parser")
+
+        for img in soup.select("img[src]"):
+            src = img.get("src")
+            if src and isinstance(src, str):
+                img["src"] = _resolve_url(src, base_url)
+
+        for a in soup.select("a[href]"):
+            href = a.get("href")
+            if href and isinstance(href, str):
+                a["href"] = _resolve_url(href, base_url)
+
+        return soup.decode_contents()
+    except Exception as exc:
+        logger.warning("normalize_content_urls_failed", error=str(exc))
+        return raw_html

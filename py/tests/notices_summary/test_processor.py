@@ -10,11 +10,22 @@ SAMPLE_AI_RESPONSE = {
     "oneLiner": "4/30까지 등록금 납부",
     "summary": "등록금 납부 안내입니다.",
     "type": "action_required",
-    "startDate": None,
-    "endDate": "2026-04-30",
-    "startTime": None,
-    "endTime": None,
-    "details": {"target": None, "action": "등록금 납부"},
+    "periods": [
+        {
+            "label": None,
+            "startDate": None,
+            "startTime": None,
+            "endDate": "2026-04-30",
+            "endTime": None,
+        }
+    ],
+    "locations": [],
+    "details": {
+        "target": None,
+        "action": "등록금 납부",
+        "host": None,
+        "impact": None,
+    },
     "model": "openai/gpt-4.1-mini",
 }
 
@@ -71,6 +82,12 @@ class TestRunSummaryBatch:
         update_doc = mock_collection.update_one.call_args[0][1]
         assert update_doc["$set"]["summary"] == "등록금 납부 안내입니다."
         assert update_doc["$set"]["summaryFailures"] == 0
+        assert update_doc["$set"]["summaryPeriods"] == SAMPLE_AI_RESPONSE["periods"]
+        assert update_doc["$set"]["summaryLocations"] == []
+        assert "summaryStartDate" not in update_doc["$set"]
+        assert "summaryStartTime" not in update_doc["$set"]
+        assert "summaryEndDate" not in update_doc["$set"]
+        assert "summaryEndTime" not in update_doc["$set"]
 
     @patch("skkuverse_crawler.notices_summary.processor.find_stale_summaries")
     @patch("skkuverse_crawler.notices_summary.processor.find_unsummarized")

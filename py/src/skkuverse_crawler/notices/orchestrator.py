@@ -9,7 +9,7 @@ from typing import Any
 
 from ..shared.db import get_db
 from ..shared.fetcher import Fetcher
-from ..shared.html_cleaner import clean_html
+from ..shared.html_cleaner import clean_html, normalize_content_urls
 from ..shared.logger import get_logger
 from .dedup import (
     bulk_touch_notices,
@@ -23,7 +23,8 @@ from .dedup import (
 )
 from .constants import SERVICE_START_DATE
 from .hashing import compute_content_hash
-from .models import NoticeListItem
+from .image_verifier import verify_notice_images
+from .models import Notice, NoticeListItem
 from .normalizer import build_notice
 from .strategies.skku_standard import SkkuStandardStrategy
 from .strategies.wordpress_api import WordPressApiStrategy
@@ -156,7 +157,7 @@ async def _crawl_department(
             )
             if detail:
                 cleaned = clean_html(detail.content, dept["baseUrl"])
-                raw_content = detail.content
+                raw_content = normalize_content_urls(detail.content, dept["baseUrl"])
                 if cleaned and len(cleaned.encode()) > _MAX_CONTENT_BYTES:
                     logger.warning(
                         "oversized_content_dropped",
@@ -238,6 +239,28 @@ async def _crawl_department(
     return result
 
 
+async def _verify_and_log_images(notice: Notice, dept_id: str) -> None:
+    """Best-effort image verification — never raises, only logs."""
+    try:
+        result = await verify_notice_images(notice.content, notice.sourceUrl)
+        if result.broken:
+            logger.warning(
+                "broken_notice_images",
+                articleNo=notice.articleNo,
+                dept_id=dept_id,
+                checked=result.checked,
+                broken_count=len(result.broken),
+                broken=result.broken[:5],  # cap log payload
+            )
+    except Exception as exc:
+        logger.warning(
+            "image_verify_failed",
+            articleNo=notice.articleNo,
+            dept_id=dept_id,
+            error=str(exc),
+        )
+
+
 async def _process_page_smart(
     list_items: list[NoticeListItem],
     existing_meta: dict[int, dict[str, Any]],
@@ -275,6 +298,7 @@ async def _process_page_smart(
                 source_dept_id=dept["id"],
                 base_url=dept["baseUrl"],
             )
+            await _verify_and_log_images(notice, dept["id"])
 
             if not existing:
                 action = await upsert_notice(collection, notice)
@@ -335,6 +359,7 @@ async def _process_page_full(
                 source_dept_id=dept["id"],
                 base_url=dept["baseUrl"],
             )
+            await _verify_and_log_images(notice, dept["id"])
             action = await upsert_notice(collection, notice)
             if action == "inserted":
                 result.inserted += 1

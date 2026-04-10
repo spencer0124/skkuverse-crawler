@@ -11,7 +11,7 @@ from pymongo import ReturnDocument
 
 from ..shared.db import get_db
 from ..shared.fetcher import Fetcher
-from ..shared.html_cleaner import clean_html
+from ..shared.html_cleaner import clean_html, normalize_content_urls
 from ..shared.logger import get_logger
 from .constants import SERVICE_START_DATE
 from .dedup import ensure_indexes
@@ -210,11 +210,12 @@ async def _check_department(
             "contentChanged": True,
             "source": "tier2",
         }
+        normalized_content = normalize_content_urls(detail.content, dept["baseUrl"])
         await collection.update_one(
             doc_filter,
             {
                 "$set": {
-                    "content": detail.content,
+                    "content": normalized_content,
                     "contentText": detail.contentText,
                     "cleanHtml": new_clean_html,
                     "contentHash": new_hash,

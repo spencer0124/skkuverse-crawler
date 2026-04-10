@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 
 from bs4 import BeautifulSoup, Tag
 
-from ..shared.html_cleaner import clean_html
+from ..shared.html_cleaner import clean_html, normalize_content_urls
 from ..shared.logger import get_logger
 from .hashing import compute_content_hash
 from .models import Notice, NoticeDetail, NoticeListItem
@@ -40,7 +40,11 @@ def build_notice(
         source_url = f"{base_url}?mode=view&articleNo={list_item.articleNo}"
 
     cleaned = clean_html(detail.content, base_url) if detail and detail.content else None
-    raw_content = detail.content if detail else None
+    # Resolve relative <img src> / <a href> in the raw content so the
+    # mobile renderer doesn't have to.
+    raw_content = (
+        normalize_content_urls(detail.content, base_url) if detail and detail.content else None
+    )
 
     if cleaned and len(cleaned.encode()) > MAX_CONTENT_BYTES:
         logger.warning(
