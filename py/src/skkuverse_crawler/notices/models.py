@@ -39,6 +39,7 @@ class Notice:
     sourceUrl: str
     detailPath: str
     sourceDeptId: str
+    cleanMarkdown: str | None = None
     crawledAt: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     lastModified: str | None = None
     contentHash: str | None = None

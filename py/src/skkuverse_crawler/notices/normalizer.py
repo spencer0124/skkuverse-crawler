@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from bs4 import BeautifulSoup, Tag
 
 from ..shared.html_cleaner import clean_html, normalize_content_urls
+from ..shared.html_to_markdown import html_to_markdown
 from ..shared.logger import get_logger
 from .hashing import compute_content_hash
 from .models import Notice, NoticeDetail, NoticeListItem
@@ -63,6 +64,8 @@ def build_notice(
     else:
         content_text = None
 
+    clean_markdown = html_to_markdown(cleaned)
+
     return Notice(
         articleNo=list_item.articleNo,
         title=list_item.title,
@@ -78,6 +81,7 @@ def build_notice(
         sourceUrl=source_url,
         detailPath=list_item.detailPath,
         sourceDeptId=source_dept_id,
+        cleanMarkdown=clean_markdown,
         crawledAt=datetime.now(timezone.utc),
         contentHash=compute_content_hash(cleaned),
     )

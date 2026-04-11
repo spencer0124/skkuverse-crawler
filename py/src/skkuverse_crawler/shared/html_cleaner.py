@@ -103,6 +103,78 @@ def _is_effectively_empty(tag: Tag) -> bool:
     return text == ""
 
 
+def _is_bold_weight(fw: str) -> bool:
+    """True if a CSS `font-weight` value means bold.
+
+    Matches keywords (`bold`, `bolder`) and numeric values 600 and above.
+    """
+    value = fw.strip().lower()
+    if value in ("bold", "bolder"):
+        return True
+    if value.isdigit():
+        try:
+            return int(value) >= 600
+        except ValueError:
+            return False
+    return False
+
+
+def _unwrap_empty_spans(soup: BeautifulSoup) -> None:
+    """Remove `<span>` tags with no remaining attributes.
+
+    nh3 strips disallowed style properties, which often leaves `<span>` with
+    an empty style attribute or no attributes at all — wrappers that email
+    composers scatter through copy-pasted notices. Unwrapping keeps their
+    text content in place.
+    """
+    for span in list(soup.find_all("span")):
+        style = span.get("style")
+        if isinstance(style, str) and style.strip() == "":
+            del span["style"]
+        if not span.attrs:
+            span.unwrap()
+
+
+def _collapse_single_child_div_chains(soup: BeautifulSoup, max_passes: int = 5) -> None:
+    """Collapse chains of `<div>` that each wrap exactly one block child.
+
+    WordPress download-box markup renders as 6–9 nested `<div>` wrappers
+    around a single file card. After nh3 strips classes/styles there is no
+    semantic information left in those wrappers, so unwrap them until the
+    structure stabilises.
+    """
+    for _ in range(max_passes):
+        changed = False
+        for div in list(soup.find_all("div")):
+            if div.parent is None:
+                continue
+            children = [
+                c for c in div.children
+                if not (isinstance(c, str) and not c.strip())
+            ]
+            if len(children) != 1:
+                continue
+            only = children[0]
+            if isinstance(only, Tag) and only.name == "div":
+                div.unwrap()
+                changed = True
+        if not changed:
+            break
+
+
+def _strip_data_uri_images(soup: BeautifulSoup) -> None:
+    """Remove `<img>` tags whose `src` is a data URI.
+
+    Step 1.5's CSS selector `img[src^='data:']` can miss cases where the
+    attribute value has leading whitespace or odd quoting, so we do a
+    defensive pass on the serialized soup right before returning.
+    """
+    for img in list(soup.find_all("img")):
+        src = img.get("src", "")
+        if isinstance(src, str) and src.lstrip().lower().startswith("data:"):
+            img.decompose()
+
+
 # ── Main Pipeline ──────────────────────────────────────
 
 def clean_html(raw_html: str, base_url: str) -> str | None:
@@ -145,9 +217,9 @@ def clean_html(raw_html: str, base_url: str) -> str | None:
             if not isinstance(style, str):
                 continue
 
-            # font-weight: bold / 700 → <strong>
+            # font-weight: bold / bolder / 600+ → <strong>
             fw = _get_style_prop(style, "font-weight")
-            if fw and fw in ("bold", "700"):
+            if fw and _is_bold_weight(fw):
                 strong = soup.new_tag("strong")
                 for child in list(el.children):
                     strong.append(child.extract())
@@ -204,6 +276,15 @@ def clean_html(raw_html: str, base_url: str) -> str | None:
                     changed = True
             if not changed:
                 break
+
+        # ── Step 6: Structural cleanup ───────────────────
+        # nh3 preserves allowlisted tags verbatim even when they carry no
+        # semantic value after style/class stripping. These passes unwrap
+        # empty span wrappers and collapse redundant div chains, and catch
+        # data URI images that slipped past Step 1.5.
+        _unwrap_empty_spans(clean_soup)
+        _collapse_single_child_div_chains(clean_soup)
+        _strip_data_uri_images(clean_soup)
 
         result = clean_soup.decode_contents()
         if not result or result.replace("\u00a0", "").strip() == "":

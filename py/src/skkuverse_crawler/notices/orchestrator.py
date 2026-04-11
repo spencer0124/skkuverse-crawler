@@ -10,6 +10,7 @@ from typing import Any
 from ..shared.db import get_db
 from ..shared.fetcher import Fetcher
 from ..shared.html_cleaner import clean_html, normalize_content_urls
+from ..shared.html_to_markdown import html_to_markdown
 from ..shared.logger import get_logger
 from .dedup import (
     bulk_touch_notices,
@@ -167,12 +168,14 @@ async def _crawl_department(
                     )
                     cleaned = None
                     raw_content = None
+                clean_markdown = html_to_markdown(cleaned)
                 await collection.update_one(
                     {"articleNo": ref["articleNo"], "sourceDeptId": dept["id"]},
                     {"$set": {
                         "content": raw_content,
                         "contentText": detail.contentText,
                         "cleanHtml": cleaned,
+                        "cleanMarkdown": clean_markdown,
                         "contentHash": compute_content_hash(cleaned),
                         "attachments": detail.attachments,
                         "crawledAt": datetime.now(timezone.utc),
