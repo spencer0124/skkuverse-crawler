@@ -6,6 +6,7 @@ import click
 
 from ..shared.db import close_client
 from ..shared.logger import configure_logging
+from .backfill import run as run_backfill
 from .config.loader import load_and_validate
 from .orchestrator import CrawlOptions, run_crawl
 from .update_checker import run_update_check
@@ -74,3 +75,23 @@ async def _run_update_check(
         )
     finally:
         await close_client()
+
+
+@click.command("backfill-content")
+@click.option("--apply", is_flag=True, help="Actually update documents (default: dry-run)")
+@click.option("--dept", multiple=True, help="Restrict to specific sourceDeptId(s)")
+@click.option("--limit", type=int, default=None, help="Stop after N documents")
+def backfill_content_cli(apply: bool, dept: tuple[str, ...], limit: int | None) -> None:
+    """Rebuild cleanHtml/contentText/cleanMarkdown from stored `content` field.
+
+    Re-runs clean_html + html_to_markdown on existing notices so pipeline
+    improvements apply retroactively. Dry-run by default.
+    """
+    import sys
+
+    configure_logging()
+    sys.exit(asyncio.run(run_backfill(
+        apply=apply,
+        dept_filter=dept if dept else None,
+        limit=limit,
+    )))

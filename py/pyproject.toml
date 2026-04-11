@@ -8,6 +8,7 @@ dependencies = [
     "beautifulsoup4>=4.12",
     "lxml>=5.0",
     "nh3>=0.2",
+    "markdownify>=1.2",
     "motor>=3.6",
     "apscheduler>=3.10,<4",
     "structlog>=24.0",

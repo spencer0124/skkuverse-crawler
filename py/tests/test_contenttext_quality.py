@@ -59,6 +59,71 @@ class TestTextFromCleanHtml:
         """빈 HTML → 빈 문자열."""
         assert _text_from_clean_html("<p></p>") == ""
 
+    # ── Phase 3: 줄바꿈 보존 회귀 방지 ──
+
+    def test_consecutive_paragraphs_have_newline(self):
+        """연속 <p> 경계가 줄바꿈으로 유지되어야 한다 (기존엔 공백 1칸으로 뭉개짐)."""
+        html = "<p>첫 문단</p><p>둘째 문단</p>"
+        text = _text_from_clean_html(html)
+        assert "첫 문단" in text
+        assert "둘째 문단" in text
+        assert "첫 문단둘째" not in text
+        # 두 문단이 같은 줄에 있으면 안 됨
+        lines = [ln for ln in text.split("\n") if ln.strip()]
+        assert "첫 문단" in lines
+        assert "둘째 문단" in lines
+
+    def test_br_creates_line_break(self):
+        """<br> 이 실제 개행을 만든다."""
+        html = "<p>A<br>B</p>"
+        text = _text_from_clean_html(html)
+        assert "AB" not in text
+        # A와 B가 다른 줄에 위치
+        lines = [ln.strip() for ln in text.split("\n") if ln.strip()]
+        assert "A" in lines
+        assert "B" in lines
+
+    def test_div_boundary_creates_line_break(self):
+        """div 경계도 개행."""
+        html = "<div>알파</div><div>베타</div>"
+        text = _text_from_clean_html(html)
+        lines = [ln.strip() for ln in text.split("\n") if ln.strip()]
+        assert "알파" in lines
+        assert "베타" in lines
+
+    def test_table_rows_on_separate_lines(self):
+        """여러 행 테이블은 각 행이 다른 줄에."""
+        html = (
+            "<table><tbody>"
+            "<tr><td>1차</td><td>5.13</td></tr>"
+            "<tr><td>2차</td><td>5.27</td></tr>"
+            "</tbody></table>"
+        )
+        text = _text_from_clean_html(html)
+        # 1차 행과 2차 행이 같은 줄에 붙으면 안 됨
+        lines = [ln.strip() for ln in text.split("\n") if ln.strip()]
+        # 한 줄에 "1차 5.13" 이 있어야 하고 다른 줄에 "2차 5.27"
+        assert any("1차" in ln and "5.13" in ln for ln in lines)
+        assert any("2차" in ln and "5.27" in ln for ln in lines)
+        # 한 줄에 두 행이 섞이면 안 됨
+        assert not any("1차" in ln and "2차" in ln for ln in lines)
+
+    def test_br_inside_td_does_not_split_row(self):
+        """테이블 셀 내부 <br>은 셀 구분을 깨지 않도록 공백으로."""
+        html = (
+            "<table><tbody>"
+            "<tr><td>공문제출<br>(행정실)</td><td>5.13</td></tr>"
+            "<tr><td>심의</td><td>5.14</td></tr>"
+            "</tbody></table>"
+        )
+        text = _text_from_clean_html(html)
+        lines = [ln.strip() for ln in text.split("\n") if ln.strip()]
+        # 한 행 안의 셀 내용은 같은 줄에 있어야 함
+        assert any("공문제출" in ln and "5.13" in ln for ln in lines)
+        assert any("심의" in ln and "5.14" in ln for ln in lines)
+        # 공문제출 / (행정실) 이 서로 다른 행으로 쪼개지면 안 됨
+        assert not any(ln.strip() == "(행정실)" for ln in lines)
+
 
 # ── clean_html 파이프라인 통합 테스트 ──
 
