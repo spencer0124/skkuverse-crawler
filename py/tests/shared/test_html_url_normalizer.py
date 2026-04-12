@@ -9,8 +9,6 @@ get image and link URLs that resolve.
 """
 from __future__ import annotations
 
-import pytest
-
 from skkuverse_crawler.shared.html_cleaner import normalize_content_urls
 
 

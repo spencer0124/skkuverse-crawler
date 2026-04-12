@@ -16,6 +16,9 @@ python -m skkuverse_crawler notices --once               # 공지 1회 실행
 python -m skkuverse_crawler notices --once --dept skku-main --pages 3
 python -m skkuverse_crawler summarize                      # AI 요약 1회 실행
 python -m skkuverse_crawler summarize --batch-size 500     # 초기 backfill
+python -m skkuverse_crawler backfill-content               # cleanHtml/contentText/cleanMarkdown 재생성 (dry-run)
+python -m skkuverse_crawler backfill-content --apply       # 실제 업데이트
+python -m skkuverse_crawler backfill-content --apply --dept cheme --limit 10  # 샘플링
 
 # 테스트 & 린트
 python -m pytest tests/ -v                  # 전체 테스트
@@ -35,7 +38,11 @@ mypy src/                                   # 타입 체크
 
 **Incremental Crawl**: title+date 변경 감지 → 변경분만 상세 fetch. 페이지 내 전부 DB에 존재하면 early-stop. content:null 기사 자동 재크롤링.
 
-**HTML Cleaning**: 5단계 파이프라인 (BS4 junk 제거 → semantic 정규화 → URL 절대경로 → nh3 태그/스타일 필터링 → 빈 요소 제거).
+**HTML Cleaning**: 6단계 파이프라인 (`shared/html_cleaner.py`). BS4 junk 제거 → semantic 정규화(`font-weight: bold|bolder|≥600` → `<strong>`) → URL 절대경로 → nh3 태그/스타일 필터링 → 빈 요소 제거 → 구조 정리(빈 `<span>` unwrap / 단독자식 `<div>` 체인 축약 / `data:` URI 이미지 재거름).
+
+**Markdown 변환**: `shared/html_to_markdown.py`. cleanHtml을 입력으로 받아 markdownify + 전처리(박스 테이블 unwrap, 첫 행 all-bold → `<thead><th>` 승격, `<td>` 내부 `<p>/<div>` flatten)로 GFM을 생성 → `cleanMarkdown` 필드에 저장. `content`/`cleanHtml`/`contentText`는 그대로 유지.
+
+**contentText 추출**: `normalizer._text_from_clean_html()`. 블록 요소(`<tr>`, `<p>`, `<div>`, `<h1-4>`, `<li>`, `<br>`)가 개행을 만들고 `<td>/<th>`는 공백으로 구분(기존 동작). 셀 내부 `<br>`은 행 구분과 충돌하므로 공백으로 대체.
 
 ### 모듈 시스템 (`py/src/skkuverse_crawler/`)
 

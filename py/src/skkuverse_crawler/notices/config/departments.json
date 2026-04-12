@@ -2655,7 +2655,8 @@
       "views": "td:nth-child(5)",
       "date": "td:nth-child(6)",
       "detailContent": "div.board_content",
-      "detailAttachment": "div.attachment a[href]"
+      "detailAttachment": "div.attachment a[href]",
+      "detailTitle": "table.board_Vtable tr:first-child th"
     },
     "pagination": { "type": "pageNum", "param": "pg", "limit": 15 }
   },
@@ -2673,7 +2674,8 @@
       "views": "td:nth-child(5)",
       "date": "td:nth-child(6)",
       "detailContent": "div.board_content",
-      "detailAttachment": "div.attachment a[href]"
+      "detailAttachment": "div.attachment a[href]",
+      "detailTitle": "table.board_Vtable tr:first-child th"
     },
     "pagination": { "type": "pageNum", "param": "pg", "limit": 15 }
   },

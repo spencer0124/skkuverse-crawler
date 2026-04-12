@@ -5,7 +5,6 @@ from unittest.mock import patch
 import pytest
 
 from skkuverse_crawler.shared.config import (
-    Config,
     CrawlerEnv,
     get_config,
     init_config,
@@ -169,7 +168,7 @@ class TestSingleton:
         assert cfg1.env != cfg2.env
 
     def test_force_reinitializes(self, monkeypatch):
-        cfg1 = _init_fresh(monkeypatch, CRAWLER_ENV="test")
+        _init_fresh(monkeypatch, CRAWLER_ENV="test")
         monkeypatch.setenv("CRAWLER_ENV", "development")
         monkeypatch.setenv("MONGO_URL", "mongodb://x")
         cfg2 = init_config(force=True)

@@ -21,6 +21,7 @@ class NoticeDetail:
     content: str
     contentText: str
     attachments: list[dict[str, str]] = field(default_factory=list)  # [{name, url}]
+    title: str | None = None  # full title from detail page (overrides list title)
 
 
 @dataclass
@@ -39,6 +40,7 @@ class Notice:
     sourceUrl: str
     detailPath: str
     sourceDeptId: str
+    cleanMarkdown: str | None = None
     crawledAt: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     lastModified: str | None = None
     contentHash: str | None = None

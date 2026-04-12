@@ -78,7 +78,11 @@ class SkkumedAspStrategy:
 
             content_el = soup.select_one(config["selectors"]["detailContent"])
             if content_el:
-                for tag in content_el.select("style, head"):
+                # Word-exported notices often embed <title>제목없음</title> and
+                # other head-only tags inline next to <p> blocks. Strip them
+                # before serialization so the stored `content` field stays
+                # clean for downstream consumers even without clean_html.
+                for tag in content_el.select("style, head, title, meta, link"):
                     tag.decompose()
                 content = content_el.decode_contents().strip()
                 content_text = content_el.get_text(strip=True)

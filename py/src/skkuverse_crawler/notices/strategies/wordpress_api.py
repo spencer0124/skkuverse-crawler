@@ -21,6 +21,7 @@ FILE_EXTENSIONS = re.compile(
     re.I,
 )
 UPLOADS_PATH = re.compile(r"/wp-content/uploads/", re.I)
+WPDM_DOWNLOAD = re.compile(r"/download/\S+", re.I)
 
 
 class WordPressApiStrategy:
@@ -35,7 +36,7 @@ class WordPressApiStrategy:
             href = a.get("href", "")
             if isinstance(href, list):
                 href = href[0]
-            if href and (FILE_EXTENSIONS.search(href) or UPLOADS_PATH.search(href)):
+            if href and (FILE_EXTENSIONS.search(href) or UPLOADS_PATH.search(href) or WPDM_DOWNLOAD.search(href)):
                 name = a.get_text(strip=True) or href.rsplit("/", 1)[-1] or "unknown"
                 full_url = href if href.startswith("http") else urljoin(base_url, href)
                 attachments.append({"name": name, "url": full_url})

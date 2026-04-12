@@ -99,8 +99,9 @@ async def _shutdown_modules(modules: list) -> None:
 
 
 # Register CLI subcommands
-from .notices.cli import notices_cli, update_check_cli  # noqa: E402
+from .notices.cli import backfill_content_cli, notices_cli, update_check_cli  # noqa: E402
 from .notices_summary.cli import summarize_cli  # noqa: E402
 main.add_command(notices_cli)
 main.add_command(update_check_cli)
+main.add_command(backfill_content_cli)
 main.add_command(summarize_cli)

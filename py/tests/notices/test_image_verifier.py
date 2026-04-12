@@ -5,11 +5,9 @@ the page Referer and reports broken/missing images.
 from __future__ import annotations
 
 import httpx
-import pytest
 import respx
 
 from skkuverse_crawler.notices.image_verifier import (
-    ImageCheckResult,
     verify_notice_images,
 )
 
