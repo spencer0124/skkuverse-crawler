@@ -152,3 +152,53 @@ def test_inline_link_tag_removed():
     assert result is not None
     assert "<link" not in result
     assert "hello" in result
+
+
+# ── <pre> to paragraph conversion ─────────────────────
+
+
+def test_pre_converted_to_paragraphs():
+    """<pre> text lines should become <p> with <br> separators."""
+    html = '<pre class="pre">Line A\nLine B\n\nLine C</pre>'
+    result = clean_html(html, BASE)
+    assert result is not None
+    assert "<pre" not in result
+    # Two paragraph groups: "Line A / Line B" and "Line C"
+    assert "<p>" in result
+    assert "Line A" in result
+    assert "Line B" in result
+    assert "Line C" in result
+
+
+def test_pre_trailing_img_preserved():
+    """<img> inside <pre> should survive as a sibling, not be lost."""
+    html = (
+        '<pre class="pre">Hello</pre>'
+        '<img src="https://example.com/a.png" alt="pic"/>'
+    )
+    result = clean_html(html, BASE)
+    assert result is not None
+    assert "Hello" in result
+    assert '<img' in result
+
+
+def test_pre_nowon_notice_structure():
+    """Real-world fixture: 노원평생학습한마당 notice preserves line breaks."""
+    html = (
+        '<pre class="pre">서울시 노원평생학습관\n\n'
+        "1. 봉사활동 개요\n"
+        " - 분야: 문화\n"
+        " - 대상: 대학생\n\n"
+        "2. 일시 및 장소\n"
+        " - 일시: 2026.5.9.\n\n"
+        "3. 신청방법: 포털 검색\n\n"
+        "4.  문의: 02-6958-8961</pre>\n"
+        '<img alt="poster" src="https://www.skku.edu/img.png"/>'
+    )
+    result = clean_html(html, BASE)
+    assert result is not None
+    assert "<pre" not in result
+    # Each numbered section should be in its own <p>
+    assert result.count("<p>") >= 4
+    # Image should be outside paragraphs, not lost
+    assert '<img' in result

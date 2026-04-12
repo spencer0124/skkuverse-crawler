@@ -236,6 +236,11 @@ def _preprocess(html: str) -> str:
     # spaces in text (e.g. `- item` where Word dropped `-\xa0item`).
     _normalize_nbsp(soup)
     _convert_pseudo_bullets(soup)
+    # Rename <ol> → <ul> so markdownify uses bullet dashes for all lists.
+    # This prevents real <ol> items from producing `1. ` patterns that the
+    # postprocess escape would then have to distinguish from prose text.
+    for ol in soup.find_all("ol"):
+        ol.name = "ul"
     _unwrap_box_tables(soup)
     _promote_header_rows(soup)
     _flatten_cell_blocks(soup)
@@ -263,6 +268,12 @@ _REPEATED_STRONG_RE = re.compile(r"\*{3,}")            # *** or more → **
 # parser recognizes. The lookahead keeps this surgical: only fires when
 # the next line is itself a bullet.
 _HARDBREAK_BEFORE_BULLET_RE = re.compile(r"[ \t]{2,}\n(?=- )")
+# Escape ordered-list markers at start of line.  Real <ol><li> elements are
+# already converted to `- item` by markdownify (bullets="−"), so any
+# remaining `^\d+\. ` pattern is accidental prose from unwrapped <pre> or
+# plain-text content.  Escaping prevents markdown renderers from creating
+# spurious numbered lists with progressive indentation.
+_ORDERED_LIST_ESCAPE_RE = re.compile(r"^(\d+)\. ", re.MULTILINE)
 # Same idea for a trailing hard-break immediately before a blank line
 # (the last item of a br-separated pseudo-list): the hard break has no
 # visible effect and just confuses list termination heuristics.
@@ -411,6 +422,9 @@ def _postprocess(md: str) -> str:
     # replacement (so the lookaheads still match `- `).
     md = _HARDBREAK_BEFORE_BULLET_RE.sub("\n", md)
     md = _HARDBREAK_BEFORE_BLANK_RE.sub("\n", md)
+
+    # Escape accidental ordered-list markers (e.g. "1. 봉사활동 개요").
+    md = _ORDERED_LIST_ESCAPE_RE.sub(r"\1\. ", md)
 
     # Neutralize GFM strikethrough risk from `~` in prose.
     md = _replace_tildes_safely(md)
