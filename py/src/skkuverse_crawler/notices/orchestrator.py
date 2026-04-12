@@ -24,8 +24,8 @@ from .dedup import (
 )
 from .constants import SERVICE_START_DATE
 from .hashing import compute_content_hash
-from .image_verifier import verify_notice_images
-from .models import Notice, NoticeListItem
+from .image_verifier import ImageCheckResult, verify_notice_images
+from .models import NoticeListItem
 from .normalizer import build_notice
 from .strategies.skku_standard import SkkuStandardStrategy
 from .strategies.wordpress_api import WordPressApiStrategy
@@ -242,26 +242,40 @@ async def _crawl_department(
     return result
 
 
-async def _verify_and_log_images(notice: Notice, dept_id: str, logger: Any) -> None:
-    """Best-effort image verification — never raises, only logs."""
+async def _verify_and_measure_images(
+    content_html: str | None,
+    source_url: str,
+    dept_id: str,
+    article_no: int,
+    logger: Any,
+) -> ImageCheckResult:
+    """Best-effort image verification + dimension detection. Never raises."""
     try:
-        result = await verify_notice_images(notice.content, notice.sourceUrl)
+        result = await verify_notice_images(content_html, source_url)
         if result.broken:
             logger.warning(
                 "broken_notice_images",
-                articleNo=notice.articleNo,
+                articleNo=article_no,
                 dept_id=dept_id,
                 checked=result.checked,
                 broken_count=len(result.broken),
                 broken=result.broken[:5],  # cap log payload
             )
+        if result.dimensions:
+            logger.debug(
+                "image_dimensions_detected",
+                articleNo=article_no,
+                count=len(result.dimensions),
+            )
+        return result
     except Exception as exc:
         logger.warning(
             "image_verify_failed",
-            articleNo=notice.articleNo,
+            articleNo=article_no,
             dept_id=dept_id,
             error=str(exc),
         )
+        return ImageCheckResult()
 
 
 async def _process_page_smart(
@@ -295,13 +309,30 @@ async def _process_page_smart(
             detail = await strategy.crawl_detail(
                 {"articleNo": item.articleNo, "detailPath": item.detailPath}, dept
             )
+
+            # Verify images + detect dimensions before build_notice so
+            # dimensions can be injected into cleanHtml/cleanMarkdown.
+            abs_content = (
+                normalize_content_urls(detail.content, dept["baseUrl"])
+                if detail and detail.content
+                else None
+            )
+            source_url = (
+                item.detailPath
+                if item.detailPath.startswith("http")
+                else f"{dept['baseUrl']}{item.detailPath}"
+            )
+            img_result = await _verify_and_measure_images(
+                abs_content, source_url, dept["id"], item.articleNo, logger,
+            )
+
             notice = build_notice(
                 item, detail,
                 department=dept["name"],
                 source_dept_id=dept["id"],
                 base_url=dept["baseUrl"],
+                image_dimensions=img_result.dimensions or None,
             )
-            await _verify_and_log_images(notice, dept["id"], logger)
 
             if not existing:
                 action = await upsert_notice(collection, notice)
@@ -356,13 +387,28 @@ async def _process_page_full(
             detail = await strategy.crawl_detail(
                 {"articleNo": item.articleNo, "detailPath": item.detailPath}, dept
             )
+
+            abs_content = (
+                normalize_content_urls(detail.content, dept["baseUrl"])
+                if detail and detail.content
+                else None
+            )
+            source_url = (
+                item.detailPath
+                if item.detailPath.startswith("http")
+                else f"{dept['baseUrl']}{item.detailPath}"
+            )
+            img_result = await _verify_and_measure_images(
+                abs_content, source_url, dept["id"], item.articleNo, logger,
+            )
+
             notice = build_notice(
                 item, detail,
                 department=dept["name"],
                 source_dept_id=dept["id"],
                 base_url=dept["baseUrl"],
+                image_dimensions=img_result.dimensions or None,
             )
-            await _verify_and_log_images(notice, dept["id"], logger)
             action = await upsert_notice(collection, notice)
             if action == "inserted":
                 result.inserted += 1

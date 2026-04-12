@@ -53,6 +53,29 @@ def _text_from_clean_html(html: str) -> str:
     return text.strip()
 
 
+def _inject_image_dimensions(
+    html: str,
+    dimensions: dict[str, tuple[int, int]],
+) -> str:
+    """Inject width/height attributes into ``<img>`` tags from detected dims."""
+    soup = BeautifulSoup(html, "html.parser")
+    changed = False
+    for img in soup.find_all("img"):
+        if not isinstance(img, Tag):
+            continue
+        src = img.get("src")
+        if not isinstance(src, str) or src not in dimensions:
+            continue
+        # Don't overwrite existing dimensions from source HTML
+        if img.get("width") or img.get("height"):
+            continue
+        w, h = dimensions[src]
+        img["width"] = str(w)
+        img["height"] = str(h)
+        changed = True
+    return str(soup) if changed else html
+
+
 def build_notice(
     list_item: NoticeListItem,
     detail: NoticeDetail | None,
@@ -60,6 +83,7 @@ def build_notice(
     department: str,
     source_dept_id: str,
     base_url: str,
+    image_dimensions: dict[str, tuple[int, int]] | None = None,
 ) -> Notice:
     # Build sourceUrl from detailPath
     if list_item.detailPath.startswith("http"):
@@ -75,6 +99,9 @@ def build_notice(
     raw_content = (
         normalize_content_urls(detail.content, base_url) if detail and detail.content else None
     )
+
+    if cleaned and image_dimensions:
+        cleaned = _inject_image_dimensions(cleaned, image_dimensions)
 
     if cleaned and len(cleaned.encode()) > MAX_CONTENT_BYTES:
         logger.warning(
