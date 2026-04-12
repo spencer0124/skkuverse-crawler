@@ -175,6 +175,76 @@ def _flatten_li_blocks(soup: BeautifulSoup) -> None:
 
 
 _BULLET_PREFIX_RE = re.compile(r"^[·●○▶▷◆◇※►•]\s*")
+_DASH_BULLET_RE = re.compile(r"^-\s+")
+
+
+def _convert_dash_bullet_paragraphs(soup: BeautifulSoup) -> None:
+    """Convert 2+ consecutive ``<p>- text</p>`` to ``<ul><li>text</li></ul>``.
+
+    Dash-prefixed paragraphs are extremely common in Korean job postings and
+    event announcements.  markdownify turns each ``<p>`` into a separate
+    markdown paragraph, producing a "loose list" with double line spacing.
+
+    Unlike ``_convert_pseudo_bullets`` (which handles special bullet chars
+    like ``·``), dash requires stricter matching because ``-`` appears often
+    in regular prose.  Guards:
+      - Dash must be followed by **at least one space** (``-\\s+``).
+      - At least **2 consecutive** matching ``<p>`` siblings are required.
+      - Whitespace text nodes and stray ``<br>`` between ``<p>`` tags are
+        skipped when checking for consecutiveness.
+    """
+    processed: set[int] = set()
+    for p in list(soup.find_all("p")):
+        if id(p) in processed or p.parent is None:
+            continue
+        # Skip <p> containing <br> — those hold multiple br-separated
+        # bullets in one paragraph, handled by postprocess hard-break
+        # cleanup instead.
+        if p.find("br"):
+            continue
+        text = p.get_text()
+        if not text or not _DASH_BULLET_RE.match(text):
+            continue
+
+        # Collect consecutive dash-bullet <p> siblings
+        run: list[Tag] = [p]
+        nxt = p.next_sibling
+        while nxt is not None:
+            # Skip whitespace text nodes and stray <br> between <p> tags
+            if isinstance(nxt, NavigableString) and not nxt.strip():
+                nxt = nxt.next_sibling
+                continue
+            if isinstance(nxt, Tag) and nxt.name == "br":
+                nxt = nxt.next_sibling
+                continue
+            if isinstance(nxt, Tag) and nxt.name == "p":
+                # Also skip br-containing <p> from joining the group
+                if nxt.find("br"):
+                    break
+                nxt_text = nxt.get_text()
+                if nxt_text and _DASH_BULLET_RE.match(nxt_text):
+                    run.append(nxt)
+                    nxt = nxt.next_sibling
+                    continue
+            break
+
+        if len(run) < 2:
+            continue
+
+        ul = soup.new_tag("ul")
+        p.insert_before(ul)
+        for bp in run:
+            processed.add(id(bp))
+            li = soup.new_tag("li")
+            for child in list(bp.children):
+                li.append(child.extract())
+            # Strip the "- " prefix from the first text node
+            first_text = li.find(string=True)
+            if first_text:
+                cleaned = _DASH_BULLET_RE.sub("", str(first_text), count=1)
+                first_text.replace_with(NavigableString(cleaned))
+            ul.append(li)
+            bp.decompose()
 
 
 def _convert_pseudo_bullets(soup: BeautifulSoup) -> None:
@@ -236,6 +306,7 @@ def _preprocess(html: str) -> str:
     # spaces in text (e.g. `- item` where Word dropped `-\xa0item`).
     _normalize_nbsp(soup)
     _convert_pseudo_bullets(soup)
+    _convert_dash_bullet_paragraphs(soup)
     # Rename <ol> → <ul> so markdownify uses bullet dashes for all lists.
     # This prevents real <ol> items from producing `1. ` patterns that the
     # postprocess escape would then have to distinguish from prose text.
