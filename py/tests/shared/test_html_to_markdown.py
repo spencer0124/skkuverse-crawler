@@ -220,3 +220,147 @@ def test_e2e_wordpress_download_box_div_chain_collapsed():
     md = html_to_markdown(cleaned)
     assert md is not None
     assert "[졸업요건 안내](https://cheme.skku.edu/file.pdf)" in md
+
+
+# ── <li> block flatten ─────────────────────────────────
+
+def test_li_with_p_does_not_runaway_indent():
+    # Each <li> contains <p> blocks. Without flattening, markdownify keeps
+    # subsequent list items stuck under the bullet's indentation.
+    html = (
+        "<ul>"
+        "<li><p>첫 줄</p><p>둘째 줄</p></li>"
+        "<li>다음 항목</li>"
+        "</ul>"
+    )
+    md = html_to_markdown(html)
+    assert md is not None
+    lines = md.split("\n")
+    # Second item must appear at the same top-level bullet indent
+    assert any(ln.startswith("- 다음 항목") for ln in lines)
+
+
+def test_li_with_div_flattened():
+    html = "<ul><li><div>안내</div>상세 내용</li></ul>"
+    md = html_to_markdown(html)
+    assert md is not None
+    # Both pieces of text must be present and no deep indentation leak
+    assert "안내" in md and "상세 내용" in md
+
+
+def test_nested_ul_inside_li_preserved():
+    # Direct <ul>/<ol> children of <li> must NOT be touched — they're
+    # legitimate list nesting, not block-level bleed.
+    html = "<ul><li>outer<ul><li>inner</li></ul></li></ul>"
+    md = html_to_markdown(html)
+    assert md is not None
+    assert "- outer" in md
+    # Nested item should still appear indented with its own bullet
+    assert any("inner" in ln and ln.startswith((" ", "\t")) for ln in md.split("\n"))
+
+
+# ── Tilde safety ───────────────────────────────────────
+
+def test_tilde_in_prose_replaced_with_fullwidth():
+    md = html_to_markdown("<p>14:00~17:00 / 7~8월</p>")
+    assert md is not None
+    assert "~" not in md
+    assert "14:00～17:00" in md
+    assert "7～8월" in md
+
+
+def test_tilde_in_link_url_preserved():
+    # Professor home URLs may legitimately contain ~. Must survive.
+    md = html_to_markdown(
+        '<p>See <a href="https://user.skku.edu/~prof/">here</a></p>'
+    )
+    assert md is not None
+    assert "https://user.skku.edu/~prof/" in md
+    # And literal `~` in the URL must not have been replaced
+    assert "～prof" not in md
+
+
+def test_tilde_in_image_url_preserved():
+    md = html_to_markdown(
+        '<p><img alt="x" src="https://user.skku.edu/~prof/a.png"></p>'
+    )
+    assert md is not None
+    assert "https://user.skku.edu/~prof/a.png" in md
+
+
+def test_double_tilde_becomes_fullwidth_not_strikethrough():
+    # Even if source HTML injects ~~, we must not emit GFM strikethrough.
+    md = html_to_markdown("<p>before~~middle~~after</p>")
+    assert md is not None
+    assert "~~" not in md
+    assert "～～" in md
+
+
+# ── Image dimension alt hint ───────────────────────────
+
+def test_image_with_dimensions_embeds_alt_hint():
+    md = html_to_markdown(
+        '<p><img src="https://x/a.png" alt="포스터" width="800" height="600"></p>'
+    )
+    assert md is not None
+    assert "![포스터 (800x600)](https://x/a.png)" in md
+
+
+def test_image_with_only_width_no_leading_space_when_alt_empty():
+    md = html_to_markdown(
+        '<p><img src="https://x/a.png" alt="" width="800"></p>'
+    )
+    assert md is not None
+    # No leading space inside the alt when alt was empty
+    assert "![(w800)](https://x/a.png)" in md
+
+
+def test_image_without_dimensions_bare_alt():
+    md = html_to_markdown('<p><img src="https://x/a.png" alt="포스터"></p>')
+    assert md is not None
+    assert "![포스터](https://x/a.png)" in md
+
+
+# ── Stray ** cleanup (safety net) ──────────────────────
+
+def test_no_quad_asterisks_after_adjacent_strong():
+    # clean_html also merges these, but verify html_to_markdown's
+    # post-process safety net handles direct-input cases too.
+    md = html_to_markdown("<p><strong>A</strong><strong>B</strong></p>")
+    assert md is not None
+    assert "****" not in md
+
+
+def test_mixed_strong_b_cleanup_by_postprocess():
+    # html_cleaner's merger groups by tag name, so <strong> + <b> can leak
+    # through. The postprocess regex must still collapse the resulting `****`.
+    md = html_to_markdown("<p><strong>A</strong><b>B</b></p>")
+    assert md is not None
+    assert "****" not in md
+
+
+def test_postprocess_never_merges_paragraph_bolds():
+    # Regression guard against an earlier _EMPTY_STRONG_RE = r"\*\*(\s*)\*\*"
+    # bug where the regex matched across paragraph breaks and fused
+    # `**A**\n\n**B**` into a single `**A\n\nB**` — a bold spanning two
+    # paragraphs, which GFM parsers break on. Each paragraph's bold must
+    # remain independently closed.
+    md = html_to_markdown("<p><strong>A</strong></p><p><strong>B</strong></p>")
+    assert md is not None
+    # Both bolds present and closed within their own paragraph
+    assert "**A**" in md
+    assert "**B**" in md
+    # No single bold spanning the blank line
+    assert "**A\n\nB**" not in md
+
+
+def test_postprocess_still_cleans_inline_empty_strong():
+    # The tightened regex must still clean up whitespace-only strongs on a
+    # single line (e.g. leftover `** **` from a <strong> </strong> wrapper
+    # not caught by html_cleaner).
+    md = html_to_markdown("<p>before** **after</p>")
+    # The literal `** **` in prose isn't emitted by markdownify normally,
+    # but we construct a minimal direct test of the postprocess layer by
+    # checking the resulting string has no empty `** **` pair.
+    assert md is not None
+    assert "** **" not in md

@@ -26,7 +26,7 @@ from __future__ import annotations
 import re
 
 from bs4 import BeautifulSoup, NavigableString, Tag
-from markdownify import markdownify as _md_convert
+from markdownify import MarkdownConverter
 
 from .logger import get_logger
 
@@ -129,27 +129,173 @@ def _flatten_cell_blocks(soup: BeautifulSoup) -> None:
             block.unwrap()
 
 
+def _flatten_li_blocks(soup: BeautifulSoup) -> None:
+    """Unwrap `<p>`/`<div>` that are direct children of `<li>`.
+
+    When a list item contains block elements, markdownify keeps subsequent
+    items (and even the content *after* the list) stuck under the bullet's
+    indentation — the bullet ends up "swallowing" its siblings. Flattening
+    direct-child blocks to inline text (separated by `<br>` where needed)
+    lets markdownify emit a clean single-line list item.
+
+    We only touch *direct* children so that legitimate nested `<ul>`/`<ol>`
+    structure is left alone.
+    """
+    for li in soup.find_all("li"):
+        for child in list(li.children):
+            if not isinstance(child, Tag):
+                continue
+            if child.name in ("p", "div"):
+                if _has_prev_inline_content(child):
+                    child.insert_before(soup.new_tag("br"))
+                child.unwrap()
+
+
 def _preprocess(html: str) -> str:
     soup = BeautifulSoup(html, "html.parser")
     _unwrap_box_tables(soup)
     _promote_header_rows(soup)
     _flatten_cell_blocks(soup)
+    _flatten_li_blocks(soup)
     return str(soup)
 
 
 # ── Conversion ─────────────────────────────────────────
 
 _MULTIBLANK_RE = re.compile(r"\n{3,}")
-_TRAILING_WS_RE = re.compile(r"[ \t]+(?=\n)")
+# `[ \t]*` — spaces/tabs only, NEVER newlines. An earlier version used `\s*`,
+# which matched across paragraph breaks and catastrophically merged
+# `**A**\n\n**B**` into `**A\n\nB**` (one bold spanning two paragraphs).
+# This regex is only meant to clean single-line `** **` artifacts from
+# `<strong>` tags that wrap whitespace; cross-line strongs must never be
+# collapsed because each paragraph's bold is semantically independent.
+_EMPTY_STRONG_RE = re.compile(r"\*\*([ \t]*)\*\*")
+_REPEATED_STRONG_RE = re.compile(r"\*{3,}")            # *** or more → **
+
+
+def _escape_md_alt(text: str) -> str:
+    """Minimal escaping for alt text so `[`/`]` don't break the image syntax."""
+    return text.replace("[", "\\[").replace("]", "\\]")
+
+
+class _SkkuMarkdownConverter(MarkdownConverter):
+    """markdownify converter with an image handler that preserves dimensions.
+
+    Standard markdown has no syntax for image size. GFM technically allows
+    raw HTML `<img width height>` to pass through, but we can't rely on the
+    mobile renderer to accept inline HTML yet, so we encode the dimensions
+    as a `(WxH)` hint appended to the alt text:
+
+        ![포스터 (800x600)](https://.../a.png)
+
+    The mobile app can then parse the tail `/\\s*\\((\\d+)x(\\d+)\\)\\s*$/` to
+    reserve layout space before the image loads. Until the app ships that
+    parser we still render cleanly — the hint is just human-readable alt.
+
+    TODO: once the app supports raw-HTML passthrough in markdown, switch
+    to emitting `<img src alt width height />` here instead (more precise,
+    no parsing needed on the client).
+    """
+
+    def convert_img(self, el, text, parent_tags):  # type: ignore[override]
+        alt = el.attrs.get("alt", "") or ""
+        src = el.attrs.get("src", "") or ""
+        title = el.attrs.get("title", "")
+        width = el.attrs.get("width")
+        height = el.attrs.get("height")
+
+        if width and height:
+            dim_hint = f"({width}x{height})"
+        elif width:
+            dim_hint = f"(w{width})"
+        elif height:
+            dim_hint = f"(h{height})"
+        else:
+            dim_hint = ""
+
+        alt_escaped = _escape_md_alt(alt)
+        if alt_escaped and dim_hint:
+            alt_final = f"{alt_escaped} {dim_hint}"
+        else:
+            alt_final = alt_escaped or dim_hint
+
+        title_part = f' "{title}"' if title else ""
+        return f"![{alt_final}]({src}{title_part})"
+
+
+def _replace_tildes_safely(md: str) -> str:
+    """Replace `~` with `～` (U+FF5E) outside code spans and link/image URLs.
+
+    GFM renders `~~text~~` as strikethrough. Korean notices use `~` heavily
+    for date/time ranges (`14:00~17:00`, `7~8월`), which are at constant
+    risk of collision. The full-width wave dash is visually near-identical
+    and carries zero markdown semantics.
+
+    We deliberately skip two regions so URLs and inline code survive intact:
+      - inline code spans: matched runs of backticks
+      - markdown link/image URL part: `](` up to the matching `)`
+    """
+    out: list[str] = []
+    i = 0
+    n = len(md)
+    while i < n:
+        ch = md[i]
+
+        # Inline code span — find opening run, then a closing run of same length
+        if ch == "`":
+            j = i
+            while j < n and md[j] == "`":
+                j += 1
+            run = md[i:j]
+            close = md.find(run, j)
+            if close == -1:
+                # Unmatched backticks: treat as literal, keep scanning after them
+                out.append(run)
+                i = j
+                continue
+            out.append(md[i : close + len(run)])
+            i = close + len(run)
+            continue
+
+        # Link/image URL part: `](` ... `)` (with nested-paren tolerance)
+        if ch == "]" and i + 1 < n and md[i + 1] == "(":
+            out.append("](")
+            i += 2
+            depth = 1
+            while i < n and depth > 0:
+                c2 = md[i]
+                out.append(c2)
+                i += 1
+                if c2 == "(":
+                    depth += 1
+                elif c2 == ")":
+                    depth -= 1
+                    if depth == 0:
+                        break
+            continue
+
+        if ch == "~":
+            out.append("～")
+        else:
+            out.append(ch)
+        i += 1
+    return "".join(out)
 
 
 def _postprocess(md: str) -> str:
-    # Collapse runs of blank lines but keep GFM "2 trailing spaces + \n" line breaks
-    def _preserve_br(match: re.Match[str]) -> str:
-        return match.group(0)
-
     # Replace 3+ newlines with 2 (paragraph break)
     md = _MULTIBLANK_RE.sub("\n\n", md)
+
+    # Bug fix: strip stray `**` artifacts. The html_cleaner adjacent-strong
+    # merge catches the common case, but a <strong> adjacent to a <b> (or
+    # nested wrappers) can still leak here. These two passes are idempotent
+    # and safe against intentional bold text.
+    md = _EMPTY_STRONG_RE.sub(r"\1", md)       # `** **` → ` ` then collapsed below
+    md = _REPEATED_STRONG_RE.sub("**", md)     # `***` / `****` → `**`
+
+    # Bug fix: neutralize GFM strikethrough risk from `~` in prose.
+    md = _replace_tildes_safely(md)
+
     # Strip trailing whitespace on each line EXCEPT the GFM "  \n" marker (2 spaces)
     out_lines: list[str] = []
     for line in md.split("\n"):
@@ -174,14 +320,13 @@ def html_to_markdown(clean_html_str: str | None) -> str | None:
         return ""
     try:
         preprocessed = _preprocess(clean_html_str)
-        md = _md_convert(
-            preprocessed,
+        md = _SkkuMarkdownConverter(
             heading_style="ATX",
             bullets="-",
             strong_em_symbol="*",
             autolinks=True,
             newline_style="SPACES",
-        )
+        ).convert(preprocessed)
         return _postprocess(md)
     except Exception as exc:
         logger.warning("html_to_markdown_failed", error=str(exc))

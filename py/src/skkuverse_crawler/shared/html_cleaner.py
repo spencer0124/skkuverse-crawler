@@ -3,7 +3,7 @@ from __future__ import annotations
 from urllib.parse import urljoin
 
 import nh3
-from bs4 import BeautifulSoup, Tag
+from bs4 import BeautifulSoup, NavigableString, Tag
 
 from .logger import get_logger
 
@@ -15,6 +15,11 @@ logger = get_logger("html_cleaner")
 REMOVE_SELECTORS = [
     "script", "style", "iframe", "form", "input", "button",
     "tfoot",
+    # Head-only tags that occasionally get dropped inline by Word-exported
+    # HTML (skkumed ASP boards in particular). nh3 would strip the tag but
+    # keep the text child of <title>, leaking strings like "제목없음" into
+    # the rendered body — decompose here before nh3 ever sees it.
+    "title", "meta", "link", "head",
     ".board-view-title-wrap",
     ".board-view-file-wrap",
     ".board-view-nav",
@@ -175,6 +180,71 @@ def _strip_data_uri_images(soup: BeautifulSoup) -> None:
             img.decompose()
 
 
+# CJK punctuation that should count as "punctuation-only" content. ASCII
+# punctuation/whitespace is already handled by `string.punctuation`/`string.whitespace`.
+_CJK_PUNCTUATION = "（）［］【】「」『』〈〉《》〔〕、，。：；！？·～—–"
+
+
+def _strip_punctuation_only_inline(
+    soup: BeautifulSoup,
+    tag_names: tuple[str, ...] = ("strong", "b", "em", "i"),
+) -> None:
+    """Unwrap inline emphasis tags whose text is only whitespace/punctuation.
+
+    WYSIWYG editors often wrap a single bracket or bullet (`<strong>[</strong>`,
+    `<strong>·</strong>`) which markdownify then renders as the visually broken
+    `**[**` / `**·**`. Since the bold has no semantic value there, we simply
+    unwrap it. Running this *before* adjacent-strong merging also lets the
+    real bold runs on either side of the bracket become siblings.
+    """
+    import string
+
+    skip = set(string.whitespace + string.punctuation + _CJK_PUNCTUATION)
+    for tag in list(soup.find_all(tag_names)):
+        if tag.find(True):  # skip if it contains child elements
+            continue
+        text = tag.get_text()
+        if text and all(ch in skip for ch in text):
+            tag.unwrap()
+
+
+def _merge_adjacent_inline(
+    soup: BeautifulSoup,
+    tag_names: tuple[str, ...] = ("strong", "b", "em", "i"),
+) -> None:
+    """Merge adjacent sibling inline-emphasis tags of the same name.
+
+    `<strong>A</strong><strong>B</strong>` and
+    `<strong>A</strong> <strong>B</strong>` (at most one whitespace-only text
+    node between) are collapsed to a single `<strong>A B</strong>`. Fixes the
+    `**A****B**` / `**A** **B**` output from markdownify at the source — the
+    post-process pass is only a fallback safety net for WYSIWYG mixes of
+    `<strong>` and `<b>` that fall outside this name-equality check.
+
+    Runs to a fixed point so 3+ consecutive siblings collapse in one call.
+    """
+    for _ in range(MAX_EMPTY_PASSES):
+        changed = False
+        for tag in list(soup.find_all(tag_names)):
+            if tag.parent is None:
+                continue  # already merged into a previous sibling
+            nxt = tag.next_sibling
+            bridge: NavigableString | None = None
+            if isinstance(nxt, NavigableString) and not nxt.strip():
+                bridge = nxt
+                nxt = nxt.next_sibling
+            if not isinstance(nxt, Tag) or nxt.name != tag.name:
+                continue
+            if bridge is not None:
+                tag.append(bridge.extract())
+            for child in list(nxt.children):
+                tag.append(child.extract())
+            nxt.decompose()
+            changed = True
+        if not changed:
+            break
+
+
 # ── Main Pipeline ──────────────────────────────────────
 
 def clean_html(raw_html: str, base_url: str) -> str | None:
@@ -285,6 +355,10 @@ def clean_html(raw_html: str, base_url: str) -> str | None:
         _unwrap_empty_spans(clean_soup)
         _collapse_single_child_div_chains(clean_soup)
         _strip_data_uri_images(clean_soup)
+        # Unwrap punctuation-only strongs first so their real-text siblings
+        # become adjacent and eligible for the merge pass below.
+        _strip_punctuation_only_inline(clean_soup)
+        _merge_adjacent_inline(clean_soup)
 
         result = clean_soup.decode_contents()
         if not result or result.replace("\u00a0", "").strip() == "":
