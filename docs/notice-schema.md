@@ -2,7 +2,7 @@
 
 ## MongoDB Document
 
-실제 dataclass 정의는 `py/src/skkuverse_crawler/notices/models.py:26-49`. 필드 이름은 camelCase로 저장된다.
+실제 dataclass 정의는 `py/src/skkuverse_crawler/notices/models.py:28-50`. 필드 이름은 camelCase로 저장된다.
 
 ```python
 @dataclass
@@ -38,7 +38,7 @@ class Notice:
 - Unique compound: `{ articleNo: 1, sourceDeptId: 1 }`
 - 같은 articleNo라도 sourceDeptId가 다르면 별개 문서 (학과별 공지는 articleNo 체계가 다를 수 있음)
 
-## 본문 필드 3종
+## 본��� 필드 4종
 
 | 필드 | 내용 | 용도 |
 |---|---|---|

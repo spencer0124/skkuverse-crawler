@@ -14,8 +14,10 @@ python -m skkuverse_crawler start                        # 스케줄러 실행
 python -m skkuverse_crawler start --module notices       # 단일 모듈
 python -m skkuverse_crawler notices --once               # 공지 1회 실행
 python -m skkuverse_crawler notices --once --dept skku-main --pages 3
-python -m skkuverse_crawler summarize                      # AI 요약 1회 실행
+python -m skkuverse_crawler summarize                      # AI 요약 1회 실행 (기본 batch-size: 50)
 python -m skkuverse_crawler summarize --batch-size 500     # 초기 backfill
+python -m skkuverse_crawler update-check                   # 최근 14일 공지 변경 감지 (Tier-2)
+python -m skkuverse_crawler update-check --days 7 --dept skku-main
 python -m skkuverse_crawler backfill-content               # cleanHtml/contentText/cleanMarkdown 재생성 (dry-run)
 python -m skkuverse_crawler backfill-content --apply       # 실제 업데이트
 python -m skkuverse_crawler backfill-content --apply --dept cheme --limit 10  # 샘플링
@@ -38,7 +40,7 @@ mypy src/                                   # 타입 체크
 
 **Incremental Crawl**: title+date 변경 감지 → 변경분만 상세 fetch. 페이지 내 전부 DB에 존재하면 early-stop. content:null 기사 자동 재크롤링.
 
-**HTML Cleaning**: 6단계 파이프라인 (`shared/html_cleaner.py`). BS4 junk 제거 → semantic 정규화(`font-weight: bold|bolder|≥600` → `<strong>`) → URL 절대경로 → nh3 태그/스타일 필터링 → 빈 요소 제거 → 구조 정리(빈 `<span>` unwrap / 단독자식 `<div>` 체인 축약 / `data:` URI 이미지 재거름).
+**HTML Cleaning**: 6단계 파이프라인 (`shared/html_cleaner.py`). BS4 junk 제거 + `data:` URI 이미지 제거 + Naver SmartEditor 레이아웃 테이블 unwrap → semantic 정규화(`font-weight: bold|bolder|≥600` → `<strong>`) + underline용 `<em>/<i>` unwrap → URL 절대경로 → nh3 태그/스타일 필터링 → 빈 요소 제거 → 구조 정리(빈 `<span>` unwrap / 단독자식 `<div>` 체인 축약 / `data:` URI 이미지 재거름 / 구두점 전용 inline 제거 / 단독자식 bold unwrap / 인접 inline 병합).
 
 **Markdown 변환**: `shared/html_to_markdown.py`. cleanHtml을 입력으로 받아 markdownify + 전처리(박스 테이블 unwrap, 첫 행 all-bold → `<thead><th>` 승격, `<td>` 내부 `<p>/<div>` flatten)로 GFM을 생성 → `cleanMarkdown` 필드에 저장. `content`/`cleanHtml`/`contentText`는 그대로 유지.
 
@@ -57,6 +59,7 @@ mypy src/                                   # 타입 체크
 | 모듈 | 타입 | 주기 |
 |------|------|------|
 | notices | CronTrigger | `*/30 * * * *` (30분) |
+| notices-update-check | CronTrigger | `10 8,14,20 * * *` (하루 3회) |
 | notices-summary | CronTrigger | `20 * * * *` (매시 20분) |
 
 ### DB 이름 규칙
@@ -76,6 +79,7 @@ mypy src/                                   # 타입 체크
 - `CRAWLER_ENV` — `production` / `development` / `test` (case-insensitive)
 - `LOG_FORMAT` — `json` (기본) / `dev` (컬러 콘솔)
 - `AI_SERVICE_URL` — AI 요약 서비스 URL. 환경별 자동 결정: `production` → `http://ai:4000`, `development`/`test` → `http://127.0.0.1:4000`. 직접 지정 시 우선
+- `CRAWL_DEPT_FILTER` — 콤마 구분 학과 ID 필터 (e.g. `skku-main,law`). 설정 시 해당 학과만 크롤링
 
 
 ## Testing
