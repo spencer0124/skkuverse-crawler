@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from skkuverse_crawler.notices.normalizer import build_notice
+from skkuverse_crawler.notices.normalizer import _inject_image_dimensions, build_notice
 from skkuverse_crawler.notices.models import NoticeDetail, NoticeListItem
 
 
@@ -105,3 +105,53 @@ class TestSourceUrl:
         )
         # urljoin("https://example.com/board.php", "") → "https://example.com/board.php"
         assert notice.sourceUrl.startswith("https://example.com/")
+
+
+# ── Image dimension injection ─────────────────────────
+
+
+class TestInjectImageDimensions:
+    def test_injects_width_height(self):
+        html = '<img src="https://example.com/a.png" alt="pic"/>'
+        dims = {"https://example.com/a.png": (800, 600)}
+        result = _inject_image_dimensions(html, dims)
+        assert 'width="800"' in result
+        assert 'height="600"' in result
+
+    def test_preserves_existing_dimensions(self):
+        html = '<img src="https://example.com/a.png" width="100" height="50"/>'
+        dims = {"https://example.com/a.png": (800, 600)}
+        result = _inject_image_dimensions(html, dims)
+        assert 'width="100"' in result
+        assert 'height="50"' in result
+
+    def test_no_match_returns_unchanged(self):
+        html = '<img src="https://example.com/a.png"/>'
+        dims = {"https://example.com/other.png": (800, 600)}
+        result = _inject_image_dimensions(html, dims)
+        assert "width" not in result
+
+    def test_empty_dimensions_returns_unchanged(self):
+        html = '<img src="https://example.com/a.png"/>'
+        result = _inject_image_dimensions(html, {})
+        assert result == html
+
+    def test_build_notice_passes_dimensions_to_cleanhtml(self):
+        detail = NoticeDetail(
+            content='<p><img src="https://example.com/a.png"/></p>',
+            contentText="",
+        )
+        notice = build_notice(
+            _item(detail_path="?articleNo=1"),
+            detail,
+            department="test",
+            source_dept_id="test",
+            base_url="https://example.com/",
+            image_dimensions={"https://example.com/a.png": (400, 300)},
+        )
+        assert notice.cleanHtml is not None
+        assert 'width="400"' in notice.cleanHtml
+        assert 'height="300"' in notice.cleanHtml
+        # cleanMarkdown should contain dimension hint
+        assert notice.cleanMarkdown is not None
+        assert "(400x300)" in notice.cleanMarkdown

@@ -23,8 +23,9 @@ py/src/skkuverse_crawler/
 │   ├── config.py               ← 중앙집중 환경 설정 (frozen Config dataclass + 싱글턴)
 │   ├── db.py                   ← Motor async MongoDB 싱글턴 (config 기반 DB suffix)
 │   ├── logger.py               ← structlog (json/dev 포맷, 시작 시 mode_label 로깅)
-│   ├── fetcher.py              ← httpx + tenacity retry(3회, exponential backoff)
-│   └── html_cleaner.py         ← 5단계 HTML 정제 파이프라인
+│   ├── fetcher.py              ← httpx + retry(3회, exponential backoff)
+│   ├── html_cleaner.py         ← 6단계 HTML 정제 파이프라인
+│   └── html_to_markdown.py     ← cleanHtml → GFM 마크다운 변환
 │
 ├── notices/                    ← 공지 크롤러 모듈
 │   ├── module.py               ← NoticesModule (CrawlModule 구현)
@@ -34,6 +35,11 @@ py/src/skkuverse_crawler/
 │   ├── models.py               ← dataclass: NoticeListItem, NoticeDetail, Notice
 │   ├── normalizer.py           ← build_notice 팩토리
 │   ├── dedup.py                ← incremental crawl + upsert + null content 재크롤링
+│   ├── constants.py            ← SERVICE_START_DATE 등 상수
+│   ├── hashing.py              ← compute_content_hash (SHA256)
+│   ├── image_verifier.py       ← 공지 이미지 URL 도달 가능 여부 검증
+│   ├── backfill.py             ← cleanHtml/contentText/cleanMarkdown 재생성
+│   ├── update_checker.py       ← Tier-2 변경 감지 (contentHash 비교)
 │   ├── parser.py               ← BeautifulSoup4 래퍼 (load_html, extract_text, extract_attr)
 │   ├── config/
 │   │   ├── loader.py           ← departments.json 로드 + 셀렉터 검증
@@ -56,6 +62,10 @@ py/src/skkuverse_crawler/
 | `python -m skkuverse_crawler notices --once` | notices 1회 실행 (incremental) |
 | `python -m skkuverse_crawler notices --once --all` | notices 전체 크롤 (non-incremental) |
 | `python -m skkuverse_crawler notices --once --dept skku-main --pages 3` | 단일 학과, 최대 3페이지 |
+| `python -m skkuverse_crawler update-check` | 최근 14일 공지 변경 감지 (Tier-2) |
+| `python -m skkuverse_crawler backfill-content` | cleanHtml/contentText/cleanMarkdown 재생성 (dry-run) |
+| `python -m skkuverse_crawler backfill-content --apply` | 실제 업데이트 |
+| `python -m skkuverse_crawler summarize` | AI 요약 1회 실행 |
 | `python -m skkuverse_crawler start` | 전체 스케줄러 (모든 모듈 cron/interval) |
 | `python -m skkuverse_crawler start --module notices` | 단일 모듈만 스케줄링 |
 
@@ -71,10 +81,19 @@ cli.py (Click CLI / APScheduler)
       → 3. find_existing_meta() + should_continue() → incremental 판단
       → 4. crawl_detail(ref: DetailRef) → NoticeDetail | None
       → 5. build_notice(list_item, detail, config) → Notice
-      → 6. upsert_notice() → inserted | updated
+          → clean_html() → cleanHtml
+          → _text_from_clean_html() → contentText
+          → html_to_markdown() → cleanMarkdown
+          → compute_content_hash() → contentHash
+          → verify_notice_images() (이미지 URL 검증)
+      → 6. upsert_notice() / update_with_history() → inserted | updated | touched
     → DeptResult (성공/실패/소요시간)
   → Summary logging
   → close_client()
+
+[update-check 모드]
+  → update_checker.run_update_check(departments)
+    → 최근 N일 공지 조회 → 상세 재fetch → contentHash 비교 → 변경분 업데이트
 ```
 
 ## Key Design Decisions

@@ -541,3 +541,105 @@ def test_nowon_notice_end_to_end():
     assert "봉사활동 개요" in md
     assert "문의" in md
     assert "02-6958-8961" in md
+
+
+# ── Dash-bullet paragraph conversion ─────────────────
+
+def test_dash_bullet_paragraphs_become_tight_list():
+    """Consecutive <p>- text</p> should become a tight markdown list."""
+    html = (
+        "<p><strong>1. 모집분야</strong></p>"
+        "<p>- Supply &amp; Trading</p>"
+        "<p>- 재무</p>"
+        "<p>- 인사</p>"
+    )
+    md = html_to_markdown(html)
+    assert md is not None
+    # Items should be tight (no blank line between them)
+    assert "- Supply & Trading\n- 재무\n- 인사" in md
+
+
+def test_dash_bullet_preserves_inline_markup():
+    """Child tags (strong, links) inside dash-bullet <p> must survive."""
+    html = (
+        "<p>- <strong>필수</strong> 항목</p>"
+        "<p>- <a href=\"https://example.com\">링크</a> 참고</p>"
+    )
+    md = html_to_markdown(html)
+    assert md is not None
+    assert "**필수** 항목" in md
+    assert "[링크]" in md
+
+
+def test_single_dash_paragraph_not_converted():
+    """A lone <p>- text</p> must NOT be wrapped in <ul> (no false positive)."""
+    html = "<p>- 서류전형 마감: 3월 31일</p><p>다음 단계는 면접입니다.</p>"
+    md = html_to_markdown(html)
+    assert md is not None
+    # Should remain as prose paragraph, not a list item
+    assert "다음 단계는 면접입니다." in md
+
+
+def test_dash_bullet_skips_br_between_paragraphs():
+    """<br> between consecutive dash-<p> should not break the group."""
+    html = (
+        "<p>- 항목 A</p>"
+        "<br/>"
+        "<p>- 항목 B</p>"
+        "<p>- 항목 C</p>"
+    )
+    md = html_to_markdown(html)
+    assert md is not None
+    assert "- 항목 A\n- 항목 B\n- 항목 C" in md
+
+
+def test_dash_without_space_not_matched():
+    """<p>-텍스트</p> (no space after dash) must NOT be treated as bullet."""
+    html = "<p>-텍스트A</p><p>-텍스트B</p>"
+    md = html_to_markdown(html)
+    assert md is not None
+    # Should remain as paragraphs, not converted to list
+    assert "-텍스트A" in md
+    assert "-텍스트B" in md
+
+
+# ── Paren-style ordered list escape ───────────────────
+
+
+def test_paren_ordered_list_marker_escaped():
+    """Bare '1) text' in a <p> should be escaped to prevent CommonMark list."""
+    md = html_to_markdown("<p>1) 직전학기 평점</p>")
+    assert md is not None
+    assert r"1\)" in md
+    assert not md.lstrip().startswith("1) ")
+
+
+def test_multiple_paren_numbered_lines_escaped():
+    md = html_to_markdown(
+        "<p>1) 첫 번째</p><p>2) 두 번째</p><p>3) 세 번째</p>"
+    )
+    assert md is not None
+    assert r"1\)" in md
+    assert r"2\)" in md
+    assert r"3\)" in md
+
+
+def test_bio_scholarship_notice_paren_and_dot_escaped():
+    """생명과학과 동문회 장학금: both 1. and 1) patterns should be escaped."""
+    html = (
+        "<p>1. 장학명 : 동문회 장학금</p>"
+        "<p>4. 선발자격</p>"
+        "<p>1) 직전학기 평점평균 2.0 이상</p>"
+        "<p>2) 가정형편이 곤란한 자</p>"
+        "<p>3) 장학금 신청사유 고려하여 선발</p>"
+        "<p>5. 신청기한 : 2026.04.05</p>"
+    )
+    md = html_to_markdown(html)
+    assert md is not None
+    # dot-style escaped
+    assert r"1\." in md
+    assert r"5\." in md
+    # paren-style escaped
+    assert r"1\)" in md
+    assert r"2\)" in md
+    assert r"3\)" in md
