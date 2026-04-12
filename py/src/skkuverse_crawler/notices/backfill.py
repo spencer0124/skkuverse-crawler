@@ -79,6 +79,7 @@ def _regenerate(doc: dict[str, Any], base_url: str) -> dict[str, Any] | None:
         payload["sourceUrl"] = new_source_url
 
     if has_content:
+        assert isinstance(content, str)
         cleaned = clean_html(content, base_url)
         if cleaned and len(cleaned.encode()) > MAX_CONTENT_BYTES:
             logger.warning(
