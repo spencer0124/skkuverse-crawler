@@ -601,3 +601,45 @@ def test_dash_without_space_not_matched():
     # Should remain as paragraphs, not converted to list
     assert "-텍스트A" in md
     assert "-텍스트B" in md
+
+
+# ── Paren-style ordered list escape ───────────────────
+
+
+def test_paren_ordered_list_marker_escaped():
+    """Bare '1) text' in a <p> should be escaped to prevent CommonMark list."""
+    md = html_to_markdown("<p>1) 직전학기 평점</p>")
+    assert md is not None
+    assert r"1\)" in md
+    assert not md.lstrip().startswith("1) ")
+
+
+def test_multiple_paren_numbered_lines_escaped():
+    md = html_to_markdown(
+        "<p>1) 첫 번째</p><p>2) 두 번째</p><p>3) 세 번째</p>"
+    )
+    assert md is not None
+    assert r"1\)" in md
+    assert r"2\)" in md
+    assert r"3\)" in md
+
+
+def test_bio_scholarship_notice_paren_and_dot_escaped():
+    """생명과학과 동문회 장학금: both 1. and 1) patterns should be escaped."""
+    html = (
+        "<p>1. 장학명 : 동문회 장학금</p>"
+        "<p>4. 선발자격</p>"
+        "<p>1) 직전학기 평점평균 2.0 이상</p>"
+        "<p>2) 가정형편이 곤란한 자</p>"
+        "<p>3) 장학금 신청사유 고려하여 선발</p>"
+        "<p>5. 신청기한 : 2026.04.05</p>"
+    )
+    md = html_to_markdown(html)
+    assert md is not None
+    # dot-style escaped
+    assert r"1\." in md
+    assert r"5\." in md
+    # paren-style escaped
+    assert r"1\)" in md
+    assert r"2\)" in md
+    assert r"3\)" in md

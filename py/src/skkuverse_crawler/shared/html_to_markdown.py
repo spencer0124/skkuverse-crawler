@@ -345,6 +345,8 @@ _HARDBREAK_BEFORE_BULLET_RE = re.compile(r"[ \t]{2,}\n(?=- )")
 # plain-text content.  Escaping prevents markdown renderers from creating
 # spurious numbered lists with progressive indentation.
 _ORDERED_LIST_ESCAPE_RE = re.compile(r"^(\d+)\. ", re.MULTILINE)
+# CommonMark also treats `1) ` as an ordered-list marker (paren style).
+_ORDERED_PAREN_ESCAPE_RE = re.compile(r"^(\d+)\) ", re.MULTILINE)
 # Same idea for a trailing hard-break immediately before a blank line
 # (the last item of a br-separated pseudo-list): the hard break has no
 # visible effect and just confuses list termination heuristics.
@@ -496,6 +498,7 @@ def _postprocess(md: str) -> str:
 
     # Escape accidental ordered-list markers (e.g. "1. 봉사활동 개요").
     md = _ORDERED_LIST_ESCAPE_RE.sub(r"\1\. ", md)
+    md = _ORDERED_PAREN_ESCAPE_RE.sub(r"\1\) ", md)
 
     # Neutralize GFM strikethrough risk from `~` in prose.
     md = _replace_tildes_safely(md)
