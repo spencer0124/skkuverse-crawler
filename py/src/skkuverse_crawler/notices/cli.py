@@ -95,3 +95,25 @@ def backfill_content_cli(apply: bool, dept: tuple[str, ...], limit: int | None) 
         dept_filter=dept if dept else None,
         limit=limit,
     )))
+
+
+@click.command("backfill-attachment-referer")
+@click.option("--apply", is_flag=True, help="Actually update documents (default: dry-run)")
+@click.option("--dept", multiple=True, help="Restrict to specific sourceDeptId(s)")
+@click.option("--limit", type=int, default=None, help="Stop after N documents")
+def backfill_attachment_referer_cli(apply: bool, dept: tuple[str, ...], limit: int | None) -> None:
+    """Add referer field to gnuboard attachment metadata.
+
+    Adds the detail-page URL as `referer` so the server proxy can
+    establish a PHP session before downloading. No HTTP requests.
+    """
+    import sys
+
+    from .backfill_attachment_referer import run as run_backfill_referer
+
+    configure_logging()
+    sys.exit(asyncio.run(run_backfill_referer(
+        apply=apply,
+        dept_filter=dept if dept else None,
+        limit=limit,
+    )))

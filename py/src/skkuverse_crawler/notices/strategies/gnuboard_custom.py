@@ -104,7 +104,7 @@ class GnuboardCustomStrategy:
                     file_href = f"{origin}{file_href}"
                 elif not file_href.startswith("http"):
                     file_href = f"{origin}/{file_href}"
-                attachments.append({"name": name, "url": file_href})
+                attachments.append({"name": name, "url": file_href, "referer": url})
 
             return NoticeDetail(content=content, contentText=content_text, attachments=attachments)
         except Exception as exc:
