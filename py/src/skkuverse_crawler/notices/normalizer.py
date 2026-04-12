@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from datetime import datetime, timezone
+from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup, Tag
 
@@ -66,7 +67,7 @@ def build_notice(
     elif list_item.detailPath.startswith("?"):
         source_url = f"{base_url}{list_item.detailPath}"
     else:
-        source_url = f"{base_url}?mode=view&articleNo={list_item.articleNo}"
+        source_url = urljoin(base_url, list_item.detailPath)
 
     cleaned = clean_html(detail.content, base_url) if detail and detail.content else None
     # Resolve relative <img src> / <a href> in the raw content so the
@@ -94,9 +95,14 @@ def build_notice(
 
     clean_markdown = html_to_markdown(cleaned)
 
+    # Prefer full title from detail page over potentially truncated list title
+    title = list_item.title
+    if detail and detail.title:
+        title = detail.title
+
     return Notice(
         articleNo=list_item.articleNo,
-        title=list_item.title,
+        title=title,
         category=list_item.category,
         author=list_item.author,
         department=department,

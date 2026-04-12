@@ -450,25 +450,25 @@ def test_nbsp_normalized_in_prose_text():
     assert "1. 일정 안내" in md
 
 
-# ── Underline preservation ─────────────────────────────
+# ── Underline stripped (no markdown equivalent) ───────
 
-def test_underline_tag_emits_raw_html():
+def test_underline_tag_stripped_text_preserved():
     md = html_to_markdown("<p>before <u>신청기한</u> after</p>")
     assert md is not None
-    assert "<u>신청기한</u>" in md
-
-
-def test_underline_tag_with_empty_content_dropped():
-    md = html_to_markdown("<p>before <u>   </u> after</p>")
-    assert md is not None
-    # Empty underline should not emit useless `<u>   </u>`
+    assert "신청기한" in md
     assert "<u>" not in md
 
 
-def test_underline_tag_mid_sentence_preserved():
-    # Real pattern from Elsevier notice: underline on a noun inside prose.
+def test_underline_tag_empty_content_dropped():
+    md = html_to_markdown("<p>before <u>   </u> after</p>")
+    assert md is not None
+    assert "<u>" not in md
+
+
+def test_underline_tag_mid_sentence_text_kept():
     md = html_to_markdown(
         "<p>원활한 간식 준비를 위해 <u>신청기한</u>을 반드시 준수해 주시기 바랍니다.</p>"
     )
     assert md is not None
-    assert "<u>신청기한</u>을" in md
+    assert "신청기한을" in md or "신청기한 을" in md
+    assert "<u>" not in md

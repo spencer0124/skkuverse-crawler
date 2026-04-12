@@ -19,6 +19,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import Any
+from urllib.parse import urljoin
 
 from ..shared.db import close_client, get_db
 from ..shared.html_cleaner import clean_html
@@ -38,40 +39,71 @@ def _base_url_map() -> dict[str, str]:
     return {d["id"]: d["baseUrl"] for d in load_and_validate()}
 
 
+def _rebuild_source_url(doc: dict[str, Any], base_url: str) -> str | None:
+    """Recompute ``sourceUrl`` from stored ``detailPath`` + ``base_url``.
+
+    Uses the same logic as ``normalizer.build_notice`` so future crawls and
+    backfill produce identical URLs.  Returns ``None`` when the existing
+    ``sourceUrl`` is already correct (no update needed).
+    """
+    detail_path = doc.get("detailPath", "")
+    if not detail_path:
+        return None
+
+    if detail_path.startswith("http"):
+        new_url = detail_path
+    elif detail_path.startswith("?"):
+        new_url = f"{base_url}{detail_path}"
+    else:
+        new_url = urljoin(base_url, detail_path)
+
+    return new_url if new_url != doc.get("sourceUrl") else None
+
+
 def _regenerate(doc: dict[str, Any], base_url: str) -> dict[str, Any] | None:
-    """Rebuild cleanHtml/contentText/cleanMarkdown from a document's `content`.
+    """Rebuild cleanHtml/contentText/cleanMarkdown/sourceUrl from a document.
 
     Returns a ``$set`` payload or ``None`` if the doc should be skipped.
     """
     content = doc.get("content")
-    if not isinstance(content, str) or not content:
+    has_content = isinstance(content, str) and bool(content)
+
+    new_source_url = _rebuild_source_url(doc, base_url)
+
+    if not has_content and not new_source_url:
         return None
 
-    cleaned = clean_html(content, base_url)
-    if cleaned and len(cleaned.encode()) > MAX_CONTENT_BYTES:
-        logger.warning(
-            "oversized_content_dropped",
-            articleNo=doc.get("articleNo"),
-            dept=doc.get("sourceDeptId"),
-            size=len(cleaned.encode()),
-        )
-        cleaned = None
+    payload: dict[str, Any] = {"backfilledAt": datetime.now(timezone.utc)}
 
-    if cleaned:
-        content_text: str | None = _text_from_clean_html(cleaned)
-    else:
-        # Keep the existing contentText as a fallback rather than clearing it.
-        content_text = doc.get("contentText")
+    if new_source_url:
+        payload["sourceUrl"] = new_source_url
 
-    clean_markdown = html_to_markdown(cleaned)
+    if has_content:
+        cleaned = clean_html(content, base_url)
+        if cleaned and len(cleaned.encode()) > MAX_CONTENT_BYTES:
+            logger.warning(
+                "oversized_content_dropped",
+                articleNo=doc.get("articleNo"),
+                dept=doc.get("sourceDeptId"),
+                size=len(cleaned.encode()),
+            )
+            cleaned = None
 
-    return {
-        "cleanHtml": cleaned,
-        "contentText": content_text,
-        "cleanMarkdown": clean_markdown,
-        "contentHash": compute_content_hash(cleaned),
-        "backfilledAt": datetime.now(timezone.utc),
-    }
+        if cleaned:
+            content_text: str | None = _text_from_clean_html(cleaned)
+        else:
+            content_text = doc.get("contentText")
+
+        clean_markdown = html_to_markdown(cleaned)
+
+        payload.update({
+            "cleanHtml": cleaned,
+            "contentText": content_text,
+            "cleanMarkdown": clean_markdown,
+            "contentHash": compute_content_hash(cleaned),
+        })
+
+    return payload
 
 
 async def run(
@@ -90,7 +122,7 @@ async def run(
 
     base_urls = _base_url_map()
 
-    match: dict[str, Any] = {"content": {"$ne": None}}
+    match: dict[str, Any] = {"$or": [{"content": {"$ne": None}}, {"detailPath": {"$exists": True}}]}
     if dept_filter:
         match["sourceDeptId"] = {"$in": list(dept_filter)}
 
@@ -117,7 +149,7 @@ async def run(
     prompt = (
         f"\n  DB: {cfg.mongo_db_name}  ({cfg.env.value})\n"
         f"  matched: {pre_count} docs\n"
-        f"  fields:  cleanHtml, contentText, cleanMarkdown, contentHash, backfilledAt\n"
+        f"  fields:  sourceUrl, cleanHtml, contentText, cleanMarkdown, contentHash, backfilledAt\n"
         f"  limit:   {limit if limit is not None else 'all'}\n\n"
         f"Regenerate these fields? [yes/N]: "
     )

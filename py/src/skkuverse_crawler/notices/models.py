@@ -21,6 +21,7 @@ class NoticeDetail:
     content: str
     contentText: str
     attachments: list[dict[str, str]] = field(default_factory=list)  # [{name, url}]
+    title: str | None = None  # full title from detail page (overrides list title)
 
 
 @dataclass

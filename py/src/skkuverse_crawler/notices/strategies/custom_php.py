@@ -130,7 +130,19 @@ class CustomPhpStrategy:
                 seen_urls.add(full_url)
                 attachments.append({"name": name, "url": full_url})
 
-            return NoticeDetail(content=content, contentText=content_text, attachments=attachments)
+            detail_title: str | None = None
+            title_selector = config.get("selectors", {}).get("detailTitle")
+            if title_selector:
+                title_el = soup.select_one(title_selector)
+                if title_el:
+                    detail_title = extract_text(title_el).strip() or None
+
+            return NoticeDetail(
+                content=content,
+                contentText=content_text,
+                attachments=attachments,
+                title=detail_title,
+            )
         except Exception as exc:
             logger.error("custom_php_detail_failed", articleNo=ref["articleNo"], error=str(exc))
             return None

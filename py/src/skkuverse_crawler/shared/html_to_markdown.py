@@ -36,23 +36,25 @@ logger = get_logger("html_to_markdown")
 # ── Preprocessing ──────────────────────────────────────
 
 def _unwrap_box_tables(soup: BeautifulSoup) -> None:
-    """Replace single-cell wrapper tables with their cell contents.
+    """Replace layout wrapper tables with their cell contents.
 
-    A table is a "box" if it has exactly one `<tr>` which has exactly one
-    `<td>`/`<th>`. `colspan`/`rowspan` are ignored — a 1-cell table is a
-    box regardless of span attributes.
+    A table is a "box" if every ``<tr>`` has exactly one ``<td>``/``<th>``
+    (single-column layout table).  This covers the common 1-row-1-cell
+    wrapper **and** multi-row single-column layout tables that Naver
+    SmartEditor and similar WYSIWYG editors produce (after class info has
+    been stripped by nh3).
     """
     for table in list(soup.find_all("table")):
         trs = table.find_all("tr")
-        if len(trs) != 1:
+        if not trs:
             continue
-        cells = trs[0].find_all(["td", "th"])
-        if len(cells) != 1:
+        if not all(len(tr.find_all(["td", "th"])) == 1 for tr in trs):
             continue
-        cell = cells[0]
-        for child in list(cell.children):
-            if isinstance(child, (Tag, NavigableString)):
-                table.insert_before(child.extract())
+        for tr in trs:
+            cell = tr.find_all(["td", "th"])[0]
+            for child in list(cell.children):
+                if isinstance(child, (Tag, NavigableString)):
+                    table.insert_before(child.extract())
         table.decompose()
 
 
@@ -172,11 +174,68 @@ def _flatten_li_blocks(soup: BeautifulSoup) -> None:
                 child.unwrap()
 
 
+_BULLET_PREFIX_RE = re.compile(r"^[·●○▶▷◆◇※►•]\s*")
+
+
+def _convert_pseudo_bullets(soup: BeautifulSoup) -> None:
+    """Convert consecutive ``<p>`` elements starting with bullet chars to ``<ul><li>``.
+
+    Korean notices commonly use middle-dot (·) or other symbols as pseudo-
+    bullets inside ``<p>`` tags.  markdownify treats these as prose paragraphs
+    with double newlines between them, creating excessive spacing.  Converting
+    to semantic ``<ul><li>`` produces tight markdown lists.
+
+    Only fires when 2+ consecutive bullet paragraphs are found to avoid
+    false positives on isolated bullet-like text.
+    """
+    processed: set[int] = set()
+    for p in list(soup.find_all("p")):
+        if id(p) in processed or p.parent is None:
+            continue
+        text = p.get_text()
+        if not text or not _BULLET_PREFIX_RE.match(text.strip()):
+            continue
+
+        # Collect consecutive bullet <p> siblings
+        run: list[Tag] = [p]
+        nxt = p.next_sibling
+        while nxt is not None:
+            if isinstance(nxt, NavigableString) and not nxt.strip():
+                nxt = nxt.next_sibling
+                continue
+            if isinstance(nxt, Tag) and nxt.name == "p":
+                nxt_text = nxt.get_text()
+                if nxt_text and _BULLET_PREFIX_RE.match(nxt_text.strip()):
+                    run.append(nxt)
+                    nxt = nxt.next_sibling
+                    continue
+            break
+
+        if len(run) < 2:
+            continue
+
+        ul = soup.new_tag("ul")
+        p.insert_before(ul)
+        for bp in run:
+            processed.add(id(bp))
+            li = soup.new_tag("li")
+            for child in list(bp.children):
+                li.append(child.extract())
+            # Strip the bullet prefix from the first text node
+            first_text = li.find(string=True)
+            if first_text:
+                cleaned = _BULLET_PREFIX_RE.sub("", str(first_text), count=1)
+                first_text.replace_with(NavigableString(cleaned))
+            ul.append(li)
+            bp.decompose()
+
+
 def _preprocess(html: str) -> str:
     soup = BeautifulSoup(html, "html.parser")
     # nbsp normalization must run first so downstream passes see ASCII
     # spaces in text (e.g. `- item` where Word dropped `-\xa0item`).
     _normalize_nbsp(soup)
+    _convert_pseudo_bullets(soup)
     _unwrap_box_tables(soup)
     _promote_header_rows(soup)
     _flatten_cell_blocks(soup)
@@ -231,13 +290,6 @@ class _SkkuMarkdownConverter(MarkdownConverter):
        TODO: switch to `<img src alt width height />` once the app supports
        raw-HTML passthrough in markdown.
 
-    2. **Underline preservation via raw `<u>`.** Markdown has no underline
-       syntax (`_text_` is italic). The default markdownify `convert_u`
-       drops the tag and keeps only the text, silently losing the author's
-       emphasis. We emit `<u>text</u>` raw HTML so mobile renderers that
-       support inline HTML render it as underline; renderers that don't
-       fall back to plain text — which is the same as the current behavior,
-       so there is no regression risk.
     """
 
     def convert_img(self, el, text, parent_tags):  # type: ignore[override]
@@ -264,14 +316,6 @@ class _SkkuMarkdownConverter(MarkdownConverter):
 
         title_part = f' "{title}"' if title else ""
         return f"![{alt_final}]({src}{title_part})"
-
-    def convert_u(self, el, text, parent_tags):  # type: ignore[override]
-        # GFM passes raw inline HTML through. If the renderer supports <u>
-        # it shows as underline; otherwise it falls through as plain text.
-        # Empty content is pointless, just drop.
-        if not text or not text.strip():
-            return text
-        return f"<u>{text}</u>"
 
 
 def _replace_tildes_safely(md: str) -> str:

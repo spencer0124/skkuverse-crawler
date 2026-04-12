@@ -40,7 +40,20 @@ async def find_existing_meta(
 
 
 def has_changed(item: NoticeListItem, existing: dict[str, Any]) -> bool:
-    return item.title != existing["title"] or item.date != existing["date"]
+    if item.date != existing["date"]:
+        return True
+    new_title = item.title
+    old_title = existing["title"]
+    if new_title == old_title:
+        return False
+    # Truncated list title (ends with "...") that matches the DB's full
+    # title prefix is NOT a real change — the list page just shows a
+    # shorter version than the detail-page title stored in the DB.
+    if new_title.endswith("..."):
+        prefix = new_title[:-3]
+        if old_title.startswith(prefix):
+            return False
+    return True
 
 
 def should_continue(
