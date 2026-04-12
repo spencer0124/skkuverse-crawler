@@ -401,7 +401,7 @@ def test_mixed_bullet_and_prose_in_single_paragraph():
     md = html_to_markdown(html)
     assert md is not None
     # `- 공지된` should appear at a new line with no leading "  " above
-    assert "2. 유의사항\n- 공지된" in md
+    assert r"2\. 유의사항" in md
     assert "- 공지된 바와 같이..." in md
     assert "- 프로그램 종료 후..." in md
 
@@ -447,7 +447,7 @@ def test_nbsp_normalized_in_prose_text():
     md = html_to_markdown("<p>1.\u00a0일정\u00a0안내</p>")
     assert md is not None
     assert "\u00a0" not in md
-    assert "1. 일정 안내" in md
+    assert r"1\. 일정 안내" in md
 
 
 # ── Underline stripped (no markdown equivalent) ───────
@@ -472,3 +472,72 @@ def test_underline_tag_mid_sentence_text_kept():
     assert md is not None
     assert "신청기한을" in md or "신청기한 을" in md
     assert "<u>" not in md
+
+
+# ── Ordered list escape ───────────────────────────────
+
+
+def test_ordered_list_marker_escaped():
+    """Bare '1. text' in a <p> should be escaped to prevent list rendering."""
+    md = html_to_markdown("<p>1. 봉사활동 개요</p>")
+    assert md is not None
+    assert r"1\." in md
+    # Should NOT render as a markdown list item
+    assert not md.lstrip().startswith("1. ")
+
+
+def test_multiple_numbered_lines_escaped():
+    md = html_to_markdown(
+        "<p>1. 첫 번째</p><p>2. 두 번째</p><p>3. 세 번째</p>"
+    )
+    assert md is not None
+    assert r"1\." in md
+    assert r"2\." in md
+    assert r"3\." in md
+
+
+def test_real_ol_converted_to_dash_bullets():
+    """A real <ol><li> list should become '- ' bullets (ol→ul in preprocess)."""
+    md = html_to_markdown("<ol><li>First</li><li>Second</li></ol>")
+    assert md is not None
+    assert "- First" in md
+    assert "- Second" in md
+
+
+# ── End-to-end: pre → cleanHtml → markdown ───────────
+
+
+def test_nowon_notice_end_to_end():
+    """노원평생학습한마당 notice: full pipeline produces correct markdown."""
+    raw_html = (
+        '<pre class="pre">서울시 노원평생학습관에서 자원봉사자를 모집합니다.\n\n'
+        "1. 봉사활동 개요\n"
+        " - 분야: 문화·체육·예술·관광\n"
+        " - 대상: 대학생 15명\n\n"
+        "2. 일시 및 장소\n"
+        " - 일시: 2026.5.9.(토) 09:00～13:00\n\n"
+        "3. 신청방법: 1365포털 검색\n\n"
+        "4.  문의: 02-6958-8961</pre>\n"
+        '<img alt="poster" src="https://www.skku.edu/img.png"/>'
+    )
+    base = "https://www.skku.edu/skku/campus/skk_comm/notice.do"
+    cleaned = clean_html(raw_html, base)
+    assert cleaned is not None
+
+    md = html_to_markdown(cleaned)
+    assert md is not None
+
+    # Numbered items should be escaped — not rendered as list
+    assert r"1\." in md
+    assert r"4\." in md
+
+    # Image should NOT be indented (not inside a list)
+    for line in md.split("\n"):
+        if "poster" in line:
+            assert line.startswith("!"), f"Image line should not be indented: {line!r}"
+            break
+
+    # All content preserved
+    assert "봉사활동 개요" in md
+    assert "문의" in md
+    assert "02-6958-8961" in md

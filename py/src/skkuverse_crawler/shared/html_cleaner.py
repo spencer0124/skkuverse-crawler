@@ -167,6 +167,57 @@ def _collapse_single_child_div_chains(soup: BeautifulSoup, max_passes: int = 5) 
             break
 
 
+def _convert_pre_to_paragraphs(soup: BeautifulSoup) -> None:
+    """Replace ``<pre>`` blocks with ``<p>`` + ``<br>`` elements.
+
+    ``<pre>`` is not in ``ALLOWED_TAGS``, so nh3 strips the wrapper and
+    leaves raw text with literal ``\\n``.  That text then leaks into
+    markdown as accidental list syntax (``1. ``, ``- ``).
+
+    This function converts each ``<pre>`` before nh3 runs:
+      - Split text on blank lines (``\\n\\n``) → separate ``<p>`` elements
+      - Single ``\\n`` within a paragraph → ``<br>``
+    Non-text children (e.g. ``<img>`` after the text) are preserved as
+    siblings after the converted paragraphs.
+    """
+    for pre in soup.find_all("pre"):
+        text = pre.get_text()
+        if not text or not text.strip():
+            pre.unwrap()
+            continue
+
+        # Collect any non-text children (images, links, etc.) to re-append
+        trailing_tags = [
+            child.extract()
+            for child in list(pre.children)
+            if isinstance(child, Tag)
+        ]
+
+        # Split on blank lines for paragraph groups
+        paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
+        if not paragraphs:
+            pre.unwrap()
+            continue
+
+        # Build replacement elements
+        new_elements: list[Tag] = []
+        for para_text in paragraphs:
+            p = soup.new_tag("p")
+            lines = para_text.split("\n")
+            for i, line in enumerate(lines):
+                if i > 0:
+                    p.append(soup.new_tag("br"))
+                p.append(NavigableString(line))
+            new_elements.append(p)
+
+        # Replace <pre> with the new <p> elements + trailing tags
+        for elem in new_elements:
+            pre.insert_before(elem)
+        for tag in trailing_tags:
+            pre.insert_before(tag)
+        pre.decompose()
+
+
 def _unwrap_naver_smarteditor_tables(soup: BeautifulSoup) -> None:
     """Unwrap Naver SmartEditor layout tables (class ``__se_tbl_ext``).
 
@@ -327,12 +378,14 @@ def _merge_adjacent_inline(
 
 def clean_html(raw_html: str, base_url: str) -> str | None:
     """
-    Clean raw HTML for mobile rendering. 5-step pipeline:
-    1. Junk element removal
-    2. Semantic tag normalization (inline elements only)
+    Clean raw HTML for mobile rendering. 6-step pipeline:
+    1. Junk element removal (+ 1.5 data URI image strip, 1.6 SmartEditor table unwrap)
+    2. Semantic tag normalization (+ 2.5 underline em/i unwrap)
     3. URL absolute path conversion
     4. Tag allowlist + style property filtering via nh3
     5. Empty element cleanup
+    6. Structural cleanup (empty span unwrap, div chain collapse, data URI re-strip,
+       punctuation-only inline strip, sole-child bold unwrap, adjacent inline merge)
     """
     if not raw_html or raw_html.strip() == "":
         return None
@@ -359,6 +412,13 @@ def clean_html(raw_html: str, base_url: str) -> str | None:
         # indistinguishable from data tables, so unwrap while the class
         # is still available.
         _unwrap_naver_smarteditor_tables(soup)
+
+        # ── Step 1.7: Convert <pre> blocks to <p>+<br> ───
+        # <pre> is not in ALLOWED_TAGS, so nh3 strips the wrapper and leaves
+        # raw text with literal \n.  That text then leaks into markdown as
+        # accidental list syntax ("1. ", "- ").  Converting before nh3
+        # preserves line structure as block elements.
+        _convert_pre_to_paragraphs(soup)
 
         # ── Step 2: Semantic tag normalization ────────────
         for el in soup.select("[style]"):
