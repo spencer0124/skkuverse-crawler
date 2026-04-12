@@ -364,3 +364,111 @@ def test_postprocess_still_cleans_inline_empty_strong():
     # checking the resulting string has no empty `** **` pair.
     assert md is not None
     assert "** **" not in md
+
+
+# ── Tight-list normalization ───────────────────────────
+
+def test_br_separated_bullets_become_tight_list():
+    # The real-world skkumed M3 pattern: <p> with <br/>-separated lines
+    # each starting with "- ". Must emit a tight list (no hard breaks
+    # between items) so the mobile parser renders all as bullets.
+    html = (
+        "<p>- 5월 지급<br/>"
+        "- 여름방학 연수<br/>"
+        "- 8~9월 발표회</p>"
+    )
+    md = html_to_markdown(html)
+    assert md is not None
+    # All three items present at line start, no hard-break "  " trailing
+    lines = md.split("\n")
+    assert "- 5월 지급" in lines
+    assert "- 여름방학 연수" in lines
+    assert "- 8～9월 발표회" in lines  # tilde also replaced
+    # None of the list lines should still carry a trailing hard-break
+    for ln in lines:
+        if ln.startswith("- "):
+            assert not ln.endswith("  "), f"bullet line still has hard break: {ln!r}"
+
+
+def test_mixed_bullet_and_prose_in_single_paragraph():
+    # Ordered header followed by unordered bullets, all br-separated.
+    # The hard breaks before every `- ` line must get stripped.
+    html = (
+        "<p>2. 유의사항<br/>"
+        "- 공지된 바와 같이...<br/>"
+        "- 프로그램 종료 후...</p>"
+    )
+    md = html_to_markdown(html)
+    assert md is not None
+    # `- 공지된` should appear at a new line with no leading "  " above
+    assert "2. 유의사항\n- 공지된" in md
+    assert "- 공지된 바와 같이..." in md
+    assert "- 프로그램 종료 후..." in md
+
+
+def test_tight_list_fix_does_not_touch_hard_break_inside_paragraph():
+    # A real intra-paragraph hard break (not before a bullet) must survive.
+    html = "<p>line one<br/>line two</p>"
+    md = html_to_markdown(html)
+    assert md is not None
+    # Hard break `  \n` between line one and line two is preserved
+    assert "line one  \nline two" in md
+
+
+def test_nbsp_after_dash_becomes_real_list():
+    # The real-world medicine ASP notice shape: source HTML has a non-
+    # breaking space after each `-` (from Word/HWP/Outlook export).
+    # Before nbsp normalization, markdown parsers saw `-\xa0item` as prose
+    # and only the one paragraph break-separated item became a list item,
+    # so the mobile app rendered the last bullet differently from the rest.
+    html = (
+        "<p>-\u00a05월 지급<br/>"
+        "-\u00a0여름방학 연수<br/>"
+        "-\u00a08~9월 발표회</p>"
+        "<p>-\u00a0해외 체류 중 유의</p>"
+    )
+    md = html_to_markdown(html)
+    assert md is not None
+    # All four items are now real list items (ASCII space after dash)
+    assert "- 5월 지급" in md
+    assert "- 여름방학 연수" in md
+    assert "- 8～9월 발표회" in md  # tilde also replaced
+    assert "- 해외 체류 중 유의" in md
+    # No literal nbsp should remain
+    assert "\u00a0" not in md
+    # First three are tight (no hard-break separators leaking through)
+    lines = md.split("\n")
+    for ln in lines:
+        if ln.startswith("- ") and "5월" in ln:
+            assert not ln.endswith("  "), f"tight list leak: {ln!r}"
+
+
+def test_nbsp_normalized_in_prose_text():
+    md = html_to_markdown("<p>1.\u00a0일정\u00a0안내</p>")
+    assert md is not None
+    assert "\u00a0" not in md
+    assert "1. 일정 안내" in md
+
+
+# ── Underline preservation ─────────────────────────────
+
+def test_underline_tag_emits_raw_html():
+    md = html_to_markdown("<p>before <u>신청기한</u> after</p>")
+    assert md is not None
+    assert "<u>신청기한</u>" in md
+
+
+def test_underline_tag_with_empty_content_dropped():
+    md = html_to_markdown("<p>before <u>   </u> after</p>")
+    assert md is not None
+    # Empty underline should not emit useless `<u>   </u>`
+    assert "<u>" not in md
+
+
+def test_underline_tag_mid_sentence_preserved():
+    # Real pattern from Elsevier notice: underline on a noun inside prose.
+    md = html_to_markdown(
+        "<p>원활한 간식 준비를 위해 <u>신청기한</u>을 반드시 준수해 주시기 바랍니다.</p>"
+    )
+    assert md is not None
+    assert "<u>신청기한</u>을" in md

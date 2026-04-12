@@ -129,6 +129,27 @@ def _flatten_cell_blocks(soup: BeautifulSoup) -> None:
             block.unwrap()
 
 
+def _normalize_nbsp(soup: BeautifulSoup) -> None:
+    """Replace U+00A0 (non-breaking space) with regular space in text nodes.
+
+    Word / HWP / Outlook notices embed `&nbsp;` as layout padding, which
+    parses into literal `\\xa0` characters in BeautifulSoup text nodes.
+    Markdown list markers require ASCII space after `-`, so a source line
+    like `-\\xa05월` is NOT recognized as a bullet by any parser — it stays
+    literal text, causing the whole br-separated pseudo-list to degrade to
+    prose. Normalizing nbsp to regular space lets markdownify emit real
+    `- item` lines, and downstream postprocess (hard-break stripping,
+    tight-list detection) can then work as intended.
+
+    We only touch NavigableString nodes, not attribute values, so URL and
+    style attributes are untouched.
+    """
+    for node in list(soup.find_all(string=True)):
+        raw = str(node)
+        if "\u00a0" in raw:
+            node.replace_with(NavigableString(raw.replace("\u00a0", " ")))
+
+
 def _flatten_li_blocks(soup: BeautifulSoup) -> None:
     """Unwrap `<p>`/`<div>` that are direct children of `<li>`.
 
@@ -153,6 +174,9 @@ def _flatten_li_blocks(soup: BeautifulSoup) -> None:
 
 def _preprocess(html: str) -> str:
     soup = BeautifulSoup(html, "html.parser")
+    # nbsp normalization must run first so downstream passes see ASCII
+    # spaces in text (e.g. `- item` where Word dropped `-\xa0item`).
+    _normalize_nbsp(soup)
     _unwrap_box_tables(soup)
     _promote_header_rows(soup)
     _flatten_cell_blocks(soup)
@@ -171,6 +195,19 @@ _MULTIBLANK_RE = re.compile(r"\n{3,}")
 # collapsed because each paragraph's bold is semantically independent.
 _EMPTY_STRONG_RE = re.compile(r"\*\*([ \t]*)\*\*")
 _REPEATED_STRONG_RE = re.compile(r"\*{3,}")            # *** or more → **
+# Strip hard-break (`  \n`) before a `- ` bullet line so br-separated
+# pseudo-lists become tight real lists. Medicine ASP notices use
+# `<p>- a<br>- b<br>- c</p>`, which markdownify emits as
+# `- a  \n- b  \n- c`; strict parsers then treat the dashes as literal
+# text inside one paragraph instead of a bullet list. Removing the two
+# trailing spaces turns it into `- a\n- b\n- c`, a tight list every GFM
+# parser recognizes. The lookahead keeps this surgical: only fires when
+# the next line is itself a bullet.
+_HARDBREAK_BEFORE_BULLET_RE = re.compile(r"[ \t]{2,}\n(?=- )")
+# Same idea for a trailing hard-break immediately before a blank line
+# (the last item of a br-separated pseudo-list): the hard break has no
+# visible effect and just confuses list termination heuristics.
+_HARDBREAK_BEFORE_BLANK_RE = re.compile(r"[ \t]{2,}\n(?=\n)")
 
 
 def _escape_md_alt(text: str) -> str:
@@ -179,22 +216,28 @@ def _escape_md_alt(text: str) -> str:
 
 
 class _SkkuMarkdownConverter(MarkdownConverter):
-    """markdownify converter with an image handler that preserves dimensions.
+    """markdownify converter with handlers for dimensions and underline.
 
-    Standard markdown has no syntax for image size. GFM technically allows
-    raw HTML `<img width height>` to pass through, but we can't rely on the
-    mobile renderer to accept inline HTML yet, so we encode the dimensions
-    as a `(WxH)` hint appended to the alt text:
+    Two extensions over the default:
 
-        ![포스터 (800x600)](https://.../a.png)
+    1. **Image dimensions via alt hint.** Standard markdown has no syntax
+       for image size. GFM technically allows raw HTML `<img width height>`
+       to pass through, but we can't rely on the mobile renderer to accept
+       inline HTML for `<img>` yet, so we encode dimensions as `(WxH)`
+       appended to the alt text:
 
-    The mobile app can then parse the tail `/\\s*\\((\\d+)x(\\d+)\\)\\s*$/` to
-    reserve layout space before the image loads. Until the app ships that
-    parser we still render cleanly — the hint is just human-readable alt.
+           ![포스터 (800x600)](https://.../a.png)
 
-    TODO: once the app supports raw-HTML passthrough in markdown, switch
-    to emitting `<img src alt width height />` here instead (more precise,
-    no parsing needed on the client).
+       TODO: switch to `<img src alt width height />` once the app supports
+       raw-HTML passthrough in markdown.
+
+    2. **Underline preservation via raw `<u>`.** Markdown has no underline
+       syntax (`_text_` is italic). The default markdownify `convert_u`
+       drops the tag and keeps only the text, silently losing the author's
+       emphasis. We emit `<u>text</u>` raw HTML so mobile renderers that
+       support inline HTML render it as underline; renderers that don't
+       fall back to plain text — which is the same as the current behavior,
+       so there is no regression risk.
     """
 
     def convert_img(self, el, text, parent_tags):  # type: ignore[override]
@@ -221,6 +264,14 @@ class _SkkuMarkdownConverter(MarkdownConverter):
 
         title_part = f' "{title}"' if title else ""
         return f"![{alt_final}]({src}{title_part})"
+
+    def convert_u(self, el, text, parent_tags):  # type: ignore[override]
+        # GFM passes raw inline HTML through. If the renderer supports <u>
+        # it shows as underline; otherwise it falls through as plain text.
+        # Empty content is pointless, just drop.
+        if not text or not text.strip():
+            return text
+        return f"<u>{text}</u>"
 
 
 def _replace_tildes_safely(md: str) -> str:
@@ -283,27 +334,43 @@ def _replace_tildes_safely(md: str) -> str:
 
 
 def _postprocess(md: str) -> str:
-    # Replace 3+ newlines with 2 (paragraph break)
-    md = _MULTIBLANK_RE.sub("\n\n", md)
-
-    # Bug fix: strip stray `**` artifacts. The html_cleaner adjacent-strong
-    # merge catches the common case, but a <strong> adjacent to a <b> (or
-    # nested wrappers) can still leak here. These two passes are idempotent
-    # and safe against intentional bold text.
-    md = _EMPTY_STRONG_RE.sub(r"\1", md)       # `** **` → ` ` then collapsed below
-    md = _REPEATED_STRONG_RE.sub("**", md)     # `***` / `****` → `**`
-
-    # Bug fix: neutralize GFM strikethrough risk from `~` in prose.
-    md = _replace_tildes_safely(md)
-
-    # Strip trailing whitespace on each line EXCEPT the GFM "  \n" marker (2 spaces)
+    # Step 0: per-line whitespace normalization.
+    #   - whitespace-only lines → empty blank line
+    #   - content + 2+ trailing spaces → content + exactly 2 spaces (GFM hard break)
+    #   - content + other trailing whitespace → stripped
+    # This has to run FIRST so the subsequent regexes see canonical blank
+    # lines (`\n\n`) instead of `  \n  \n` — without this, the hard-break
+    # cleanup regexes silently fail because their lookaheads expect a
+    # literal `\n` right after the hard break, not a whitespace-only line.
     out_lines: list[str] = []
     for line in md.split("\n"):
-        if line.endswith("  "):
-            out_lines.append(line)
+        content = line.rstrip()
+        if not content:
+            out_lines.append("")
+        elif line.endswith("  "):
+            out_lines.append(content + "  ")
         else:
-            out_lines.append(line.rstrip())
+            out_lines.append(content)
     md = "\n".join(out_lines)
+
+    # Collapse runs of 3+ newlines to a single paragraph break.
+    md = _MULTIBLANK_RE.sub("\n\n", md)
+
+    # Strip stray `**` artifacts. The html_cleaner adjacent-strong merge
+    # catches the common case, but <strong> adjacent to <b> (or nested
+    # wrappers) can still leak here. Idempotent safety net.
+    md = _EMPTY_STRONG_RE.sub(r"\1", md)       # `** **` on one line → ` `
+    md = _REPEATED_STRONG_RE.sub("**", md)     # `***` / `****` → `**`
+
+    # Normalize br-separated pseudo-list bullets into tight lists. Must
+    # run after step 0 (so blank lines are canonical) and before tilde
+    # replacement (so the lookaheads still match `- `).
+    md = _HARDBREAK_BEFORE_BULLET_RE.sub("\n", md)
+    md = _HARDBREAK_BEFORE_BLANK_RE.sub("\n", md)
+
+    # Neutralize GFM strikethrough risk from `~` in prose.
+    md = _replace_tildes_safely(md)
+
     return md.strip()
 
 
