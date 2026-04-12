@@ -282,7 +282,8 @@ def _strip_sole_child_bold(soup: BeautifulSoup) -> None:
                     for c in b.children
                     if not (isinstance(c, NavigableString) and not c.strip())
                 ]
-                children[0].unwrap()
+                if isinstance(children[0], Tag):
+                    children[0].unwrap()
 
 
 def _merge_adjacent_inline(
