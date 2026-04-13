@@ -27,7 +27,8 @@ from ..shared.html_to_markdown import html_to_markdown
 from ..shared.logger import get_logger
 from .config.loader import load_and_validate
 from .hashing import compute_content_hash
-from .normalizer import _text_from_clean_html
+from .image_verifier import verify_notice_images
+from .normalizer import _inject_image_dimensions, _text_from_clean_html
 
 logger = get_logger("backfill_content")
 
@@ -60,7 +61,7 @@ def _rebuild_source_url(doc: dict[str, Any], base_url: str) -> str | None:
     return new_url if new_url != doc.get("sourceUrl") else None
 
 
-def _regenerate(doc: dict[str, Any], base_url: str) -> dict[str, Any] | None:
+async def _regenerate(doc: dict[str, Any], base_url: str) -> dict[str, Any] | None:
     """Rebuild cleanHtml/contentText/cleanMarkdown/sourceUrl from a document.
 
     Returns a ``$set`` payload or ``None`` if the doc should be skipped.
@@ -91,6 +92,10 @@ def _regenerate(doc: dict[str, Any], base_url: str) -> dict[str, Any] | None:
             cleaned = None
 
         if cleaned:
+            source_url = new_source_url or doc.get("sourceUrl", "")
+            img_result = await verify_notice_images(cleaned, source_url)
+            if img_result.dimensions:
+                cleaned = _inject_image_dimensions(cleaned, img_result.dimensions)
             content_text: str | None = _text_from_clean_html(cleaned)
         else:
             content_text = doc.get("contentText")
@@ -180,7 +185,7 @@ async def run(
             continue
 
         try:
-            payload = _regenerate(doc, base_url)
+            payload = await _regenerate(doc, base_url)
         except Exception as exc:
             logger.error(
                 "regenerate_failed",
