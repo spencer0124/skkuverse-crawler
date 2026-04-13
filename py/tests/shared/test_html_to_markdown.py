@@ -303,16 +303,16 @@ def test_image_with_dimensions_embeds_alt_hint():
         '<p><img src="https://x/a.png" alt="포스터" width="800" height="600"></p>'
     )
     assert md is not None
-    assert "![포스터 (800x600)](https://x/a.png)" in md
+    assert "![{800x600} 포스터](https://x/a.png)" in md
 
 
-def test_image_with_only_width_no_leading_space_when_alt_empty():
+def test_image_with_only_width_no_trailing_space_when_alt_empty():
     md = html_to_markdown(
         '<p><img src="https://x/a.png" alt="" width="800"></p>'
     )
     assert md is not None
-    # No leading space inside the alt when alt was empty
-    assert "![(w800)](https://x/a.png)" in md
+    # No trailing space inside the alt when alt was empty
+    assert "![{w800}](https://x/a.png)" in md
 
 
 def test_image_without_dimensions_bare_alt():
