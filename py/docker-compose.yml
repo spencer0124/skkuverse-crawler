@@ -6,7 +6,7 @@ services:
     environment:
       - CRAWLER_ENV=production
       - LOG_FORMAT=json
-      - CRAWL_DEPT_FILTER=skku-main,cal-undergrad,bio-undergrad,nano,dorm-seoul,medicine,cheme
+      - CRAWL_DEPT_FILTER=skku-main,cal-undergrad,bio-undergrad,nano,dorm-seoul,medicine,cheme,lib-seoul,lib-suwon,lib-all,skku-notice02,skku-notice04,skku-notice05,skku-notice06,skku-notice07
       - AI_SERVICE_URL=http://ai:4000
       - TZ=Asia/Seoul
     restart: unless-stopped
