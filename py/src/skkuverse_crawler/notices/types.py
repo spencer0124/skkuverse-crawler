@@ -164,6 +164,16 @@ class GnuboardCustomDepartmentConfig(TypedDict, total=False):
     extraParams: dict[str, str]
 
 
+class PyxisApiDepartmentConfig(TypedDict, total=False):
+    id: str
+    name: str
+    strategy: Literal["pyxis-api"]
+    baseUrl: str
+    pagination: OffsetPaginationConfig
+    bulletinBoardId: int
+    bulletinCategoryId: int
+
+
 DepartmentConfig = (
     SkkuStandardDepartmentConfig
     | WordPressApiDepartmentConfig
@@ -172,6 +182,7 @@ DepartmentConfig = (
     | CustomPhpDepartmentConfig
     | GnuboardDepartmentConfig
     | GnuboardCustomDepartmentConfig
+    | PyxisApiDepartmentConfig
 )
 
 

@@ -2646,7 +2646,10 @@
     "name": "건설환경공학부(학부)",
     "strategy": "custom-php",
     "baseUrl": "https://cal.skku.edu/index.php",
-    "boardParams": { "hCode": "BOARD", "bo_idx": "17" },
+    "boardParams": {
+      "hCode": "BOARD",
+      "bo_idx": "17"
+    },
     "articleIdParam": "idx",
     "selectors": {
       "listRow": "#con_area table tr",
@@ -2658,14 +2661,21 @@
       "detailAttachment": "div.attachment a[href]",
       "detailTitle": "table.board_Vtable tr:first-child th"
     },
-    "pagination": { "type": "pageNum", "param": "pg", "limit": 15 }
+    "pagination": {
+      "type": "pageNum",
+      "param": "pg",
+      "limit": 15
+    }
   },
   {
     "id": "cal-grad",
     "name": "건설환경공학부(대학원)",
     "strategy": "custom-php",
     "baseUrl": "https://cal.skku.edu/index.php",
-    "boardParams": { "hCode": "BOARD", "bo_idx": "18" },
+    "boardParams": {
+      "hCode": "BOARD",
+      "bo_idx": "18"
+    },
     "articleIdParam": "idx",
     "selectors": {
       "listRow": "#con_area table tr",
@@ -2677,7 +2687,11 @@
       "detailAttachment": "div.attachment a[href]",
       "detailTitle": "table.board_Vtable tr:first-child th"
     },
-    "pagination": { "type": "pageNum", "param": "pg", "limit": 15 }
+    "pagination": {
+      "type": "pageNum",
+      "param": "pg",
+      "limit": 15
+    }
   },
   {
     "id": "bio-undergrad",
@@ -2697,7 +2711,11 @@
       "detailContent": "#bo_v_con",
       "detailAttachment": "#bo_v_file ul li a.view_file_download"
     },
-    "pagination": { "type": "pageNum", "param": "page", "limit": 15 }
+    "pagination": {
+      "type": "pageNum",
+      "param": "page",
+      "limit": 15
+    }
   },
   {
     "id": "bio-grad",
@@ -2717,7 +2735,11 @@
       "detailContent": "#bo_v_con",
       "detailAttachment": "#bo_v_file ul li a.view_file_download"
     },
-    "pagination": { "type": "pageNum", "param": "page", "limit": 15 }
+    "pagination": {
+      "type": "pageNum",
+      "param": "page",
+      "limit": 15
+    }
   },
   {
     "id": "pharm",
@@ -2737,7 +2759,11 @@
       "detailContent": "#bo_v_con",
       "detailAttachment": "div.bo_file_layer ul li a"
     },
-    "pagination": { "type": "pageNum", "param": "page", "limit": 15 }
+    "pagination": {
+      "type": "pageNum",
+      "param": "page",
+      "limit": 15
+    }
   },
   {
     "id": "nano",
@@ -2756,6 +2782,49 @@
       "detailContent": "#DivContents",
       "detailAttachment": "a[href*='download.php']"
     },
-    "pagination": { "type": "pageNum", "param": "page", "limit": 15 }
+    "pagination": {
+      "type": "pageNum",
+      "param": "page",
+      "limit": 15
+    }
+  },
+  {
+    "id": "lib-seoul",
+    "name": "도서관(인사캠/중앙학술정보관)",
+    "strategy": "pyxis-api",
+    "baseUrl": "https://lib.skku.edu/pyxis-api/1",
+    "bulletinBoardId": 1,
+    "bulletinCategoryId": 2,
+    "pagination": {
+      "type": "offset",
+      "param": "offset",
+      "limit": 10
+    }
+  },
+  {
+    "id": "lib-suwon",
+    "name": "도서관(자과캠/삼성학술정보관)",
+    "strategy": "pyxis-api",
+    "baseUrl": "https://lib.skku.edu/pyxis-api/1",
+    "bulletinBoardId": 1,
+    "bulletinCategoryId": 3,
+    "pagination": {
+      "type": "offset",
+      "param": "offset",
+      "limit": 10
+    }
+  },
+  {
+    "id": "lib-all",
+    "name": "도서관(전체/양캠퍼스공통)",
+    "strategy": "pyxis-api",
+    "baseUrl": "https://lib.skku.edu/pyxis-api/1",
+    "bulletinBoardId": 1,
+    "bulletinCategoryId": 24,
+    "pagination": {
+      "type": "offset",
+      "param": "offset",
+      "limit": 10
+    }
   }
 ]

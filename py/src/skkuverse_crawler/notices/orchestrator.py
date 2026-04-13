@@ -34,6 +34,7 @@ from .strategies.jsp_dorm import JspDormStrategy
 from .strategies.custom_php import CustomPhpStrategy
 from .strategies.gnuboard import GnuboardStrategy
 from .strategies.gnuboard_custom import GnuboardCustomStrategy
+from .strategies.pyxis_api import PyxisApiStrategy
 
 
 _MAX_CONTENT_BYTES = 5 * 1024 * 1024  # 5MB
@@ -66,6 +67,7 @@ STRATEGY_MAP: dict[str, type] = {
     "custom-php": CustomPhpStrategy,
     "gnuboard": GnuboardStrategy,
     "gnuboard-custom": GnuboardCustomStrategy,
+    "pyxis-api": PyxisApiStrategy,
 }
 
 
