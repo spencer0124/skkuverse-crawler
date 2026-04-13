@@ -151,3 +151,6 @@ class DeptId(str, Enum):
     BIO_GRAD = "bio-grad"
     PHARM = "pharm"
     NANO = "nano"
+    LIB_SEOUL = "lib-seoul"
+    LIB_SUWON = "lib-suwon"
+    LIB_ALL = "lib-all"

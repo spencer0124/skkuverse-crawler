@@ -17,6 +17,7 @@ REQUIRED_SELECTORS: dict[str, list[str]] = {
     "custom-php": ["listRow", "titleLink", "category", "views", "date", "detailContent"],
     "gnuboard": ["listRow", "titleLink", "author", "date", "detailContent", "detailAttachment"],
     "gnuboard-custom": ["listRow", "titleLink", "date", "meta", "detailContent", "detailAttachment"],
+    "pyxis-api": [],
 }
 
 
