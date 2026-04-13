@@ -53,7 +53,7 @@ ALLOWED_STYLE_PROPERTIES = {
     "font-weight", "font-style",
 }
 
-ALLOWED_URL_SCHEMES = {"http", "https", "mailto", "tel"}
+ALLOWED_URL_SCHEMES = {"http", "https", "mailto", "tel", "data"}
 
 # Step 5: Elements to check for emptiness
 REMOVABLE_EMPTY_TAGS = {
@@ -233,16 +233,29 @@ def _unwrap_naver_smarteditor_tables(soup: BeautifulSoup) -> None:
         table.decompose()
 
 
-def _strip_data_uri_images(soup: BeautifulSoup) -> None:
-    """Remove `<img>` tags whose `src` is a data URI.
+# Keep data: images whose decoded payload is at least this size.
+# Tracking pixels / spacer GIFs are typically < 100 bytes; real content
+# images (posters, diagrams) are tens of KB or more.
+_DATA_URI_MIN_BYTES = 1024
 
-    Step 1.5's CSS selector `img[src^='data:']` can miss cases where the
-    attribute value has leading whitespace or odd quoting, so we do a
-    defensive pass on the serialized soup right before returning.
+
+def _strip_data_uri_images(soup: BeautifulSoup) -> None:
+    """Remove small ``data:`` URI ``<img>`` tags (tracking pixels, spacers).
+
+    Images whose decoded payload is >= ``_DATA_URI_MIN_BYTES`` are kept —
+    gnuboard editors embed real content images as base64 data URIs.
     """
     for img in list(soup.find_all("img")):
         src = img.get("src", "")
-        if isinstance(src, str) and src.lstrip().lower().startswith("data:"):
+        if not (isinstance(src, str) and src.lstrip().lower().startswith("data:")):
+            continue
+        comma = src.find(",")
+        if comma == -1:
+            img.decompose()
+            continue
+        payload_len = len(src) - comma - 1
+        decoded_size = payload_len * 3 // 4  # base64 → bytes (approx)
+        if decoded_size < _DATA_URI_MIN_BYTES:
             img.decompose()
 
 
@@ -379,7 +392,7 @@ def _merge_adjacent_inline(
 def clean_html(raw_html: str, base_url: str) -> str | None:
     """
     Clean raw HTML for mobile rendering. 6-step pipeline:
-    1. Junk element removal (+ 1.5 data URI image strip, 1.6 SmartEditor table unwrap)
+    1. Junk element removal (+ 1.5 small data URI image strip, 1.6 SmartEditor table unwrap)
     2. Semantic tag normalization (+ 2.5 underline em/i unwrap)
     3. URL absolute path conversion
     4. Tag allowlist + style property filtering via nh3
@@ -402,9 +415,8 @@ def clean_html(raw_html: str, base_url: str) -> str | None:
             for el in soup.select(sel):
                 el.decompose()
 
-        # ── Step 1.5: Strip data URI images ─────────────
-        for img in soup.select("img[src^='data:']"):
-            img.decompose()
+        # ── Step 1.5: Strip small data URI images ────────
+        _strip_data_uri_images(soup)
 
         # ── Step 1.6: Unwrap Naver SmartEditor layout tables ──
         # SmartEditor wraps content in deeply nested layout tables with
@@ -508,8 +520,8 @@ def clean_html(raw_html: str, base_url: str) -> str | None:
         # ── Step 6: Structural cleanup ───────────────────
         # nh3 preserves allowlisted tags verbatim even when they carry no
         # semantic value after style/class stripping. These passes unwrap
-        # empty span wrappers and collapse redundant div chains, and catch
-        # data URI images that slipped past Step 1.5.
+        # empty span wrappers and collapse redundant div chains, and re-strip
+        # small data URI images that nh3 may have let through.
         _unwrap_empty_spans(clean_soup)
         _collapse_single_child_div_chains(clean_soup)
         _strip_data_uri_images(clean_soup)
