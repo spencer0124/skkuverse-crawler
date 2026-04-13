@@ -45,7 +45,9 @@ mypy src/                                   # 타입 체크
 
 **HTML Cleaning**: 6단계 파이프라인 (`shared/html_cleaner.py`). BS4 junk 제거 + `data:` URI 이미지 제거 + Naver SmartEditor 레이아웃 테이블 unwrap → semantic 정규화(`font-weight: bold|bolder|≥600` → `<strong>`) + underline용 `<em>/<i>` unwrap → URL 절대경로 → nh3 태그/스타일 필터링 → 빈 요소 제거 → 구조 정리(빈 `<span>` unwrap / 단독자식 `<div>` 체인 축약 / `data:` URI 이미지 재거름 / 구두점 전용 inline 제거 / 단독자식 bold unwrap / 인접 inline 병합).
 
-**Markdown 변환**: `shared/html_to_markdown.py`. cleanHtml을 입력으로 받아 markdownify + 전처리(박스 테이블 unwrap, 첫 행 all-bold → `<thead><th>` 승격, `<td>` 내부 `<p>/<div>` flatten)로 GFM을 생성 → `cleanMarkdown` 필드에 저장. `content`/`cleanHtml`/`contentText`는 그대로 유지.
+**Markdown 변환**: `shared/html_to_markdown.py`. cleanHtml을 입력으로 받아 markdownify + 전처리(박스 테이블 unwrap, 첫 행 all-bold → `<thead><th>` 승격, `<td>` 내부 `<p>/<div>` flatten)로 GFM을 생성 → `cleanMarkdown` 필드에 저장. `content`/`cleanHtml`/`contentText`는 그대로 유지. 이미지에 width/height 속성이 있으면 `{WxH}` 포맷으로 alt text 앞에 prepend: `![{800x600} 포스터](url)`. width만 있으면 `{w800}`, height만 있으면 `{h600}`. 앱에서 `!\[\{(\d+)x(\d+)\}` 정규식으로 파싱.
+
+**이미지 검증**: `notices/image_verifier.py`. 크롤링 시 `<img>` URL마다 HTTP Range 헤더로 첫 32KB만 요청 → `imagesize` 라이브러리로 dimension 파싱. Range 미지원 서버는 Content-Length ≤ 5MB일 때 전체 응답 사용, 초과 시 스킵. 감지된 dimension은 `normalizer._inject_image_dimensions()`이 cleanHtml의 `<img>` 태그에 `width`/`height` 속성으로 주입.
 
 **contentText 추출**: `normalizer._text_from_clean_html()`. 블록 요소(`<tr>`, `<p>`, `<div>`, `<h1-4>`, `<li>`, `<br>`)가 개행을 만들고 `<td>/<th>`는 공백으로 구분(기존 동작). 셀 내부 `<br>`은 행 구분과 충돌하므로 공백으로 대체.
 
