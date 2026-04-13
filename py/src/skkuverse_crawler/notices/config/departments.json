@@ -2816,7 +2816,7 @@
   },
   {
     "id": "lib-all",
-    "name": "공통",
+    "name": "학술정보관 본부",
     "strategy": "pyxis-api",
     "baseUrl": "https://lib.skku.edu/pyxis-api/1",
     "bulletinBoardId": 1,
