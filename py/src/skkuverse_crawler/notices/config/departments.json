@@ -2790,7 +2790,7 @@
   },
   {
     "id": "lib-seoul",
-    "name": "도서관(인사캠/중앙학술정보관)",
+    "name": "중앙학술정보관",
     "strategy": "pyxis-api",
     "baseUrl": "https://lib.skku.edu/pyxis-api/1",
     "bulletinBoardId": 1,
@@ -2803,7 +2803,7 @@
   },
   {
     "id": "lib-suwon",
-    "name": "도서관(자과캠/삼성학술정보관)",
+    "name": "삼성학술정보관",
     "strategy": "pyxis-api",
     "baseUrl": "https://lib.skku.edu/pyxis-api/1",
     "bulletinBoardId": 1,
@@ -2816,7 +2816,7 @@
   },
   {
     "id": "lib-all",
-    "name": "도서관(전체/양캠퍼스공통)",
+    "name": "공통",
     "strategy": "pyxis-api",
     "baseUrl": "https://lib.skku.edu/pyxis-api/1",
     "bulletinBoardId": 1,
