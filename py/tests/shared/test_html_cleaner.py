@@ -39,8 +39,8 @@ def test_single_child_div_chain_collapsed():
     assert 'href="https://cheme.skku.edu/file.pdf"' in result
 
 
-def test_data_uri_img_stripped_with_whitespace():
-    # Whitespace before the data: scheme — guards against step 1.5 selector misses
+def test_small_data_uri_img_stripped():
+    # Small data: URI (< 1 KB) — tracking pixel / spacer — should be removed
     html = (
         '<p><img alt="icon" src="   data:image/svg+xml;base64,AAA=">'
         '<img alt="real" src="https://www.skku.edu/foo.png"></p>'
@@ -48,6 +48,20 @@ def test_data_uri_img_stripped_with_whitespace():
     result = clean_html(html, BASE)
     assert result is not None
     assert "data:" not in result
+    assert "https://www.skku.edu/foo.png" in result
+
+
+def test_large_data_uri_img_kept():
+    # Large data: URI (>= 1 KB) — real content image — should be preserved
+    # Generate a base64 payload > 1 KB decoded (need ~1400 base64 chars)
+    big_b64 = "A" * 1400  # ~1050 bytes decoded
+    html = (
+        f'<p><img alt="poster" src="data:image/png;base64,{big_b64}">'
+        '<img alt="real" src="https://www.skku.edu/foo.png"></p>'
+    )
+    result = clean_html(html, BASE)
+    assert result is not None
+    assert f"data:image/png;base64,{big_b64}" in result
     assert "https://www.skku.edu/foo.png" in result
 
 
