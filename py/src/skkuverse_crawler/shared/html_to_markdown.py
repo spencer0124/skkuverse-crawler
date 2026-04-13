@@ -366,10 +366,10 @@ class _SkkuMarkdownConverter(MarkdownConverter):
     1. **Image dimensions via alt hint.** Standard markdown has no syntax
        for image size. GFM technically allows raw HTML `<img width height>`
        to pass through, but we can't rely on the mobile renderer to accept
-       inline HTML for `<img>` yet, so we encode dimensions as `(WxH)`
-       appended to the alt text:
+       inline HTML for `<img>` yet, so we encode dimensions as `{WxH}`
+       prepended to the alt text:
 
-           ![포스터 (800x600)](https://.../a.png)
+           ![{800x600} 포스터](https://.../a.png)
 
        TODO: switch to `<img src alt width height />` once the app supports
        raw-HTML passthrough in markdown.
@@ -384,19 +384,19 @@ class _SkkuMarkdownConverter(MarkdownConverter):
         height = el.attrs.get("height")
 
         if width and height:
-            dim_hint = f"({width}x{height})"
+            dim_hint = f"{{{width}x{height}}}"
         elif width:
-            dim_hint = f"(w{width})"
+            dim_hint = f"{{w{width}}}"
         elif height:
-            dim_hint = f"(h{height})"
+            dim_hint = f"{{h{height}}}"
         else:
             dim_hint = ""
 
         alt_escaped = _escape_md_alt(alt)
         if alt_escaped and dim_hint:
-            alt_final = f"{alt_escaped} {dim_hint}"
+            alt_final = f"{dim_hint} {alt_escaped}"
         else:
-            alt_final = alt_escaped or dim_hint
+            alt_final = dim_hint or alt_escaped
 
         title_part = f' "{title}"' if title else ""
         return f"![{alt_final}]({src}{title_part})"

@@ -154,4 +154,4 @@ class TestInjectImageDimensions:
         assert 'height="300"' in notice.cleanHtml
         # cleanMarkdown should contain dimension hint
         assert notice.cleanMarkdown is not None
-        assert "(400x300)" in notice.cleanMarkdown
+        assert "{400x300}" in notice.cleanMarkdown
