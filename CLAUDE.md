@@ -21,6 +21,9 @@ python -m skkuverse_crawler update-check --days 7 --dept skku-main
 python -m skkuverse_crawler backfill-content               # cleanHtml/contentText/cleanMarkdown 재생성 (dry-run)
 python -m skkuverse_crawler backfill-content --apply       # 실제 업데이트
 python -m skkuverse_crawler backfill-content --apply --dept cheme --limit 10  # 샘플링
+python -m skkuverse_crawler backfill-attachment-referer              # gnuboard 첨부 referer 추가 (dry-run)
+python -m skkuverse_crawler backfill-attachment-referer --apply      # 실제 업데이트
+python -m skkuverse_crawler backfill-attachment-referer --apply --dept nano --limit 5
 
 # 테스트 & 린트
 python -m pytest tests/ -v                  # 전체 테스트
@@ -45,6 +48,8 @@ mypy src/                                   # 타입 체크
 **Markdown 변환**: `shared/html_to_markdown.py`. cleanHtml을 입력으로 받아 markdownify + 전처리(박스 테이블 unwrap, 첫 행 all-bold → `<thead><th>` 승격, `<td>` 내부 `<p>/<div>` flatten)로 GFM을 생성 → `cleanMarkdown` 필드에 저장. `content`/`cleanHtml`/`contentText`는 그대로 유지.
 
 **contentText 추출**: `normalizer._text_from_clean_html()`. 블록 요소(`<tr>`, `<p>`, `<div>`, `<h1-4>`, `<li>`, `<br>`)가 개행을 만들고 `<td>/<th>`는 공백으로 구분(기존 동작). 셀 내부 `<br>`은 행 구분과 충돌하므로 공백으로 대체.
+
+**첨부파일 Referer**: gnuboard 계열 학과(nano, bio-undergrad, bio-grad, pharm)의 `download.php`는 PHP 세션 + Referer 헤더를 검증. 크롤러가 attachment 메타데이터에 `referer` (상세 페이지 URL)를 저장하여 서버 프록시가 세션 수립 후 다운로드할 수 있도록 지원. gnuboard-custom(nano)은 케이스 A(아무 페이지 세션 OK), gnuboard 표준(pharm, bio)은 케이스 B(상세 페이지 방문 필수). bio는 https 미지원(http only).
 
 ### 모듈 시스템 (`py/src/skkuverse_crawler/`)
 
