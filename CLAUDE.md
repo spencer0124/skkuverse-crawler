@@ -37,7 +37,7 @@ mypy src/                                   # 타입 체크
 
 ```bash
 cd py
-python scripts/generate_artifacts.py    # departments.json → 5개 아티팩트 생성 + 형제 레포 복사
+python scripts/generate_artifacts.py    # departments.json + categories.json → 7개 아티팩트 생성 + 형제 레포 복사
 ```
 
 **생성 아티팩트:**
@@ -46,17 +46,20 @@ python scripts/generate_artifacts.py    # departments.json → 5개 아티팩트
 |---------|----------|------|
 | `dept_ids.py` | `py/src/.../config/dept_ids.py` | Python DeptId enum |
 | `server-departments.json` | `py/generated/` → `skkuverse-server` 복사 | 서버 API 응답용 (noticeAvailable, hasCategory, hasAuthor 포함) |
-| `app-departments.ts` | `py/generated/` → `skkuverse-app` 복사 | 앱 TypeScript 상수 |
 | `docker-crawl-filter.env` | `py/generated/` | Docker 참고용 |
 | `coverage-table.md` | `docs/department-coverage-analysis.md` | 캠퍼스/단과대별 학과 테이블 |
+| `departments-by-college.md` | `docs/departments-by-college.md` | 단과대학별 학과 목록 |
+| `departments-by-app-category.md` | `docs/departments-by-app-category.md` | 앱 카테고리별 학과 목록 |
+| `server-categories.json` | `py/generated/` → `skkuverse-server` 복사 | Server-driven 탭 구성 (탭 순서, 라벨, picker/fixed 모드) |
 
 `py/generated/`는 `.gitignore`에 등록됨.
 
 ### 학과 추가/변경 절차
 
 1. `departments.json` (레포 루트) 수정 — campus, college, appCategory, crawlEnabled + 크롤링 설정
-2. `cd py && python scripts/generate_artifacts.py` 실행
-3. 형제 레포(skkuverse-server, skkuverse-app)에 자동 복사됨 (존재 시)
+2. 새 카테고리 추가 시 `categories.json`도 수정
+3. `cd py && python scripts/generate_artifacts.py` 실행
+4. 형제 레포(skkuverse-server)에 자동 복사됨 (존재 시)
 
 ## Architecture
 
@@ -64,10 +67,16 @@ python scripts/generate_artifacts.py    # departments.json → 5개 아티팩트
 
 **모듈형 구조**: `shared/` (config, DB, logger, HTTP 클라이언트) + 각 모듈 디렉토리 (notices, notices_summary)
 
-**Strategy Pattern**: `CrawlStrategy` 인터페이스 + `departments.json` config-driven. 8개 전략: skku-standard, wordpress-api, skkumed-asp, jsp-dorm, custom-php, gnuboard, gnuboard-custom, pyxis-api.
+**Strategy Pattern**: `CrawlStrategy` 인터페이스 + `departments.json` config-driven. 전략 목록은 `departments.json`의 `strategy` 필드 및 `generate_artifacts.py`의 `STRATEGY_FEATURES` 참조.
 
-**SSOT (Single Source of Truth)**: 레포 루트 `departments.json`이 학과 데이터의 단일 출처. 147개 엔트리에 크롤링 설정(strategy, selectors, baseUrl) + 메타데이터(campus, college, appCategory, crawlEnabled) 통합. `py/scripts/generate_artifacts.py`가 서버/앱/Docker/문서용 파생 파일을 자동 생성. 학과 추가/변경 시 이 파일만 수정 후 `cd py && python scripts/generate_artifacts.py` 실행.
+**SSOT (Single Source of Truth)**: 레포 루트에 두 개의 SSOT 파일:
+- `departments.json` — 학과 데이터. 크롤링 설정(strategy, selectors, baseUrl) + 메타데이터(campus, college, appCategory, crawlEnabled).
+- `categories.json` — 앱 탭/카테고리 구성. 탭 순서(배열 순서), 라벨(ko/en), 탭 모드(picker: 학과 선택 / fixed: 단일 학과 고정). picker 탭은 `appCategory == category.id`인 학과를 자동 수집.
 
+`py/scripts/generate_artifacts.py`가 두 파일을 읽어 서버/Docker/문서용 파생 파일을 자동 생성. 양방향 검증(departments↔categories 정합성)도 포함.
+
+- `campus`: 유효값은 `generate_artifacts.py`의 `VALID_CAMPUSES` 참조.
+- `appCategory`: 유효값은 `categories.json`의 id 목록에서 자동 도출 (+ `null` 허용).
 - `crawlEnabled`: 프로덕션 크롤링 여부. `CRAWL_DEPT_FILTER` env var 미설정 시 이 필드가 기본 필터.
 - `CRAWL_DEPT_FILTER`: dev/디버깅용 오버라이드로만 사용. 설정하면 crawlEnabled 무시하고 해당 ID만 크롤링.
 - `hasCategory`/`hasAuthor`: departments.json에 저장하지 않음. strategy에서 결정론적 도출 (codegen의 STRATEGY_FEATURES 룩업).

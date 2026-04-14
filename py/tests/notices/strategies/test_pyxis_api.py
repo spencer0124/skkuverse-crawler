@@ -7,7 +7,7 @@ from skkuverse_crawler.notices.strategies.pyxis_api import PyxisApiStrategy
 
 
 BASE_CONFIG = {
-    "id": "lib-seoul",
+    "id": "lib-hssc",
     "name": "도서관(인사캠/중앙학술정보관)",
     "strategy": "pyxis-api",
     "baseUrl": "https://lib.skku.edu/pyxis-api/1",

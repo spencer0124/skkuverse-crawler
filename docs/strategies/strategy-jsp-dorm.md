@@ -341,7 +341,7 @@ JSP 기숙사 게시판은 `article_no`(snake_case)를 사용한다.
 
 - `py/src/skkuverse_crawler/notices/strategies/jsp_dorm.py` — `crawl_list()` + `crawl_detail()` 구현
 - `py/src/skkuverse_crawler/notices/types.py` — `JspDormConfig` TypedDict
-- `py/src/skkuverse_crawler/notices/config/departments.json` — dorm-seoul, dorm-suwon 설정
+- `py/src/skkuverse_crawler/notices/config/departments.json` — dorm-hssc, dorm-nsc 설정
 
 ## 두 캠퍼스의 구조적 동일성
 
@@ -364,7 +364,7 @@ JSP 기숙사 게시판은 `article_no`(snake_case)를 사용한다.
 ```json
 [
   {
-    "id": "dorm-seoul",
+    "id": "dorm-hssc",
     "name": "명륜학사 (인사캠 기숙사)",
     "strategy": "jsp-dorm",
     "baseUrl": "https://dorm.skku.edu/dorm_seoul/notice/notice_all.jsp",
@@ -383,7 +383,7 @@ JSP 기숙사 게시판은 `article_no`(snake_case)를 사용한다.
     }
   },
   {
-    "id": "dorm-suwon",
+    "id": "dorm-nsc",
     "name": "봉룡학사 (자과캠 기숙사)",
     "strategy": "jsp-dorm",
     "baseUrl": "https://dorm.skku.edu/dorm_suwon/notice/notice_all.jsp",
