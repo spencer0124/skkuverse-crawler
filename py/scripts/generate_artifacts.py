@@ -152,6 +152,23 @@ def validate_categories(
             if not matching:
                 errors.append(f"category {cid}: picker matches 0 departments")
 
+            # Optional defaultDeptIds must be subset of enabled matching depts
+            defaults = cat.get("defaultDeptIds")
+            if defaults is not None:
+                if not isinstance(defaults, list):
+                    errors.append(f"category {cid}: defaultDeptIds must be array")
+                else:
+                    enabled_ids = {
+                        d["id"] for d in departments
+                        if d["appCategory"] == cid and d["crawlEnabled"]
+                    }
+                    for did in defaults:
+                        if did not in enabled_ids:
+                            errors.append(
+                                f"category {cid}: defaultDeptId '{did}' "
+                                f"not in enabled matching depts"
+                            )
+
     # Every non-null appCategory in departments must have a category entry
     for app_cat in sorted(dept_app_cats):
         if app_cat not in cat_ids:
@@ -225,13 +242,16 @@ def gen_server_categories(
                 d["id"] for d in departments
                 if d["appCategory"] == cat["id"] and d["crawlEnabled"]
             ]
-            entries.append({
+            entry: dict = {
                 "id": cat["id"],
                 "label": cat["label"],
                 "tabMode": "picker",
                 "deptIds": dept_ids,
                 "maxSelection": cat["maxSelection"],
-            })
+            }
+            if "defaultDeptIds" in cat:
+                entry["defaultDeptIds"] = cat["defaultDeptIds"]
+            entries.append(entry)
     return json.dumps(entries, ensure_ascii=False, indent=2) + "\n"
 
 

@@ -39,7 +39,8 @@
     "id": "library",
     "label": { "ko": "도서관", "en": "Library" },
     "tabMode": "picker",
-    "maxSelection": 3
+    "maxSelection": 3,
+    "defaultDeptIds": ["lib-hssc", "lib-nsc"]
   },
   {
     "id": "dorm",
