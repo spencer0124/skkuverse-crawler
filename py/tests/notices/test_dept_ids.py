@@ -7,10 +7,10 @@ from pathlib import Path
 
 from skkuverse_crawler.notices.config.dept_ids import DeptId
 
-DEPARTMENTS_JSON = (
-    Path(__file__).resolve().parent.parent.parent
-    / "src" / "skkuverse_crawler" / "notices" / "config" / "departments.json"
-)
+# departments.json lives at the repo root (SSOT).
+# test file is at py/tests/notices/test_dept_ids.py
+_REPO_ROOT = Path(__file__).resolve().parents[3]
+DEPARTMENTS_JSON = _REPO_ROOT / "departments.json"
 
 
 def _load_json_ids() -> set[str]:

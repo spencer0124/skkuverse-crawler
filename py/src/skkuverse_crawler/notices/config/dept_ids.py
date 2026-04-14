@@ -1,6 +1,6 @@
 """Auto-generated from departments.json. Do not edit manually.
 
-Regenerate: cd py && python scripts/generate_dept_ids.py
+Regenerate: cd py && python scripts/generate_artifacts.py
 """
 
 from enum import Enum
