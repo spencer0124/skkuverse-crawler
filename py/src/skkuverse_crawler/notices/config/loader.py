@@ -2,10 +2,15 @@ from __future__ import annotations
 
 import json
 import sys
-from importlib import resources
+from pathlib import Path
 from typing import Any
 
 from ...shared.logger import get_logger
+
+# departments.json lives at the repo root (SSOT).
+# loader.py is at py/src/skkuverse_crawler/notices/config/loader.py
+_REPO_ROOT = Path(__file__).resolve().parents[5]
+_DEPARTMENTS_JSON = _REPO_ROOT / "departments.json"
 
 logger = get_logger("config_loader")
 
@@ -22,9 +27,9 @@ REQUIRED_SELECTORS: dict[str, list[str]] = {
 
 
 def load_and_validate() -> list[dict[str, Any]]:
-    pkg = resources.files("skkuverse_crawler.notices.config")
-    json_path = pkg.joinpath("departments.json")
-    configs: list[dict[str, Any]] = json.loads(json_path.read_text(encoding="utf-8"))
+    configs: list[dict[str, Any]] = json.loads(
+        _DEPARTMENTS_JSON.read_text(encoding="utf-8")
+    )
 
     errors: list[str] = []
 

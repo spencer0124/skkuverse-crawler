@@ -32,7 +32,7 @@
 | 필드 | 타입 | 설명 |
 |---|---|---|
 | `articleNo` | int | 원 사이트의 게시글 번호 (학과 내에서만 unique) |
-| `sourceDeptId` | string | 학과 config id (`skku-main`, `cheme`, `dorm-seoul`, …) |
+| `sourceDeptId` | string | 학과 config id (`skku-main`, `cheme`, `dorm-hssc`, …) |
 | `department` | string | 학과 사람 이름 (`학부통합(학사)`, `화학공학과` …) |
 | `title` | string | 공지 제목 |
 | `category` | string | 원 사이트 카테고리 (전략별로 있을 수도/빈 문자열일 수도) |
@@ -102,7 +102,7 @@ summaryContentHash != contentHash
 
 ## 3. 전략(strategy) 7종 · 유형별 특이사항
 
-`departments.json`의 총 **144개 학과**, 실측 분포:
+`departments.json` 기준 전략별 실측 분포 (학과 수는 `departments.json` 참조):
 
 | strategy | 학과 수 | category | author | views | content | 비고 |
 |---|---:|:---:|:---:|:---:|:---:|---|
@@ -238,7 +238,7 @@ summaryContentHash != contentHash
 ```json
 {
   "articleNo": 86439,
-  "sourceDeptId": "dorm-seoul",
+  "sourceDeptId": "dorm-hssc",
   "department": "명륜학사 (인사캠 기숙사)",
   "title": "Suspending Curfew during mid-term exam period",
   "category": "Notice in English",
@@ -376,7 +376,7 @@ summaryContentHash != contentHash
 | Backfill 로직 | `py/src/skkuverse_crawler/notices/backfill.py` |
 | 요약 프로세서 | `py/src/skkuverse_crawler/notices_summary/processor.py:69-115` |
 | 요약 쿼리(pending/stale) | `py/src/skkuverse_crawler/notices_summary/query.py` |
-| 학과 config | `py/src/skkuverse_crawler/notices/config/departments.json` (144개 학과) |
+| 학과 config | `departments.json` (레포 루트 SSOT) |
 | 전략 구현 | `py/src/skkuverse_crawler/notices/strategies/*.py` |
 
 ---
@@ -391,7 +391,7 @@ cat py/src/skkuverse_crawler/notices/models.py
 
 # (2) 실제 DB에서 각 전략별 샘플 1건씩 조회
 # MCP mongodb find로 skku_notices.notices에 대해 sourceDeptId별로 limit=1
-#   sourceDeptId: skku-main, cheme, medicine, dorm-seoul, cal-undergrad, bio-undergrad, nano
+#   sourceDeptId: skku-main, cheme, medicine, dorm-hssc, cal-undergrad, bio-undergrad, nano
 
 # (3) 요약/미요약/stale 상태 카운트
 #   요약 완료:  {summaryAt: {$ne: null}}

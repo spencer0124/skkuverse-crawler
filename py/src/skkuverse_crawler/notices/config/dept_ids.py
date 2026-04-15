@@ -1,6 +1,6 @@
 """Auto-generated from departments.json. Do not edit manually.
 
-Regenerate: cd py && python scripts/generate_dept_ids.py
+Regenerate: cd py && python scripts/generate_artifacts.py
 """
 
 from enum import Enum
@@ -143,14 +143,14 @@ class DeptId(str, Enum):
     CHEM = "chem"
     CHEME = "cheme"
     MEDICINE = "medicine"
-    DORM_SEOUL = "dorm-seoul"
-    DORM_SUWON = "dorm-suwon"
+    DORM_HSSC = "dorm-hssc"
+    DORM_NSC = "dorm-nsc"
     CAL_UNDERGRAD = "cal-undergrad"
     CAL_GRAD = "cal-grad"
     BIO_UNDERGRAD = "bio-undergrad"
     BIO_GRAD = "bio-grad"
     PHARM = "pharm"
     NANO = "nano"
-    LIB_SEOUL = "lib-seoul"
-    LIB_SUWON = "lib-suwon"
+    LIB_HSSC = "lib-hssc"
+    LIB_NSC = "lib-nsc"
     LIB_ALL = "lib-all"

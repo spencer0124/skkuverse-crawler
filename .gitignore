@@ -22,5 +22,8 @@ dist/
 .pytest_cache/
 htmlcov/
 
+# Generated artifacts (codegen output)
+py/generated/
+
 # Logs
 *.log

@@ -1,0 +1,57 @@
+[
+  {
+    "id": "dept",
+    "label": { "ko": "학과", "en": "Department" },
+    "tabMode": "picker",
+    "maxSelection": 5
+  },
+  {
+    "id": "academic",
+    "label": { "ko": "학사", "en": "Academic" },
+    "tabMode": "fixed",
+    "fixedDeptId": "skku-notice02"
+  },
+  {
+    "id": "scholarship",
+    "label": { "ko": "장학", "en": "Scholarship" },
+    "tabMode": "fixed",
+    "fixedDeptId": "skku-notice06"
+  },
+  {
+    "id": "career",
+    "label": { "ko": "취업", "en": "Career" },
+    "tabMode": "fixed",
+    "fixedDeptId": "skku-notice04"
+  },
+  {
+    "id": "recruitment",
+    "label": { "ko": "모집", "en": "Recruitment" },
+    "tabMode": "fixed",
+    "fixedDeptId": "skku-notice05"
+  },
+  {
+    "id": "event",
+    "label": { "ko": "행사", "en": "Events" },
+    "tabMode": "fixed",
+    "fixedDeptId": "skku-notice07"
+  },
+  {
+    "id": "library",
+    "label": { "ko": "도서관", "en": "Library" },
+    "tabMode": "picker",
+    "maxSelection": 3,
+    "defaultDeptIds": ["lib-hssc", "lib-nsc"]
+  },
+  {
+    "id": "dorm",
+    "label": { "ko": "기숙사", "en": "Dormitory" },
+    "tabMode": "picker",
+    "maxSelection": 2
+  },
+  {
+    "id": "general",
+    "label": { "ko": "일반", "en": "General" },
+    "tabMode": "picker",
+    "maxSelection": 5
+  }
+]

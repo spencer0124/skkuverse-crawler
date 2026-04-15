@@ -94,7 +94,8 @@ async def run_crawl(
             )
         filtered = [d for d in departments if d["id"] in options.dept_filter]
     else:
-        filtered = departments
+        # No explicit filter: use crawlEnabled from departments.json (SSOT)
+        filtered = [d for d in departments if d.get("crawlEnabled", False)]
 
     if not filtered:
         logger.warning("no_matching_departments", dept_filter=options.dept_filter)
