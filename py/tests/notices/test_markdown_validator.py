@@ -77,6 +77,38 @@ class TestSpaceBeforeCloseEmphasis:
         issues = check_space_before_close_emphasis(md)
         assert len(issues) == 1
 
+    def test_closing_then_opening_with_space_not_flagged(self):
+        """**A**로 **B** — two separate bolds with Korean particle, NOT space-before-close."""
+        md = "**이수자**로 **총 평점**"
+        assert check_space_before_close_emphasis(md) == []
+
+    def test_closing_then_opening_long_gap_not_flagged(self):
+        """**A**에 초청되며, 결선 진출 팀에게는 **B** — long text between bolds."""
+        md = "**결선 라운드**에 초청되며, 결선 진출 팀에게는 **3박 숙박이 제공**"
+        assert check_space_before_close_emphasis(md) == []
+
+    def test_start_of_string_still_detected(self):
+        """**A ** at start of string — pos==0, no preceding char, must flag."""
+        md = "**A **"
+        issues = check_space_before_close_emphasis(md)
+        assert len(issues) == 1
+
+    def test_after_newline_still_detected(self):
+        """**A ** after newline — preceded by whitespace, must flag."""
+        md = "text\n**A **"
+        issues = check_space_before_close_emphasis(md)
+        assert len(issues) == 1
+
+    def test_consecutive_bolds_not_flagged(self):
+        """**A** **B** **C** — multiple separate bolds, no FP."""
+        md = "**A** **B** **C**"
+        assert check_space_before_close_emphasis(md) == []
+
+    def test_hangul_before_opening_not_flagged(self):
+        """가**A ** — preceded by Hangul character, closing not opening."""
+        md = "가**A **"
+        assert check_space_before_close_emphasis(md) == []
+
 
 # ── check_empty_table_header ─────────────────────────
 

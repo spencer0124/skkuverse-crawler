@@ -68,6 +68,25 @@ class MarkdownValidationReport:
 # ---------------------------------------------------------------------------
 
 
+def _is_likely_opening_delimiter(md: str, pos: int) -> bool:
+    """``**`` at *pos* is likely an opening delimiter (not closing).
+
+    Heuristic based on CommonMark Rule 1: an opening ``**`` is typically
+    preceded by whitespace or start-of-string.  If preceded by a content
+    character (letter, digit, CJK), the ``**`` is almost certainly closing
+    a preceding bold span.
+
+    Note: this intentionally does NOT treat punctuation as "content" — a
+    ``(**`` or ``-**`` could be a valid opening delimiter.  This means we
+    may miss FPs like ``)**...** `` (paren before ``**``), but such cases
+    are extremely rare in SKKU notice data and the trade-off favours fewer
+    false negatives over perfect FP elimination.
+    """
+    if pos == 0:
+        return True
+    return md[pos - 1] in (" ", "\t", "\n")
+
+
 def _line_of(md: str, pos: int) -> int:
     """Return 1-based line number for character position *pos*."""
     return md.count("\n", 0, pos) + 1
@@ -116,10 +135,7 @@ def check_cross_line_strong(md: str) -> list[MarkdownIssue]:
         if "**" in pre or "**" in post:
             continue
         # Reject false positive: closing ** matched as opening.
-        # If the char before our ** is content (not whitespace/start),
-        # this ** is a closing delimiter, not opening.
-        pos = m.start()
-        if pos > 0 and md[pos - 1] not in (" ", "\t", "\n"):
+        if not _is_likely_opening_delimiter(md, m.start()):
             continue
         n_lines = m.group().count("\n")
         issues.append(MarkdownIssue(
@@ -144,6 +160,10 @@ def check_space_before_close_emphasis(md: str) -> list[MarkdownIssue]:
     """Space or tab immediately before closing ``**``."""
     issues: list[MarkdownIssue] = []
     for m in _SPACE_BEFORE_CLOSE_STRONG_RE.finditer(md):
+        # Reject false positive: closing ** matched as opening.
+        # E.g. **이수자**로 **총 평점** — "**로 **" is NOT space-before-close.
+        if not _is_likely_opening_delimiter(md, m.start()):
+            continue
         issues.append(MarkdownIssue(
             check="space_before_close_emphasis",
             line=_line_of(md, m.start()),
