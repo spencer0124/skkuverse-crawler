@@ -148,6 +148,23 @@ def backfill_attachments_cli(apply: bool, dept: tuple[str, ...], limit: int | No
     )))
 
 
+@click.command("backfill-wpdm-attachments")
+@click.option("--apply", is_flag=True, help="Actually update documents (default: dry-run)")
+@click.option("--limit", type=int, default=None, help="Stop after N documents")
+def backfill_wpdm_cli(apply: bool, limit: int | None) -> None:
+    """Re-fetch cheme WPDM posts to fix attachment download URLs.
+
+    Replaces landing-page URLs (/download/slug/) with actual download
+    URLs (?wpdmdl=id) by re-fetching from the WP REST API.
+    """
+    import sys
+
+    from .backfill_wpdm_attachments import run as run_backfill_wpdm
+
+    configure_logging()
+    sys.exit(asyncio.run(run_backfill_wpdm(apply=apply, limit=limit)))
+
+
 @click.command("validate-attachments")
 @click.option("--dept", multiple=True, help="Department ID(s) to validate")
 @click.option("--limit", type=int, default=None, help="Max notices to scan")

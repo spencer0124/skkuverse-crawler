@@ -24,6 +24,7 @@ REMOVE_SELECTORS = [
     ".board-view-file-wrap",
     ".board-view-nav",
     'a[href*="mode=list"]',
+    "div.w3eden",  # WPDM download blocks (wordpress-api strategy)
 ]
 
 # Step 2: Only inline elements get font-weight→<strong> / font-style→<em>

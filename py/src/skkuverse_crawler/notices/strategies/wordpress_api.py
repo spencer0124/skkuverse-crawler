@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import re
 from html import unescape
-from urllib.parse import urljoin
+from urllib.parse import parse_qs, urlencode, urljoin, urlparse
 
 from ...shared.fetcher import Fetcher
 from ...shared.logger import get_logger
@@ -21,7 +21,6 @@ FILE_EXTENSIONS = re.compile(
     re.I,
 )
 UPLOADS_PATH = re.compile(r"/wp-content/uploads/", re.I)
-WPDM_DOWNLOAD = re.compile(r"/download/\S+", re.I)
 
 
 class WordPressApiStrategy:
@@ -30,16 +29,49 @@ class WordPressApiStrategy:
         self._detail_cache: dict[int, NoticeDetail] = {}
 
     def _extract_attachments(self, html: str, base_url: str) -> list[dict[str, str]]:
+        """Extract attachments from raw HTML.
+
+        Must be called BEFORE clean_html() — WPDM blocks (div.w3eden)
+        are stripped by html_cleaner, which would erase data-downloadurl.
+        """
         soup = load_html(html)
         attachments: list[dict[str, str]] = []
         for a in soup.select("a[href]"):
             href = a.get("href", "")
             if isinstance(href, list):
                 href = href[0]
-            if href and (FILE_EXTENSIONS.search(href) or UPLOADS_PATH.search(href) or WPDM_DOWNLOAD.search(href)):
+            if href and (FILE_EXTENSIONS.search(href) or UPLOADS_PATH.search(href)):
                 name = a.get_text(strip=True) or href.rsplit("/", 1)[-1] or "unknown"
                 full_url = href if href.startswith("http") else urljoin(base_url, href)
                 attachments.append({"name": name, "url": full_url})
+
+        # WPDM 블록: div.w3eden 컨테이너 안에서 title + download URL 쌍 추출
+        seen_urls = {a["url"] for a in attachments}
+        for container in soup.select("div.w3eden"):
+            btn = container.select_one("a[data-downloadurl]")
+            if not btn:
+                continue
+            raw = btn.get("data-downloadurl", "")
+            if not raw:
+                continue
+            absolute = raw if raw.startswith("http") else urljoin(base_url, raw)
+            parsed = urlparse(absolute)
+            cleaned_qs = urlencode(
+                {k: v for k, v in parse_qs(parsed.query).items() if k != "refresh"},
+                doseq=True,
+            )
+            clean_url = parsed._replace(query=cleaned_qs).geturl()
+            if clean_url in seen_urls:
+                continue
+            seen_urls.add(clean_url)
+            title_a = container.select_one("h3.package-title a, a.package-title")
+            name = (
+                (title_a.get_text(strip=True) if title_a else None)
+                or btn.get_text(strip=True)
+                or "download"
+            )
+            attachments.append({"name": name, "url": clean_url})
+
         return attachments
 
     async def crawl_list(self, config: dict, page: int) -> list[NoticeListItem]:
