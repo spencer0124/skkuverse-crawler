@@ -1,13 +1,12 @@
 from __future__ import annotations
 
+import asyncio
 from unittest.mock import AsyncMock, patch
 
 import httpx
-import pytest
 import respx
 
 from skkuverse_crawler.notices.attachment_validator import (
-    AttachmentIssue,
     ValidationReport,
     check_reachability,
     validate_attachments,
@@ -223,8 +222,6 @@ class TestValidateNoticeAttachments:
 # ---------------------------------------------------------------------------
 # Async: check_reachability
 # ---------------------------------------------------------------------------
-
-import asyncio
 
 
 class TestCheckReachability:
