@@ -37,7 +37,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -60,7 +60,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -83,7 +83,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -106,7 +106,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -129,7 +129,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -152,7 +152,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -175,7 +175,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -198,7 +198,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -221,7 +221,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -244,7 +244,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -267,7 +267,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -290,7 +290,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -313,7 +313,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -336,7 +336,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -359,7 +359,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -382,7 +382,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -405,7 +405,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -428,7 +428,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -451,7 +451,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -474,7 +474,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -497,7 +497,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -520,7 +520,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -543,7 +543,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -566,7 +566,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -589,7 +589,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -612,7 +612,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -635,7 +635,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -658,7 +658,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -681,7 +681,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -704,7 +704,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -727,7 +727,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -750,7 +750,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -773,7 +773,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -796,7 +796,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -819,7 +819,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -842,7 +842,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -865,7 +865,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -888,7 +888,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -911,7 +911,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -934,7 +934,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -957,7 +957,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -980,7 +980,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -1003,7 +1003,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -1026,7 +1026,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -1049,7 +1049,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -1072,7 +1072,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -1095,7 +1095,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -1118,7 +1118,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -1302,7 +1302,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -1325,7 +1325,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -1348,7 +1348,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -1371,7 +1371,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -1394,7 +1394,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -1417,7 +1417,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -1440,7 +1440,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -1463,7 +1463,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -1486,7 +1486,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -1509,7 +1509,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -1532,7 +1532,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -1555,7 +1555,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -1578,7 +1578,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -1601,7 +1601,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -1624,7 +1624,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -1647,7 +1647,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -1670,7 +1670,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -1693,7 +1693,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -1716,7 +1716,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -1739,7 +1739,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -1762,7 +1762,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -1785,7 +1785,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -1808,7 +1808,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -1831,7 +1831,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -1854,7 +1854,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -1877,7 +1877,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -1900,7 +1900,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -1923,7 +1923,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -1946,7 +1946,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -1969,7 +1969,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -1992,7 +1992,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2015,7 +2015,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2038,7 +2038,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2061,7 +2061,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2084,7 +2084,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2107,7 +2107,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2130,7 +2130,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2153,7 +2153,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2176,7 +2176,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2199,7 +2199,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2222,7 +2222,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2245,7 +2245,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2268,7 +2268,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2291,7 +2291,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2314,7 +2314,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2337,7 +2337,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2360,7 +2360,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2383,7 +2383,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2406,7 +2406,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2429,7 +2429,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2452,7 +2452,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2475,7 +2475,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2498,7 +2498,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2521,7 +2521,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2544,7 +2544,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2567,7 +2567,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2590,7 +2590,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2613,7 +2613,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2636,7 +2636,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2659,7 +2659,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2682,7 +2682,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2705,7 +2705,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2728,7 +2728,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2751,7 +2751,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2774,7 +2774,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2797,7 +2797,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2823,7 +2823,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2849,7 +2849,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2875,7 +2875,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2901,7 +2901,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2927,7 +2927,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2953,7 +2953,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -2979,7 +2979,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -3002,7 +3002,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -3025,7 +3025,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -3048,7 +3048,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
@@ -3071,7 +3071,7 @@
       "titleLink": "dt.board-list-content-title a",
       "infoList": "dd.board-list-content-info ul li",
       "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.filedown_list li a"
+      "attachmentList": "ul.board-view-file-wrap li a"
     },
     "pagination": {
       "type": "offset",
