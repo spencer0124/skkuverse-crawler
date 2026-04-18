@@ -24,6 +24,7 @@ from ..shared.fetcher import Fetcher
 from ..shared.logger import get_logger
 from .config.loader import load_and_validate
 from .strategies.skku_standard import SkkuStandardStrategy
+from .types import DetailRef
 
 logger = get_logger("backfill_attachments")
 
@@ -131,7 +132,7 @@ async def run(
             continue
 
         try:
-            ref = {"articleNo": article_no, "detailPath": detail_path}
+            ref: DetailRef = {"articleNo": article_no, "detailPath": detail_path}
             detail = await strategy.crawl_detail(ref, dept_config)
         except Exception as exc:
             logger.error(

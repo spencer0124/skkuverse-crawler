@@ -51,7 +51,8 @@ class WordPressApiStrategy:
             btn = container.select_one("a[data-downloadurl]")
             if not btn:
                 continue
-            raw = btn.get("data-downloadurl", "")
+            raw_attr = btn.get("data-downloadurl", "")
+            raw = raw_attr[0] if isinstance(raw_attr, list) else raw_attr
             if not raw:
                 continue
             absolute = raw if raw.startswith("http") else urljoin(base_url, raw)
