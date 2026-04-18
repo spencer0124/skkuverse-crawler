@@ -216,3 +216,28 @@ def test_pre_nowon_notice_structure():
     assert result.count("<p>") >= 4
     # Image should be outside paragraphs, not lost
     assert '<img' in result
+
+
+def test_wpdm_blocks_removed():
+    """WPDM download blocks (div.w3eden) are stripped from clean HTML."""
+    html = (
+        "<p>공지 본문입니다.</p>"
+        "<div class='w3eden'>"
+        '<div class="link-template-default card mb-2"><div class="card-body">'
+        '<div class="media"><div class="media-body">'
+        '<h3 class="package-title">'
+        "<a href='https://cheme.skku.edu/download/slug/'>파일.hwp</a></h3>"
+        "</div>"
+        '<div class="ml-3">'
+        '<a href="#" data-downloadurl="https://cheme.skku.edu/download/slug/'
+        '?wpdmdl=123&amp;refresh=abc">다운로드</a>'
+        "</div></div></div></div></div>"
+        "<p>본문 계속.</p>"
+    )
+    result = clean_html(html, "https://cheme.skku.edu")
+    assert result is not None
+    assert "w3eden" not in result
+    assert "wpdmdl" not in result
+    assert "다운로드" not in result
+    assert "공지 본문입니다" in result
+    assert "본문 계속" in result

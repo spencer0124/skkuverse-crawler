@@ -99,10 +99,14 @@ async def _shutdown_modules(modules: list) -> None:
 
 
 # Register CLI subcommands
-from .notices.cli import backfill_attachment_referer_cli, backfill_content_cli, notices_cli, update_check_cli  # noqa: E402
+from .notices.cli import backfill_attachment_referer_cli, backfill_attachments_cli, backfill_content_cli, backfill_wpdm_cli, notices_cli, update_check_cli, validate_attachments_cli, validate_markdown_cli  # noqa: E402
 from .notices_summary.cli import summarize_cli  # noqa: E402
 main.add_command(notices_cli)
 main.add_command(update_check_cli)
 main.add_command(backfill_content_cli)
 main.add_command(backfill_attachment_referer_cli)
+main.add_command(backfill_attachments_cli)
+main.add_command(backfill_wpdm_cli)
+main.add_command(validate_attachments_cli)
+main.add_command(validate_markdown_cli)
 main.add_command(summarize_cli)

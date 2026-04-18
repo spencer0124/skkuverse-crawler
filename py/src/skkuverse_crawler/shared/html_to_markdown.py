@@ -300,10 +300,132 @@ def _convert_pseudo_bullets(soup: BeautifulSoup) -> None:
             bp.decompose()
 
 
+def _unwrap_all_spans(soup: BeautifulSoup) -> None:
+    """Strip all ``<span>`` tags — markdown has no span-level styling.
+
+    cleanHtml preserves ``<span>`` with color/background-color styles for
+    potential HTML rendering, but markdown cannot represent them.  Removing
+    spans here exposes adjacent ``<strong>/<b>`` tags that WYSIWYG editors
+    fragmented (each wrapped in its own ``<span>``), enabling the merge
+    pass below to unify them.
+    """
+    for span in list(soup.find_all("span")):
+        span.unwrap()
+
+
+def _merge_adjacent_strongs(soup: BeautifulSoup) -> None:
+    """Merge adjacent ``<strong>``/``<b>`` elements into one.
+
+    After ``_unwrap_all_spans``, previously-separated strong elements
+    become adjacent (possibly with whitespace text nodes between them).
+    Merging prevents markdownify from emitting ``**text **text**``
+    (space-before-close emphasis bug).
+    """
+    for tag_name in ("strong", "b"):
+        for tag in list(soup.find_all(tag_name)):
+            if tag.parent is None:
+                continue
+            nxt = tag.next_sibling
+            whitespace_buffer: list[NavigableString] = []
+            while nxt is not None:
+                # Skip whitespace-only text nodes between adjacent strongs
+                if isinstance(nxt, NavigableString) and not nxt.strip():
+                    whitespace_buffer.append(nxt)
+                    nxt = nxt.next_sibling
+                    continue
+                if isinstance(nxt, Tag) and nxt.name == tag_name:
+                    # Absorb the skipped whitespace into the merged tag
+                    for ws in whitespace_buffer:
+                        ws.extract()
+                    for child in list(nxt.children):
+                        tag.append(child.extract())
+                    nxt.decompose()
+                    # Continue scanning for more adjacent strongs
+                    nxt = tag.next_sibling
+                    whitespace_buffer = []
+                else:
+                    break
+
+
+def _split_strong_at_br(soup: BeautifulSoup) -> None:
+    """Split ``<strong>/<b>`` that contain ``<br/>`` into separate elements.
+
+    WYSIWYG editors sometimes wrap multi-line content in a single
+    ``<strong>`` that spans ``<br/>`` tags.  markdownify emits this as
+    ``**text\\ntext**`` — a bold spanning newlines.  Splitting into
+    per-segment strongs produces ``**text**\\n**text**``.
+    """
+    for tag_name in ("strong", "b"):
+        for tag in list(soup.find_all(tag_name)):
+            if tag.parent is None:
+                continue
+            if not tag.find("br", recursive=False):
+                continue
+
+            # Collect children into segments split by <br>
+            segments: list[list] = []
+            current: list = []
+            for child in list(tag.children):
+                if isinstance(child, Tag) and child.name == "br":
+                    segments.append(current)
+                    current = []
+                else:
+                    current.append(child)
+            segments.append(current)
+
+            # Replace original tag with per-segment strongs + <br> separators
+            for i, seg in enumerate(segments):
+                if seg:
+                    new_tag = soup.new_tag(tag_name)
+                    for child in seg:
+                        new_tag.append(child.extract())
+                    tag.insert_before(new_tag)
+                if i < len(segments) - 1:
+                    tag.insert_before(soup.new_tag("br"))
+            tag.decompose()
+
+
+def _promote_first_row_as_header(soup: BeautifulSoup) -> None:
+    """Fallback: promote first row to header when no ``<th>/<thead>`` exists.
+
+    Prevents markdownify from generating a synthetic empty header row.
+    Only fires on tables with ≥2 rows and no existing header elements.
+    """
+    for table in soup.find_all("table"):
+        if table.find("th") or table.find("thead"):
+            continue
+        trs = table.find_all("tr")
+        if len(trs) < 2:
+            continue
+        first_tr = trs[0]
+        first_cells = first_tr.find_all("td", recursive=False)
+        if not first_cells:
+            continue
+        for td in list(first_cells):
+            th = soup.new_tag("th")
+            for key in ("colspan", "rowspan"):
+                if td.get(key):
+                    th[key] = td[key]
+            for child in list(td.children):
+                if isinstance(child, (Tag, NavigableString)):
+                    th.append(child.extract())
+            td.replace_with(th)
+        # Extract from <tbody> if needed, wrap in <thead>, insert as table's first child
+        first_tr.extract()
+        thead = soup.new_tag("thead")
+        thead.append(first_tr)
+        table.insert(0, thead)
+
+
 def _preprocess(html: str) -> str:
     soup = BeautifulSoup(html, "html.parser")
-    # nbsp normalization must run first so downstream passes see ASCII
-    # spaces in text (e.g. `- item` where Word dropped `-\xa0item`).
+    # Span unwrap + strong merge must run first so downstream passes
+    # see clean <strong> elements (not fragmented by <span> wrappers).
+    _unwrap_all_spans(soup)
+    _merge_adjacent_strongs(soup)
+    _split_strong_at_br(soup)
+    # nbsp normalization must run before bullet detection so downstream
+    # passes see ASCII spaces (e.g. `- item` where Word dropped `-\xa0item`).
     _normalize_nbsp(soup)
     _convert_pseudo_bullets(soup)
     _convert_dash_bullet_paragraphs(soup)
@@ -314,6 +436,7 @@ def _preprocess(html: str) -> str:
         ol.name = "ul"
     _unwrap_box_tables(soup)
     _promote_header_rows(soup)
+    _promote_first_row_as_header(soup)
     _flatten_cell_blocks(soup)
     _flatten_li_blocks(soup)
     return str(soup)

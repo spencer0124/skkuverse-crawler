@@ -643,3 +643,109 @@ def test_bio_scholarship_notice_paren_and_dot_escaped():
     assert r"1\)" in md
     assert r"2\)" in md
     assert r"3\)" in md
+
+
+# ── Span unwrap + adjacent strong merge ──────────────
+
+
+def test_span_wrapped_strongs_merged_no_trailing_space():
+    """Adjacent <strong> wrapped in <span> with whitespace between them must merge."""
+    html = (
+        '<span style="background-color:rgb(255,245,153)">'
+        "<strong><span>총 평점 </span></strong></span>\n"
+        '<span style="background-color:rgb(255,245,153)">'
+        "<strong><span>4.0/4.5</span></strong></span>"
+    )
+    md = html_to_markdown(html)
+    assert md is not None
+    assert "**총 평점 4.0/4.5**" in md
+    # Must NOT have space-before-close pattern
+    assert "**총 평점 **" not in md
+
+
+def test_adjacent_strongs_merged_without_spans():
+    """Directly adjacent <strong> tags merge even without <span> wrappers."""
+    md = html_to_markdown("<p><strong>A </strong><strong>B</strong></p>")
+    assert md is not None
+    assert "**A B**" in md
+
+
+# ── Strong split at <br> ─────────────────────────────
+
+
+def test_strong_spanning_br_split_into_separate():
+    """<strong> wrapping text + <br/> + text produces two separate bolds."""
+    html = "<p><strong>가. 1차: 2026<br/>나. 2차: 2027</strong></p>"
+    md = html_to_markdown(html)
+    assert md is not None
+    assert "**가. 1차: 2026**" in md
+    assert "**나. 2차: 2027**" in md
+
+
+def test_strong_consecutive_br_preserved():
+    """<strong>A<br><br>B</strong> must produce 2 line breaks between bolds."""
+    html = "<strong>A<br/><br/>B</strong>"
+    md = html_to_markdown(html)
+    assert md is not None
+    assert "**A**" in md
+    assert "**B**" in md
+
+
+def test_strong_no_br_untouched():
+    """<strong> without <br> should not be affected by the split pass."""
+    md = html_to_markdown("<p><strong>Normal bold</strong></p>")
+    assert md is not None
+    assert "**Normal bold**" in md
+
+
+# ── First row promotion as header ────────────────────
+
+
+def test_first_row_promoted_when_no_bold():
+    """Table with no bold first row should use first row as header, not empty."""
+    html = (
+        "<table><tbody>"
+        "<tr><td>직종</td><td>담당업무</td></tr>"
+        "<tr><td>A</td><td>B</td></tr>"
+        "</tbody></table>"
+    )
+    md = html_to_markdown(html)
+    assert md is not None
+    # Must NOT have all-empty header row
+    assert "|  |  |" not in md
+    assert "직종" in md
+    assert "담당업무" in md
+
+
+def test_first_row_promotion_skipped_when_th_exists():
+    """Table with existing <th> should not be double-promoted."""
+    html = (
+        "<table><thead><tr><th>Col A</th><th>Col B</th></tr></thead>"
+        "<tbody><tr><td>1</td><td>2</td></tr></tbody></table>"
+    )
+    md = html_to_markdown(html)
+    assert md is not None
+    assert "Col A" in md
+    assert "Col B" in md
+
+
+def test_first_row_promotion_with_tbody_wrapping():
+    """<tr> inside <tbody> must be extracted safely to <thead>."""
+    html = (
+        "<table><tbody>"
+        "<tr><td>Header1</td><td>Header2</td></tr>"
+        "<tr><td>Data1</td><td>Data2</td></tr>"
+        "<tr><td>Data3</td><td>Data4</td></tr>"
+        "</tbody></table>"
+    )
+    md = html_to_markdown(html)
+    assert md is not None
+    assert "Header1" in md
+    assert "Data1" in md
+    # No empty header row
+    lines = md.strip().split("\n")
+    assert not any(
+        all(cell.strip() == "" for cell in ln.split("|") if cell)
+        for ln in lines
+        if "|" in ln and "---" not in ln
+    )
