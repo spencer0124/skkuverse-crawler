@@ -21,6 +21,16 @@
   - `cal.skku.edu` 라이브 검증: 10건 중 2건에서 한글 파일명(`대한토목학회.jpg`, `2026학년도 학과별 교육과정 로드맵_건축공학심화.pdf` 등) 정상 추출 확인.
 - **상세**: `docs/strategies/strategy-custom-php.md` 참조.
 
+### ~~5. wordpress-api WPDM 첨부파일 랜딩 페이지 URL~~ (2026-04-18 해결)
+- **문제**: cheme의 WPDM(WordPress Download Manager) 첨부파일이 `/download/{slug}/` 랜딩 페이지 URL로 저장되어 실제 파일 다운로드 불가
+- **원인**: `WPDM_DOWNLOAD` 정규식이 `<a href>` 의 랜딩 페이지 URL을 캐치. 실제 다운로드 URL은 `<a data-downloadurl=".../?wpdmdl={id}&refresh={hash}">` 속성에 존재
+- **해결**:
+  - `WPDM_DOWNLOAD` 정규식 제거, `div.w3eden` 컨테이너 단위로 `data-downloadurl` 추출
+  - 일시적 `refresh` 토큰 제거, `?wpdmdl={id}`만 저장 (검증: refresh 없이 다운로드 작동)
+  - 파일명은 `h3.package-title a` 텍스트에서 추출
+  - `html_cleaner.py`의 `REMOVE_SELECTORS`에 `div.w3eden` 추가 → cleanHtml/cleanMarkdown에서 WPDM UI 블록 제거
+  - `backfill-wpdm-attachments` CLI 명령어로 기존 DB 문서 수정 지원
+
 ### 3. `lastModified` 필드 미구현
 - 상세 페이지 `<span class="date">최종 수정일 : 2026.03.27</span>` 에서 추출 가능
 - 현재는 Notice 모델에 선언만 되어있고 값을 채우지 않음

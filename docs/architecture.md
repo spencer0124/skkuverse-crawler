@@ -39,6 +39,11 @@ py/src/skkuverse_crawler/
 │   ├── hashing.py              ← compute_content_hash (SHA256)
 │   ├── image_verifier.py       ← 공지 이미지 URL 도달 가능 여부 검증
 │   ├── backfill.py             ← cleanHtml/contentText/cleanMarkdown 재생성
+│   ├── backfill_attachments.py ← skku-standard 첨부 재크롤링
+│   ├── backfill_attachment_referer.py ← gnuboard 첨부 referer 백필
+│   ├── backfill_wpdm_attachments.py   ← cheme WPDM 첨부 URL 교체
+│   ├── attachment_validator.py ← 첨부파일 메타데이터 검증 (URL/name/referer/HTTP)
+│   ├── markdown_validator.py   ← cleanMarkdown 렌더링 품질 검증
 │   ├── update_checker.py       ← Tier-2 변경 감지 (contentHash 비교)
 │   ├── parser.py               ← BeautifulSoup4 래퍼 (load_html, extract_text, extract_attr)
 │   ├── config/
@@ -65,6 +70,11 @@ py/src/skkuverse_crawler/
 | `python -m skkuverse_crawler update-check` | 최근 14일 공지 변경 감지 (Tier-2) |
 | `python -m skkuverse_crawler backfill-content` | cleanHtml/contentText/cleanMarkdown 재생성 (dry-run) |
 | `python -m skkuverse_crawler backfill-content --apply` | 실제 업데이트 |
+| `python -m skkuverse_crawler backfill-attachment-referer --apply` | gnuboard 첨부 referer 백필 |
+| `python -m skkuverse_crawler backfill-attachments --apply` | skku-standard 첨부 재크롤링 |
+| `python -m skkuverse_crawler backfill-wpdm-attachments --apply` | cheme WPDM 첨부 URL 교체 |
+| `python -m skkuverse_crawler validate-attachments` | 첨부파일 메타데이터 검증 |
+| `python -m skkuverse_crawler validate-markdown` | cleanMarkdown 렌더링 품질 검증 |
 | `python -m skkuverse_crawler summarize` | AI 요약 1회 실행 |
 | `python -m skkuverse_crawler start` | 전체 스케줄러 (모든 모듈 cron/interval) |
 | `python -m skkuverse_crawler start --module notices` | 단일 모듈만 스케줄링 |

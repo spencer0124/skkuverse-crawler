@@ -35,6 +35,26 @@ python -m skkuverse_crawler summarize
 # batch-size/delay 지정
 python -m skkuverse_crawler summarize --batch-size 500 --delay 2.0
 
+# gnuboard 첨부파일 referer 백필 (dry-run)
+python -m skkuverse_crawler backfill-attachment-referer
+python -m skkuverse_crawler backfill-attachment-referer --apply --dept nano
+
+# skku-standard 첨부 재크롤링 (dry-run)
+python -m skkuverse_crawler backfill-attachments
+python -m skkuverse_crawler backfill-attachments --apply --dept law --limit 10
+
+# cheme WPDM 첨부 URL 교체 (dry-run)
+python -m skkuverse_crawler backfill-wpdm-attachments
+python -m skkuverse_crawler backfill-wpdm-attachments --apply
+
+# 첨부파일 메타데이터 검증
+python -m skkuverse_crawler validate-attachments
+python -m skkuverse_crawler validate-attachments --dept cheme --no-http --json
+
+# cleanMarkdown 렌더링 품질 검증
+python -m skkuverse_crawler validate-markdown
+python -m skkuverse_crawler validate-markdown --dept skku-main --severity error
+
 # 스케줄러
 python -m skkuverse_crawler start
 
@@ -58,6 +78,28 @@ python -m skkuverse_crawler start --module notices
 | `--apply` | false | 실제 업데이트 (없으면 dry-run) |
 | `--dept <id>` | 전체 | 특정 학과만 |
 | `--limit <n>` | 무제한 | 최대 문서 수 |
+| **backfill-attachment-referer** | | |
+| `--apply` | false | 실제 업데이트 (없으면 dry-run) |
+| `--dept <id>` | 전체 gnuboard | 특정 학과만 |
+| `--limit <n>` | 무제한 | 최대 문서 수 |
+| **backfill-attachments** | | |
+| `--apply` | false | 실제 업데이트 (없으면 dry-run) |
+| `--dept <id>` | 전체 skku-standard | 특정 학과만 |
+| `--limit <n>` | 무제한 | 최대 문서 수 |
+| **backfill-wpdm-attachments** | | |
+| `--apply` | false | 실제 업데이트 (없으면 dry-run) |
+| `--limit <n>` | 무제한 | 최대 문서 수 |
+| **validate-attachments** | | |
+| `--dept <id>` | 전체 | 특정 학과만 |
+| `--limit <n>` | 무제한 | 최대 공지 수 |
+| `--no-http` | false | HTTP 도달성 검사 스킵 |
+| `--json` | false | JSON 형식 출력 |
+| `--concurrency <n>` | 20 | HTTP 동시 요청 수 |
+| **validate-markdown** | | |
+| `--dept <id>` | 전체 | 특정 학과만 |
+| `--limit <n>` | 무제한 | 최대 공지 수 |
+| `--severity` | all | `all`, `error`, `warning` 필터 |
+| `--json` | false | JSON 형식 출력 |
 | **summarize** | | |
 | `--batch-size <n>` | 50 | 배치당 공지 수 |
 | `--delay <sec>` | 1.0 | API 호출 간 딜레이 (초) |

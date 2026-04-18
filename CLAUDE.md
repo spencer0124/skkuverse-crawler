@@ -24,6 +24,14 @@ python -m skkuverse_crawler backfill-content --apply --dept cheme --limit 10  # 
 python -m skkuverse_crawler backfill-attachment-referer              # gnuboard 첨부 referer 추가 (dry-run)
 python -m skkuverse_crawler backfill-attachment-referer --apply      # 실제 업데이트
 python -m skkuverse_crawler backfill-attachment-referer --apply --dept nano --limit 5
+python -m skkuverse_crawler backfill-attachments                     # skku-standard 첨부 재크롤링 (dry-run)
+python -m skkuverse_crawler backfill-attachments --apply --dept law --limit 10
+python -m skkuverse_crawler backfill-wpdm-attachments                # cheme WPDM 첨부 URL 교체 (dry-run)
+python -m skkuverse_crawler backfill-wpdm-attachments --apply
+python -m skkuverse_crawler validate-attachments                     # 첨부파일 메타데이터 검증
+python -m skkuverse_crawler validate-attachments --dept cheme --no-http --json
+python -m skkuverse_crawler validate-markdown                        # cleanMarkdown 렌더링 품질 검증
+python -m skkuverse_crawler validate-markdown --dept skku-main --severity error --json
 
 # 테스트 & 린트
 python -m pytest tests/ -v                  # 전체 테스트
@@ -83,7 +91,7 @@ python scripts/generate_artifacts.py    # departments.json + categories.json →
 
 **Incremental Crawl**: title+date 변경 감지 → 변경분만 상세 fetch. 페이지 내 전부 DB에 존재하면 early-stop. content:null 기사 자동 재크롤링.
 
-**HTML Cleaning**: 6단계 파이프라인 (`shared/html_cleaner.py`). BS4 junk 제거 + `data:` URI 이미지 제거 + Naver SmartEditor 레이아웃 테이블 unwrap → semantic 정규화(`font-weight: bold|bolder|≥600` → `<strong>`) + underline용 `<em>/<i>` unwrap → URL 절대경로 → nh3 태그/스타일 필터링 → 빈 요소 제거 → 구조 정리(빈 `<span>` unwrap / 단독자식 `<div>` 체인 축약 / `data:` URI 이미지 재거름 / 구두점 전용 inline 제거 / 단독자식 bold unwrap / 인접 inline 병합).
+**HTML Cleaning**: 6단계 파이프라인 (`shared/html_cleaner.py`). BS4 junk 제거(WPDM `div.w3eden` 다운로드 블록 포함) + `data:` URI 이미지 제거 + Naver SmartEditor 레이아웃 테이블 unwrap → semantic 정규화(`font-weight: bold|bolder|≥600` → `<strong>`) + underline용 `<em>/<i>` unwrap → URL 절대경로 → nh3 태그/스타일 필터링 → 빈 요소 제거 → 구조 정리(빈 `<span>` unwrap / 단독자식 `<div>` 체인 축약 / `data:` URI 이미지 재거름 / 구두점 전용 inline 제거 / 단독자식 bold unwrap / 인접 inline 병합).
 
 **Markdown 변환**: `shared/html_to_markdown.py`. cleanHtml을 입력으로 받아 markdownify + 전처리(박스 테이블 unwrap, 첫 행 all-bold → `<thead><th>` 승격, `<td>` 내부 `<p>/<div>` flatten)로 GFM을 생성 → `cleanMarkdown` 필드에 저장. `content`/`cleanHtml`/`contentText`는 그대로 유지. 이미지에 width/height 속성이 있으면 `{WxH}` 포맷으로 alt text 앞에 prepend: `![{800x600} 포스터](url)`. width만 있으면 `{w800}`, height만 있으면 `{h600}`. 앱에서 `!\[\{(\d+)x(\d+)\}` 정규식으로 파싱.
 
@@ -91,7 +99,13 @@ python scripts/generate_artifacts.py    # departments.json + categories.json →
 
 **contentText 추출**: `normalizer._text_from_clean_html()`. 블록 요소(`<tr>`, `<p>`, `<div>`, `<h1-4>`, `<li>`, `<br>`)가 개행을 만들고 `<td>/<th>`는 공백으로 구분(기존 동작). 셀 내부 `<br>`은 행 구분과 충돌하므로 공백으로 대체.
 
+**WPDM 첨부 추출**: `wordpress-api` 전략(cheme 전용). WPDM 플러그인은 `div.w3eden` 컨테이너 안에 `data-downloadurl` 속성으로 실제 다운로드 URL(`?wpdmdl={id}`)을 제공. 일시적 `refresh` 토큰은 제거하고 저장. 랜딩 페이지 URL(`/download/{slug}/`)은 첨부로 잡지 않음. 파일명은 `h3.package-title a` 텍스트에서 추출. `_extract_attachments()`는 반드시 `clean_html()` 이전에 raw HTML 대상으로 실행해야 함 — `div.w3eden`이 Stage 1에서 제거되므로.
+
 **첨부파일 Referer**: gnuboard 계열 학과(nano, bio-undergrad, bio-grad, pharm)의 `download.php`는 PHP 세션 + Referer 헤더를 검증. 크롤러가 attachment 메타데이터에 `referer` (상세 페이지 URL)를 저장하여 서버 프록시가 세션 수립 후 다운로드할 수 있도록 지원. gnuboard-custom(nano)은 케이스 A(아무 페이지 세션 OK), gnuboard 표준(pharm, bio)은 케이스 B(상세 페이지 방문 필수). bio는 https 미지원(http only).
+
+**첨부파일 검증**: `notices/attachment_validator.py`. URL scheme·host 허용 여부, name 품질, gnuboard referer 존재, 중복 URL, HTTP 도달성(HEAD 요청)을 검사. CLI로 `validate-attachments` 실행. `--no-http`으로 네트워크 체크 스킵, `--json`으로 기계 판독 가능 출력.
+
+**Markdown 검증**: `notices/markdown_validator.py`. cleanMarkdown 필드의 렌더링 품질을 검사. broken emphasis(닫히지 않은 `*`/`**`), 빈 링크, 이미지 dimension 포맷(`{WxH}`), 과도한 빈 줄 등을 감지. severity는 `error`/`warning` 두 단계. CLI로 `validate-markdown` 실행.
 
 ### 모듈 시스템 (`py/src/skkuverse_crawler/`)
 
