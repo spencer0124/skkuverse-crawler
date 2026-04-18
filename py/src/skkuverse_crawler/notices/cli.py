@@ -16,6 +16,7 @@ from .update_checker import run_update_check
 
 if TYPE_CHECKING:
     from .attachment_validator import ValidationReport
+    from .markdown_validator import MarkdownValidationReport
 
 
 @click.command("notices")
@@ -125,6 +126,28 @@ def backfill_attachment_referer_cli(apply: bool, dept: tuple[str, ...], limit: i
     )))
 
 
+@click.command("backfill-attachments")
+@click.option("--apply", is_flag=True, help="Actually update documents (default: dry-run)")
+@click.option("--dept", multiple=True, help="Restrict to specific sourceDeptId(s)")
+@click.option("--limit", type=int, default=None, help="Stop after N documents")
+def backfill_attachments_cli(apply: bool, dept: tuple[str, ...], limit: int | None) -> None:
+    """Re-fetch detail pages to backfill missing attachments.
+
+    Targets skku-standard subdomain departments whose attachments were
+    not captured due to a selector mismatch. Dry-run by default.
+    """
+    import sys
+
+    from .backfill_attachments import run as run_backfill_att
+
+    configure_logging()
+    sys.exit(asyncio.run(run_backfill_att(
+        apply=apply,
+        dept_filter=dept if dept else None,
+        limit=limit,
+    )))
+
+
 @click.command("validate-attachments")
 @click.option("--dept", multiple=True, help="Department ID(s) to validate")
 @click.option("--limit", type=int, default=None, help="Max notices to scan")
@@ -197,4 +220,89 @@ def _print_human(report: "ValidationReport") -> None:
             print(f"  [{r.source_dept_id}] articleNo={r.article_no}  {r.source_url}")
             for issue in r.issues:
                 print(f"    [{issue.attachment_index}] {issue.check}: {issue.detail}")
+        print()
+
+
+# ── validate-markdown ─────────────────────────────────
+
+
+@click.command("validate-markdown")
+@click.option("--dept", multiple=True, help="Department ID(s) to validate")
+@click.option("--limit", type=int, default=None, help="Max notices to scan")
+@click.option("--json", "json_output", is_flag=True, help="Output as JSON")
+@click.option(
+    "--severity",
+    type=click.Choice(["all", "error", "warning"]),
+    default="all",
+    help="Filter by minimum severity level",
+)
+def validate_markdown_cli(
+    dept: tuple[str, ...],
+    limit: int | None,
+    json_output: bool,
+    severity: str,
+) -> None:
+    """Validate markdown rendering in stored cleanMarkdown fields."""
+    from ..shared.config import init_config
+
+    init_config()
+    configure_logging()
+    asyncio.run(_run_validate_markdown(dept, limit, json_output, severity))
+
+
+async def _run_validate_markdown(
+    dept_filter: tuple[str, ...],
+    limit: int | None,
+    json_output: bool,
+    severity: str,
+) -> None:
+    try:
+        from .markdown_validator import validate_markdown
+
+        min_severity = "error" if severity == "error" else "warning"
+        report = await validate_markdown(
+            dept_filter=dept_filter if dept_filter else None,
+            limit=limit,
+            min_severity=min_severity,
+        )
+    finally:
+        await close_client()
+
+    if json_output:
+        _print_md_json(report)
+    else:
+        _print_md_human(report)
+
+
+def _print_md_json(report: "MarkdownValidationReport") -> None:
+    from dataclasses import asdict
+
+    print(_json.dumps(asdict(report), indent=2, ensure_ascii=False, default=str))
+
+
+def _print_md_human(report: "MarkdownValidationReport") -> None:
+    print()
+    print("Markdown Validation Report")
+    print("=" * 40)
+    print(f"  Notices scanned:      {report.total_notices:,}")
+    print(f"  Notices with issues:  {report.notices_with_issues:,}")
+    print()
+
+    if report.issue_counts:
+        print("Issues by type:")
+        for check_type, count in sorted(report.issue_counts.items(), key=lambda x: -x[1]):
+            print(f"  {check_type:35s} {count:,}")
+        print()
+
+    if report.results:
+        print(f"Details ({len(report.results)} notices):")
+        for r in report.results:
+            print(f"\n  [{r.source_dept_id}] articleNo={r.article_no}")
+            print(f"  {r.source_url}")
+            for issue in r.issues:
+                severity_tag = "ERR" if issue.severity == "error" else "WRN"
+                print(f"    L{issue.line} [{severity_tag}] {issue.check}: {issue.detail}")
+                if issue.snippet:
+                    visible = issue.snippet.replace("\n", "\\n")
+                    print(f"      | {visible}")
         print()
