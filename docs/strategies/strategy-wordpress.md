@@ -363,14 +363,30 @@ WordPress 기본 기능에 조회수가 없다. 플러그인(WP-PostViews, Post 
 
 ### 5. 첨부파일 추출
 
-`content.rendered` HTML 내에서 파일 링크를 추출해야 한다.
-WordPress 미디어 라이브러리 URL 패턴:
+`content.rendered` HTML 내에서 두 가지 패턴으로 첨부파일을 추출한다:
+
+**패턴 A: 일반 파일 링크** — `<a href>` 태그에서 파일 확장자(`.pdf`, `.hwp`, `.xlsx` 등) 또는 `/wp-content/uploads/` 경로 매칭.
 
 ```
 https://cheme.skku.edu/wp-content/uploads/2026/03/filename.pdf
 ```
 
-BeautifulSoup으로 `<a>` 태그의 href에서 파일 확장자(`.pdf`, `.hwp`, `.xlsx` 등) 매칭하여 추출.
+**패턴 B: WPDM (WordPress Download Manager)** — `div.w3eden` 컨테이너 안의 `<a data-downloadurl="...">` 속성에서 실제 다운로드 URL 추출. WPDM은 각 첨부파일을 카드 UI로 렌더링하며, `href`는 랜딩 페이지(`/download/{slug}/`)이지만 실제 다운로드 URL은 `data-downloadurl`에 `?wpdmdl={id}&refresh={hash}` 형태로 존재. `refresh` 토큰은 일시적이므로 제거하고 `?wpdmdl={id}`만 저장.
+
+```html
+<div class='w3eden'>
+  <div class="media">
+    <div class="media-body">
+      <h3 class="package-title"><a href='/download/slug/'>파일명</a></h3>
+    </div>
+    <div class="ml-3">
+      <a href='#' data-downloadurl="/download/slug/?wpdmdl=18765&refresh=abc">다운로드</a>
+    </div>
+  </div>
+</div>
+```
+
+파일명은 `h3.package-title a` 텍스트에서 추출. `div.w3eden` 블록은 `html_cleaner.py`의 `REMOVE_SELECTORS`에 등록되어 `cleanHtml`/`cleanMarkdown`에서 제거됨. 따라서 `_extract_attachments()`는 반드시 `clean_html()` 이전에 raw HTML 대상으로 실행해야 한다.
 
 ### 6. 날짜 형식
 
