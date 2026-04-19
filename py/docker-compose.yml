@@ -1,7 +1,9 @@
 services:
   crawler:
     container_name: skkuverse-crawler
-    build: .
+    build:
+      context: ..
+      dockerfile: py/Dockerfile
     env_file: .env
     environment:
       - CRAWLER_ENV=production
