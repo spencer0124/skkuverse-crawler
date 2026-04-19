@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -8,9 +9,12 @@ from typing import Any
 from ...shared.logger import get_logger
 
 # departments.json lives at the repo root (SSOT).
-# loader.py is at py/src/skkuverse_crawler/notices/config/loader.py
-_REPO_ROOT = Path(__file__).resolve().parents[5]
-_DEPARTMENTS_JSON = _REPO_ROOT / "departments.json"
+# Docker: set DEPARTMENTS_JSON_PATH=/departments.json explicitly.
+# Local:  fallback to parents[5] (loader.py → config → notices → skkuverse_crawler → src → py → repo root).
+_DEPARTMENTS_JSON = Path(
+    os.environ.get("DEPARTMENTS_JSON_PATH")
+    or str(Path(__file__).resolve().parents[5] / "departments.json")
+)
 
 logger = get_logger("config_loader")
 
