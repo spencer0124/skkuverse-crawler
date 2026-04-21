@@ -49,9 +49,12 @@ def has_changed(item: NoticeListItem, existing: dict[str, Any]) -> bool:
     # Truncated list title (ends with "...") that matches the DB's full
     # title prefix is NOT a real change — the list page just shows a
     # shorter version than the detail-page title stored in the DB.
+    # Some source servers truncate at a byte boundary inside a multi-byte
+    # UTF-8 character, leaving one or more U+FFFD replacement chars before
+    # "..."; strip those so the prefix match still succeeds.
     if new_title.endswith("..."):
-        prefix = new_title[:-3]
-        if old_title.startswith(prefix):
+        prefix = new_title[:-3].rstrip("�")
+        if prefix and old_title.startswith(prefix):
             return False
     return True
 
