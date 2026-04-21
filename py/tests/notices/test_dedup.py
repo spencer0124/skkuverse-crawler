@@ -5,10 +5,11 @@ from unittest.mock import MagicMock
 
 from skkuverse_crawler.notices.dedup import (
     find_existing_meta,
+    has_changed,
     update_with_history,
     upsert_notice,
 )
-from skkuverse_crawler.notices.models import Notice
+from skkuverse_crawler.notices.models import Notice, NoticeListItem
 
 
 def _make_notice(**overrides) -> Notice:
@@ -32,6 +33,67 @@ def _make_notice(**overrides) -> Notice:
     )
     defaults.update(overrides)
     return Notice(**defaults)
+
+
+def _make_list_item(**overrides) -> NoticeListItem:
+    defaults = dict(
+        articleNo=1,
+        title="테스트 공지",
+        category="일반",
+        author="관리자",
+        date="2026-03-01",
+        views=0,
+        detailPath="?articleNo=1",
+    )
+    defaults.update(overrides)
+    return NoticeListItem(**defaults)
+
+
+class TestHasChanged:
+    def test_identical_title_and_date_not_changed(self):
+        item = _make_list_item(title="Hello", date="2026-03-01")
+        existing = {"title": "Hello", "date": "2026-03-01"}
+        assert has_changed(item, existing) is False
+
+    def test_date_differs_is_changed(self):
+        item = _make_list_item(title="Hello", date="2026-03-02")
+        existing = {"title": "Hello", "date": "2026-03-01"}
+        assert has_changed(item, existing) is True
+
+    def test_truncated_title_with_ellipsis_matches_prefix(self):
+        item = _make_list_item(title="Very long announcemen...", date="2026-03-01")
+        existing = {"title": "Very long announcement about stuff", "date": "2026-03-01"}
+        assert has_changed(item, existing) is False
+
+    def test_truncated_title_with_ufffd_before_ellipsis(self):
+        # cal.skku.edu style: source byte-truncates title mid multi-byte
+        # character, resulting in a trailing U+FFFD before "...".
+        item = _make_list_item(
+            title="[IBK기업은행] 2026년 전문·일반계약직 및 전문준정규직 채용�...",
+            date="2026-04-20",
+        )
+        existing = {
+            "title": "[IBK기업은행] 2026년 전문·일반계약직 및 전문준정규직 채용공고 (~5/4, 10:00)",
+            "date": "2026-04-20",
+        }
+        assert has_changed(item, existing) is False
+
+    def test_truncated_title_with_multiple_ufffd(self):
+        item = _make_list_item(title="Hello wor��...", date="2026-03-01")
+        existing = {"title": "Hello world peace", "date": "2026-03-01"}
+        assert has_changed(item, existing) is False
+
+    def test_real_title_change_still_detected(self):
+        item = _make_list_item(title="Totally different title", date="2026-03-01")
+        existing = {"title": "Original title", "date": "2026-03-01"}
+        assert has_changed(item, existing) is True
+
+    def test_empty_prefix_after_stripping_does_not_match_everything(self):
+        # If everything before "..." is U+FFFD, we can't safely infer a match;
+        # treat as changed rather than declaring a silent match on any old title.
+        item = _make_list_item(title="�...", date="2026-03-01")
+        existing = {"title": "Completely unrelated", "date": "2026-03-01"}
+        assert has_changed(item, existing) is True
 
 
 class TestUpsertNotice:
