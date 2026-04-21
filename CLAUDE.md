@@ -86,7 +86,7 @@ python scripts/generate_artifacts.py    # departments.json + categories.json →
 - `campus`: 유효값은 `generate_artifacts.py`의 `VALID_CAMPUSES` 참조.
 - `appCategory`: 유효값은 `categories.json`의 id 목록에서 자동 도출 (+ `null` 허용).
 - `crawlEnabled`: 프로덕션 크롤링 여부. `CRAWL_DEPT_FILTER` env var 미설정 시 이 필드가 기본 필터.
-- `CRAWL_DEPT_FILTER`: dev/디버깅용 오버라이드로만 사용. 설정하면 crawlEnabled 무시하고 해당 ID만 크롤링.
+- `CRAWL_DEPT_FILTER`: dev/디버깅용 오버라이드 **전용**. ⚠️ **절대 프로덕션 `docker-compose.yml`에 두지 말 것** — 설정 시 `departments.json`의 `crawlEnabled`를 덮어써 나머지 학과가 전부 침묵 차단됨. 컨테이너 Up 상태와 로그 무에러에도 coverage가 급락하므로 외부에서 알아채기 어려움 (2026-04-21 인시던트, `docs/known-issues.md` §7 참조).
 - `hasCategory`/`hasAuthor`: departments.json에 저장하지 않음. strategy에서 결정론적 도출 (codegen의 STRATEGY_FEATURES 룩업).
 
 **Incremental Crawl**: title+date 변경 감지 → 변경분만 상세 fetch. 페이지 내 전부 DB에 존재하면 early-stop. content:null 기사 자동 재크롤링.
@@ -140,7 +140,7 @@ python scripts/generate_artifacts.py    # departments.json + categories.json →
 - `CRAWLER_ENV` — `production` / `development` / `test` (case-insensitive)
 - `LOG_FORMAT` — `json` (기본) / `dev` (컬러 콘솔)
 - `AI_SERVICE_URL` — AI 요약 서비스 URL. 환경별 자동 결정: `production` → `http://ai:4000`, `development`/`test` → `http://127.0.0.1:4000`. 직접 지정 시 우선
-- `CRAWL_DEPT_FILTER` — 콤마 구분 학과 ID 필터 (e.g. `skku-main,law`). **dev 오버라이드 전용**. 미설정 시 `departments.json`의 `crawlEnabled: true` 항목만 크롤링
+- `CRAWL_DEPT_FILTER` — 콤마 구분 학과 ID 필터 (e.g. `skku-main,law`). **dev 오버라이드 전용** ⚠️ 프로덕션 미설정 원칙. 미설정 시 `departments.json`의 `crawlEnabled: true` 항목만 크롤링
 
 
 ## Testing
