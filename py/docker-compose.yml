@@ -10,9 +10,9 @@ services:
     environment:
       - CRAWLER_ENV=production
       - LOG_FORMAT=json
-      - CRAWL_DEPT_FILTER=skku-main,cal-undergrad,bio-undergrad,nano,dorm-hssc,medicine,cheme,lib-hssc,lib-nsc,lib-all,skku-notice02,skku-notice04,skku-notice05,skku-notice06,skku-notice07
+      - CRAWL_SOURCE_FILTER=skku-main,cal-undergrad,bio-undergrad,nano,dorm-hssc,medicine,cheme,lib-hssc,lib-nsc,lib-all,skku-notice02,skku-notice04,skku-notice05,skku-notice06,skku-notice07
       - AI_SERVICE_URL=http://ai:4000
-      - DEPARTMENTS_JSON_PATH=/departments.json
+      - SOURCES_JSON_PATH=/sources.json
       - TZ=Asia/Seoul
     restart: unless-stopped
     mem_limit: 512m

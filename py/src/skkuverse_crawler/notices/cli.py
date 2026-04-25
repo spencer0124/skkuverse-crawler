@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 @click.command("notices")
 @click.option("--once", is_flag=True, help="Run once and exit")
 @click.option("--all", "full_crawl", is_flag=True, help="Full (non-incremental) crawl")
-@click.option("--dept", multiple=True, help="Department ID(s) to crawl")
+@click.option("--source", multiple=True, help="Department ID(s) to crawl")
 @click.option("--pages", type=int, default=None, help="Max pages per department")
 @click.option("--delay", type=int, default=500, help="Delay between requests (ms)")
 def notices_cli(once: bool, full_crawl: bool, dept: tuple[str, ...], pages: int | None, delay: int) -> None:
@@ -58,7 +58,7 @@ async def _run(
 
 @click.command("update-check")
 @click.option("--days", type=int, default=14, help="Window in days (default: 14)")
-@click.option("--dept", multiple=True, help="Department ID(s) to check")
+@click.option("--source", multiple=True, help="Department ID(s) to check")
 def update_check_cli(days: int, dept: tuple[str, ...]) -> None:
     """Run Tier 2 update detection on recent notices."""
     from ..shared.config import init_config
@@ -86,7 +86,7 @@ async def _run_update_check(
 
 @click.command("backfill-content")
 @click.option("--apply", is_flag=True, help="Actually update documents (default: dry-run)")
-@click.option("--dept", multiple=True, help="Restrict to specific sourceDeptId(s)")
+@click.option("--source", multiple=True, help="Restrict to specific sourceId(s)")
 @click.option("--limit", type=int, default=None, help="Stop after N documents")
 def backfill_content_cli(apply: bool, dept: tuple[str, ...], limit: int | None) -> None:
     """Rebuild cleanHtml/contentText/cleanMarkdown from stored `content` field.
@@ -106,7 +106,7 @@ def backfill_content_cli(apply: bool, dept: tuple[str, ...], limit: int | None) 
 
 @click.command("backfill-attachment-referer")
 @click.option("--apply", is_flag=True, help="Actually update documents (default: dry-run)")
-@click.option("--dept", multiple=True, help="Restrict to specific sourceDeptId(s)")
+@click.option("--source", multiple=True, help="Restrict to specific sourceId(s)")
 @click.option("--limit", type=int, default=None, help="Stop after N documents")
 def backfill_attachment_referer_cli(apply: bool, dept: tuple[str, ...], limit: int | None) -> None:
     """Add referer field to gnuboard attachment metadata.
@@ -128,7 +128,7 @@ def backfill_attachment_referer_cli(apply: bool, dept: tuple[str, ...], limit: i
 
 @click.command("backfill-attachments")
 @click.option("--apply", is_flag=True, help="Actually update documents (default: dry-run)")
-@click.option("--dept", multiple=True, help="Restrict to specific sourceDeptId(s)")
+@click.option("--source", multiple=True, help="Restrict to specific sourceId(s)")
 @click.option("--limit", type=int, default=None, help="Stop after N documents")
 def backfill_attachments_cli(apply: bool, dept: tuple[str, ...], limit: int | None) -> None:
     """Re-fetch detail pages to backfill missing attachments.
@@ -166,7 +166,7 @@ def backfill_wpdm_cli(apply: bool, limit: int | None) -> None:
 
 
 @click.command("validate-attachments")
-@click.option("--dept", multiple=True, help="Department ID(s) to validate")
+@click.option("--source", multiple=True, help="Department ID(s) to validate")
 @click.option("--limit", type=int, default=None, help="Max notices to scan")
 @click.option("--no-http", is_flag=True, help="Skip HTTP reachability checks")
 @click.option("--json", "json_output", is_flag=True, help="Output as JSON")
@@ -234,7 +234,7 @@ def _print_human(report: "ValidationReport") -> None:
     if report.results:
         print(f"Details ({len(report.results)} notices):")
         for r in report.results:
-            print(f"  [{r.source_dept_id}] articleNo={r.article_no}  {r.source_url}")
+            print(f"  [{r.source_id}] articleNo={r.article_no}  {r.source_url}")
             for issue in r.issues:
                 print(f"    [{issue.attachment_index}] {issue.check}: {issue.detail}")
         print()
@@ -244,7 +244,7 @@ def _print_human(report: "ValidationReport") -> None:
 
 
 @click.command("validate-markdown")
-@click.option("--dept", multiple=True, help="Department ID(s) to validate")
+@click.option("--source", multiple=True, help="Department ID(s) to validate")
 @click.option("--limit", type=int, default=None, help="Max notices to scan")
 @click.option("--json", "json_output", is_flag=True, help="Output as JSON")
 @click.option(
@@ -314,7 +314,7 @@ def _print_md_human(report: "MarkdownValidationReport") -> None:
     if report.results:
         print(f"Details ({len(report.results)} notices):")
         for r in report.results:
-            print(f"\n  [{r.source_dept_id}] articleNo={r.article_no}")
+            print(f"\n  [{r.source_id}] articleNo={r.article_no}")
             print(f"  {r.source_url}")
             for issue in r.issues:
                 severity_tag = "ERR" if issue.severity == "error" else "WRN"

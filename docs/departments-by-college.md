@@ -1,9 +1,9 @@
-<!-- Auto-generated from departments.json. Do not edit manually. -->
+<!-- Auto-generated from sources.json. Do not edit manually. -->
 <!-- Regenerate: cd py && python scripts/generate_artifacts.py -->
 
 # 단과대학별 학과 목록
 
-> departments.json 기준 147개 엔트리
+> sources.json 기준 147개 엔트리
 
 ## 경영대학
 

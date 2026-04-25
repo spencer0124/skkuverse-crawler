@@ -126,7 +126,7 @@ GET {baseUrl}/?rest_route=/wp/v2/categories&per_page=100&_fields=id,name,slug,co
 ]
 ```
 
-카테고리 ID를 `departments.json`의 `categoryId` 필드에 지정하여 필터링한다.
+카테고리 ID를 `sources.json`의 `categoryId` 필드에 지정하여 필터링한다.
 
 ### 필드 매핑 (REST API → NoticeListItem)
 
@@ -249,11 +249,11 @@ REST API에서 `_fields`에 `content`를 포함하여 목록 API 호출 1번에 
 ### Fallback: HTML 파싱 전략
 
 REST API가 비활성화된 WordPress 사이트를 위한 fallback.
-`usg_` 클래스가 사이트마다 다를 수 있으므로 `selectors`를 departments.json에서 설정한다.
+`usg_` 클래스가 사이트마다 다를 수 있으므로 `selectors`를 sources.json에서 설정한다.
 
 ---
 
-## departments.json 설정 예시
+## sources.json 설정 예시
 
 ### REST API 방식 (권장)
 
@@ -416,5 +416,5 @@ Notice 스키마의 `date`는 `YYYY-MM-DD`이므로 `post.date.split('T')[0]`으
 ## 구현 상태
 
 - `wordpress-api` 전략: 구현 완료 (`py/src/skkuverse_crawler/notices/strategies/wordpress_api.py`)
-- `cheme` 설정: departments.json에 등록 완료
+- `cheme` 설정: sources.json에 등록 완료
 - `wordpress-html` 전략: 미구현 (REST API 비활성 사이트용 fallback, 필요시 추가)

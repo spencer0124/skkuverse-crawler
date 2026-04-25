@@ -39,7 +39,7 @@ class Notice:
     attachments: list[dict[str, str]]  # [{name, url}]
     sourceUrl: str
     detailPath: str
-    sourceDeptId: str
+    sourceId: str
     cleanMarkdown: str | None = None
     crawledAt: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     lastModified: str | None = None

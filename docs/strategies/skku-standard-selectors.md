@@ -94,7 +94,7 @@
 - N = page × 10 (0, 10, 20, ...)
 - 빈 리스트가 나오면 마지막 페이지
 
-## departments.json 셀렉터 매핑
+## sources.json 셀렉터 매핑
 
 ```json
 {
@@ -112,4 +112,4 @@
 같은 skku-standard 전략이지만 학과별로 셀렉터가 다를 수 있음:
 - `infoList`의 `<li>` 순서가 다를 수 있음 (작성자/날짜 위치)
 - `detailContent`의 클래스가 다를 수 있음
-- departments.json에서 selectors를 학과별로 오버라이드 가능
+- sources.json에서 selectors를 학과별로 오버라이드 가능

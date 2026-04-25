@@ -32,11 +32,11 @@ APScheduler가 각 모듈의 `cron_schedule`에 따라 `mod.run()`을 자동 호
 `NoticesModule.run()`이 호출되면:
 
 ```python
-departments = load_and_validate()   # departments.json에서 학과 목록 로드
+departments = load_and_validate()   # sources.json에서 학과 목록 로드
 results = await run_crawl(departments, options)
 ```
 
-`departments.json`에는 크롤링할 학과들이 정의돼 있다. 각 학과마다 "어떤 웹사이트 구조인지" 전략(strategy)이 지정돼 있다.
+`sources.json`에는 크롤링할 학과들이 정의돼 있다. 각 학과마다 "어떤 웹사이트 구조인지" 전략(strategy)이 지정돼 있다.
 
 `run_crawl()` (orchestrator.py)이 하는 일:
 
@@ -81,7 +81,7 @@ while page < max_pages:
 | `gnuboard` | Gnuboard 기반 |
 | `gnuboard-custom` | Gnuboard 커스텀 변형 |
 
-`STRATEGY_MAP`이 `departments.json`의 `"strategy"` 문자열을 실제 클래스로 매핑한다. 새 학과를 추가할 때 기존 전략이 맞으면 JSON에 한 줄만 추가하면 되고, 구조가 다르면 새 Strategy 클래스만 만들면 된다.
+`STRATEGY_MAP`이 `sources.json`의 `"strategy"` 문자열을 실제 클래스로 매핑한다. 새 학과를 추가할 때 기존 전략이 맞으면 JSON에 한 줄만 추가하면 되고, 구조가 다르면 새 Strategy 클래스만 만들면 된다.
 
 ### 3-3. Incremental 크롤링 — 똑똑하게 건너뛰기
 
@@ -144,7 +144,7 @@ notice = build_notice(item, detail, ...)            # 5가지 출력 생성
 
 | 상황 | 동작 |
 |------|------|
-| 새 공지 | `upsert_notice()` — `articleNo + sourceDeptId` 기준 insert |
+| 새 공지 | `upsert_notice()` — `articleNo + sourceId` 기준 insert |
 | 변경된 공지 | `update_with_history()` — 본문 업데이트 + `editHistory` 배열에 변경 이력 기록 (최대 20건) |
 | 변경 없는 공지 | `bulk_touch_notices()` — 조회수(`views`)와 `crawledAt`만 갱신 |
 

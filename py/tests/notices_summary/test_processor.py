@@ -34,7 +34,7 @@ def _make_doc(**overrides) -> dict:
     defaults = {
         "_id": ObjectId(),
         "articleNo": 1,
-        "sourceDeptId": "test-dept",
+        "sourceId": "test-dept",
         "title": "테스트 공지",
         "category": "일반",
         "contentText": "본문 텍스트",

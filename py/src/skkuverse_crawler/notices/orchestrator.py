@@ -89,12 +89,12 @@ async def run_crawl(
         unknown = [did for did in options.dept_filter if did not in valid_ids]
         if unknown:
             raise ValueError(
-                f"Unknown department ID(s) in CRAWL_DEPT_FILTER: {unknown}. "
-                f"Check departments.json for valid IDs."
+                f"Unknown department ID(s) in CRAWL_SOURCE_FILTER: {unknown}. "
+                f"Check sources.json for valid IDs."
             )
         filtered = [d for d in departments if d["id"] in options.dept_filter]
     else:
-        # No explicit filter: use crawlEnabled from departments.json (SSOT)
+        # No explicit filter: use crawlEnabled from sources.json (SSOT)
         filtered = [d for d in departments if d.get("crawlEnabled", False)]
 
     if not filtered:
@@ -173,7 +173,7 @@ async def _crawl_department(
                     raw_content = None
                 clean_markdown = html_to_markdown(cleaned)
                 await collection.update_one(
-                    {"articleNo": ref["articleNo"], "sourceDeptId": dept["id"]},
+                    {"articleNo": ref["articleNo"], "sourceId": dept["id"]},
                     {"$set": {
                         "content": raw_content,
                         "contentText": detail.contentText,
@@ -303,7 +303,7 @@ async def _process_page_smart(
             if existing and not has_changed(item, existing):
                 to_touch.append({
                     "articleNo": item.articleNo,
-                    "sourceDeptId": dept["id"],
+                    "sourceId": dept["id"],
                     "views": item.views,
                 })
                 result.skipped += 1
@@ -332,7 +332,7 @@ async def _process_page_smart(
             notice = build_notice(
                 item, detail,
                 department=dept["name"],
-                source_dept_id=dept["id"],
+                source_id=dept["id"],
                 base_url=dept["baseUrl"],
                 image_dimensions=img_result.dimensions or None,
             )
@@ -408,7 +408,7 @@ async def _process_page_full(
             notice = build_notice(
                 item, detail,
                 department=dept["name"],
-                source_dept_id=dept["id"],
+                source_id=dept["id"],
                 base_url=dept["baseUrl"],
                 image_dimensions=img_result.dimensions or None,
             )

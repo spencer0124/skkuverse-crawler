@@ -81,7 +81,7 @@ def build_notice(
     detail: NoticeDetail | None,
     *,
     department: str,
-    source_dept_id: str,
+    source_id: str,
     base_url: str,
     image_dimensions: dict[str, tuple[int, int]] | None = None,
 ) -> Notice:
@@ -107,7 +107,7 @@ def build_notice(
         logger.warning(
             "oversized_content_dropped",
             articleNo=list_item.articleNo,
-            dept=source_dept_id,
+            dept=source_id,
             size=len(cleaned.encode()),
         )
         cleaned = None
@@ -141,7 +141,7 @@ def build_notice(
         attachments=detail.attachments if detail else [],
         sourceUrl=source_url,
         detailPath=list_item.detailPath,
-        sourceDeptId=source_dept_id,
+        sourceId=source_id,
         cleanMarkdown=clean_markdown,
         crawledAt=datetime.now(timezone.utc),
         contentHash=compute_content_hash(cleaned),

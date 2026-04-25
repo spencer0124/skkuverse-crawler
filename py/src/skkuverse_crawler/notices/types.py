@@ -23,7 +23,7 @@ PaginationConfig = OffsetPaginationConfig | PageNumPaginationConfig
 
 
 # ── Department Config ───────────────────────────────────
-# camelCase keys match departments.json field names
+# camelCase keys match sources.json field names
 
 class SkkuStandardSelectors(TypedDict):
     listItem: str

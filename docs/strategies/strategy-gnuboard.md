@@ -538,12 +538,12 @@ py/src/skkuverse_crawler/notices/strategies/
   custom_php.py       # C1 (cal 등 자체 PHP)
 ```
 
-**C2-gnuboard 내부에서는 스킨별 셀렉터 차이를 departments.json의 selectors로 처리.**
+**C2-gnuboard 내부에서는 스킨별 셀렉터 차이를 sources.json의 selectors로 처리.**
 bio.skku.edu (테이블형)과 pharm.skku.edu (리스트형)은 같은 전략에서 셀렉터만 다르게 설정.
 
 ---
 
-## departments.json 설정 예시
+## sources.json 설정 예시
 
 ### C1: 커스텀 PHP (custom-php 전략)
 
@@ -788,4 +788,4 @@ nano.skku.edu 상세 페이지의 `#DivContents` 내부에는 HWP(한글) 에디
 3. `#bo_list table` 존재 → 테이블형 스킨
 4. `div.conbody table` + `tbl=` 파라미터 → GnCommon 커스텀
 
-하지만 **departments.json에서 명시적으로 셀렉터를 지정하는 것이 더 안정적**이다.
+하지만 **sources.json에서 명시적으로 셀렉터를 지정하는 것이 더 안정적**이다.

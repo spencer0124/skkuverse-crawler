@@ -1,9 +1,9 @@
-<!-- Auto-generated from departments.json. Do not edit manually. -->
+<!-- Auto-generated from sources.json. Do not edit manually. -->
 <!-- Regenerate: cd py && python scripts/generate_artifacts.py -->
 
 # 크롤링 학과/기관 전수 분류 + 커버리지 분석
 
-> departments.json 기준 147개 엔트리
+> sources.json 기준 147개 엔트리
 
 ## 전략별 분포
 

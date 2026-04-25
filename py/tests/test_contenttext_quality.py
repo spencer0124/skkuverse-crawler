@@ -197,7 +197,7 @@ class TestBuildNoticeContentText:
             self._make_list_item(),
             detail,
             department="test",
-            source_dept_id="test",
+            source_id="test",
             base_url="https://example.com",
         )
         # cleanHtml 파생이므로 nav 없고 테이블 내용 있어야 함
@@ -217,7 +217,7 @@ class TestBuildNoticeContentText:
             self._make_list_item(),
             detail,
             department="test",
-            source_dept_id="test",
+            source_id="test",
             base_url="https://example.com",
         )
         # fallback이므로 raw 그대로
@@ -229,7 +229,7 @@ class TestBuildNoticeContentText:
             self._make_list_item(),
             None,
             department="test",
-            source_dept_id="test",
+            source_id="test",
             base_url="https://example.com",
         )
         assert notice.contentText is None

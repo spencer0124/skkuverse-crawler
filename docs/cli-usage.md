@@ -12,7 +12,7 @@ python -m skkuverse_crawler notices --once
 python -m skkuverse_crawler notices --once --all
 
 # 특정 학과만, 지정 페이지 수
-python -m skkuverse_crawler notices --once --dept skku-main --pages 3
+python -m skkuverse_crawler notices --once --source skku-main --pages 3
 
 # 요청 간 딜레이 변경 (기본 500ms)
 python -m skkuverse_crawler notices --once --delay 1000
@@ -21,13 +21,13 @@ python -m skkuverse_crawler notices --once --delay 1000
 python -m skkuverse_crawler update-check
 
 # 윈도우 및 학과 지정
-python -m skkuverse_crawler update-check --days 7 --dept skku-main
+python -m skkuverse_crawler update-check --days 7 --source skku-main
 
 # cleanHtml/contentText/cleanMarkdown 재생성 (dry-run)
 python -m skkuverse_crawler backfill-content
 
 # 실제 업데이트 (학과/건수 제한 가능)
-python -m skkuverse_crawler backfill-content --apply --dept cheme --limit 10
+python -m skkuverse_crawler backfill-content --apply --source cheme --limit 10
 
 # AI 요약 (기본 batch-size: 50)
 python -m skkuverse_crawler summarize
@@ -37,11 +37,11 @@ python -m skkuverse_crawler summarize --batch-size 500 --delay 2.0
 
 # gnuboard 첨부파일 referer 백필 (dry-run)
 python -m skkuverse_crawler backfill-attachment-referer
-python -m skkuverse_crawler backfill-attachment-referer --apply --dept nano
+python -m skkuverse_crawler backfill-attachment-referer --apply --source nano
 
 # skku-standard 첨부 재크롤링 (dry-run)
 python -m skkuverse_crawler backfill-attachments
-python -m skkuverse_crawler backfill-attachments --apply --dept law --limit 10
+python -m skkuverse_crawler backfill-attachments --apply --source law --limit 10
 
 # cheme WPDM 첨부 URL 교체 (dry-run)
 python -m skkuverse_crawler backfill-wpdm-attachments
@@ -49,11 +49,11 @@ python -m skkuverse_crawler backfill-wpdm-attachments --apply
 
 # 첨부파일 메타데이터 검증
 python -m skkuverse_crawler validate-attachments
-python -m skkuverse_crawler validate-attachments --dept cheme --no-http --json
+python -m skkuverse_crawler validate-attachments --source cheme --no-http --json
 
 # cleanMarkdown 렌더링 품질 검증
 python -m skkuverse_crawler validate-markdown
-python -m skkuverse_crawler validate-markdown --dept skku-main --severity error
+python -m skkuverse_crawler validate-markdown --source skku-main --severity error
 
 # 스케줄러
 python -m skkuverse_crawler start
@@ -68,35 +68,35 @@ python -m skkuverse_crawler start --module notices
 |------|--------|------|
 | `--once` | false | 1회 실행 후 종료 (없으면 cron 모드) |
 | `--all` | false | incremental 무시, 모든 페이지 크롤링 |
-| `--dept <id>` | 전체 | 특정 학과만 크롤링 (departments.json의 id) |
+| `--source <id>` | 전체 | 특정 학과만 크롤링 (sources.json의 id) |
 | `--pages <n>` | 무제한 | 최대 페이지 수 제한 |
 | `--delay <ms>` | 500 | 요청 간 최소 딜레이 (밀리초) |
 | **update-check** | | |
 | `--days <n>` | 14 | 변경 감지 윈도우 (일) |
-| `--dept <id>` | 전체 | 특정 학과만 체크 |
+| `--source <id>` | 전체 | 특정 학과만 체크 |
 | **backfill-content** | | |
 | `--apply` | false | 실제 업데이트 (없으면 dry-run) |
-| `--dept <id>` | 전체 | 특정 학과만 |
+| `--source <id>` | 전체 | 특정 학과만 |
 | `--limit <n>` | 무제한 | 최대 문서 수 |
 | **backfill-attachment-referer** | | |
 | `--apply` | false | 실제 업데이트 (없으면 dry-run) |
-| `--dept <id>` | 전체 gnuboard | 특정 학과만 |
+| `--source <id>` | 전체 gnuboard | 특정 학과만 |
 | `--limit <n>` | 무제한 | 최대 문서 수 |
 | **backfill-attachments** | | |
 | `--apply` | false | 실제 업데이트 (없으면 dry-run) |
-| `--dept <id>` | 전체 skku-standard | 특정 학과만 |
+| `--source <id>` | 전체 skku-standard | 특정 학과만 |
 | `--limit <n>` | 무제한 | 최대 문서 수 |
 | **backfill-wpdm-attachments** | | |
 | `--apply` | false | 실제 업데이트 (없으면 dry-run) |
 | `--limit <n>` | 무제한 | 최대 문서 수 |
 | **validate-attachments** | | |
-| `--dept <id>` | 전체 | 특정 학과만 |
+| `--source <id>` | 전체 | 특정 학과만 |
 | `--limit <n>` | 무제한 | 최대 공지 수 |
 | `--no-http` | false | HTTP 도달성 검사 스킵 |
 | `--json` | false | JSON 형식 출력 |
 | `--concurrency <n>` | 20 | HTTP 동시 요청 수 |
 | **validate-markdown** | | |
-| `--dept <id>` | 전체 | 특정 학과만 |
+| `--source <id>` | 전체 | 특정 학과만 |
 | `--limit <n>` | 무제한 | 최대 공지 수 |
 | `--severity` | all | `all`, `error`, `warning` 필터 |
 | `--json` | false | JSON 형식 출력 |

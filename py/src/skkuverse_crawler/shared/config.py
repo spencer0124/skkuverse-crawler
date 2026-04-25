@@ -75,7 +75,7 @@ def load_config() -> Config:
 
     base_db = os.getenv("MONGO_DB_NAME", "skku_notices")
 
-    raw_dept = os.getenv("CRAWL_DEPT_FILTER", "").strip()
+    raw_dept = os.getenv("CRAWL_SOURCE_FILTER", "").strip()
     dept_filter = tuple(d.strip() for d in raw_dept.split(",") if d.strip()) or None
 
     return Config(

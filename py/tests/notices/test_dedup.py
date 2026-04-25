@@ -27,7 +27,7 @@ def _make_notice(**overrides) -> Notice:
         attachments=[],
         sourceUrl="https://example.com/1",
         detailPath="?articleNo=1",
-        sourceDeptId="test-dept",
+        sourceId="test-dept",
         crawledAt=datetime.now(timezone.utc),
         contentHash="abc123",
     )

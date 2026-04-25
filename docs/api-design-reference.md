@@ -10,14 +10,14 @@
 
 - **MongoDB DB**: `skku_notices` (prod) / `skku_notices_dev` / `skku_notices_test`
 - **컬렉션**: `notices` (단일. 모든 학과/기숙사/공지 통합)
-- **문서 식별**: `(articleNo, sourceDeptId)` 복합 unique
+- **문서 식별**: `(articleNo, sourceId)` 복합 unique
 - **인덱스** (실측):
-  - `articleNo_1_sourceDeptId_1` (unique)
-  - `sourceDeptId_1_date_-1` (학과별 최신순 리스트 쿼리용)
+  - `articleNo_1_sourceId_1` (unique)
+  - `sourceId_1_date_-1` (학과별 최신순 리스트 쿼리용)
   - `idx_summary_pending` = `{summaryAt:1, contentText:1}` (요약 배치용)
 
 앱 API가 쓸 수 있는 기본 패턴:
-- 학과별 최신순 리스트 → `{sourceDeptId}` 필터 + `date DESC` 정렬 (인덱스 적중)
+- 학과별 최신순 리스트 → `{sourceId}` 필터 + `date DESC` 정렬 (인덱스 적중)
 - 전체 최신순 → 별도 인덱스 없음. 추가 인덱스 필요 (`date_-1` 또는 `crawledAt_-1`)
 - 검색 → 현재 text 인덱스 없음 (설계 시 고려 필요)
 
@@ -32,7 +32,7 @@
 | 필드 | 타입 | 설명 |
 |---|---|---|
 | `articleNo` | int | 원 사이트의 게시글 번호 (학과 내에서만 unique) |
-| `sourceDeptId` | string | 학과 config id (`skku-main`, `cheme`, `dorm-hssc`, …) |
+| `sourceId` | string | 학과 config id (`skku-main`, `cheme`, `dorm-hssc`, …) |
 | `department` | string | 학과 사람 이름 (`학부통합(학사)`, `화학공학과` …) |
 | `title` | string | 공지 제목 |
 | `category` | string | 원 사이트 카테고리 (전략별로 있을 수도/빈 문자열일 수도) |
@@ -102,7 +102,7 @@ summaryContentHash != contentHash
 
 ## 3. 전략(strategy) 7종 · 유형별 특이사항
 
-`departments.json` 기준 전략별 실측 분포 (학과 수는 `departments.json` 참조):
+`sources.json` 기준 전략별 실측 분포 (학과 수는 `sources.json` 참조):
 
 | strategy | 학과 수 | category | author | views | content | 비고 |
 |---|---:|:---:|:---:|:---:|:---:|---|
@@ -122,7 +122,7 @@ summaryContentHash != contentHash
 2. **`content` 없음** 케이스가 실존: 상세 fetch 실패 시 `content/cleanHtml/cleanMarkdown/contentHash = null`. 앱은 "본문 준비 중" 또는 `sourceUrl`로 외부 링크만 제공해야 함.
 3. **`cleanHtml` 5MB 초과** 시에도 null이 됨 (드물지만 가능). 이 경우 `cleanMarkdown`도 null.
 4. **`category`/`author`/`views`는 전략별로 빈값** — 학과별 뷰에서 조건부 렌더 필요. 전체 리스트 뷰에서는 위 테이블을 바탕으로 "category가 보장되는 학과"만 카테고리 필터 제공 가능.
-5. **중복 키는 `(articleNo, sourceDeptId)`** — `articleNo` 단독은 전혀 unique하지 않음. 앱 API의 상세 엔드포인트는 `/notices/:deptId/:articleNo` 형태가 자연스러움.
+5. **중복 키는 `(articleNo, sourceId)`** — `articleNo` 단독은 전혀 unique하지 않음. 앱 API의 상세 엔드포인트는 `/notices/:deptId/:articleNo` 형태가 자연스러움.
 6. **`attachments[].url`은 절대경로** 로 저장되어 있으니 앱에서 그대로 외부 브라우저로 열면 됨.
 7. **`cleanHtml`은 이미 sanitize됨** (nh3). 허용 태그: `p, br, div, span, h1-h4, strong, b, em, i, u, mark, ul, ol, li, table, thead, tbody, tr, th, td, img, a, hr`. 스타일: `color, background-color, text-align, text-decoration, font-weight, font-style`만. 앱의 웹뷰/HTML 렌더에서 그대로 쓰면 안전. `content`(원본)는 sanitize 안 된 상태라 그대로 주입하지 말 것.
 8. **`cleanMarkdown`은 GFM** — ATX heading(`#~####`), `**bold**`, `*em*`, `- ` / `1. ` 리스트, GFM 테이블(`| --- |`), `![alt](src)` 이미지, `[text](href)` 링크, `  \n` hard break. `<u>`, `<mark>`, `text-align`, `background-color` 같은 장식성 스타일은 손실됨. colspan/rowspan도 단순화됨(10% 문서). 앱 렌더러는 GFM 테이블과 원격 이미지 지원 필수.
@@ -142,7 +142,7 @@ summaryContentHash != contentHash
 ```json
 {
   "articleNo": 136023,
-  "sourceDeptId": "skku-main",
+  "sourceId": "skku-main",
   "department": "학부통합(학사)",
   "title": "[모집] 2026 학생 창업유망팀 300+ 사전준비반 참가팀 모집 [마감]",
   "category": "행사/세미나",
@@ -201,7 +201,7 @@ summaryContentHash != contentHash
 ```json
 {
   "articleNo": 18867,
-  "sourceDeptId": "cheme",
+  "sourceId": "cheme",
   "department": "화학공학과",
   "title": "[학부/대학원] 2026학년도 1학기 중간시험 및 중간강의평가 시행 안내",
   "category": "",
@@ -238,7 +238,7 @@ summaryContentHash != contentHash
 ```json
 {
   "articleNo": 86439,
-  "sourceDeptId": "dorm-hssc",
+  "sourceId": "dorm-hssc",
   "department": "명륜학사 (인사캠 기숙사)",
   "title": "Suspending Curfew during mid-term exam period",
   "category": "Notice in English",
@@ -268,7 +268,7 @@ summaryContentHash != contentHash
 ```json
 {
   "articleNo": 427,
-  "sourceDeptId": "nano",
+  "sourceId": "nano",
   "department": "나노공학과",
   "title": "[취업][기아] 2026상반기 기아 신입/전환형 인턴 채용 (신입 ~4/13(월) 11시, 인턴 ~4/20(월) 11시까지)",
   "category": "",
@@ -351,7 +351,7 @@ summaryContentHash != contentHash
 ## 7. API 설계 시 체크리스트
 
 - [ ] `/notices` 전체 최신순 엔드포인트를 만들 거면 `date_-1` 또는 `crawledAt_-1` 인덱스 추가 필요
-- [ ] `/notices?dept=...` 학과별은 기존 `sourceDeptId_1_date_-1` 인덱스로 커버됨
+- [ ] `/notices?dept=...` 학과별은 기존 `sourceId_1_date_-1` 인덱스로 커버됨
 - [ ] `/notices/:deptId/:articleNo` 상세 — 복합키 사용
 - [ ] 검색 필요 시 `title`, `contentText`에 text 인덱스 추가 (별도 작업)
 - [ ] 기본 필터: `isDeleted: {$ne: true}`, `date >= SERVICE_START_DATE("2026-03-09")`
@@ -376,7 +376,7 @@ summaryContentHash != contentHash
 | Backfill 로직 | `py/src/skkuverse_crawler/notices/backfill.py` |
 | 요약 프로세서 | `py/src/skkuverse_crawler/notices_summary/processor.py:69-115` |
 | 요약 쿼리(pending/stale) | `py/src/skkuverse_crawler/notices_summary/query.py` |
-| 학과 config | `departments.json` (레포 루트 SSOT) |
+| 학과 config | `sources.json` (레포 루트 SSOT) |
 | 전략 구현 | `py/src/skkuverse_crawler/notices/strategies/*.py` |
 
 ---
@@ -390,8 +390,8 @@ summaryContentHash != contentHash
 cat py/src/skkuverse_crawler/notices/models.py
 
 # (2) 실제 DB에서 각 전략별 샘플 1건씩 조회
-# MCP mongodb find로 skku_notices.notices에 대해 sourceDeptId별로 limit=1
-#   sourceDeptId: skku-main, cheme, medicine, dorm-hssc, cal-undergrad, bio-undergrad, nano
+# MCP mongodb find로 skku_notices.notices에 대해 sourceId별로 limit=1
+#   sourceId: skku-main, cheme, medicine, dorm-hssc, cal-undergrad, bio-undergrad, nano
 
 # (3) 요약/미요약/stale 상태 카운트
 #   요약 완료:  {summaryAt: {$ne: null}}

@@ -63,7 +63,7 @@ class NoticeValidationResult:
 
     notice_id: str
     article_no: int
-    source_dept_id: str
+    source_id: str
     source_url: str
     issues: list[AttachmentIssue] = field(default_factory=list)
 
@@ -248,7 +248,7 @@ async def validate_attachments(
     Parameters
     ----------
     dept_filter:
-        Restrict to specific ``sourceDeptId`` values.
+        Restrict to specific ``sourceId`` values.
     limit:
         Max notices to scan.
     check_http:
@@ -269,7 +269,7 @@ async def validate_attachments(
 
     query: dict = {"attachments": {"$exists": True, "$ne": []}}
     if dept_filter:
-        query["sourceDeptId"] = {"$in": list(dept_filter)}
+        query["sourceId"] = {"$in": list(dept_filter)}
 
     report = ValidationReport()
     semaphore = asyncio.Semaphore(http_concurrency)
@@ -287,14 +287,14 @@ async def validate_attachments(
         async for doc in cursor:
             count += 1
             attachments: list[dict[str, str]] = doc.get("attachments", [])
-            dept_id = doc.get("sourceDeptId", "")
+            dept_id = doc.get("sourceId", "")
             source_url = doc.get("sourceUrl", "")
             article_no = doc.get("articleNo", 0)
             notice_id = str(doc["_id"])
 
             strategy = strategy_map.get(dept_id)
             if strategy is None:
-                logger.warning("unknown_dept", sourceDeptId=dept_id, notice_id=notice_id)
+                logger.warning("unknown_dept", sourceId=dept_id, notice_id=notice_id)
 
             report.total_notices += 1
             report.total_attachments += len(attachments)
@@ -330,7 +330,7 @@ async def validate_attachments(
                 report.results.append(NoticeValidationResult(
                     notice_id=notice_id,
                     article_no=article_no,
-                    source_dept_id=dept_id,
+                    source_id=dept_id,
                     source_url=source_url,
                     issues=issues,
                 ))

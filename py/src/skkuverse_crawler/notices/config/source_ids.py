@@ -1,4 +1,4 @@
-"""Auto-generated from departments.json. Do not edit manually.
+"""Auto-generated from sources.json. Do not edit manually.
 
 Regenerate: cd py && python scripts/generate_artifacts.py
 """
@@ -6,7 +6,7 @@ Regenerate: cd py && python scripts/generate_artifacts.py
 from enum import Enum
 
 
-class DeptId(str, Enum):
+class SourceId(str, Enum):
     SKKU_MAIN = "skku-main"
     HEALTH = "health"
     ARCH = "arch"

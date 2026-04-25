@@ -22,7 +22,7 @@ class TestCheckDepartmentHashComparison:
     async def test_same_hash_no_update(self, mock_collection):
         """hash 동일 → 업데이트 안 함."""
         notices = [{
-            "articleNo": 1, "sourceDeptId": "test-dept",
+            "articleNo": 1, "sourceId": "test-dept",
             "detailPath": "?articleNo=1", "contentHash": "existing_hash", "title": "제목",
         }]
         strategy = AsyncMock()
@@ -49,7 +49,7 @@ class TestCheckDepartmentHashComparison:
     async def test_different_hash_updates_with_tier2_source(self, mock_collection):
         """hash 다름 → $set + $push + $inc, source=tier2."""
         notices = [{
-            "articleNo": 1, "sourceDeptId": "test-dept",
+            "articleNo": 1, "sourceId": "test-dept",
             "detailPath": "?articleNo=1", "contentHash": "old_hash", "title": "제목",
         }]
         strategy = AsyncMock()
@@ -85,7 +85,7 @@ class TestCheckDepartmentHashComparison:
     async def test_null_hash_backfill(self, mock_collection):
         """old hash None (backfill) → contentHash만 세팅, editHistory push 안 함."""
         notices = [{
-            "articleNo": 1, "sourceDeptId": "test-dept",
+            "articleNo": 1, "sourceId": "test-dept",
             "detailPath": "?articleNo=1", "contentHash": None, "title": "제목",
         }]
         strategy = AsyncMock()
@@ -120,7 +120,7 @@ class TestCheckDepartmentEdgeCases:
     async def test_no_detail_path_skipped(self, mock_collection):
         """detailPath 없음 → skipped_no_detail 증가."""
         notices = [{
-            "articleNo": 1, "sourceDeptId": "test-dept",
+            "articleNo": 1, "sourceId": "test-dept",
             "detailPath": "", "contentHash": "hash", "title": "제목",
         }]
         logger = MagicMock()
@@ -137,9 +137,9 @@ class TestCheckDepartmentEdgeCases:
     async def test_fetch_error_continues(self, mock_collection):
         """crawl_detail 예외 → fetch_errors 증가, 다음 notice 계속 처리."""
         notices = [
-            {"articleNo": 1, "sourceDeptId": "test-dept",
+            {"articleNo": 1, "sourceId": "test-dept",
              "detailPath": "?a=1", "contentHash": "h1", "title": "제목1"},
-            {"articleNo": 2, "sourceDeptId": "test-dept",
+            {"articleNo": 2, "sourceId": "test-dept",
              "detailPath": "?a=2", "contentHash": "h2", "title": "제목2"},
         ]
         strategy = AsyncMock()
@@ -172,7 +172,7 @@ class TestChangeRateAnomaly:
         """>80% → logger.error (likely determinism bug)."""
         # 10건 체크, 9건 변경 = 90%
         notices = [
-            {"articleNo": i, "sourceDeptId": "test-dept",
+            {"articleNo": i, "sourceId": "test-dept",
              "detailPath": f"?a={i}", "contentHash": f"old_{i}", "title": f"제목{i}"}
             for i in range(10)
         ]
@@ -206,7 +206,7 @@ class TestChangeRateAnomaly:
         assert result.content_changed == 9
         logger.error.assert_any_call(
             "likely_determinism_bug",
-            source_dept_id="test-dept",
+            source_id="test-dept",
             rate=0.9,
             content_changed=9,
             checked=10,
@@ -216,7 +216,7 @@ class TestChangeRateAnomaly:
         """>30% but <=80% → logger.warning."""
         # 10건 체크, 5건 변경 = 50%
         notices = [
-            {"articleNo": i, "sourceDeptId": "test-dept",
+            {"articleNo": i, "sourceId": "test-dept",
              "detailPath": f"?a={i}", "contentHash": f"old_{i}", "title": f"제목{i}"}
             for i in range(10)
         ]
@@ -249,7 +249,7 @@ class TestChangeRateAnomaly:
         assert result.content_changed == 5
         logger.warning.assert_any_call(
             "high_change_rate",
-            source_dept_id="test-dept",
+            source_id="test-dept",
             rate=0.5,
             content_changed=5,
             checked=10,
@@ -259,7 +259,7 @@ class TestChangeRateAnomaly:
     async def test_no_warning_on_low_rate(self, mock_collection):
         """<=30% → 알람 없음."""
         notices = [{
-            "articleNo": 1, "sourceDeptId": "test-dept",
+            "articleNo": 1, "sourceId": "test-dept",
             "detailPath": "?a=1", "contentHash": "same", "title": "제목",
         }]
         strategy = AsyncMock()
@@ -297,7 +297,7 @@ class TestSoftDelete:
 
     async def test_single_404_increments_counter(self, mock_collection):
         notices = [{
-            "articleNo": 1, "sourceDeptId": "test-dept",
+            "articleNo": 1, "sourceId": "test-dept",
             "detailPath": "?a=1", "contentHash": "h", "title": "제목",
             "consecutiveFailures": 0,
         }]
@@ -307,7 +307,7 @@ class TestSoftDelete:
 
         # find_one_and_update returns the updated doc (failures=1, not deleted)
         mock_collection.find_one_and_update.return_value = {
-            "articleNo": 1, "sourceDeptId": "test-dept",
+            "articleNo": 1, "sourceId": "test-dept",
             "consecutiveFailures": 1, "isDeleted": False,
         }
 
@@ -323,7 +323,7 @@ class TestSoftDelete:
 
     async def test_third_404_triggers_soft_delete(self, mock_collection):
         notices = [{
-            "articleNo": 1, "sourceDeptId": "test-dept",
+            "articleNo": 1, "sourceId": "test-dept",
             "detailPath": "?a=1", "contentHash": "h", "title": "제목",
             "consecutiveFailures": 2,  # 이미 2회, 이번이 3번째
         }]
@@ -333,7 +333,7 @@ class TestSoftDelete:
 
         # find_one_and_update returns the updated doc (failures=3, deleted)
         mock_collection.find_one_and_update.return_value = {
-            "articleNo": 1, "sourceDeptId": "test-dept",
+            "articleNo": 1, "sourceId": "test-dept",
             "consecutiveFailures": 3, "isDeleted": True,
         }
 
@@ -349,7 +349,7 @@ class TestSoftDelete:
     async def test_successful_fetch_resets_counter(self, mock_collection):
         """정상 fetch → consecutiveFailures 리셋."""
         notices = [{
-            "articleNo": 1, "sourceDeptId": "test-dept",
+            "articleNo": 1, "sourceId": "test-dept",
             "detailPath": "?a=1", "contentHash": "same", "title": "제목",
             "consecutiveFailures": 2,
         }]
@@ -380,7 +380,7 @@ class TestSoftDelete:
         """학과 전체 >50% 404 (5건+) → 서버 문제로 판단, 카운터 증가 skip."""
         # 6건 중 4건 404 (66%) → mass 404 (>= 5건 threshold)
         notices = [
-            {"articleNo": i, "sourceDeptId": "test-dept",
+            {"articleNo": i, "sourceId": "test-dept",
              "detailPath": f"?a={i}", "contentHash": f"h{i}", "title": f"제목{i}",
              "consecutiveFailures": 0}
             for i in range(6)
@@ -418,7 +418,7 @@ class TestSoftDelete:
         assert result.soft_deleted == 0  # 카운터 증가 안 함
         logger.error.assert_any_call(
             "mass_404_detected",
-            source_dept_id="test-dept",
+            source_id="test-dept",
             not_found=4,
             total_attempted=6,
         )

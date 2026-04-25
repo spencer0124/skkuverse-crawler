@@ -1,11 +1,11 @@
 """Generate all derived artifacts from the SSOT config files.
 
-Reads departments.json and categories.json from repo root,
+Reads sources.json and categories.json from repo root,
 validates cross-references, and produces:
 
-  1. dept_ids.py                    — Python DeptId enum
-  2. server-departments.json        — Server API format
-  3. docker-crawl-filter.env        — CRAWL_DEPT_FILTER env line
+  1. source_ids.py                  — Python SourceId enum
+  2. server-sources.json            — Server API format
+  3. docker-crawl-filter.env        — CRAWL_SOURCE_FILTER env line
   4. coverage-table.md              → docs/department-coverage-analysis.md
   5. departments-by-college.md      → docs/departments-by-college.md
   6. departments-by-app-category.md → docs/departments-by-app-category.md
@@ -27,19 +27,19 @@ from pathlib import Path
 # Paths
 # ---------------------------------------------------------------------------
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-DEPARTMENTS_JSON = REPO_ROOT / "departments.json"
+SOURCES_JSON = REPO_ROOT / "sources.json"
 CATEGORIES_JSON = REPO_ROOT / "categories.json"
 GENERATED_DIR = REPO_ROOT / "py" / "generated"
-DEPT_IDS_PY = (
+SOURCE_IDS_PY = (
     REPO_ROOT / "py" / "src" / "skkuverse_crawler"
-    / "notices" / "config" / "dept_ids.py"
+    / "notices" / "config" / "source_ids.py"
 )
 COVERAGE_MD = REPO_ROOT / "docs" / "department-coverage-analysis.md"
 BY_COLLEGE_MD = REPO_ROOT / "docs" / "departments-by-college.md"
 BY_APP_CATEGORY_MD = REPO_ROOT / "docs" / "departments-by-app-category.md"
 
 # Sibling repos
-SERVER_DEPT_JSON = REPO_ROOT.parent / "skkuverse-server" / "features" / "notices" / "departments.json"
+SERVER_SOURCES_JSON = REPO_ROOT.parent / "skkuverse-server" / "features" / "notices" / "sources.json"
 SERVER_CAT_JSON = REPO_ROOT.parent / "skkuverse-server" / "features" / "notices" / "categories.json"
 
 # ---------------------------------------------------------------------------
@@ -58,6 +58,7 @@ STRATEGY_FEATURES: dict[str, tuple[bool, bool]] = {
 
 VALID_CAMPUSES = {"hssc", "nsc", "both", None}
 VALID_TAB_MODES = {"fixed", "picker"}
+VALID_CAMPUS_DEFAULT_KEYS = {"hssc", "nsc"}
 
 
 # ---------------------------------------------------------------------------
@@ -132,14 +133,14 @@ def validate_categories(
                 errors.append(f"category {cid}: missing label.{lang}")
 
         if mode == "fixed":
-            # fixedDeptId must exist and be enabled
-            fixed_id = cat.get("fixedDeptId")
+            # fixedSourceId must exist and be enabled
+            fixed_id = cat.get("fixedSourceId")
             if not fixed_id:
-                errors.append(f"category {cid}: fixed mode requires fixedDeptId")
+                errors.append(f"category {cid}: fixed mode requires fixedSourceId")
             elif fixed_id not in dept_by_id:
-                errors.append(f"category {cid}: fixedDeptId '{fixed_id}' not in departments.json")
+                errors.append(f"category {cid}: fixedSourceId '{fixed_id}' not in sources.json")
             elif not dept_by_id[fixed_id]["crawlEnabled"]:
-                errors.append(f"category {cid}: fixedDeptId '{fixed_id}' has crawlEnabled=false")
+                errors.append(f"category {cid}: fixedSourceId '{fixed_id}' has crawlEnabled=false")
 
         elif mode == "picker":
             # maxSelection must be positive int
@@ -152,28 +153,69 @@ def validate_categories(
             if not matching:
                 errors.append(f"category {cid}: picker matches 0 departments")
 
-            # Optional defaultDeptIds must be subset of enabled matching depts
-            defaults = cat.get("defaultDeptIds")
+            enabled_ids = {
+                d["id"] for d in departments
+                if d["appCategory"] == cid and d["crawlEnabled"]
+            }
+
+            # Optional defaultIds (common defaults — seeded for every campus)
+            defaults = cat.get("defaultIds")
             if defaults is not None:
                 if not isinstance(defaults, list):
-                    errors.append(f"category {cid}: defaultDeptIds must be array")
+                    errors.append(f"category {cid}: defaultIds must be array")
                 else:
-                    enabled_ids = {
-                        d["id"] for d in departments
-                        if d["appCategory"] == cid and d["crawlEnabled"]
-                    }
                     for did in defaults:
                         if did not in enabled_ids:
                             errors.append(
-                                f"category {cid}: defaultDeptId '{did}' "
+                                f"category {cid}: defaultId '{did}' "
                                 f"not in enabled matching depts"
                             )
+
+            # Optional campusDefaultIds (per-campus additional defaults)
+            campus_defaults = cat.get("campusDefaultIds")
+            if campus_defaults is not None:
+                if not isinstance(campus_defaults, dict):
+                    errors.append(
+                        f"category {cid}: campusDefaultIds must be object"
+                    )
+                else:
+                    for campus_key, ids in campus_defaults.items():
+                        if campus_key not in VALID_CAMPUS_DEFAULT_KEYS:
+                            errors.append(
+                                f"category {cid}: campusDefaultIds key "
+                                f"'{campus_key}' must be one of "
+                                f"{sorted(VALID_CAMPUS_DEFAULT_KEYS)}"
+                            )
+                            continue
+                        if not isinstance(ids, list):
+                            errors.append(
+                                f"category {cid}: campusDefaultIds.{campus_key} "
+                                f"must be array"
+                            )
+                            continue
+                        for did in ids:
+                            if did not in enabled_ids:
+                                errors.append(
+                                    f"category {cid}: campusDefaultIds."
+                                    f"{campus_key} '{did}' not in enabled matching depts"
+                                )
+                        # Per-campus seed cap: union of common + this campus
+                        # must not exceed maxSelection. Keeps the picker UI's
+                        # cap intact regardless of which campus the user picks.
+                        if isinstance(max_sel, int) and isinstance(defaults, list):
+                            seed = set(defaults) | set(ids)
+                            if len(seed) > max_sel:
+                                errors.append(
+                                    f"category {cid}: seed for campus "
+                                    f"'{campus_key}' has {len(seed)} ids > "
+                                    f"maxSelection {max_sel}"
+                                )
 
     # Every non-null appCategory in departments must have a category entry
     for app_cat in sorted(dept_app_cats):
         if app_cat not in cat_ids:
             errors.append(
-                f"appCategory '{app_cat}' used in departments.json "
+                f"appCategory '{app_cat}' used in sources.json "
                 f"but has no entry in categories.json"
             )
 
@@ -183,9 +225,9 @@ def validate_categories(
 # ---------------------------------------------------------------------------
 # Artifact generators
 # ---------------------------------------------------------------------------
-def gen_dept_ids(departments: list[dict]) -> str:
+def gen_source_ids(sources: list[dict]) -> str:
     lines = [
-        '"""Auto-generated from departments.json. Do not edit manually.',
+        '"""Auto-generated from sources.json. Do not edit manually.',
         "",
         "Regenerate: cd py && python scripts/generate_artifacts.py",
         '"""',
@@ -193,26 +235,26 @@ def gen_dept_ids(departments: list[dict]) -> str:
         "from enum import Enum",
         "",
         "",
-        "class DeptId(str, Enum):",
+        "class SourceId(str, Enum):",
     ]
-    for dept in departments:
-        enum_name = dept["id"].replace("-", "_").upper()
-        lines.append(f'    {enum_name} = "{dept["id"]}"')
+    for source in sources:
+        enum_name = source["id"].replace("-", "_").upper()
+        lines.append(f'    {enum_name} = "{source["id"]}"')
     lines.append("")
     return "\n".join(lines)
 
 
-def gen_server_json(departments: list[dict]) -> str:
+def gen_sources_json(sources: list[dict]) -> str:
     entries = []
-    for dept in departments:
-        has_cat, has_author = STRATEGY_FEATURES[dept["strategy"]]
+    for source in sources:
+        has_cat, has_author = STRATEGY_FEATURES[source["strategy"]]
         entries.append({
-            "id": dept["id"],
-            "name": dept["name"],
-            "campus": dept["campus"],
-            "college": dept["college"],
-            "appCategory": dept["appCategory"],
-            "noticeAvailable": dept["crawlEnabled"],
+            "id": source["id"],
+            "name": source["name"],
+            "campus": source["campus"],
+            "college": source["college"],
+            "appCategory": source["appCategory"],
+            "noticeAvailable": source["crawlEnabled"],
             "hasCategory": has_cat,
             "hasAuthor": has_author,
         })
@@ -221,7 +263,7 @@ def gen_server_json(departments: list[dict]) -> str:
 
 def gen_docker_env(departments: list[dict]) -> str:
     enabled = [d["id"] for d in departments if d["crawlEnabled"]]
-    return f"CRAWL_DEPT_FILTER={','.join(enabled)}\n"
+    return f"CRAWL_SOURCE_FILTER={','.join(enabled)}\n"
 
 
 def gen_server_categories(
@@ -235,10 +277,10 @@ def gen_server_categories(
                 "id": cat["id"],
                 "label": cat["label"],
                 "tabMode": "fixed",
-                "deptId": cat["fixedDeptId"],
+                "sourceId": cat["fixedSourceId"],
             })
         else:  # picker
-            dept_ids = [
+            source_ids = [
                 d["id"] for d in departments
                 if d["appCategory"] == cat["id"] and d["crawlEnabled"]
             ]
@@ -246,23 +288,25 @@ def gen_server_categories(
                 "id": cat["id"],
                 "label": cat["label"],
                 "tabMode": "picker",
-                "deptIds": dept_ids,
+                "sourceIds": source_ids,
                 "maxSelection": cat["maxSelection"],
             }
-            if "defaultDeptIds" in cat:
-                entry["defaultDeptIds"] = cat["defaultDeptIds"]
+            if "defaultIds" in cat:
+                entry["defaultIds"] = cat["defaultIds"]
+            if "campusDefaultIds" in cat:
+                entry["campusDefaultIds"] = cat["campusDefaultIds"]
             entries.append(entry)
     return json.dumps(entries, ensure_ascii=False, indent=2) + "\n"
 
 
 def gen_coverage_md(departments: list[dict]) -> str:
     lines = [
-        "<!-- Auto-generated from departments.json. Do not edit manually. -->",
+        "<!-- Auto-generated from sources.json. Do not edit manually. -->",
         "<!-- Regenerate: cd py && python scripts/generate_artifacts.py -->",
         "",
         "# 크롤링 학과/기관 전수 분류 + 커버리지 분석",
         "",
-        f"> departments.json 기준 {len(departments)}개 엔트리",
+        f"> sources.json 기준 {len(departments)}개 엔트리",
         "",
     ]
 
@@ -359,12 +403,12 @@ def gen_coverage_md(departments: list[dict]) -> str:
 
 def gen_by_college_md(departments: list[dict]) -> str:
     lines = [
-        "<!-- Auto-generated from departments.json. Do not edit manually. -->",
+        "<!-- Auto-generated from sources.json. Do not edit manually. -->",
         "<!-- Regenerate: cd py && python scripts/generate_artifacts.py -->",
         "",
         "# 단과대학별 학과 목록",
         "",
-        f"> departments.json 기준 {len(departments)}개 엔트리",
+        f"> sources.json 기준 {len(departments)}개 엔트리",
         "",
     ]
 
@@ -402,12 +446,12 @@ def gen_by_app_category_md(
     categories: list[dict],
 ) -> str:
     lines = [
-        "<!-- Auto-generated from departments.json. Do not edit manually. -->",
+        "<!-- Auto-generated from sources.json. Do not edit manually. -->",
         "<!-- Regenerate: cd py && python scripts/generate_artifacts.py -->",
         "",
         "# 앱 카테고리별 학과 목록",
         "",
-        f"> departments.json 기준 {len(departments)}개 엔트리",
+        f"> sources.json 기준 {len(departments)}개 엔트리",
         "",
     ]
 
@@ -458,13 +502,13 @@ def copy_to_sibling(src: Path, dst: Path, label: str) -> None:
 # ---------------------------------------------------------------------------
 def main() -> None:
     # Load sources
-    for path in (DEPARTMENTS_JSON, CATEGORIES_JSON):
+    for path in (SOURCES_JSON, CATEGORIES_JSON):
         if not path.exists():
             print(f"ERROR: {path} not found", file=sys.stderr)
             sys.exit(1)
 
-    with open(DEPARTMENTS_JSON, encoding="utf-8") as f:
-        departments = json.load(f)
+    with open(SOURCES_JSON, encoding="utf-8") as f:
+        sources = json.load(f)
     with open(CATEGORIES_JSON, encoding="utf-8") as f:
         categories = json.load(f)
 
@@ -472,52 +516,52 @@ def main() -> None:
     valid_app_categories: set[str | None] = {c["id"] for c in categories} | {None}
 
     # Validate
-    errors = validate_departments(departments, valid_app_categories)
-    errors += validate_categories(categories, departments)
+    errors = validate_departments(sources, valid_app_categories)
+    errors += validate_categories(categories, sources)
     if errors:
         print("Validation errors:", file=sys.stderr)
         for e in errors:
             print(f"  - {e}", file=sys.stderr)
         sys.exit(1)
 
-    print(f"Loaded {len(departments)} departments, {len(categories)} categories")
+    print(f"Loaded {len(sources)} sources, {len(categories)} categories")
 
     # Ensure generated/ exists
     GENERATED_DIR.mkdir(exist_ok=True)
 
-    # 1. dept_ids.py
-    DEPT_IDS_PY.write_text(gen_dept_ids(departments), encoding="utf-8")
-    print(f"  [1] dept_ids.py ({len(departments)} enums)")
+    # 1. source_ids.py
+    SOURCE_IDS_PY.write_text(gen_source_ids(sources), encoding="utf-8")
+    print(f"  [1] source_ids.py ({len(sources)} enums)")
 
-    # 2. server-departments.json
-    server_path = GENERATED_DIR / "server-departments.json"
-    server_path.write_text(gen_server_json(departments), encoding="utf-8")
-    print("  [2] server-departments.json")
-    copy_to_sibling(server_path, SERVER_DEPT_JSON, "skkuverse-server")
+    # 2. server-sources.json
+    server_path = GENERATED_DIR / "server-sources.json"
+    server_path.write_text(gen_sources_json(sources), encoding="utf-8")
+    print("  [2] server-sources.json")
+    copy_to_sibling(server_path, SERVER_SOURCES_JSON, "skkuverse-server")
 
     # 3. docker-crawl-filter.env
     env_path = GENERATED_DIR / "docker-crawl-filter.env"
-    env_path.write_text(gen_docker_env(departments), encoding="utf-8")
+    env_path.write_text(gen_docker_env(sources), encoding="utf-8")
     print("  [3] docker-crawl-filter.env")
 
     # 4. coverage-table.md → docs/
-    COVERAGE_MD.write_text(gen_coverage_md(departments), encoding="utf-8")
+    COVERAGE_MD.write_text(gen_coverage_md(sources), encoding="utf-8")
     print("  [4] docs/department-coverage-analysis.md")
 
     # 5. departments-by-college.md → docs/
-    BY_COLLEGE_MD.write_text(gen_by_college_md(departments), encoding="utf-8")
+    BY_COLLEGE_MD.write_text(gen_by_college_md(sources), encoding="utf-8")
     print("  [5] docs/departments-by-college.md")
 
     # 6. departments-by-app-category.md → docs/
     BY_APP_CATEGORY_MD.write_text(
-        gen_by_app_category_md(departments, categories), encoding="utf-8",
+        gen_by_app_category_md(sources, categories), encoding="utf-8",
     )
     print("  [6] docs/departments-by-app-category.md")
 
     # 7. server-categories.json
     cat_path = GENERATED_DIR / "server-categories.json"
     cat_path.write_text(
-        gen_server_categories(categories, departments), encoding="utf-8",
+        gen_server_categories(categories, sources), encoding="utf-8",
     )
     print("  [7] server-categories.json")
     copy_to_sibling(cat_path, SERVER_CAT_JSON, "skkuverse-server")
