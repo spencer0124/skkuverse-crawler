@@ -9,7 +9,7 @@ and department config.
 Usage (from py/):
     python -m skkuverse_crawler backfill-attachment-referer              # dry-run
     python -m skkuverse_crawler backfill-attachment-referer --apply
-    python -m skkuverse_crawler backfill-attachment-referer --apply --dept nano
+    python -m skkuverse_crawler backfill-attachment-referer --apply --source nano
     python -m skkuverse_crawler backfill-attachment-referer --apply --limit 10
 """
 
@@ -27,7 +27,7 @@ GNUBOARD_STRATEGIES = ("gnuboard", "gnuboard-custom")
 
 
 def _dept_config_map() -> dict[str, dict[str, Any]]:
-    """Map ``sourceDeptId`` -> full department config for gnuboard depts."""
+    """Map ``sourceId`` -> full department config for gnuboard depts."""
     return {
         d["id"]: d
         for d in load_and_validate()
@@ -93,7 +93,7 @@ async def run(
         target_ids = gnuboard_ids
 
     match: dict[str, Any] = {
-        "sourceDeptId": {"$in": target_ids},
+        "sourceId": {"$in": target_ids},
         "attachments": {"$ne": []},
         "attachments.referer": {"$exists": False},
     }
@@ -143,7 +143,7 @@ async def run(
         if limit is not None and updated >= limit:
             break
 
-        dept_id = doc.get("sourceDeptId")
+        dept_id = doc.get("sourceId")
         dept = dept_configs.get(dept_id)
         if not dept:
             skipped += 1

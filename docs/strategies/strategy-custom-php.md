@@ -43,7 +43,7 @@ href 경로는 `./NFUpload/...` 상대 경로인데, `baseUrl`이 `.../index.php
 
 ### 구현 결정
 
-1. **셀렉터는 config 중심** — `departments.json`에 `detailAttachment` 키를 추가하고 코드는 `.get("detailAttachment", "div.attachment a[href]")`로 기본값만 보장. gnuboard / gnuboard-custom가 따르는 관례와 일치.
+1. **셀렉터는 config 중심** — `sources.json`에 `detailAttachment` 키를 추가하고 코드는 `.get("detailAttachment", "div.attachment a[href]")`로 기본값만 보장. gnuboard / gnuboard-custom가 따르는 관례와 일치.
 2. **파일명 추출 우선순위**: `name=` 쿼리 파라미터 → 링크 텍스트 → URL basename. `nfupload_down.php` 외 일반 상대 경로 첨부(`./files/plain.pdf` 등)에도 동작하도록 폴백 체인 설계.
 3. **URL 절대화**: `./` / `/` / `http` / 그 외(상대)를 분기 처리. 기준 디렉터리는 `baseUrl.rsplit("/", 1)[0]` (= `https://cal.skku.edu`).
 4. **중복 URL 제거** — 같은 첨부가 여러 번 노출될 수 있어 `seen_urls` 세트로 디둡.
@@ -95,7 +95,7 @@ for a in soup.select(attachment_selector):
     attachments.append({"name": name, "url": full_url})
 ```
 
-`departments.json` (양쪽 cal 엔트리):
+`sources.json` (양쪽 cal 엔트리):
 
 ```json
 "selectors": {
@@ -187,7 +187,7 @@ if href and (FILE_EXTENSIONS.search(href) or UPLOADS_PATH.search(href)):
 |------|------|
 | `py/src/skkuverse_crawler/notices/strategies/custom_php.py` | `urlparse/parse_qs/unquote` import, `crawl_detail` 내 첨부 추출 로직 구현 |
 | `py/src/skkuverse_crawler/notices/strategies/wordpress_api.py` | `FILE_EXTENSIONS` 확장 + `UPLOADS_PATH` 보강 |
-| `py/src/skkuverse_crawler/notices/config/departments.json` | `cal-undergrad`, `cal-grad` 엔트리에 `detailAttachment` 셀렉터 추가 |
+| `py/src/skkuverse_crawler/notices/config/sources.json` | `cal-undergrad`, `cal-grad` 엔트리에 `detailAttachment` 셀렉터 추가 |
 | `py/tests/notices/strategies/test_custom_php.py` | 신규, 4 케이스 |
 | `py/tests/notices/strategies/test_wordpress_api.py` | 신규, 4 케이스 |
 
@@ -197,6 +197,6 @@ if href and (FILE_EXTENSIONS.search(href) or UPLOADS_PATH.search(href)):
 
 ```bash
 cd py
-python -m skkuverse_crawler notices --once --dept cal-undergrad --pages 1
+python -m skkuverse_crawler notices --once --source cal-undergrad --pages 1
 # MongoDB (skku_notices_dev.notices)에서 dept 필터 + attachments.0 존재 확인
 ```

@@ -11,7 +11,7 @@ which is what the `content` field already contains thanks to
 Usage (from py/):
     python -m skkuverse_crawler backfill-content                     # dry-run
     python -m skkuverse_crawler backfill-content --apply
-    python -m skkuverse_crawler backfill-content --apply --dept cheme
+    python -m skkuverse_crawler backfill-content --apply --source cheme
     python -m skkuverse_crawler backfill-content --apply --limit 10
 """
 
@@ -36,7 +36,7 @@ MAX_CONTENT_BYTES = 5 * 1024 * 1024  # 5MB — matches normalizer.MAX_CONTENT_BY
 
 
 def _base_url_map() -> dict[str, str]:
-    """Map `sourceDeptId` → `baseUrl` from departments.json."""
+    """Map `sourceId` → `baseUrl` from sources.json."""
     return {d["id"]: d["baseUrl"] for d in load_and_validate()}
 
 
@@ -86,7 +86,7 @@ async def _regenerate(doc: dict[str, Any], base_url: str) -> dict[str, Any] | No
             logger.warning(
                 "oversized_content_dropped",
                 articleNo=doc.get("articleNo"),
-                dept=doc.get("sourceDeptId"),
+                dept=doc.get("sourceId"),
                 size=len(cleaned.encode()),
             )
             cleaned = None
@@ -130,7 +130,7 @@ async def run(
 
     match: dict[str, Any] = {"$or": [{"content": {"$ne": None}}, {"detailPath": {"$exists": True}}]}
     if dept_filter:
-        match["sourceDeptId"] = {"$in": list(dept_filter)}
+        match["sourceId"] = {"$in": list(dept_filter)}
 
     pre_count = await collection.count_documents(match)
     logger.info(
@@ -177,7 +177,7 @@ async def run(
         if limit is not None and updated + skipped + failed >= limit:
             break
 
-        dept_id = doc.get("sourceDeptId")
+        dept_id = doc.get("sourceId")
         base_url = base_urls.get(dept_id, "")
         if not base_url:
             logger.warning("missing_base_url", articleNo=doc.get("articleNo"), dept=dept_id)

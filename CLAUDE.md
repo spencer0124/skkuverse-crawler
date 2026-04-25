@@ -13,25 +13,25 @@ cd py
 python -m skkuverse_crawler start                        # 스케줄러 실행
 python -m skkuverse_crawler start --module notices       # 단일 모듈
 python -m skkuverse_crawler notices --once               # 공지 1회 실행
-python -m skkuverse_crawler notices --once --dept skku-main --pages 3
+python -m skkuverse_crawler notices --once --source skku-main --pages 3
 python -m skkuverse_crawler summarize                      # AI 요약 1회 실행 (기본 batch-size: 50)
 python -m skkuverse_crawler summarize --batch-size 500     # 초기 backfill
 python -m skkuverse_crawler update-check                   # 최근 14일 공지 변경 감지 (Tier-2)
-python -m skkuverse_crawler update-check --days 7 --dept skku-main
+python -m skkuverse_crawler update-check --days 7 --source skku-main
 python -m skkuverse_crawler backfill-content               # cleanHtml/contentText/cleanMarkdown 재생성 (dry-run)
 python -m skkuverse_crawler backfill-content --apply       # 실제 업데이트
-python -m skkuverse_crawler backfill-content --apply --dept cheme --limit 10  # 샘플링
+python -m skkuverse_crawler backfill-content --apply --source cheme --limit 10  # 샘플링
 python -m skkuverse_crawler backfill-attachment-referer              # gnuboard 첨부 referer 추가 (dry-run)
 python -m skkuverse_crawler backfill-attachment-referer --apply      # 실제 업데이트
-python -m skkuverse_crawler backfill-attachment-referer --apply --dept nano --limit 5
+python -m skkuverse_crawler backfill-attachment-referer --apply --source nano --limit 5
 python -m skkuverse_crawler backfill-attachments                     # skku-standard 첨부 재크롤링 (dry-run)
-python -m skkuverse_crawler backfill-attachments --apply --dept law --limit 10
+python -m skkuverse_crawler backfill-attachments --apply --source law --limit 10
 python -m skkuverse_crawler backfill-wpdm-attachments                # cheme WPDM 첨부 URL 교체 (dry-run)
 python -m skkuverse_crawler backfill-wpdm-attachments --apply
 python -m skkuverse_crawler validate-attachments                     # 첨부파일 메타데이터 검증
-python -m skkuverse_crawler validate-attachments --dept cheme --no-http --json
+python -m skkuverse_crawler validate-attachments --source cheme --no-http --json
 python -m skkuverse_crawler validate-markdown                        # cleanMarkdown 렌더링 품질 검증
-python -m skkuverse_crawler validate-markdown --dept skku-main --severity error --json
+python -m skkuverse_crawler validate-markdown --source skku-main --severity error --json
 
 # 테스트 & 린트
 python -m pytest tests/ -v                  # 전체 테스트
@@ -45,15 +45,15 @@ mypy src/                                   # 타입 체크
 
 ```bash
 cd py
-python scripts/generate_artifacts.py    # departments.json + categories.json → 7개 아티팩트 생성 + 형제 레포 복사
+python scripts/generate_artifacts.py    # sources.json + categories.json → 7개 아티팩트 생성 + 형제 레포 복사
 ```
 
 **생성 아티팩트:**
 
 | 아티팩트 | 출력 위치 | 용도 |
 |---------|----------|------|
-| `dept_ids.py` | `py/src/.../config/dept_ids.py` | Python DeptId enum |
-| `server-departments.json` | `py/generated/` → `skkuverse-server` 복사 | 서버 API 응답용 (noticeAvailable, hasCategory, hasAuthor 포함) |
+| `source_ids.py` | `py/src/.../config/source_ids.py` | Python SourceId enum |
+| `server-sources.json` | `py/generated/` → `skkuverse-server` 복사 | 서버 API 응답용 (noticeAvailable, hasCategory, hasAuthor 포함) |
 | `docker-crawl-filter.env` | `py/generated/` | Docker 참고용 |
 | `coverage-table.md` | `docs/department-coverage-analysis.md` | 캠퍼스/단과대별 학과 테이블 |
 | `departments-by-college.md` | `docs/departments-by-college.md` | 단과대학별 학과 목록 |
@@ -64,7 +64,7 @@ python scripts/generate_artifacts.py    # departments.json + categories.json →
 
 ### 학과 추가/변경 절차
 
-1. `departments.json` (레포 루트) 수정 — campus, college, appCategory, crawlEnabled + 크롤링 설정
+1. `sources.json` (레포 루트) 수정 — campus, college, appCategory, crawlEnabled + 크롤링 설정
 2. 새 카테고리 추가 시 `categories.json`도 수정
 3. `cd py && python scripts/generate_artifacts.py` 실행
 4. 형제 레포(skkuverse-server)에 자동 복사됨 (존재 시)
@@ -75,19 +75,19 @@ python scripts/generate_artifacts.py    # departments.json + categories.json →
 
 **모듈형 구조**: `shared/` (config, DB, logger, HTTP 클라이언트) + 각 모듈 디렉토리 (notices, notices_summary)
 
-**Strategy Pattern**: `CrawlStrategy` 인터페이스 + `departments.json` config-driven. 전략 목록은 `departments.json`의 `strategy` 필드 및 `generate_artifacts.py`의 `STRATEGY_FEATURES` 참조.
+**Strategy Pattern**: `CrawlStrategy` 인터페이스 + `sources.json` config-driven. 전략 목록은 `sources.json`의 `strategy` 필드 및 `generate_artifacts.py`의 `STRATEGY_FEATURES` 참조.
 
 **SSOT (Single Source of Truth)**: 레포 루트에 두 개의 SSOT 파일:
-- `departments.json` — 학과 데이터. 크롤링 설정(strategy, selectors, baseUrl) + 메타데이터(campus, college, appCategory, crawlEnabled).
+- `sources.json` — 학과 데이터. 크롤링 설정(strategy, selectors, baseUrl) + 메타데이터(campus, college, appCategory, crawlEnabled).
 - `categories.json` — 앱 탭/카테고리 구성. 탭 순서(배열 순서), 라벨(ko/en), 탭 모드(picker: 학과 선택 / fixed: 단일 학과 고정). picker 탭은 `appCategory == category.id`인 학과를 자동 수집.
 
 `py/scripts/generate_artifacts.py`가 두 파일을 읽어 서버/Docker/문서용 파생 파일을 자동 생성. 양방향 검증(departments↔categories 정합성)도 포함.
 
 - `campus`: 유효값은 `generate_artifacts.py`의 `VALID_CAMPUSES` 참조.
 - `appCategory`: 유효값은 `categories.json`의 id 목록에서 자동 도출 (+ `null` 허용).
-- `crawlEnabled`: 프로덕션 크롤링 여부. `CRAWL_DEPT_FILTER` env var 미설정 시 이 필드가 기본 필터.
-- `CRAWL_DEPT_FILTER`: dev/디버깅용 오버라이드 **전용**. ⚠️ **절대 프로덕션 `docker-compose.yml`에 두지 말 것** — 설정 시 `departments.json`의 `crawlEnabled`를 덮어써 나머지 학과가 전부 침묵 차단됨. 컨테이너 Up 상태와 로그 무에러에도 coverage가 급락하므로 외부에서 알아채기 어려움 (2026-04-21 인시던트, `docs/known-issues.md` §7 참조).
-- `hasCategory`/`hasAuthor`: departments.json에 저장하지 않음. strategy에서 결정론적 도출 (codegen의 STRATEGY_FEATURES 룩업).
+- `crawlEnabled`: 프로덕션 크롤링 여부. `CRAWL_SOURCE_FILTER` env var 미설정 시 이 필드가 기본 필터.
+- `CRAWL_SOURCE_FILTER`: dev/디버깅용 오버라이드 **전용**. ⚠️ **절대 프로덕션 `docker-compose.yml`에 두지 말 것** — 설정 시 `sources.json`의 `crawlEnabled`를 덮어써 나머지 학과가 전부 침묵 차단됨. 컨테이너 Up 상태와 로그 무에러에도 coverage가 급락하므로 외부에서 알아채기 어려움 (2026-04-21 인시던트, `docs/known-issues.md` §7 참조).
+- `hasCategory`/`hasAuthor`: sources.json에 저장하지 않음. strategy에서 결정론적 도출 (codegen의 STRATEGY_FEATURES 룩업).
 
 **Incremental Crawl**: title+date 변경 감지 → 변경분만 상세 fetch. 페이지 내 전부 DB에 존재하면 early-stop. content:null 기사 자동 재크롤링.
 
@@ -140,7 +140,7 @@ python scripts/generate_artifacts.py    # departments.json + categories.json →
 - `CRAWLER_ENV` — `production` / `development` / `test` (case-insensitive)
 - `LOG_FORMAT` — `json` (기본) / `dev` (컬러 콘솔)
 - `AI_SERVICE_URL` — AI 요약 서비스 URL. 환경별 자동 결정: `production` → `http://ai:4000`, `development`/`test` → `http://127.0.0.1:4000`. 직접 지정 시 우선
-- `CRAWL_DEPT_FILTER` — 콤마 구분 학과 ID 필터 (e.g. `skku-main,law`). **dev 오버라이드 전용** ⚠️ 프로덕션 미설정 원칙. 미설정 시 `departments.json`의 `crawlEnabled: true` 항목만 크롤링
+- `CRAWL_SOURCE_FILTER` — 콤마 구분 학과 ID 필터 (e.g. `skku-main,law`). **dev 오버라이드 전용** ⚠️ 프로덕션 미설정 원칙. 미설정 시 `sources.json`의 `crawlEnabled: true` 항목만 크롤링
 
 
 ## Testing

@@ -48,7 +48,7 @@ class NoticeMarkdownResult:
 
     notice_id: str
     article_no: int
-    source_dept_id: str
+    source_id: str
     source_url: str
     issues: list[MarkdownIssue] = field(default_factory=list)
 
@@ -280,7 +280,7 @@ async def validate_markdown(
     Parameters
     ----------
     dept_filter:
-        Restrict to specific ``sourceDeptId`` values.
+        Restrict to specific ``sourceId`` values.
     limit:
         Max notices to scan.
     min_severity:
@@ -293,13 +293,13 @@ async def validate_markdown(
 
     query: dict = {"cleanMarkdown": {"$exists": True, "$ne": None}}
     if dept_filter:
-        query["sourceDeptId"] = {"$in": list(dept_filter)}
+        query["sourceId"] = {"$in": list(dept_filter)}
 
     report = MarkdownValidationReport()
 
     cursor = collection.find(
         query,
-        {"cleanMarkdown": 1, "articleNo": 1, "sourceDeptId": 1, "sourceUrl": 1},
+        {"cleanMarkdown": 1, "articleNo": 1, "sourceId": 1, "sourceUrl": 1},
     )
     if limit:
         cursor = cursor.limit(limit)
@@ -321,7 +321,7 @@ async def validate_markdown(
             report.results.append(NoticeMarkdownResult(
                 notice_id=notice_id,
                 article_no=doc.get("articleNo", 0),
-                source_dept_id=doc.get("sourceDeptId", ""),
+                source_id=doc.get("sourceId", ""),
                 source_url=doc.get("sourceUrl", ""),
                 issues=issues,
             ))

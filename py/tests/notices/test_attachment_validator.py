@@ -277,7 +277,7 @@ class TestValidateAttachmentsPipeline:
             {
                 "_id": ObjectId(),
                 "articleNo": 100,
-                "sourceDeptId": "skku-main",
+                "sourceId": "skku-main",
                 "sourceUrl": "https://www.skku.edu/skku/campus/skku_news.do?mode=view&articleNo=100",
                 "attachments": [
                     {"url": "https://www.skku.edu/file.pdf", "name": "report.pdf"},
@@ -321,7 +321,7 @@ class TestValidateAttachmentsPipeline:
             {
                 "_id": ObjectId(),
                 "articleNo": 200,
-                "sourceDeptId": "pharm",
+                "sourceId": "pharm",
                 "sourceUrl": "https://pharm.skku.edu/bbs/board.php?bo_table=notice&wr_id=200",
                 "attachments": [
                     {
@@ -356,14 +356,14 @@ class TestValidateAttachmentsPipeline:
         assert report.notices_with_issues == 0  # referer present, all valid
 
     async def test_unknown_dept_treated_as_non_gnuboard(self, mock_collection):
-        """Unknown sourceDeptId should not crash; no referer check."""
+        """Unknown sourceId should not crash; no referer check."""
         from bson import ObjectId
 
         docs = [
             {
                 "_id": ObjectId(),
                 "articleNo": 300,
-                "sourceDeptId": "deleted-dept",
+                "sourceId": "deleted-dept",
                 "sourceUrl": "https://www.skku.edu/deleted",
                 "attachments": [
                     {"url": "https://www.skku.edu/file.pdf", "name": "ok.pdf"},

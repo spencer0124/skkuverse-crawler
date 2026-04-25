@@ -72,7 +72,7 @@ async def _summarize_one(
     doc: dict,
 ) -> bool:
     article_no = doc["articleNo"]
-    dept = doc.get("sourceDeptId", "")
+    dept = doc.get("sourceId", "")
     try:
         resp = await client.summarize(
             title=doc["title"],

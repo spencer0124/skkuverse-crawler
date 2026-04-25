@@ -200,14 +200,14 @@ class TestValidateMarkdownPipeline:
             {
                 "_id": ObjectId(),
                 "articleNo": 1,
-                "sourceDeptId": "cse-undergrad",
+                "sourceId": "cse-undergrad",
                 "sourceUrl": "https://cse.skku.edu/notice/1",
                 "cleanMarkdown": "**broken\nbold**",
             },
             {
                 "_id": ObjectId(),
                 "articleNo": 2,
-                "sourceDeptId": "cse-undergrad",
+                "sourceId": "cse-undergrad",
                 "sourceUrl": "https://cse.skku.edu/notice/2",
                 "cleanMarkdown": "Clean **text** here.",
             },
@@ -237,7 +237,7 @@ class TestValidateMarkdownPipeline:
             {
                 "_id": ObjectId(),
                 "articleNo": 3,
-                "sourceDeptId": "test",
+                "sourceId": "test",
                 "sourceUrl": "",
                 "cleanMarkdown": "",
             },

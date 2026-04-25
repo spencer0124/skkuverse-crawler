@@ -30,7 +30,7 @@ async def find_unsummarized(
         {
             "_id": 1,
             "articleNo": 1,
-            "sourceDeptId": 1,
+            "sourceId": 1,
             "title": 1,
             "category": 1,
             "contentText": 1,
@@ -57,7 +57,7 @@ async def find_stale_summaries(
         {
             "_id": 1,
             "articleNo": 1,
-            "sourceDeptId": 1,
+            "sourceId": 1,
             "title": 1,
             "category": 1,
             "contentText": 1,

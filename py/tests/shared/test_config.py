@@ -20,7 +20,7 @@ from skkuverse_crawler.shared.config import (
 
 def _init_fresh(monkeypatch, **env_vars):
     """Set env vars, reset singleton, and return a fresh Config."""
-    monkeypatch.setenv("CRAWL_DEPT_FILTER", "")
+    monkeypatch.setenv("CRAWL_SOURCE_FILTER", "")
     for k, v in env_vars.items():
         monkeypatch.setenv(k, v)
     reset_config()

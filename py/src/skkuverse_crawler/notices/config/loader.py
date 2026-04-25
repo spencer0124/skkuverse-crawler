@@ -8,12 +8,12 @@ from typing import Any
 
 from ...shared.logger import get_logger
 
-# departments.json lives at the repo root (SSOT).
-# Docker: set DEPARTMENTS_JSON_PATH=/departments.json explicitly.
+# sources.json lives at the repo root (SSOT).
+# Docker: set SOURCES_JSON_PATH=/sources.json explicitly.
 # Local:  fallback to parents[5] (loader.py → config → notices → skkuverse_crawler → src → py → repo root).
-_DEPARTMENTS_JSON = Path(
-    os.environ.get("DEPARTMENTS_JSON_PATH")
-    or str(Path(__file__).resolve().parents[5] / "departments.json")
+_SOURCES_JSON = Path(
+    os.environ.get("SOURCES_JSON_PATH")
+    or str(Path(__file__).resolve().parents[5] / "sources.json")
 )
 
 logger = get_logger("config_loader")
@@ -32,7 +32,7 @@ REQUIRED_SELECTORS: dict[str, list[str]] = {
 
 def load_and_validate() -> list[dict[str, Any]]:
     configs: list[dict[str, Any]] = json.loads(
-        _DEPARTMENTS_JSON.read_text(encoding="utf-8")
+        _SOURCES_JSON.read_text(encoding="utf-8")
     )
 
     errors: list[str] = []

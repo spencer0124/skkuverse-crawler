@@ -341,7 +341,7 @@ JSP 기숙사 게시판은 `article_no`(snake_case)를 사용한다.
 
 - `py/src/skkuverse_crawler/notices/strategies/jsp_dorm.py` — `crawl_list()` + `crawl_detail()` 구현
 - `py/src/skkuverse_crawler/notices/types.py` — `JspDormConfig` TypedDict
-- `py/src/skkuverse_crawler/notices/config/departments.json` — dorm-hssc, dorm-nsc 설정
+- `py/src/skkuverse_crawler/notices/config/sources.json` — dorm-hssc, dorm-nsc 설정
 
 ## 두 캠퍼스의 구조적 동일성
 
@@ -357,9 +357,9 @@ JSP 기숙사 게시판은 `article_no`(snake_case)를 사용한다.
 | 인코딩 | UTF-8 | UTF-8 | 동일 |
 
 **결론: 하나의 `jsp-dorm` 전략으로 두 캠퍼스 모두 커버 가능하다.**
-차이점은 `baseUrl`, `boardNo`, `id`, `name`뿐이며, 이는 departments.json에서 설정한다.
+차이점은 `baseUrl`, `boardNo`, `id`, `name`뿐이며, 이는 sources.json에서 설정한다.
 
-## departments.json 설정 예시
+## sources.json 설정 예시
 
 ```json
 [

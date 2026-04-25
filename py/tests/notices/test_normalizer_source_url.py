@@ -38,7 +38,7 @@ class TestSourceUrl:
             _item(detail_path="https://example.com/notice/123"),
             _DETAIL,
             department="test",
-            source_dept_id="test",
+            source_id="test",
             base_url="https://other.com/board.php",
         )
         assert notice.sourceUrl == "https://example.com/notice/123"
@@ -49,7 +49,7 @@ class TestSourceUrl:
             _item(detail_path="?mode=view&articleNo=136184"),
             _DETAIL,
             department="학부통합",
-            source_dept_id="skku-main",
+            source_id="skku-main",
             base_url="https://www.skku.edu/skku/campus/skk_comm/notice01.do",
         )
         assert notice.sourceUrl == (
@@ -66,7 +66,7 @@ class TestSourceUrl:
             ),
             _DETAIL,
             department="나노공학과",
-            source_dept_id="nano",
+            source_id="nano",
             base_url="https://nano.skku.edu/bbs/board.php",
         )
         assert notice.sourceUrl == (
@@ -82,7 +82,7 @@ class TestSourceUrl:
             ),
             _DETAIL,
             department="의과대학",
-            source_dept_id="medicine",
+            source_id="medicine",
             base_url="https://www.skkumed.ac.kr/community_notice.asp",
         )
         assert notice.sourceUrl == (
@@ -100,7 +100,7 @@ class TestSourceUrl:
             _item(detail_path=detail_path),
             _DETAIL,
             department="test",
-            source_dept_id="test",
+            source_id="test",
             base_url="https://example.com/board.php",
         )
         # urljoin("https://example.com/board.php", "") → "https://example.com/board.php"
@@ -145,7 +145,7 @@ class TestInjectImageDimensions:
             _item(detail_path="?articleNo=1"),
             detail,
             department="test",
-            source_dept_id="test",
+            source_id="test",
             base_url="https://example.com/",
             image_dimensions={"https://example.com/a.png": (400, 300)},
         )

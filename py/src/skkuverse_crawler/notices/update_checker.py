@@ -21,7 +21,7 @@ from .orchestrator import STRATEGY_MAP
 
 @dataclass
 class UpdateCheckResult:
-    source_dept_id: str = ""
+    source_id: str = ""
     total_checked: int = 0
     content_changed: int = 0
     hash_backfilled: int = 0
@@ -51,14 +51,14 @@ async def run_update_check(
 
     cursor = collection.find(
         {"date": {"$gte": cutoff_date_str}, "isDeleted": {"$ne": True}},
-        {"articleNo": 1, "sourceDeptId": 1, "detailPath": 1,
+        {"articleNo": 1, "sourceId": 1, "detailPath": 1,
          "contentHash": 1, "title": 1, "consecutiveFailures": 1},
     )
 
-    # Group by sourceDeptId
+    # Group by sourceId
     by_dept: dict[str, list[dict[str, Any]]] = {}
     async for doc in cursor:
-        dept_id = doc["sourceDeptId"]
+        dept_id = doc["sourceId"]
         by_dept.setdefault(dept_id, []).append(doc)
 
     # Build department lookup
@@ -69,8 +69,8 @@ async def run_update_check(
         unknown = [did for did in dept_filter if did not in valid_ids]
         if unknown:
             raise ValueError(
-                f"Unknown department ID(s) in CRAWL_DEPT_FILTER: {unknown}. "
-                f"Check departments.json for valid IDs."
+                f"Unknown department ID(s) in CRAWL_SOURCE_FILTER: {unknown}. "
+                f"Check sources.json for valid IDs."
             )
         by_dept = {k: v for k, v in by_dept.items() if k in dept_filter}
 
@@ -89,7 +89,7 @@ async def run_update_check(
             dept = dept_lookup.get(dept_id)
             if not dept:
                 logger.warning("unknown_dept_id", dept_id=dept_id)
-                return UpdateCheckResult(source_dept_id=dept_id)
+                return UpdateCheckResult(source_id=dept_id)
             return await _check_department(
                 dept, notices, collection, fetcher, logger,
             )
@@ -126,7 +126,7 @@ async def _check_department(
     logger: Any,
 ) -> UpdateCheckResult:
     start = time.monotonic()
-    result = UpdateCheckResult(source_dept_id=dept["id"])
+    result = UpdateCheckResult(source_id=dept["id"])
 
     strategy_cls = STRATEGY_MAP.get(dept["strategy"])
     if not strategy_cls:
@@ -173,7 +173,7 @@ async def _check_department(
             continue
 
         result.total_checked += 1
-        doc_filter = {"articleNo": doc["articleNo"], "sourceDeptId": dept["id"]}
+        doc_filter = {"articleNo": doc["articleNo"], "sourceId": dept["id"]}
 
         new_clean_html = clean_html(detail.content, dept["baseUrl"])
         new_hash = compute_content_hash(new_clean_html)
@@ -240,7 +240,7 @@ async def _check_department(
     if mass_404:
         logger.error(
             "mass_404_detected",
-            source_dept_id=dept["id"],
+            source_id=dept["id"],
             not_found=result.not_found,
             total_attempted=total_attempted,
         )
@@ -248,7 +248,7 @@ async def _check_department(
         for doc in not_found_docs:
             was_deleted = doc.get("isDeleted", False)
             updated = await collection.find_one_and_update(
-                {"articleNo": doc["articleNo"], "sourceDeptId": dept["id"]},
+                {"articleNo": doc["articleNo"], "sourceId": dept["id"]},
                 [
                     {"$set": {
                         "consecutiveFailures": {
@@ -273,7 +273,7 @@ async def _check_department(
     result.elapsed_seconds = round(time.monotonic() - start, 2)
     logger.info(
         "update_check_dept_done",
-        source_dept_id=result.source_dept_id,
+        source_id=result.source_id,
         total_checked=result.total_checked,
         content_changed=result.content_changed,
         hash_backfilled=result.hash_backfilled,
@@ -291,7 +291,7 @@ async def _check_department(
         if change_rate > 0.8:
             logger.error(
                 "likely_determinism_bug",
-                source_dept_id=result.source_dept_id,
+                source_id=result.source_id,
                 rate=round(change_rate, 2),
                 content_changed=result.content_changed,
                 checked=checked_non_backfill,
@@ -299,7 +299,7 @@ async def _check_department(
         elif change_rate > 0.3:
             logger.warning(
                 "high_change_rate",
-                source_dept_id=result.source_dept_id,
+                source_id=result.source_id,
                 rate=round(change_rate, 2),
                 content_changed=result.content_changed,
                 checked=checked_non_backfill,
