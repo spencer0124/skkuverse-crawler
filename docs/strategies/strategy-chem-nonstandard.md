@@ -255,7 +255,7 @@ for el in soup.select("div.noticeViewBtnList button.fileBtn"):
 
 ### 방안 1: skku-standard 전략에 커스텀 셀렉터만 적용
 
-departments.json에서 셀렉터를 오버라이드하는 방식.
+sources.json에서 셀렉터를 오버라이드하는 방식.
 
 **문제점**:
 
@@ -326,9 +326,9 @@ class SkkuStandardConfig(TypedDict, total=False):
 2. **`py/src/skkuverse_crawler/notices/strategies/skku_standard.py`** — 두 곳에 분기 추가:
    - `crawl_list()` — labeled infoParser 분기
    - `crawl_detail()` — onclick attachmentParser 분기
-3. **`py/src/skkuverse_crawler/notices/config/departments.json`** — 화학과 엔트리
+3. **`py/src/skkuverse_crawler/notices/config/sources.json`** — 화학과 엔트리
 
-### departments.json 최종 엔트리
+### sources.json 최종 엔트리
 
 ```json
 {
@@ -375,6 +375,6 @@ curl -s 'https://{dept}.skku.edu/...' | grep -o 'boardTy = [^,]*'
 | 새 전략 필요? | 불필요 (`skku-standard` 확장으로 충분) |
 | 셀렉터만 변경으로 해결? | 불가 (infoList 파싱 + 첨부파일 파싱 로직이 다름) |
 | 권장 방안 | `skku-standard`에 `infoParser` + `attachmentParser` 옵션 추가 |
-| 변경 파일 수 | 3개 (`types.py`, `skku_standard.py`, `departments.json`) |
+| 변경 파일 수 | 3개 (`types.py`, `skku_standard.py`, `sources.json`) |
 | URL/페이지네이션 호환 | 완전 호환 (동일한 SKKU CMS 기반) |
 | articleNo 추출 | 동일 (`?mode=view&articleNo=N` 패턴) |

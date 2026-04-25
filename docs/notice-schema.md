@@ -20,7 +20,7 @@ class Notice:
     attachments: list[dict]   # [{"name": str, "url": str}]
     sourceUrl: str            # 원본 상세 페이지 URL
     detailPath: str           # 내부 재크롤용 (앱 노출 불필요)
-    sourceDeptId: str         # departments.json의 id (e.g. "skku-main")
+    sourceId: str         # sources.json의 id (e.g. "skku-main")
     cleanMarkdown: str | None # cleanHtml → GFM 변환 결과 (None 가능)
     crawledAt: datetime       # 마지막 크롤링 시각 (UTC)
     lastModified: str | None  # 예약 필드 (현재 미사용)
@@ -35,8 +35,8 @@ class Notice:
 
 ## Index
 
-- Unique compound: `{ articleNo: 1, sourceDeptId: 1 }`
-- 같은 articleNo라도 sourceDeptId가 다르면 별개 문서 (학과별 공지는 articleNo 체계가 다를 수 있음)
+- Unique compound: `{ articleNo: 1, sourceId: 1 }`
+- 같은 articleNo라도 sourceId가 다르면 별개 문서 (학과별 공지는 articleNo 체계가 다를 수 있음)
 
 ## 본��� 필드 4종
 
@@ -60,7 +60,7 @@ fetch 실패 시 `content` / `cleanHtml` / `cleanMarkdown` 모두 `None` → 다
 
 ## Upsert 동작
 
-- `articleNo + sourceDeptId` 기준으로 upsert
+- `articleNo + sourceId` 기준으로 upsert
 - 이미 존재하면 전체 필드를 `$set`으로 덮어씀
 - 1페이지 글은 매번 upsert → 제목/내용 수정이 자동 반영
 

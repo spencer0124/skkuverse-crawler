@@ -307,7 +307,7 @@ html = response.content.decode("euc-kr")
 
 ### 전략별 인코딩 설정
 
-departments.json에 `encoding` 필드를 추가하여 전략에서 분기:
+sources.json에 `encoding` 필드를 추가하여 전략에서 분기:
 
 ```json
 {
@@ -323,7 +323,7 @@ else:
     html = response.text
 ```
 
-## departments.json 설정 예시
+## sources.json 설정 예시
 
 ```json
 {
@@ -369,7 +369,7 @@ else:
 
 - `py/src/skkuverse_crawler/notices/strategies/skkumed_asp.py` — `crawl_list()` + `crawl_detail()` 구현
 - `py/src/skkuverse_crawler/notices/types.py` — `SkkumedAspConfig` TypedDict
-- `py/src/skkuverse_crawler/notices/config/departments.json` — medicine 학과 설정
+- `py/src/skkuverse_crawler/notices/config/sources.json` — medicine 학과 설정
 - `py/src/skkuverse_crawler/shared/fetcher.py` — encoding 옵션 지원
 
 ## 참고: 같은 ASP 사이트의 다른 게시판

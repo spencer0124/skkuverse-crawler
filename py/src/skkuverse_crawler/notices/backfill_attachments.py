@@ -2,7 +2,7 @@
 
 Re-fetches the detail page of notices that have ``attachments: []`` and
 re-parses attachments using the (now-corrected) selector from
-``departments.json``.
+``sources.json``.
 
 Only targets ``skku-standard`` departments on subdomain sites
 (not ``www.skku.edu``) — the ones affected by the selector mismatch.
@@ -10,7 +10,7 @@ Only targets ``skku-standard`` departments on subdomain sites
 Usage (from py/):
     python -m skkuverse_crawler backfill-attachments              # dry-run
     python -m skkuverse_crawler backfill-attachments --apply
-    python -m skkuverse_crawler backfill-attachments --apply --dept cse-undergrad
+    python -m skkuverse_crawler backfill-attachments --apply --source cse-undergrad
     python -m skkuverse_crawler backfill-attachments --apply --limit 50
 """
 
@@ -66,7 +66,7 @@ async def run(
             return 0
 
     match: dict[str, Any] = {
-        "sourceDeptId": {"$in": target_ids},
+        "sourceId": {"$in": target_ids},
         "attachments": {"$size": 0},
     }
 
@@ -119,7 +119,7 @@ async def run(
         if limit is not None and updated >= limit:
             break
 
-        dept_id = doc.get("sourceDeptId")
+        dept_id = doc.get("sourceId")
         dept_config = dept_configs.get(dept_id)
         if not dept_config:
             skipped += 1

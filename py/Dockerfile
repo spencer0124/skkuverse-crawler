@@ -23,7 +23,7 @@ WORKDIR /app
 COPY --from=build --chown=crawler:crawler /app .
 
 # SSOT config files from repo root (named build context)
-COPY --from=repo-root departments.json /departments.json
+COPY --from=repo-root sources.json /sources.json
 COPY --from=repo-root categories.json /categories.json
 
 ENV PATH="/app/.venv/bin:$PATH"

@@ -50,7 +50,7 @@ async def run(
     collection = db["notices"]
 
     match = {
-        "sourceDeptId": DEPT_ID,
+        "sourceId": DEPT_ID,
         "attachments": {
             "$elemMatch": {
                 "url": {"$regex": "/download/", "$not": {"$regex": "wpdmdl="}},

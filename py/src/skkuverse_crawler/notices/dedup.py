@@ -11,21 +11,21 @@ from .models import Notice, NoticeListItem
 
 async def ensure_indexes(collection: AsyncIOMotorCollection) -> None:
     await collection.create_index(
-        [("articleNo", 1), ("sourceDeptId", 1)],
+        [("articleNo", 1), ("sourceId", 1)],
         unique=True,
     )
     await collection.create_index(
-        [("sourceDeptId", 1), ("date", -1)],
+        [("sourceId", 1), ("date", -1)],
     )
 
 
 async def find_existing_meta(
     collection: AsyncIOMotorCollection,
-    source_dept_id: str,
+    source_id: str,
     article_nos: list[int],
 ) -> dict[int, dict[str, Any]]:
     cursor = collection.find(
-        {"sourceDeptId": source_dept_id, "articleNo": {"$in": article_nos}},
+        {"sourceId": source_id, "articleNo": {"$in": article_nos}},
         {"articleNo": 1, "title": 1, "date": 1, "contentHash": 1},
     )
     result: dict[int, dict[str, Any]] = {}
@@ -76,7 +76,7 @@ async def upsert_notice(
     is_deleted = doc.pop("isDeleted", False)
     consecutive_failures = doc.pop("consecutiveFailures", 0)
     result = await collection.update_one(
-        {"articleNo": notice.articleNo, "sourceDeptId": notice.sourceDeptId},
+        {"articleNo": notice.articleNo, "sourceId": notice.sourceId},
         {
             "$set": doc,
             "$setOnInsert": {
@@ -102,7 +102,7 @@ async def update_with_history(
     doc.pop("isDeleted", None)
     doc.pop("consecutiveFailures", None)
     await collection.update_one(
-        {"articleNo": notice.articleNo, "sourceDeptId": notice.sourceDeptId},
+        {"articleNo": notice.articleNo, "sourceId": notice.sourceId},
         {
             "$set": doc,
             "$push": {"editHistory": {"$each": [edit_entry], "$slice": -20}},
@@ -121,7 +121,7 @@ async def bulk_touch_notices(
     ops = [
         {
             "updateOne": {
-                "filter": {"articleNo": item["articleNo"], "sourceDeptId": item["sourceDeptId"]},
+                "filter": {"articleNo": item["articleNo"], "sourceId": item["sourceId"]},
                 "update": {"$set": {"views": item["views"], "crawledAt": now}},
             }
         }
@@ -143,10 +143,10 @@ def _to_pymongo_op(op: dict) -> Any:
 
 async def find_null_content(
     collection: AsyncIOMotorCollection,
-    source_dept_id: str,
+    source_id: str,
 ) -> list[dict[str, Any]]:
     cursor = collection.find(
-        {"sourceDeptId": source_dept_id, "$or": [{"content": None}, {"content": ""}]},
+        {"sourceId": source_id, "$or": [{"content": None}, {"content": ""}]},
         {"articleNo": 1, "detailPath": 1},
     )
     result = []

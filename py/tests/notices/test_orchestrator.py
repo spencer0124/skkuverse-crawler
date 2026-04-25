@@ -49,7 +49,7 @@ class TestFloorDateItemSkip:
         item = _make_item(date="2026-04-15")
         strategy = AsyncMock()
         strategy.crawl_detail.return_value = MOCK_DETAIL
-        mock_build.return_value = MagicMock(articleNo=1, sourceDeptId="test-dept", contentHash="abc")
+        mock_build.return_value = MagicMock(articleNo=1, sourceId="test-dept", contentHash="abc")
         mock_upsert.return_value = "inserted"
         result = DeptResult()
         logger = MagicMock()
@@ -66,7 +66,7 @@ class TestFloorDateItemSkip:
         item = _make_item(date="")  # falsy date
         strategy = AsyncMock()
         strategy.crawl_detail.return_value = MOCK_DETAIL
-        mock_build.return_value = MagicMock(articleNo=1, sourceDeptId="test-dept", contentHash="abc")
+        mock_build.return_value = MagicMock(articleNo=1, sourceId="test-dept", contentHash="abc")
         mock_upsert.return_value = "inserted"
         result = DeptResult()
         logger = MagicMock()
@@ -101,7 +101,7 @@ class TestThreeWayBranch:
         item = _make_item(article_no=99)
         strategy = AsyncMock()
         strategy.crawl_detail.return_value = MOCK_DETAIL
-        mock_build.return_value = MagicMock(articleNo=99, sourceDeptId="test-dept", contentHash="abc")
+        mock_build.return_value = MagicMock(articleNo=99, sourceId="test-dept", contentHash="abc")
         mock_upsert.return_value = "inserted"
         result = DeptResult()
         logger = MagicMock()
@@ -123,7 +123,7 @@ class TestThreeWayBranch:
         existing_meta = {1: {"articleNo": 1, "title": "옛 제목", "date": "2026-04-15", "contentHash": "old_hash"}}
         strategy = AsyncMock()
         strategy.crawl_detail.return_value = MOCK_DETAIL
-        mock_build.return_value = MagicMock(articleNo=1, sourceDeptId="test-dept", contentHash="new_hash")
+        mock_build.return_value = MagicMock(articleNo=1, sourceId="test-dept", contentHash="new_hash")
         result = DeptResult()
         logger = MagicMock()
 
