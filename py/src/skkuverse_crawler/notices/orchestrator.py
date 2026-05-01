@@ -94,8 +94,13 @@ async def run_crawl(
             )
         filtered = [d for d in departments if d["id"] in options.dept_filter]
     else:
-        # No explicit filter: use crawlEnabled from sources.json (SSOT)
-        filtered = [d for d in departments if d.get("crawlEnabled", False)]
+        # No explicit filter: cron crawls only when BOTH structurally available
+        # (crawlAvailable=true; not intentionally unsupported) AND operationally
+        # enabled (crawlEnabled=true; not paused for testing/maintenance).
+        filtered = [
+            d for d in departments
+            if d.get("crawlAvailable", False) and d.get("crawlEnabled", False)
+        ]
 
     if not filtered:
         logger.warning("no_matching_departments", dept_filter=options.dept_filter)

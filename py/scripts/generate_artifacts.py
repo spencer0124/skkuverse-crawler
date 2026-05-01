@@ -60,6 +60,17 @@ VALID_CAMPUSES = {"hssc", "nsc", "both", None}
 VALID_TAB_MODES = {"fixed", "picker"}
 VALID_CAMPUS_DEFAULT_KEYS = {"hssc", "nsc"}
 
+# excludeReason enum keys. Mirrored on the client as i18n keys
+# (onboarding.unsupportedDept.reason.<key>). Adding a new reason requires
+# updating the client translations in the same release.
+VALID_EXCLUDE_REASONS = {
+    "loginRequired",
+    "noWebsite",
+    "externalSystem",
+    "accessRestricted",
+    "temporarilyUnavailable",
+}
+
 
 # ---------------------------------------------------------------------------
 # Validation
@@ -76,7 +87,8 @@ def validate_departments(
 
         # Required fields
         for field in ("id", "name", "strategy", "campus", "college",
-                      "appCategory", "crawlEnabled"):
+                      "appCategory", "crawlAvailable", "crawlEnabled",
+                      "excludeReason"):
             if field not in dept:
                 errors.append(f"{did}: missing required field '{field}'")
 
@@ -96,9 +108,42 @@ def validate_departments(
         if dept.get("appCategory") not in valid_app_categories:
             errors.append(f"{did}: invalid appCategory '{dept.get('appCategory')}'")
 
-        # crawlEnabled must be bool
+        # crawlAvailable / crawlEnabled must be bool
+        if not isinstance(dept.get("crawlAvailable"), bool):
+            errors.append(f"{did}: crawlAvailable must be boolean")
         if not isinstance(dept.get("crawlEnabled"), bool):
             errors.append(f"{did}: crawlEnabled must be boolean")
+
+        # excludeReason: must be a known enum key, or null
+        reason = dept.get("excludeReason")
+        if reason is not None and reason not in VALID_EXCLUDE_REASONS:
+            errors.append(
+                f"{did}: invalid excludeReason '{reason}' "
+                f"(allowed: {sorted(VALID_EXCLUDE_REASONS)} or null)"
+            )
+
+        # Three-rule semantic consistency:
+        # crawlAvailable | excludeReason | crawlEnabled
+        # ───────────────┼───────────────┼─────────────
+        # true           | null          | * (any)             ← normal, valid
+        # false          | non-null key  | false               ← intentionally unsupported
+        # any other combination is a contradiction.
+        avail = dept.get("crawlAvailable")
+        if avail is False and reason is None:
+            errors.append(
+                f"{did}: crawlAvailable=false requires non-null excludeReason "
+                f"(unsupported depts must declare a reason)"
+            )
+        if avail is True and reason is not None:
+            errors.append(
+                f"{did}: crawlAvailable=true must have null excludeReason "
+                f"(crawlable depts cannot have an exclusion reason)"
+            )
+        if avail is False and dept.get("crawlEnabled") is True:
+            errors.append(
+                f"{did}: crawlAvailable=false forbids crawlEnabled=true "
+                f"(unsupported source cannot be operationally enabled)"
+            )
 
     return errors
 
@@ -133,14 +178,19 @@ def validate_categories(
                 errors.append(f"category {cid}: missing label.{lang}")
 
         if mode == "fixed":
-            # fixedSourceId must exist and be enabled
+            # fixedSourceId must exist and be structurally crawlable
+            # (operational pause via crawlEnabled=false is fine — fixed tab
+            # still renders, just with stale data until cron resumes).
             fixed_id = cat.get("fixedSourceId")
             if not fixed_id:
                 errors.append(f"category {cid}: fixed mode requires fixedSourceId")
             elif fixed_id not in dept_by_id:
                 errors.append(f"category {cid}: fixedSourceId '{fixed_id}' not in sources.json")
-            elif not dept_by_id[fixed_id]["crawlEnabled"]:
-                errors.append(f"category {cid}: fixedSourceId '{fixed_id}' has crawlEnabled=false")
+            elif not dept_by_id[fixed_id]["crawlAvailable"]:
+                errors.append(
+                    f"category {cid}: fixedSourceId '{fixed_id}' has "
+                    f"crawlAvailable=false (unsupported source can't anchor a fixed tab)"
+                )
 
         elif mode == "picker":
             # maxSelection must be positive int
@@ -153,9 +203,13 @@ def validate_categories(
             if not matching:
                 errors.append(f"category {cid}: picker matches 0 departments")
 
+            # Default-seed eligibility: only depts that actually crawl.
+            # Unsupported depts (crawlAvailable=false) must NOT be defaulted —
+            # users would see a permanently empty notice list.
             enabled_ids = {
                 d["id"] for d in departments
-                if d["appCategory"] == cid and d["crawlEnabled"]
+                if d["appCategory"] == cid
+                and d["crawlAvailable"] and d["crawlEnabled"]
             }
 
             # Optional defaultIds (common defaults — seeded for every campus)
@@ -245,6 +299,12 @@ def gen_source_ids(sources: list[dict]) -> str:
 
 
 def gen_sources_json(sources: list[dict]) -> str:
+    """Server-facing artifact (skkuverse-server/features/notices/sources.json).
+
+    Carries crawler-domain field names (crawlAvailable, excludeReason) through;
+    the server's tabConfig.js maps these to the client-friendly response shape
+    (e.g. crawlAvailable → noticeAvailable) at API boundary.
+    """
     entries = []
     for source in sources:
         has_cat, has_author = STRATEGY_FEATURES[source["strategy"]]
@@ -254,7 +314,8 @@ def gen_sources_json(sources: list[dict]) -> str:
             "campus": source["campus"],
             "college": source["college"],
             "appCategory": source["appCategory"],
-            "noticeAvailable": source["crawlEnabled"],
+            "crawlAvailable": source["crawlAvailable"],
+            "excludeReason": source["excludeReason"],
             "hasCategory": has_cat,
             "hasAuthor": has_author,
         })
@@ -262,7 +323,12 @@ def gen_sources_json(sources: list[dict]) -> str:
 
 
 def gen_docker_env(departments: list[dict]) -> str:
-    enabled = [d["id"] for d in departments if d["crawlEnabled"]]
+    # Cron actually crawls only when BOTH structurally available AND
+    # operationally enabled. Either flag false → skip.
+    enabled = [
+        d["id"] for d in departments
+        if d["crawlAvailable"] and d["crawlEnabled"]
+    ]
     return f"CRAWL_SOURCE_FILTER={','.join(enabled)}\n"
 
 
@@ -280,9 +346,14 @@ def gen_server_categories(
                 "sourceId": cat["fixedSourceId"],
             })
         else:  # picker
+            # Picker visibility: crawlable OR intentionally unsupported.
+            # Unsupported entries stay so the client can render them greyed
+            # out and explain *why* (excludeReason). Operational pause
+            # (crawlEnabled=false but crawlAvailable=true) keeps them visible.
             source_ids = [
                 d["id"] for d in departments
-                if d["appCategory"] == cat["id"] and d["crawlEnabled"]
+                if d["appCategory"] == cat["id"]
+                and (d["crawlAvailable"] or d["excludeReason"] is not None)
             ]
             entry: dict = {
                 "id": cat["id"],
@@ -349,7 +420,7 @@ def gen_coverage_md(departments: list[dict]) -> str:
             lines.append("| ID | 이름 | 전략 | 활성 |")
             lines.append("|----|------|------|:----:|")
             for d in depts:
-                enabled = "O" if d["crawlEnabled"] else ""
+                enabled = "O" if d["crawlAvailable"] and d["crawlEnabled"] else ""
                 strategy = d["strategy"] if d["strategy"] != "skku-standard" else ""
                 lines.append(f"| `{d['id']}` | {d['name']} | {strategy} | {enabled} |")
             lines.append("")
@@ -373,7 +444,7 @@ def gen_coverage_md(departments: list[dict]) -> str:
             lines.append("| ID | 이름 | 활성 |")
             lines.append("|----|------|:----:|")
             for d in depts:
-                enabled = "O" if d["crawlEnabled"] else ""
+                enabled = "O" if d["crawlAvailable"] and d["crawlEnabled"] else ""
                 lines.append(f"| `{d['id']}` | {d['name']} | {enabled} |")
             lines.append("")
 
@@ -385,12 +456,12 @@ def gen_coverage_md(departments: list[dict]) -> str:
         lines.append("| ID | 이름 | 활성 |")
         lines.append("|----|------|:----:|")
         for d in null_campus:
-            enabled = "O" if d["crawlEnabled"] else ""
+            enabled = "O" if d["crawlAvailable"] and d["crawlEnabled"] else ""
             lines.append(f"| `{d['id']}` | {d['name']} | {enabled} |")
         lines.append("")
 
     # Summary
-    enabled_count = sum(1 for d in departments if d["crawlEnabled"])
+    enabled_count = sum(1 for d in departments if d["crawlAvailable"] and d["crawlEnabled"])
     lines.append("## 요약")
     lines.append("")
     lines.append(f"- 총 엔트리: {len(departments)}")
@@ -432,7 +503,7 @@ def gen_by_college_md(departments: list[dict]) -> str:
         for d in depts:
             campus = d["campus"] or ""
             strategy = d["strategy"] if d["strategy"] != "skku-standard" else ""
-            enabled = "O" if d["crawlEnabled"] else ""
+            enabled = "O" if d["crawlAvailable"] and d["crawlEnabled"] else ""
             lines.append(
                 f"| `{d['id']}` | {d['name']} | {campus} | {strategy} | {enabled} |"
             )
@@ -477,7 +548,7 @@ def gen_by_app_category_md(
         for d in depts:
             campus = d["campus"] or ""
             strategy = d["strategy"] if d["strategy"] != "skku-standard" else ""
-            enabled = "O" if d["crawlEnabled"] else ""
+            enabled = "O" if d["crawlAvailable"] and d["crawlEnabled"] else ""
             lines.append(
                 f"| `{d['id']}` | {d['name']} | {campus} | {strategy} | {enabled} |"
             )
