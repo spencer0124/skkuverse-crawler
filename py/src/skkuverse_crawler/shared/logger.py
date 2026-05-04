@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from urllib.parse import urlparse
 
 import structlog
 
@@ -38,6 +39,40 @@ def configure_logging() -> None:
     if not cfg.is_test:
         logger = structlog.get_logger("config")
         logger.info("crawler_mode", mode=cfg.mode_label)
+        _log_dispatch_state(logger, cfg)
+
+
+def _log_dispatch_state(logger: structlog.stdlib.BoundLogger, cfg: object) -> None:
+    """3-state boot log for the FCM dispatch ping config.
+
+    - both set     → INFO  dispatch_ping_enabled       (normal run)
+    - both unset   → WARN  dispatch_ping_disabled      (intentional disable)
+    - exactly one  → ERROR dispatch_ping_misconfigured (deploy mistake — silent
+                                                        failure mode otherwise)
+
+    Token value is NEVER logged; only its presence as a boolean flag.
+    """
+    url = getattr(cfg, "dispatch_url", None)
+    tok = getattr(cfg, "internal_dispatch_token", None)
+    url_set = bool(url)
+    tok_set = bool(tok)
+    if url_set and tok_set:
+        logger.info("dispatch_ping_enabled", url_host=urlparse(url).netloc)
+    elif url_set or tok_set:
+        logger.error(
+            "dispatch_ping_misconfigured",
+            reason=(
+                "exactly one of DISPATCH_URL / INTERNAL_DISPATCH_TOKEN is set; "
+                "both must be set together to enable the ping"
+            ),
+            dispatch_url_set=url_set,
+            token_set=tok_set,
+        )
+    else:
+        logger.warning(
+            "dispatch_ping_disabled",
+            reason="DISPATCH_URL and INTERNAL_DISPATCH_TOKEN both unset",
+        )
 
 
 def get_logger(name: str = "", **initial_context: object) -> structlog.stdlib.BoundLogger:
