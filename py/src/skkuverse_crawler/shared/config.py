@@ -22,6 +22,11 @@ class Config:
     log_format: str
     dept_filter: tuple[str, ...] | None
     ai_service_url: str
+    # FCM dispatch ping (optional). Both must be set together; either missing
+    # disables the ping and the server's safety-net cron drains the queue
+    # within 30 min instead. See plan: latency-vs-correctness tradeoff.
+    dispatch_url: str | None
+    internal_dispatch_token: str | None
 
     @property
     def is_production(self) -> bool:
@@ -85,6 +90,8 @@ def load_config() -> Config:
         log_format=os.getenv("LOG_FORMAT", "json"),
         dept_filter=dept_filter,
         ai_service_url=os.getenv("AI_SERVICE_URL") or _ai_service_url(env),
+        dispatch_url=os.getenv("DISPATCH_URL") or None,
+        internal_dispatch_token=os.getenv("INTERNAL_DISPATCH_TOKEN") or None,
     )
 
 
