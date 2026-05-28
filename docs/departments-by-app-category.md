@@ -3,7 +3,7 @@
 
 # 앱 카테고리별 학과 목록
 
-> sources.json 기준 147개 엔트리
+> sources.json 기준 148개 엔트리
 
 ## 학과 (dept)
 
@@ -79,6 +79,7 @@
 | `qie` | 양자정보공학과 | nsc |  | O |
 | `energy` | 에너지학과 | nsc |  | O |
 | `acting` | 연기예술학과 | hssc |  | O |
+| `ftm-undergrad` | 영상학과 | hssc | webflow-skku | O |
 | `english-undergrad` | 영어영문학과(학부생) | hssc |  | O |
 | `english-grad` | 영어영문학과(대학원) | hssc |  | O |
 | `art-undergrad` | 예술대학(학부생) | hssc |  | O |

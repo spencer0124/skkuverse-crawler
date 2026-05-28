@@ -174,6 +174,27 @@ class PyxisApiDepartmentConfig(TypedDict, total=False):
     bulletinCategoryId: int
 
 
+class WebflowSkkuSelectors(TypedDict, total=False):
+    listItem: str
+    listLink: str
+    listRow: str
+    titleCell: str
+    regularCell: str
+    paginationNext: str
+    detailTitle: str
+    detailContent: str
+
+
+class WebflowSkkuDepartmentConfig(TypedDict, total=False):
+    id: str
+    name: str
+    strategy: Literal["webflow-skku"]
+    baseUrl: str
+    pageParam: str
+    selectors: WebflowSkkuSelectors
+    pagination: PageNumPaginationConfig
+
+
 DepartmentConfig = (
     SkkuStandardDepartmentConfig
     | WordPressApiDepartmentConfig
@@ -183,6 +204,7 @@ DepartmentConfig = (
     | GnuboardDepartmentConfig
     | GnuboardCustomDepartmentConfig
     | PyxisApiDepartmentConfig
+    | WebflowSkkuDepartmentConfig
 )
 
 

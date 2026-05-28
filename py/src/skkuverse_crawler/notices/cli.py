@@ -9,7 +9,6 @@ import click
 
 from ..shared.db import close_client
 from ..shared.logger import configure_logging
-from .backfill import run as run_backfill
 from .config.loader import load_and_validate
 from .orchestrator import CrawlOptions, run_crawl
 from .update_checker import run_update_check
@@ -22,7 +21,7 @@ if TYPE_CHECKING:
 @click.command("notices")
 @click.option("--once", is_flag=True, help="Run once and exit")
 @click.option("--all", "full_crawl", is_flag=True, help="Full (non-incremental) crawl")
-@click.option("--source", multiple=True, help="Department ID(s) to crawl")
+@click.option("--source", "dept", multiple=True, help="Department ID(s) to crawl")
 @click.option("--pages", type=int, default=None, help="Max pages per department")
 @click.option("--delay", type=int, default=500, help="Delay between requests (ms)")
 def notices_cli(once: bool, full_crawl: bool, dept: tuple[str, ...], pages: int | None, delay: int) -> None:
@@ -58,7 +57,7 @@ async def _run(
 
 @click.command("update-check")
 @click.option("--days", type=int, default=14, help="Window in days (default: 14)")
-@click.option("--source", multiple=True, help="Department ID(s) to check")
+@click.option("--source", "dept", multiple=True, help="Department ID(s) to check")
 def update_check_cli(days: int, dept: tuple[str, ...]) -> None:
     """Run Tier 2 update detection on recent notices."""
     from ..shared.config import init_config
@@ -84,89 +83,8 @@ async def _run_update_check(
         await close_client()
 
 
-@click.command("backfill-content")
-@click.option("--apply", is_flag=True, help="Actually update documents (default: dry-run)")
-@click.option("--source", multiple=True, help="Restrict to specific sourceId(s)")
-@click.option("--limit", type=int, default=None, help="Stop after N documents")
-def backfill_content_cli(apply: bool, dept: tuple[str, ...], limit: int | None) -> None:
-    """Rebuild cleanHtml/contentText/cleanMarkdown from stored `content` field.
-
-    Re-runs clean_html + html_to_markdown on existing notices so pipeline
-    improvements apply retroactively. Dry-run by default.
-    """
-    import sys
-
-    configure_logging()
-    sys.exit(asyncio.run(run_backfill(
-        apply=apply,
-        dept_filter=dept if dept else None,
-        limit=limit,
-    )))
-
-
-@click.command("backfill-attachment-referer")
-@click.option("--apply", is_flag=True, help="Actually update documents (default: dry-run)")
-@click.option("--source", multiple=True, help="Restrict to specific sourceId(s)")
-@click.option("--limit", type=int, default=None, help="Stop after N documents")
-def backfill_attachment_referer_cli(apply: bool, dept: tuple[str, ...], limit: int | None) -> None:
-    """Add referer field to gnuboard attachment metadata.
-
-    Adds the detail-page URL as `referer` so the server proxy can
-    establish a PHP session before downloading. No HTTP requests.
-    """
-    import sys
-
-    from .backfill_attachment_referer import run as run_backfill_referer
-
-    configure_logging()
-    sys.exit(asyncio.run(run_backfill_referer(
-        apply=apply,
-        dept_filter=dept if dept else None,
-        limit=limit,
-    )))
-
-
-@click.command("backfill-attachments")
-@click.option("--apply", is_flag=True, help="Actually update documents (default: dry-run)")
-@click.option("--source", multiple=True, help="Restrict to specific sourceId(s)")
-@click.option("--limit", type=int, default=None, help="Stop after N documents")
-def backfill_attachments_cli(apply: bool, dept: tuple[str, ...], limit: int | None) -> None:
-    """Re-fetch detail pages to backfill missing attachments.
-
-    Targets skku-standard subdomain departments whose attachments were
-    not captured due to a selector mismatch. Dry-run by default.
-    """
-    import sys
-
-    from .backfill_attachments import run as run_backfill_att
-
-    configure_logging()
-    sys.exit(asyncio.run(run_backfill_att(
-        apply=apply,
-        dept_filter=dept if dept else None,
-        limit=limit,
-    )))
-
-
-@click.command("backfill-wpdm-attachments")
-@click.option("--apply", is_flag=True, help="Actually update documents (default: dry-run)")
-@click.option("--limit", type=int, default=None, help="Stop after N documents")
-def backfill_wpdm_cli(apply: bool, limit: int | None) -> None:
-    """Re-fetch cheme WPDM posts to fix attachment download URLs.
-
-    Replaces landing-page URLs (/download/slug/) with actual download
-    URLs (?wpdmdl=id) by re-fetching from the WP REST API.
-    """
-    import sys
-
-    from .backfill_wpdm_attachments import run as run_backfill_wpdm
-
-    configure_logging()
-    sys.exit(asyncio.run(run_backfill_wpdm(apply=apply, limit=limit)))
-
-
 @click.command("validate-attachments")
-@click.option("--source", multiple=True, help="Department ID(s) to validate")
+@click.option("--source", "dept", multiple=True, help="Department ID(s) to validate")
 @click.option("--limit", type=int, default=None, help="Max notices to scan")
 @click.option("--no-http", is_flag=True, help="Skip HTTP reachability checks")
 @click.option("--json", "json_output", is_flag=True, help="Output as JSON")
@@ -244,7 +162,7 @@ def _print_human(report: "ValidationReport") -> None:
 
 
 @click.command("validate-markdown")
-@click.option("--source", multiple=True, help="Department ID(s) to validate")
+@click.option("--source", "dept", multiple=True, help="Department ID(s) to validate")
 @click.option("--limit", type=int, default=None, help="Max notices to scan")
 @click.option("--json", "json_output", is_flag=True, help="Output as JSON")
 @click.option(

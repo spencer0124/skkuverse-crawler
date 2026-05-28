@@ -54,6 +54,7 @@ STRATEGY_FEATURES: dict[str, tuple[bool, bool]] = {
     "gnuboard-custom": (False, True),
     "skkumed-asp":     (False, True),
     "wordpress-api":   (False, False),
+    "webflow-skku":    (True,  True),
 }
 
 VALID_CAMPUSES = {"hssc", "nsc", "both", None}

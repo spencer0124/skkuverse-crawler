@@ -90,6 +90,7 @@ class SourceId(str, Enum):
     QIE = "qie"
     ENERGY = "energy"
     ACTING = "acting"
+    FTM_UNDERGRAD = "ftm-undergrad"
     ENGLISH_UNDERGRAD = "english-undergrad"
     ENGLISH_GRAD = "english-grad"
     ART_UNDERGRAD = "art-undergrad"
