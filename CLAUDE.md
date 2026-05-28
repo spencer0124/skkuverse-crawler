@@ -18,16 +18,6 @@ python -m skkuverse_crawler summarize                      # AI 요약 1회 실�
 python -m skkuverse_crawler summarize --batch-size 500     # 초기 backfill
 python -m skkuverse_crawler update-check                   # 최근 14일 공지 변경 감지 (Tier-2)
 python -m skkuverse_crawler update-check --days 7 --source skku-main
-python -m skkuverse_crawler backfill-content               # cleanHtml/contentText/cleanMarkdown 재생성 (dry-run)
-python -m skkuverse_crawler backfill-content --apply       # 실제 업데이트
-python -m skkuverse_crawler backfill-content --apply --source cheme --limit 10  # 샘플링
-python -m skkuverse_crawler backfill-attachment-referer              # gnuboard 첨부 referer 추가 (dry-run)
-python -m skkuverse_crawler backfill-attachment-referer --apply      # 실제 업데이트
-python -m skkuverse_crawler backfill-attachment-referer --apply --source nano --limit 5
-python -m skkuverse_crawler backfill-attachments                     # skku-standard 첨부 재크롤링 (dry-run)
-python -m skkuverse_crawler backfill-attachments --apply --source law --limit 10
-python -m skkuverse_crawler backfill-wpdm-attachments                # cheme WPDM 첨부 URL 교체 (dry-run)
-python -m skkuverse_crawler backfill-wpdm-attachments --apply
 python -m skkuverse_crawler validate-attachments                     # 첨부파일 메타데이터 검증
 python -m skkuverse_crawler validate-attachments --source cheme --no-http --json
 python -m skkuverse_crawler validate-markdown                        # cleanMarkdown 렌더링 품질 검증

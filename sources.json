@@ -2075,6 +2075,34 @@
     }
   },
   {
+    "id": "ftm-undergrad",
+    "name": "영상학과",
+    "strategy": "webflow-skku",
+    "campus": "hssc",
+    "college": "예술대학",
+    "appCategory": "dept",
+    "crawlAvailable": true,
+    "crawlEnabled": true,
+    "excludeReason": null,
+    "baseUrl": "https://ott.skku.edu/ftm-skku-edu/notice",
+    "pageParam": "671fdbc7_page",
+    "selectors": {
+      "listItem": "div.w-dyn-list div.w-dyn-item",
+      "listLink": "a.link-block-3",
+      "listRow": "div.table-line-copy",
+      "titleCell": "div.text-block-8-copy",
+      "regularCell": "div.text-block-8",
+      "paginationNext": "a.w-pagination-next",
+      "detailTitle": "h1.heading-19",
+      "detailContent": "div.rich-text-block-3.w-richtext"
+    },
+    "pagination": {
+      "type": "pageNum",
+      "param": "671fdbc7_page",
+      "limit": 10
+    }
+  },
+  {
     "id": "english-undergrad",
     "name": "영어영문학과(학부생)",
     "strategy": "skku-standard",

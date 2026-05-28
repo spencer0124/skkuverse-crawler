@@ -3,7 +3,7 @@
 
 # 단과대학별 학과 목록
 
-> sources.json 기준 147개 엔트리
+> sources.json 기준 148개 엔트리
 
 ## 경영대학
 
@@ -177,6 +177,7 @@
 | `design-grad` | 디자인학과(대학원) | hssc |  | O |
 | `dance` | 무용학과 | hssc |  | O |
 | `acting` | 연기예술학과 | hssc |  | O |
+| `ftm-undergrad` | 영상학과 | hssc | webflow-skku | O |
 | `art-undergrad` | 예술대학(학부생) | hssc |  | O |
 | `art-grad` | 예술대학(대학원) | hssc |  | O |
 | `fashion-undergrad` | 의상학과(학부생) | hssc |  | O |

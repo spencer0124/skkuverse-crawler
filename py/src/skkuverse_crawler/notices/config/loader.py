@@ -27,6 +27,7 @@ REQUIRED_SELECTORS: dict[str, list[str]] = {
     "gnuboard": ["listRow", "titleLink", "author", "date", "detailContent", "detailAttachment"],
     "gnuboard-custom": ["listRow", "titleLink", "date", "meta", "detailContent", "detailAttachment"],
     "pyxis-api": [],
+    "webflow-skku": ["listItem", "listLink", "listRow", "titleCell", "regularCell", "paginationNext", "detailTitle", "detailContent"],
 }
 
 

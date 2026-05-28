@@ -3,7 +3,7 @@
 
 # 크롤링 학과/기관 전수 분류 + 커버리지 분석
 
-> sources.json 기준 147개 엔트리
+> sources.json 기준 148개 엔트리
 
 ## 전략별 분포
 
@@ -14,6 +14,7 @@
 | `pyxis-api` | 3 |
 | `jsp-dorm` | 2 |
 | `custom-php` | 2 |
+| `webflow-skku` | 1 |
 | `wordpress-api` | 1 |
 | `skkumed-asp` | 1 |
 | `gnuboard-custom` | 1 |
@@ -103,6 +104,7 @@
 | `design-grad` | 디자인학과(대학원) |  | O |
 | `dance` | 무용학과 |  | O |
 | `acting` | 연기예술학과 |  | O |
+| `ftm-undergrad` | 영상학과 | webflow-skku | O |
 | `art-undergrad` | 예술대학(학부생) |  | O |
 | `art-grad` | 예술대학(대학원) |  | O |
 | `fashion-undergrad` | 의상학과(학부생) |  | O |
@@ -338,6 +340,6 @@
 
 ## 요약
 
-- 총 엔트리: 147
-- 크롤링 활성: 147
-- 전략 수: 8
+- 총 엔트리: 148
+- 크롤링 활성: 148
+- 전략 수: 9

@@ -35,6 +35,7 @@ from .strategies.custom_php import CustomPhpStrategy
 from .strategies.gnuboard import GnuboardStrategy
 from .strategies.gnuboard_custom import GnuboardCustomStrategy
 from .strategies.pyxis_api import PyxisApiStrategy
+from .strategies.webflow_skku import WebflowSkkuStrategy
 
 
 _MAX_CONTENT_BYTES = 5 * 1024 * 1024  # 5MB
@@ -68,6 +69,7 @@ STRATEGY_MAP: dict[str, type] = {
     "gnuboard": GnuboardStrategy,
     "gnuboard-custom": GnuboardCustomStrategy,
     "pyxis-api": PyxisApiStrategy,
+    "webflow-skku": WebflowSkkuStrategy,
 }
 
 
