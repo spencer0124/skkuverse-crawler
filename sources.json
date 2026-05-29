@@ -3736,5 +3736,30 @@
       "param": "offset",
       "limit": 10
     }
+  },
+  {
+    "id": "gsc",
+    "name": "중국대학원",
+    "strategy": "skku-standard",
+    "campus": "hssc",
+    "college": "중국대학원",
+    "appCategory": "dept",
+    "crawlAvailable": true,
+    "crawlEnabled": true,
+    "excludeReason": null,
+    "baseUrl": "https://gsc.skku.edu/gsc/notice.do",
+    "selectors": {
+      "listItem": "dl.board-list-content-wrap",
+      "category": "span.c-board-list-category",
+      "titleLink": "dt.board-list-content-title a",
+      "infoList": "dd.board-list-content-info ul li",
+      "detailContent": "div.board-view-content-wrap",
+      "attachmentList": "ul.board-view-file-wrap li a"
+    },
+    "pagination": {
+      "type": "offset",
+      "param": "article.offset",
+      "limit": 10
+    }
   }
 ]

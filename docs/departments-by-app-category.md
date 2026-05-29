@@ -3,7 +3,7 @@
 
 # 앱 카테고리별 학과 목록
 
-> sources.json 기준 148개 엔트리
+> sources.json 기준 149개 엔트리
 
 ## 학과 (dept)
 
@@ -135,6 +135,7 @@
 | `bio-grad` | 생명과학과(대학원) | nsc | gnuboard | O |
 | `pharm` | 약학대학 | nsc | gnuboard | O |
 | `nano` | 나노공학과 | nsc | gnuboard-custom | O |
+| `gsc` | 중국대학원 | hssc |  | O |
 
 ## 학사 (academic)
 

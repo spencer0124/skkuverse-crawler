@@ -155,3 +155,4 @@ class SourceId(str, Enum):
     LIB_HSSC = "lib-hssc"
     LIB_NSC = "lib-nsc"
     LIB_ALL = "lib-all"
+    GSC = "gsc"
