@@ -133,8 +133,9 @@ def test_slug_to_article_no_stable_and_positive():
     a = slug_to_article_no(slug)
     b = slug_to_article_no(slug)
     assert a == b
-    # 7-byte digest → 56-bit positive int (fits BSON Long signed int64)
-    assert 0 < a < 2**56
+    # 4-byte digest masked to 31 bits → positive int that fits BSON Int32
+    # (so the API serializes it as a plain JSON number, not a Long object).
+    assert 0 < a < 2**31
 
     # Different slugs produce different ints (sanity, not strict)
     assert slug_to_article_no("foo") != slug_to_article_no("bar")
