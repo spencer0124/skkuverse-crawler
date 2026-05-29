@@ -21,10 +21,13 @@ _ATTACH_EXT_RE = re.compile(
 
 
 def slug_to_article_no(slug_or_path: str) -> int:
-    # 7-byte (56-bit) BLAKE2b digest fits BSON Long (signed int64 max 2^63-1)
-    # without bit masking. Birthday-collision risk ~10^-11 at k=1000 — still
-    # safe vs. ~10^-4 at 4-byte. digest_size=8 would overflow BSON Long.
-    return int(hashlib.blake2b(slug_or_path.encode(), digest_size=7).hexdigest(), 16)
+    # 31-bit positive int → PyMongo stores BSON Int32 (NOT Long). Int32 is
+    # serialized by the API as a plain JSON number; a Long (>2^31) leaks as
+    # {high,low,unsigned} and the app coerces it to 0 → broken detail links.
+    # Birthday-collision risk ~10^-4 at k=1000; the (articleNo, sourceId) unique
+    # index turns a collision into a dropped (logged) upsert, not corruption.
+    digest = hashlib.blake2b(slug_or_path.encode(), digest_size=4).digest()
+    return int.from_bytes(digest, "big") & 0x7FFFFFFF
 
 
 def _normalize_date(text: str) -> str:
