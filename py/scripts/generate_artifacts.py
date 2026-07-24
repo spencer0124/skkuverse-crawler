@@ -6,9 +6,9 @@ validates cross-references, and produces:
   1. source_ids.py                  — Python SourceId enum
   2. server-sources.json            — Server API format
   3. docker-crawl-filter.env        — CRAWL_SOURCE_FILTER env line
-  4. coverage-table.md              → docs/department-coverage-analysis.md
-  5. departments-by-college.md      → docs/departments-by-college.md
-  6. departments-by-app-category.md → docs/departments-by-app-category.md
+  4. coverage-table.md              → docs/reference/coverage/department-coverage-analysis.md
+  5. departments-by-college.md      → docs/reference/coverage/departments-by-college.md
+  6. departments-by-app-category.md → docs/reference/coverage/departments-by-app-category.md
   7. server-categories.json         — Server-driven tab config for app
 
 Usage:
@@ -34,9 +34,10 @@ SOURCE_IDS_PY = (
     REPO_ROOT / "py" / "src" / "skkuverse_crawler"
     / "notices" / "config" / "source_ids.py"
 )
-COVERAGE_MD = REPO_ROOT / "docs" / "department-coverage-analysis.md"
-BY_COLLEGE_MD = REPO_ROOT / "docs" / "departments-by-college.md"
-BY_APP_CATEGORY_MD = REPO_ROOT / "docs" / "departments-by-app-category.md"
+COVERAGE_DOCS_DIR = REPO_ROOT / "docs" / "reference" / "coverage"
+COVERAGE_MD = COVERAGE_DOCS_DIR / "department-coverage-analysis.md"
+BY_COLLEGE_MD = COVERAGE_DOCS_DIR / "departments-by-college.md"
+BY_APP_CATEGORY_MD = COVERAGE_DOCS_DIR / "departments-by-app-category.md"
 
 # Sibling repos
 SERVER_SOURCES_JSON = REPO_ROOT.parent / "skkuverse-server" / "features" / "notices" / "sources.json"
@@ -616,19 +617,20 @@ def main() -> None:
     env_path.write_text(gen_docker_env(sources), encoding="utf-8")
     print("  [3] docker-crawl-filter.env")
 
-    # 4. coverage-table.md → docs/
+    # 4. coverage-table.md → docs/reference/coverage/
+    COVERAGE_DOCS_DIR.mkdir(parents=True, exist_ok=True)
     COVERAGE_MD.write_text(gen_coverage_md(sources), encoding="utf-8")
-    print("  [4] docs/department-coverage-analysis.md")
+    print("  [4] docs/reference/coverage/department-coverage-analysis.md")
 
-    # 5. departments-by-college.md → docs/
+    # 5. departments-by-college.md → docs/reference/coverage/
     BY_COLLEGE_MD.write_text(gen_by_college_md(sources), encoding="utf-8")
-    print("  [5] docs/departments-by-college.md")
+    print("  [5] docs/reference/coverage/departments-by-college.md")
 
-    # 6. departments-by-app-category.md → docs/
+    # 6. departments-by-app-category.md → docs/reference/coverage/
     BY_APP_CATEGORY_MD.write_text(
         gen_by_app_category_md(sources, categories), encoding="utf-8",
     )
-    print("  [6] docs/departments-by-app-category.md")
+    print("  [6] docs/reference/coverage/departments-by-app-category.md")
 
     # 7. server-categories.json
     cat_path = GENERATED_DIR / "server-categories.json"

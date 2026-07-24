@@ -1,3 +1,12 @@
+---
+title: skku-standard 전략 — 표준 게시판 구조·셀렉터
+type: reference
+status: accepted
+owner: zoyoong124@gmail.com
+last-updated: 2026-07-24
+audience: internal
+---
+
 # skku-standard 게시판 구조
 
 ## 타겟 사이트

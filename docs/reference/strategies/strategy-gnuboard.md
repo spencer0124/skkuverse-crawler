@@ -1,3 +1,12 @@
+---
+title: gnuboard 계열 전략
+type: reference
+status: accepted
+owner: zoyoong124@gmail.com
+last-updated: 2026-07-24
+audience: internal
+---
+
 # Gnuboard / PHP 게시판 크롤링 전략
 
 ## 개요

@@ -1,3 +1,12 @@
+---
+title: wordpress-api 전략 — cheme
+type: reference
+status: accepted
+owner: zoyoong124@gmail.com
+last-updated: 2026-07-24
+audience: internal
+---
+
 # WordPress 게시판 크롤링 전략 (Type D)
 
 ## 사이트 개요

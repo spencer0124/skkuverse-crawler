@@ -1,3 +1,15 @@
+---
+title: 누락/보류 학과 추적
+type: reference
+status: accepted
+owner: zoyoong124@gmail.com
+last-updated: 2026-07-24
+audience: internal
+---
+
+> [!NOTE]
+> 운영용 추적 문서(hand-written, codegen 아님). 헤딩의 건수는 **작성 시점 스냅샷**이며 실제 등재 소스의 개수·분포 SSOT는 codegen [coverage](../reference/coverage/department-coverage-analysis.md)다. 소스 추가 절차는 [how-to/add-a-source.md](../how-to/add-a-source.md).
+
 # 누락/보류 학과 추적 문서
 
 > ⚠️ **이 파일은 자동 생성 대상이 아닙니다.** `generate_artifacts.py`의 codegen은 이 파일을 건드리지 않으니 안전하게 손으로 갱신하세요.

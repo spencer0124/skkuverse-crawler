@@ -1,3 +1,12 @@
+---
+title: 화학과 비표준 게시판 전략
+type: reference
+status: accepted
+owner: zoyoong124@gmail.com
+last-updated: 2026-07-24
+audience: internal
+---
+
 # 화학과 비표준 게시판 구조 분석
 
 ## 개요

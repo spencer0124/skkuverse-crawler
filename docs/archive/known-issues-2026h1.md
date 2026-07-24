@@ -1,3 +1,15 @@
+---
+title: Known Issues 로그 (2026 상반기 스냅샷)
+type: reference
+status: superseded
+owner: zoyoong124@gmail.com
+last-updated: 2026-07-24
+audience: internal
+---
+
+> [!WARNING]
+> **아카이브 스냅샷.** 이 파일의 해결된 이슈·본문 속 개수(147/132/15 등)는 당시 기록이며 현재 값이 아니다 — 현재 커버리지 SSOT는 codegen [coverage](../reference/coverage/department-coverage-analysis.md). 미해결 로드맵 항목은 여기서 그대로 참고하되 우선순위는 최신 상태로 재확인할 것.
+
 # Known Issues & Phase 2 TODO
 
 ## Known Issues (1단계)

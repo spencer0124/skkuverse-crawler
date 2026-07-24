@@ -1,3 +1,12 @@
+---
+title: custom-php 전략 — cal.skku.edu
+type: reference
+status: accepted
+owner: zoyoong124@gmail.com
+last-updated: 2026-07-24
+audience: internal
+---
+
 # Custom-PHP 게시판 크롤링 전략 + 첨부파일 보완 (2026-04-10)
 
 ## 개요

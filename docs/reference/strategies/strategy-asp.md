@@ -1,3 +1,12 @@
+---
+title: skkumed-asp 전략 — ASP 게시판 (의과대학)
+type: reference
+status: accepted
+owner: zoyoong124@gmail.com
+last-updated: 2026-07-24
+audience: internal
+---
+
 # ASP 게시판 크롤링 전략 (Type E)
 
 ## 사이트 개요

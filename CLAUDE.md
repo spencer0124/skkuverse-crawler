@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Documentation
+
+문서는 Diátaxis 구조 (`docs/how-to|reference|explanation|decisions|internal|archive`). **새 문서 작성·수정 전 `docs/README.md`(인덱스 + 작성 규칙 SSOT) 필독** — frontmatter 스키마, kebab-case, 값 복사 금지(개수·라인번호는 코드/코드젠 참조) 규칙. 전체 CLI 레퍼런스는 `docs/reference/cli.md`, 스키마는 `docs/reference/schema/`. 시스템 전체(레포 경계) 그림은 [umbrella 저장소](https://github.com/spencer0124/skkuverse).
+
 ## Overview
 
 SKKU 관련 데이터 크롤링 + 콘텐츠 정제 서비스. Python 구현 (`py/`).
@@ -22,6 +26,9 @@ python -m skkuverse_crawler validate-attachments                     # 첨부파
 python -m skkuverse_crawler validate-attachments --source cheme --no-http --json
 python -m skkuverse_crawler validate-markdown                        # cleanMarkdown 렌더링 품질 검증
 python -m skkuverse_crawler validate-markdown --source skku-main --severity error --json
+python -m skkuverse_crawler schedule --once                # 학사일정 1회 크롤
+
+# 전체 CLI 레퍼런스: docs/reference/cli.md
 
 # 테스트 & 린트
 python -m pytest tests/ -v                  # 전체 테스트
@@ -45,9 +52,9 @@ python scripts/generate_artifacts.py    # sources.json + categories.json → 7�
 | `source_ids.py` | `py/src/.../config/source_ids.py` | Python SourceId enum |
 | `server-sources.json` | `py/generated/` → `skkuverse-server` 복사 | 서버 API 응답용 (noticeAvailable, hasCategory, hasAuthor 포함) |
 | `docker-crawl-filter.env` | `py/generated/` | Docker 참고용 |
-| `coverage-table.md` | `docs/department-coverage-analysis.md` | 캠퍼스/단과대별 학과 테이블 |
-| `departments-by-college.md` | `docs/departments-by-college.md` | 단과대학별 학과 목록 |
-| `departments-by-app-category.md` | `docs/departments-by-app-category.md` | 앱 카테고리별 학과 목록 |
+| `coverage-table.md` | `docs/reference/coverage/department-coverage-analysis.md` | 캠퍼스/단과대별 학과 테이블 |
+| `departments-by-college.md` | `docs/reference/coverage/departments-by-college.md` | 단과대학별 학과 목록 |
+| `departments-by-app-category.md` | `docs/reference/coverage/departments-by-app-category.md` | 앱 카테고리별 학과 목록 |
 | `server-categories.json` | `py/generated/` → `skkuverse-server` 복사 | Server-driven 탭 구성 (탭 순서, 라벨, picker/fixed 모드) |
 
 `py/generated/`는 `.gitignore`에 등록됨.
@@ -76,7 +83,7 @@ python scripts/generate_artifacts.py    # sources.json + categories.json → 7�
 - `campus`: 유효값은 `generate_artifacts.py`의 `VALID_CAMPUSES` 참조.
 - `appCategory`: 유효값은 `categories.json`의 id 목록에서 자동 도출 (+ `null` 허용).
 - `crawlEnabled`: 프로덕션 크롤링 여부. `CRAWL_SOURCE_FILTER` env var 미설정 시 이 필드가 기본 필터.
-- `CRAWL_SOURCE_FILTER`: dev/디버깅용 오버라이드 **전용**. ⚠️ **절대 프로덕션 `docker-compose.yml`에 두지 말 것** — 설정 시 `sources.json`의 `crawlEnabled`를 덮어써 나머지 학과가 전부 침묵 차단됨. 컨테이너 Up 상태와 로그 무에러에도 coverage가 급락하므로 외부에서 알아채기 어려움 (2026-04-21 인시던트, `docs/known-issues.md` §7 참조).
+- `CRAWL_SOURCE_FILTER`: dev/디버깅용 오버라이드 **전용**. ⚠️ **절대 프로덕션 `docker-compose.yml`에 두지 말 것** — 설정 시 `sources.json`의 `crawlEnabled`를 덮어써 나머지 학과가 전부 침묵 차단됨. 컨테이너 Up 상태와 로그 무에러에도 coverage가 급락하므로 외부에서 알아채기 어려움 (2026-04-21 인시던트, `docs/archive/known-issues-2026h1.md` 참조).
 - `hasCategory`/`hasAuthor`: sources.json에 저장하지 않음. strategy에서 결정론적 도출 (codegen의 STRATEGY_FEATURES 룩업).
 
 **Incremental Crawl**: title+date 변경 감지 → 변경분만 상세 fetch. 페이지 내 전부 DB에 존재하면 early-stop. content:null 기사 자동 재크롤링.

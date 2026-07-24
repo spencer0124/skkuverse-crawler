@@ -1,3 +1,12 @@
+---
+title: jsp-dorm 전략 — 기숙사 게시판
+type: reference
+status: accepted
+owner: zoyoong124@gmail.com
+last-updated: 2026-07-24
+audience: internal
+---
+
 # jsp-dorm 전략: SKKU 기숙사 게시판 (Type F)
 
 ## 사이트 개요

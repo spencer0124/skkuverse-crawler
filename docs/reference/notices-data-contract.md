@@ -1,8 +1,22 @@
-# 공지 API 설계를 위한 크롤러 데이터 레퍼런스
+---
+title: notices 데이터 계약 (소비자용)
+type: reference
+status: accepted
+owner: zoyoong124@gmail.com
+last-updated: 2026-07-24
+audience: internal
+---
+
+# notices 데이터 계약 (소비자용)
+
+> 공지 API를 설계·소비하는 쪽(서버/앱)을 위한 크롤러 데이터 레퍼런스 — 필드 가용성, 전략별 특이사항, editHistory, 샘플. **필드 정의의 canonical SSOT는 [schema/notices.md](schema/notices.md)** 이며, 이 문서는 소비 관점(전략별 빈값·렌더 선택·API 체크리스트)에 집중한다.
+
+> [!WARNING]
+> **요약 필드 스키마 주의**: 이 문서의 일부 요약 예시(§4 샘플 JSON)는 `summaryStartDate`/`summaryEndDate` 같은 **구(舊) flat 스키마**로 남아 있다. 현재 스키마는 `summaryPeriods[]`(각 원소 `{label,startDate,startTime,endDate,endTime}`) + `summaryLocations[]` 배열이다 (§2.2 표는 현재 기준으로 갱신됨). 최신 요약 필드는 [schema/notices.md](schema/notices.md) + [skkuverse-ai notice-summarization](https://github.com/spencer0124/skkuverse-ai/blob/main/docs/explanation/notice-summarization.md)를 본다. §4 샘플은 editHistory·전략별 빈값 등 **비-요약 구조**를 보여주는 용도로만 참고.
 
 ## Context
 
-앱에서 SKKU 공지를 표시하기 위한 API를 설계하려 한다. 이 문서는 그 전제가 되는 크롤러의 저장 구조, 유형별 특이사항, 실제 예시 데이터를 한눈에 볼 수 있도록 정리한 레퍼런스다. (실제 `skku_notices` DB의 샘플 데이터로 검증함.)
+앱에서 SKKU 공지를 표시하기 위한 API를 설계할 때 전제가 되는 크롤러의 저장 구조·유형별 특이사항·예시 데이터를 정리한 레퍼런스.
 
 ---
 
@@ -25,7 +39,7 @@
 
 ## 2. 필드 전체 목록 (Notice 문서)
 
-`py/src/skkuverse_crawler/notices/models.py:26-48` + 요약 프로세서가 `$set`으로 덧붙이는 필드.
+SSOT: `notices/models.py`의 `Notice` dataclass + 요약 프로세서(`notices_summary/processor.py`)가 `$set`으로 덧붙이는 필드. (canonical 정리는 [schema/notices.md](schema/notices.md).)
 
 ### 2.1 크롤러가 쓰는 필드 (모든 문서에 존재)
 
@@ -48,7 +62,6 @@
 | `detailPath` | string | 리스트에서 얻은 상대/쿼리. 내부 재크롤 용도. **앱에 노출 불필요** |
 | `contentHash` | string\|null | `cleanHtml`의 SHA256. null = 컨텐츠 미확보 |
 | `crawledAt` | datetime (UTC) | 마지막 크롤 시각 |
-| `backfilledAt` | datetime (UTC)\|absent | backfill로 소급 갱신된 문서에만 존재. 신규 크롤링 문서엔 없음 |
 | `lastModified` | null | 현재 미사용 (예약 필드) |
 | `isDeleted` | bool | 원본에서 사라지면 soft delete |
 | `consecutiveFailures` | int | 상세 fetch 실패 연속 횟수 (앱 노출 불필요) |
@@ -62,29 +75,26 @@
 - **검색·요약·미리보기** → `contentText` (줄바꿈이 필요 없으면 `\n`을 공백으로 치환)
 - **`content`는 사용 지양** — 크기 크고 sanitize 안 됨. backfill용 입력 소스로만 존재
 
-**크기 실측 (prod 126건 기준)**:
-| 필드 | 평균 | 최대 |
-|---|---:|---:|
-| `cleanMarkdown` | ~1.2 KB | ~6.3 KB |
-| `cleanHtml` | ~6 KB | 수백 KB |
-| `content` | 편차 큼 | MB 단위 가능 |
+**크기 특성** (정확한 실측치는 시점에 따라 변하므로 박제하지 않음): `cleanMarkdown` < `cleanHtml` ≪ `content`. `content`는 원본 HTML이라 WP 사이트에서 MB 단위도 가능. → **리스트 응답에선 `content`/`cleanHtml`/`cleanMarkdown` 제외 권장.**
 
 ### 2.2 요약 프로세서가 덧붙이는 필드 (있을 수도/없을 수도)
 
-`notices_summary/processor.py:83-101` 기준. 요약이 완료된 문서에만 존재.
+`notices_summary/processor.py`(`run_summary_batch`)가 AI 응답으로 `$set`. 요약이 완료된 문서에만 존재. **현재 스키마 기준** (구 flat `summaryStartDate/EndDate`는 `summaryPeriods[]`로 대체됨):
 
 | 필드 | 타입 | 설명 |
 |---|---|---|
 | `summary` | string | 본문 요약. 친근한 톤("~요") |
-| `summaryOneLiner` | string | 한 줄 요약. 보통 `"YYYY-MM-DD ..."` 형식으로 시작 |
-| `summaryType` | string | 분류. 실측값: `action_required`, `informational` (AI가 자유롭게 생성하므로 enum으로 단정 불가) |
-| `summaryStartDate` / `summaryEndDate` | string\|null | `YYYY-MM-DD` |
-| `summaryStartTime` / `summaryEndTime` | string\|null | `HH:MM` |
-| `summaryDetails` | object\|null | 구조화 필드. 실측 키: `target`, `action`, `location`, `host`, `impact` (각 null 가능) |
-| `summaryModel` | string | 예: `gpt-4.1-mini-2025-04-14` |
-| `summaryAt` | datetime | 요약 생성 시각 |
-| `summaryContentHash` | string | 요약 생성 시점의 `contentHash`. 본문이 바뀌면 stale 판단에 사용 |
+| `summaryOneLiner` | string | 한 줄 요약 (제목·날짜 표현은 배제) |
+| `summaryType` | string | 분류: `action_required` / `event` / `informational` (union 밖 값은 소비자 쪽에서 `informational`로 coerce) |
+| `summaryPeriods` | array | `[{label, startDate, startTime, endDate, endTime}]` — 기간/일시. 없으면 `[]`. 날짜 `YYYY-MM-DD`, 시간 `HH:mm` |
+| `summaryLocations` | array | `[{label, detail}]` — 장소. `detail`은 비어있지 않은 문자열. 없으면 `[]` |
+| `summaryDetails` | object\|null | `{target, action, host, impact}` (각 null 가능) |
+| `summaryModel` | string | 서빙한 프로바이더/모델 id (디버깅용, 값 박제 금지) |
+| `summaryAt` | datetime | 요약 생성 시각 (크롤러 "요약됨" 마커) |
+| `summaryContentHash` | string | 요약 시점 `contentHash`. 본문이 바뀌면 stale 판단에 사용 |
 | `summaryFailures` | int | 요약 실패 카운터. ≥3이면 재시도 중단 |
+
+> `aiSummaryAt`(서버 FCM 디스패치 게이트)는 `summaryAt`과 별개다 — [schema/notices.md](schema/notices.md) 참조. 요약 생성 로직은 [skkuverse-ai notice-summarization](https://github.com/spencer0124/skkuverse-ai/blob/main/docs/explanation/notice-summarization.md).
 
 **요약 없음 상태를 판별하는 조건** (앱에서 "요약 준비 중" 표시):
 ```
@@ -100,19 +110,21 @@ summaryContentHash != contentHash
 
 ---
 
-## 3. 전략(strategy) 7종 · 유형별 특이사항
+## 3. 전략별 필드 특이사항
 
-`sources.json` 기준 전략별 실측 분포 (학과 수는 `sources.json` 참조):
+> **전략 목록·개수·소스별 분포의 SSOT는 codegen** → [coverage](coverage/department-coverage-analysis.md) (개수 박제 금지). 각 전략의 `hasCategory`/`hasAuthor` 도출은 `generate_artifacts.py`의 `STRATEGY_FEATURES`. 아래는 소비 관점의 필드 가용성 가이드 (개수 컬럼 제거 — 시점에 따라 변함):
 
-| strategy | 학과 수 | category | author | views | content | 비고 |
-|---|---:|:---:|:---:|:---:|:---:|---|
-| `skku-standard` | 134 | ✓ | ✓ | ✓ | ✓ | 대부분. 품질 가장 좋음 |
-| `gnuboard` | 3 | ✗ | ✓ | ✓ | ✓ | 생명과/약대 등 |
-| `jsp-dorm` | 2 | △ | ✗ | ✗ | ✓ | 명륜·봉룡학사. `category`는 "Notice in English" 처럼 들어오기도 함 |
-| `custom-php` | 2 | ✓ | ✗ | ✓ | ✓ | 건설환경공학부 |
-| `wordpress-api` | 1 | ✗ | ✗ | ✗ | ✓ | 화학공학과. WP REST API |
-| `skkumed-asp` | 1 | ✗ | ✓ | ✓ | ✓ | 의과대학. EUC-KR 인코딩 |
-| `gnuboard-custom` | 1 | ✗ | △ | ✓ | ✓ | 나노공학과. author="관리자" 같이 들어옴 |
+| strategy | category | author | views | 비고 |
+|---|:---:|:---:|:---:|---|
+| `skku-standard` | ✓ | ✓ | ✓ | 대부분. 품질 가장 좋음 |
+| `gnuboard` | ✗ | ✓ | ✓ | 생명과/약대 등 |
+| `gnuboard-custom` | ✗ | △ | ✓ | 나노공학과. author="관리자" 같이 들어옴 |
+| `custom-php` | ✓ | ✗ | ✓ | cal.skku.edu |
+| `wordpress-api` | ✗ | ✗ | ✗ | 화학공학과. WP REST API |
+| `skkumed-asp` | ✗ | ✓ | ✓ | 의과대학. EUC-KR 인코딩 |
+| `jsp-dorm` | △ | ✗ | ✗ | 명륜·봉룡학사. `category`가 "Notice in English"처럼 들어오기도 함 |
+| `pyxis-api` | — | — | — | 도서관 (Pyxis API) — 가용 필드는 `STRATEGY_FEATURES` 참조 |
+| `webflow-skku` | — | — | — | Webflow 사이트 — 가용 필드는 `STRATEGY_FEATURES` 참조 |
 
 "✗"인 필드는 대부분 **빈 문자열 `""`** (null 아님). 앱에서는 `if (category)` 체크로 숨겨야 함.
 
@@ -126,16 +138,19 @@ summaryContentHash != contentHash
 6. **`attachments[].url`은 절대경로** 로 저장되어 있으니 앱에서 그대로 외부 브라우저로 열면 됨.
 7. **`cleanHtml`은 이미 sanitize됨** (nh3). 허용 태그: `p, br, div, span, h1-h4, strong, b, em, i, u, mark, ul, ol, li, table, thead, tbody, tr, th, td, img, a, hr`. 스타일: `color, background-color, text-align, text-decoration, font-weight, font-style`만. 앱의 웹뷰/HTML 렌더에서 그대로 쓰면 안전. `content`(원본)는 sanitize 안 된 상태라 그대로 주입하지 말 것.
 8. **`cleanMarkdown`은 GFM** — ATX heading(`#~####`), `**bold**`, `*em*`, `- ` / `1. ` 리스트, GFM 테이블(`| --- |`), `![alt](src)` 이미지, `[text](href)` 링크, `  \n` hard break. `<u>`, `<mark>`, `text-align`, `background-color` 같은 장식성 스타일은 손실됨. colspan/rowspan도 단순화됨(10% 문서). 앱 렌더러는 GFM 테이블과 원격 이미지 지원 필수.
-9. **`contentText`의 줄바꿈**: 2026-04 이후 문서는 블록 경계가 `\n`으로 분리된다. 이전 backfill 안 된 구 문서는 공백으로 뭉개져 있을 수 있음. 미리보기 UI는 `white-space: pre-wrap` 또는 `\n`→ 공백 치환으로 대응.
-8. **첨부파일 이름**은 원본 그대로 (한글·공백 포함). URL 인코딩은 되어있지 않으므로 필요 시 클라이언트에서.
-9. **`isDeleted: true`**는 원본 삭제된 공지 → 앱 리스트에서 기본 제외 권장.
-10. **요약 톤**은 고정 ("~요" 체). 앱 UI 톤과 안 맞으면 프롬프트 수정이 크롤러 쪽 작업.
+9. **`contentText`의 줄바꿈**: 블록 경계가 `\n`으로 분리된다. 아주 오래된 미갱신 문서는 공백으로 뭉개져 있을 수 있음. 미리보기 UI는 `white-space: pre-wrap` 또는 `\n`→공백 치환으로 대응.
+10. **첨부파일 이름**은 원본 그대로 (한글·공백 포함). URL 인코딩은 되어있지 않으므로 필요 시 클라이언트에서.
+11. **`isDeleted: true`**는 원본 삭제된 공지 → 앱 리스트에서 기본 제외 권장.
+12. **요약 톤**은 고정 ("~요" 체). 앱 UI 톤과 안 맞으면 프롬프트 수정이 크롤러 쪽 작업.
 
 ---
 
 ## 4. 실제 예시 데이터 (DB에서 뽑은 real sample)
 
 > 긴 `content`/`cleanHtml` 필드는 생략. 나머지는 실제 값.
+>
+> [!WARNING]
+> 아래 샘플의 요약 필드는 **구 flat 스키마**(`summaryStartDate`/`summaryEndDate`/`summaryStartTime`/`summaryEndTime`, `summaryDetails.location`)로 남아 있다 — 현재는 `summaryPeriods[]` + `summaryLocations[]`(§2.2). 샘플은 **editHistory·전략별 빈값·첨부** 등 비-요약 구조의 실제 형태를 보는 용도로만 참고.
 
 ### 4.1 skku-standard (학부통합, 요약 완료, 제목 2회 수정됨)
 
@@ -337,14 +352,14 @@ summaryContentHash != contentHash
 실측한 AI 출력 패턴 기반 권장:
 
 - **리스트 아이템** = `summaryOneLiner` (있을 때) / 없으면 `title`
-- **리스트 부제** = `summaryEndDate` 있으면 "D-N 마감" 배지, `summaryType == "action_required"`면 강조
-- **상세 상단 카드** = `summary` + `summaryDetails.target/action/host/impact`를 라벨로 렌더
-- **기간 표시** = `summaryStartDate ~ summaryEndDate` (+ time 있으면 덧붙이기)
+- **리스트 부제 (마감 pill)** = `summaryPeriods[]`에서 type에 맞는 기간을 골라 D-day/오늘/진행중 배지. `summaryType`별로 기간 해석이 다르다 (마감 의미론) — 로직은 [skkuverse-ai notice-summarization](https://github.com/spencer0124/skkuverse-ai/blob/main/docs/explanation/notice-summarization.md), [app notices-feature](https://github.com/spencer0124/skkuverse-app/tree/main/docs)
+- **상세 상단 카드** = `summary` + `summaryDetails.{target,action,host,impact}` + `summaryLocations[]`를 라벨로 렌더
+- **기간 표시** = `summaryPeriods[]` 각 원소 `{label, startDate~endDate}` (+ time 있으면 덧붙이기)
 - **원문 버튼** = `sourceUrl`을 외부 브라우저로
-- **본문 렌더** = `cleanMarkdown` 네이티브 마크다운 렌더(1순위) → 없으면 `cleanHtml` 웹뷰 fallback → 둘 다 없으면 "본문 준비 중" 또는 `sourceUrl`로 외부 링크.
+- **본문 렌더** = `cleanMarkdown` 네이티브 마크다운(1순위) → `cleanHtml` 웹뷰 fallback → 둘 다 없으면 "본문 준비 중" 또는 `sourceUrl`
 - **첨부 섹션** = `attachments` 루프, 각 항목 외부 링크
 
-`summaryType`은 AI가 생성하므로 **enum으로 단정 금지**. 실측값(`action_required`, `informational`) 외에도 등장할 수 있음. UI는 default 케이스를 항상 둘 것.
+`summaryType`은 `action_required`/`event`/`informational` 3분류. union 밖 값은 소비자 쪽에서 `informational`로 coerce하므로 UI는 default 케이스만 두면 된다.
 
 ---
 
@@ -354,7 +369,7 @@ summaryContentHash != contentHash
 - [ ] `/notices?dept=...` 학과별은 기존 `sourceId_1_date_-1` 인덱스로 커버됨
 - [ ] `/notices/:deptId/:articleNo` 상세 — 복합키 사용
 - [ ] 검색 필요 시 `title`, `contentText`에 text 인덱스 추가 (별도 작업)
-- [ ] 기본 필터: `isDeleted: {$ne: true}`, `date >= SERVICE_START_DATE("2026-03-09")`
+- [ ] 기본 필터: `isDeleted: {$ne: true}`, `date >= SERVICE_START_DATE` (서비스 시작일 상수는 서버 설정이 SSOT — 날짜 박제 금지)
 - [ ] 리스트 응답에서 `content`, `cleanHtml`, `cleanMarkdown` 제외 (크기 큼). `contentText`는 미리보기 길이만큼 자르기
 - [ ] 상세 응답에 `cleanMarkdown` projection 포함 (앱 마크다운 렌더 경로용)
 - [ ] `category`/`author`가 빈 문자열인 전략(§3 표)을 파악해서 UI 조건부 렌더
@@ -365,19 +380,21 @@ summaryContentHash != contentHash
 
 ## 8. 핵심 파일 포인터
 
+> 라인번호는 박제하지 않는다 — 클래스/함수 이름으로 찾는다.
+
 | 목적 | 경로 |
 |---|---|
-| Notice 스키마 (dataclass) | `py/src/skkuverse_crawler/notices/models.py:26-49` |
-| DB 인덱스 정의 | `py/src/skkuverse_crawler/notices/dedup.py:12-19` |
-| 변경 감지 로직 | `py/src/skkuverse_crawler/notices/dedup.py:42-50`, `orchestrator.py` |
-| HTML 정제 파이프라인 (6단계) | `py/src/skkuverse_crawler/shared/html_cleaner.py` |
-| HTML → Markdown 변환 | `py/src/skkuverse_crawler/shared/html_to_markdown.py` |
-| contentText 추출(블록 개행) | `py/src/skkuverse_crawler/notices/normalizer.py:_text_from_clean_html` |
-| Backfill 로직 | `py/src/skkuverse_crawler/notices/backfill.py` |
-| 요약 프로세서 | `py/src/skkuverse_crawler/notices_summary/processor.py:69-115` |
-| 요약 쿼리(pending/stale) | `py/src/skkuverse_crawler/notices_summary/query.py` |
+| Notice 스키마 (dataclass) | `notices/models.py`의 `Notice` |
+| DB 인덱스 정의 | `notices/dedup.py`의 `ensure_indexes` |
+| 변경 감지 로직 | `notices/dedup.py`, `notices/update_checker.py`, `notices/orchestrator.py` |
+| HTML 정제 파이프라인 (6단계) | `shared/html_cleaner.py` |
+| HTML → Markdown 변환 | `shared/html_to_markdown.py` |
+| contentText 추출(블록 개행) | `notices/normalizer.py`의 `_text_from_clean_html` |
+| 일회성 마이그레이션 | `py/scripts/`의 `migrate_oversized_articleno.py`, `cleanup_summary_fields.py` ([run-migrations](../how-to/run-migrations.md)) |
+| 요약 프로세서 | `notices_summary/processor.py`의 `run_summary_batch` |
+| 요약 쿼리(pending/stale) | `notices_summary/query.py` |
 | 학과 config | `sources.json` (레포 루트 SSOT) |
-| 전략 구현 | `py/src/skkuverse_crawler/notices/strategies/*.py` |
+| 전략 구현 | `notices/strategies/*.py` |
 
 ---
 
