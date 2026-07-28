@@ -476,15 +476,115 @@
   },
   {
     "id": "sco",
-    "name": "글로벌융합학부",
+    "name": "글로벌융합학부(공통)",
     "strategy": "skku-standard",
-    "campus": "nsc",
+    "campus": "hssc",
     "college": "소프트웨어융합대학",
     "appCategory": "dept",
     "crawlAvailable": true,
     "crawlEnabled": true,
     "excludeReason": null,
     "baseUrl": "https://sco.skku.edu/sco/community/notice.do",
+    "selectors": {
+      "listItem": "dl.board-list-content-wrap",
+      "category": "span.c-board-list-category",
+      "titleLink": "dt.board-list-content-title a",
+      "infoList": "dd.board-list-content-info ul li",
+      "detailContent": "dl.board-write-box dd",
+      "attachmentList": "ul.board-view-file-wrap li a"
+    },
+    "pagination": {
+      "type": "offset",
+      "param": "article.offset",
+      "limit": 10
+    }
+  },
+  {
+    "id": "sco-data",
+    "name": "글로벌융합학부(데이터사이언스융합전공)",
+    "strategy": "skku-standard",
+    "campus": "hssc",
+    "college": "소프트웨어융합대학",
+    "appCategory": "dept",
+    "crawlAvailable": true,
+    "crawlEnabled": true,
+    "excludeReason": null,
+    "baseUrl": "https://sco.skku.edu/sco/community/major_data.do",
+    "selectors": {
+      "listItem": "dl.board-list-content-wrap",
+      "category": "span.c-board-list-category",
+      "titleLink": "dt.board-list-content-title a",
+      "infoList": "dd.board-list-content-info ul li",
+      "detailContent": "dl.board-write-box dd",
+      "attachmentList": "ul.board-view-file-wrap li a"
+    },
+    "pagination": {
+      "type": "offset",
+      "param": "article.offset",
+      "limit": 10
+    }
+  },
+  {
+    "id": "sco-info",
+    "name": "글로벌융합학부(인공지능융합전공)",
+    "strategy": "skku-standard",
+    "campus": "hssc",
+    "college": "소프트웨어융합대학",
+    "appCategory": "dept",
+    "crawlAvailable": true,
+    "crawlEnabled": true,
+    "excludeReason": null,
+    "baseUrl": "https://sco.skku.edu/sco/community/major_info.do",
+    "selectors": {
+      "listItem": "dl.board-list-content-wrap",
+      "category": "span.c-board-list-category",
+      "titleLink": "dt.board-list-content-title a",
+      "infoList": "dd.board-list-content-info ul li",
+      "detailContent": "dl.board-write-box dd",
+      "attachmentList": "ul.board-view-file-wrap li a"
+    },
+    "pagination": {
+      "type": "offset",
+      "param": "article.offset",
+      "limit": 10
+    }
+  },
+  {
+    "id": "sco-magnetic",
+    "name": "글로벌융합학부(자기설계융합전공)",
+    "strategy": "skku-standard",
+    "campus": "hssc",
+    "college": "소프트웨어융합대학",
+    "appCategory": "dept",
+    "crawlAvailable": true,
+    "crawlEnabled": true,
+    "excludeReason": null,
+    "baseUrl": "https://sco.skku.edu/sco/community/major_magnetic.do",
+    "selectors": {
+      "listItem": "dl.board-list-content-wrap",
+      "category": "span.c-board-list-category",
+      "titleLink": "dt.board-list-content-title a",
+      "infoList": "dd.board-list-content-info ul li",
+      "detailContent": "dl.board-write-box dd",
+      "attachmentList": "ul.board-view-file-wrap li a"
+    },
+    "pagination": {
+      "type": "offset",
+      "param": "article.offset",
+      "limit": 10
+    }
+  },
+  {
+    "id": "sco-culture",
+    "name": "글로벌융합학부(컬처앤테크놀로지융합전공)",
+    "strategy": "skku-standard",
+    "campus": "hssc",
+    "college": "소프트웨어융합대학",
+    "appCategory": "dept",
+    "crawlAvailable": true,
+    "crawlEnabled": true,
+    "excludeReason": null,
+    "baseUrl": "https://sco.skku.edu/sco/community/major_culture.do",
     "selectors": {
       "listItem": "dl.board-list-content-wrap",
       "category": "span.c-board-list-category",
@@ -560,31 +660,6 @@
     "crawlEnabled": true,
     "excludeReason": null,
     "baseUrl": "https://saint.skku.edu/saint/community/notice.do",
-    "selectors": {
-      "listItem": "dl.board-list-content-wrap",
-      "category": "span.c-board-list-category",
-      "titleLink": "dt.board-list-content-title a",
-      "infoList": "dd.board-list-content-info ul li",
-      "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.board-view-file-wrap li a"
-    },
-    "pagination": {
-      "type": "offset",
-      "param": "article.offset",
-      "limit": 10
-    }
-  },
-  {
-    "id": "sco-data",
-    "name": "데이터사이언스융합전공",
-    "strategy": "skku-standard",
-    "campus": "nsc",
-    "college": "융합전공",
-    "appCategory": "dept",
-    "crawlAvailable": true,
-    "crawlEnabled": true,
-    "excludeReason": null,
-    "baseUrl": "https://sco.skku.edu/sco/community/major_data.do",
     "selectors": {
       "listItem": "dl.board-list-content-wrap",
       "category": "span.c-board-list-category",
@@ -2353,31 +2428,6 @@
     }
   },
   {
-    "id": "sco-ai",
-    "name": "인공지능융합전공",
-    "strategy": "skku-standard",
-    "campus": "nsc",
-    "college": "융합전공",
-    "appCategory": "dept",
-    "crawlAvailable": true,
-    "crawlEnabled": true,
-    "excludeReason": null,
-    "baseUrl": "https://sco.skku.edu/sco/community/major_info.do",
-    "selectors": {
-      "listItem": "dl.board-list-content-wrap",
-      "category": "span.c-board-list-category",
-      "titleLink": "dt.board-list-content-title a",
-      "infoList": "dd.board-list-content-info ul li",
-      "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.board-view-file-wrap li a"
-    },
-    "pagination": {
-      "type": "offset",
-      "param": "article.offset",
-      "limit": 10
-    }
-  },
-  {
     "id": "helper",
     "name": "인권센터",
     "strategy": "skku-standard",
@@ -2388,31 +2438,6 @@
     "crawlEnabled": true,
     "excludeReason": null,
     "baseUrl": "https://helper.skku.edu/helper/board/notice.do",
-    "selectors": {
-      "listItem": "dl.board-list-content-wrap",
-      "category": "span.c-board-list-category",
-      "titleLink": "dt.board-list-content-title a",
-      "infoList": "dd.board-list-content-info ul li",
-      "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.board-view-file-wrap li a"
-    },
-    "pagination": {
-      "type": "offset",
-      "param": "article.offset",
-      "limit": 10
-    }
-  },
-  {
-    "id": "sco-magnetic",
-    "name": "자기설계융합전공",
-    "strategy": "skku-standard",
-    "campus": "nsc",
-    "college": "융합전공",
-    "appCategory": "dept",
-    "crawlAvailable": true,
-    "crawlEnabled": true,
-    "excludeReason": null,
-    "baseUrl": "https://sco.skku.edu/sco/community/major_magnetic.do",
     "selectors": {
       "listItem": "dl.board-list-content-wrap",
       "category": "span.c-board-list-category",

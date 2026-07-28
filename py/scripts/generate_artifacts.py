@@ -39,8 +39,8 @@ BY_COLLEGE_MD = REPO_ROOT / "docs" / "departments-by-college.md"
 BY_APP_CATEGORY_MD = REPO_ROOT / "docs" / "departments-by-app-category.md"
 
 # Sibling repos
-SERVER_SOURCES_JSON = REPO_ROOT.parent / "skkuverse-server" / "features" / "notices" / "sources.json"
-SERVER_CAT_JSON = REPO_ROOT.parent / "skkuverse-server" / "features" / "notices" / "categories.json"
+SERVER_SOURCES_JSON = REPO_ROOT.parent / "skkuverse-server" / "src" / "notices" / "sources.json"
+SERVER_CAT_JSON = REPO_ROOT.parent / "skkuverse-server" / "src" / "notices" / "categories.json"
 
 # ---------------------------------------------------------------------------
 # Strategy → hasCategory / hasAuthor mapping
@@ -300,7 +300,7 @@ def gen_source_ids(sources: list[dict]) -> str:
 
 
 def gen_sources_json(sources: list[dict]) -> str:
-    """Server-facing artifact (skkuverse-server/features/notices/sources.json).
+    """Server-facing artifact (skkuverse-server/src/notices/sources.json).
 
     Carries crawler-domain field names (crawlAvailable, excludeReason) through;
     the server's tabConfig.js maps these to the client-friendly response shape

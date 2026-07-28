@@ -3,7 +3,7 @@
 
 # 앱 카테고리별 학과 목록
 
-> sources.json 기준 149개 엔트리
+> sources.json 기준 150개 엔트리
 
 ## 학과 (dept)
 
@@ -25,10 +25,13 @@
 | `gld` | 글로벌리더학부 | hssc |  | O |
 | `gbme-undergrad` | 글로벌바이오메디컬공학과(학부생) | nsc |  | O |
 | `gbme-grad` | 글로벌바이오메디컬공학과(대학원) | nsc |  | O |
-| `sco` | 글로벌융합학부 | nsc |  | O |
+| `sco` | 글로벌융합학부(공통) | hssc |  | O |
+| `sco-data` | 글로벌융합학부(데이터사이언스융합전공) | hssc |  | O |
+| `sco-info` | 글로벌융합학부(인공지능융합전공) | hssc |  | O |
+| `sco-magnetic` | 글로벌융합학부(자기설계융합전공) | hssc |  | O |
+| `sco-culture` | 글로벌융합학부(컬처앤테크놀로지융합전공) | hssc |  | O |
 | `mech-undergrad` | 기계공학부(학부생) | nsc |  | O |
 | `mech-grad` | 기계공학부(대학원) | nsc |  | O |
-| `sco-data` | 데이터사이언스융합전공 | nsc |  | O |
 | `german` | 독어독문학과 | hssc |  | O |
 | `design-undergrad` | 디자인학과(학부생) | hssc |  | O |
 | `design-grad` | 디자인학과(대학원) | hssc |  | O |
@@ -90,8 +93,6 @@
 | `aicon` | 응용AI융합학부 | nsc |  | O |
 | `fashion-undergrad` | 의상학과(학부생) | hssc |  | O |
 | `fashion-grad` | 의상학과(대학원) | hssc |  | O |
-| `sco-ai` | 인공지능융합전공 | nsc |  | O |
-| `sco-magnetic` | 자기설계융합전공 | nsc |  | O |
 | `cscience-undergrad` | 자연과학대학(학부생) | nsc |  | O |
 | `cscience-grad` | 자연과학대학(대학원) | nsc |  | O |
 | `eee-undergrad` | 전자전기공학부(학부생) | nsc |  | O |
