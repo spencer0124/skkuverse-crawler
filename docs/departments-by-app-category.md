@@ -128,14 +128,14 @@
 | `klcc-grad` | 한문학과(대학원) | hssc |  | O |
 | `gsg` | 행정학과(국정전문대학원) | hssc |  | O |
 | `chem` | 화학과 | nsc |  | O |
-| `cheme` | 화학공학과 | nsc | wordpress-api | O |
+| `cheme` | 화학공학과 | nsc | wordpress-api |  |
 | `medicine` | 의과대학 | nsc | skkumed-asp | O |
 | `cal-undergrad` | 건설환경공학부(학부) | nsc | custom-php | O |
 | `cal-grad` | 건설환경공학부(대학원) | nsc | custom-php | O |
 | `bio-undergrad` | 생명과학과(학부) | nsc | gnuboard | O |
 | `bio-grad` | 생명과학과(대학원) | nsc | gnuboard | O |
 | `pharm` | 약학대학 | nsc | gnuboard | O |
-| `nano` | 나노공학과 | nsc | gnuboard-custom | O |
+| `nano` | 나노공학과 | nsc | gnuboard-custom |  |
 | `gsc` | 중국대학원 | hssc |  | O |
 
 ## 학사 (academic)

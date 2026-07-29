@@ -23,13 +23,19 @@ async def run_daily_summary() -> dict:
     db = await get_db()
 
     departments = load_and_validate()
-    enabled_count = sum(
-        1 for d in departments if d.get("crawlAvailable") and d.get("crawlEnabled")
-    )
+    enabled_ids = {
+        d["id"] for d in departments if d.get("crawlAvailable") and d.get("crawlEnabled")
+    }
+    enabled_count = len(enabled_ids)
 
+    # Restrict to currently-enabled sources: a source retired via
+    # crawlAvailable=false leaves a stale crawl_health doc behind (it never
+    # "recovers" because it is no longer crawled) and must not haunt the
+    # summary forever.
     failing = [
         doc
         async for doc in db[COLLECTION].find({"consecutiveFailures": {"$gt": 0}})
+        if doc.get("sourceId") in enabled_ids
     ]
 
     # New docs in the last 24h via the ObjectId embedded timestamp — no schema

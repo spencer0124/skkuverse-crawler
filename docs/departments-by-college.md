@@ -37,10 +37,10 @@
 | `amse-undergrad` | 신소재공학부(학부생) | nsc |  | O |
 | `amse-grad` | 신소재공학부(대학원) | nsc |  | O |
 | `qie` | 양자정보공학과 | nsc |  | O |
-| `cheme` | 화학공학과 | nsc | wordpress-api | O |
+| `cheme` | 화학공학과 | nsc | wordpress-api |  |
 | `cal-undergrad` | 건설환경공학부(학부) | nsc | custom-php | O |
 | `cal-grad` | 건설환경공학부(대학원) | nsc | custom-php | O |
-| `nano` | 나노공학과 | nsc | gnuboard-custom | O |
+| `nano` | 나노공학과 | nsc | gnuboard-custom |  |
 
 ## 국정전문대학원
 

@@ -76,11 +76,14 @@
 - **필요 작업**: 새 링크 체계 분석 → 파서/전략 대응(16진수 itemId 처리 포함) → 소스 매핑 재설계 → 기존 문서 마이그레이션 전략. 학부통합 계열은 앱 주요 소스라 우선순위 높음.
 - **감지**: crawl_health 알림이 커버 중 (지속 실패로 매일 요약에 표시). 수정 완료 시 recovered 알림으로 확인.
 
-### 11. cheme·nano SSL 인증서 체인 오류 — 크롤 중단 (미해결, 2026-07-29 발견)
-- **문제**: `cheme.skku.edu`/`nano.skku.edu`의 `*.skku.edu` 인증서가 중간 인증서(Thawte TLS RSA CA G1) 없이 서빙됨 (`openssl verify return code: 21 — unable to verify the first certificate`). httpx가 `CERTIFICATE_VERIFY_FAILED`로 매 틱 실패.
-- **원인**: 학교 측 인증서 갱신 시 체인 미포함 배포로 추정 (서버 설정 문제).
-- **선택지**: (a) 학교 측 수정 대기, (b) 크롤러 fetcher에 해당 중간 CA를 추가한 커스텀 SSL 컨텍스트 (호스트 한정), (c) 해당 소스만 verify 완화 — (c)는 지양.
-- **감지**: crawl_health 알림이 커버 중. 수정 완료 시 recovered 알림으로 확인.
+### ~~11. cheme·nano SSL 인증서 체인 오류 — 크롤 중단~~ (2026-07-29 소스 제외로 종결, 재활성 조건부)
+- **문제**: `cheme.skku.edu`/`nano.skku.edu`의 `*.skku.edu` 인증서(notBefore 2026-07-16, 서버 배포 07-21)가 중간 인증서(Thawte TLS RSA CA G1) 없이 서빙됨 (`openssl verify return code: 21`). httpx가 `CERTIFICATE_VERIFY_FAILED`로 매 틱 실패, 마지막 성공 둘 다 07-21 14:33 KST.
+- **조사 결과**:
+  - nano: certifi + 중간 CA 보충 컨텍스트로 핸드셰이크·크롤 엔드포인트 200 실증 — SSL만의 문제.
+  - cheme: SSL 통과 후에도 **Cloudflare 봇 챌린지 403** ("Just a moment...") — wp-json·RSS(`/feed/` 등)·루트 전 경로, 로컬·oracle VM IP 모두 동일. 챌린지 우회는 만들지 않음(정책).
+- **결정 (2026-07-29, 운영자)**: 크롤러 측 인증서 보충/우회 없이 **소스 제외로 처리**. `sources.json`에서 두 소스 `crawlAvailable: false` + `excludeReason: "temporarilyUnavailable"`(앱 노출: "잠시 점검 중이에요" + 공과대학 우산 대안 제안) + 기술 사유는 내부 전용 `excludeNote` 필드(ssl / ssl+cloudflare)에 기록.
+- **재활성 조건**: nano — `openssl s_client`로 체인 정상 서빙 확인 시 플래그 원복만 하면 됨. cheme — 챌린지 해제 확인 시. 재활성 후 백필분은 푸시 억제 절차(§8 참조) 필요.
+- **파생 수정**: 제외된 소스의 stale crawl_health 상태가 일일 요약을 영구 오염하는 문제 → 요약이 enabled 소스로 필터하도록 수정 (`crawl_health/module.py`).
 
 ### 3. `lastModified` 필드 미구현
 - 상세 페이지 `<span class="date">최종 수정일 : 2026.03.27</span>` 에서 추출 가능
