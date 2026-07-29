@@ -210,3 +210,38 @@ async def test_hash_href_filtered_out():
     assert detail is not None
     assert len(detail.attachments) == 1
     assert detail.attachments[0]["name"] == "실제파일.pdf"
+
+
+LIST_PAGE_WITH_PINNED = """
+<div>
+  <dl class="board-list-content-wrap ">
+    <dt class="board-list-content-title ">
+      <a href="?mode=view&articleNo=210001&article.offset=0&articleLimit=10" title="자세히 보기">고정 공지</a>
+    </dt>
+    <dd class="board-list-content-info">
+      <ul><li>공지</li><li>글로벌융합학부</li><li>2026-05-01</li><li>조회수<span>100</span></li></ul>
+    </dd>
+  </dl>
+  <dl class="board-list-content-wrap ">
+    <dt class="board-list-content-title ">
+      <a href="?mode=view&articleNo=210002&article.offset=0&articleLimit=10" title="자세히 보기">일반 공지</a>
+    </dt>
+    <dd class="board-list-content-info">
+      <ul><li>No.756</li><li>글로벌융합학부</li><li>2026-06-01</li><li>조회수<span>10</span></li></ul>
+    </dd>
+  </dl>
+</div>
+"""
+
+
+async def test_crawl_list_detects_pinned_rows():
+    """첫 info 셀이 '공지'인 행은 pinned=True, 'No.###'인 행은 False."""
+    strategy = _make_strategy(LIST_PAGE_WITH_PINNED)
+    items = await strategy.crawl_list(SUBDOMAIN_CONFIG, page=0)
+
+    assert len(items) == 2
+    by_no = {i.articleNo: i for i in items}
+    assert by_no[210001].pinned is True
+    assert by_no[210002].pinned is False
+    assert by_no[210001].date == "2026-05-01"
+    assert by_no[210002].views == 10

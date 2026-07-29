@@ -54,6 +54,7 @@ class SkkuStandardStrategy:
                 info_items = el.select(selectors["infoList"])
                 info_texts = [li.get_text(strip=True) for li in info_items]
 
+                pinned = False
                 if config.get("infoParser") == "labeled":
                     info_map: dict[str, str] = {}
                     for text in info_texts:
@@ -66,6 +67,9 @@ class SkkuStandardStrategy:
                     hits_m = re.search(r"(\d+)", hits_text)
                     views = int(hits_m.group(1)) if hits_m else 0
                 else:
+                    # First cell is the row number ("No.756") — pinned rows
+                    # show "공지" there instead and repeat on every page.
+                    pinned = bool(info_texts) and info_texts[0] == "공지"
                     author = info_texts[1] if len(info_texts) > 1 else ""
                     date = info_texts[2] if len(info_texts) > 2 else ""
                     views_text = info_texts[3] if len(info_texts) > 3 else "0"
@@ -80,6 +84,7 @@ class SkkuStandardStrategy:
                     date=date,
                     views=views,
                     detailPath=href,
+                    pinned=pinned,
                 ))
             except Exception as exc:
                 logger.warning("parse_list_item_failed", error=str(exc))

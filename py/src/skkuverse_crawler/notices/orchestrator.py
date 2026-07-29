@@ -141,6 +141,20 @@ async def run_crawl(
     return results
 
 
+def _page_below_floor(list_items: list[NoticeListItem]) -> bool:
+    """True when every regular row on the page pre-dates SERVICE_START_DATE.
+
+    Pinned rows repeat on every page, so a single recent pinned notice would
+    otherwise keep this check false all the way to the last page. Judge the
+    floor on regular rows only; a page with no regular rows falls through and
+    stops via empty_list_page/all_known on the next one.
+    """
+    regular_items = [item for item in list_items if not item.pinned]
+    return bool(regular_items) and all(
+        item.date and item.date < SERVICE_START_DATE for item in regular_items
+    )
+
+
 async def _crawl_department(
     dept: dict[str, Any],
     collection: Any,
@@ -209,7 +223,7 @@ async def _crawl_department(
             logger.info("empty_list_page", dept_id=dept["id"], page=page)
             break
 
-        if all(item.date and item.date < SERVICE_START_DATE for item in list_items):
+        if _page_below_floor(list_items):
             logger.info("floor_date_stopping", page=page, dept_id=dept["id"])
             break
 
