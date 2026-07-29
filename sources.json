@@ -3283,7 +3283,7 @@
     "crawlAvailable": true,
     "crawlEnabled": true,
     "excludeReason": null,
-    "baseUrl": "https://success.skku.edu/success/community/notice.do",
+    "baseUrl": "https://success.skku.edu/success/notice.do",
     "selectors": {
       "listItem": "dl.board-list-content-wrap",
       "category": "span.c-board-list-category",
