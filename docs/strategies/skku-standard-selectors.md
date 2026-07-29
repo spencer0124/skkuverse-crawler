@@ -18,7 +18,7 @@
     </dt>
     <dd class="board-list-content-info">
       <ul>
-        <li>No.24662</li>       <!-- 순번 (articleNo와 다름) -->
+        <li>No.24662</li>       <!-- 순번 (articleNo와 다름). 상단 고정 글은 "공지" — 파서가 pinned 플래그로 인식 -->
         <li>김선영</li>          <!-- 작성자 -->
         <li>2026-03-27</li>     <!-- 날짜 -->
         <li>조회수<span class="board-mg-l10">592</span></li>

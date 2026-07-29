@@ -43,6 +43,24 @@
 - **해결**: 프로덕션 `py/docker-compose.yml`에서 `- CRAWL_SOURCE_FILTER=...` 라인 삭제 → `docker compose up -d crawler` 재생성. 수동 검증 크롤(`docker exec ... notices --once --source biz-undergrad --pages 1`)에서 11건 신규 수집 확인.
 - **재발 방지**: CLAUDE.md의 `CRAWL_SOURCE_FILTER` 설명에 ⚠️ 경고 강화. 향후 "distinct crawled dept count < enabled dept count" 알람 구축 고려.
 
+### ~~8. 법학전문대학원(sls) 사이트 개편으로 게시판 URL 404 → 크롤 침묵 중단~~ (2026-07-29 해결)
+- **문제**: sls.skku.edu가 게시판 경로에서 `/community/` 세그먼트를 제거하고 법전원 게시판을 개명(`notice_special_law.do` → `notice_sls.do`). `sls-general`/`sls-special` 두 소스가 2026-07-14경부터 404로 침묵 중단됨.
+- **증상**: 매 크롤 틱마다 `list_fetch_failed` 에러 2건 반복, 신규 공지 미수집 약 2주. update-check도 저장된 구 sourceUrl로 전량 404 — 단, **mass-404 안전장치**(총 시도 ≥5건 중 404 비율 >50%면 soft-delete 보류)가 작동해 오삭제 0건.
+- **해결**:
+  - `sources.json` baseUrl 2건 교체 (`/sls/notice_general_law.do`, `/sls/notice_sls.do`). articleNo 체계가 연속이라 incremental 크롤이 공백 구간을 자동 백필.
+  - 기존 문서 200건(sls-general 55 + sls-special 145)의 `sourceUrl`을 새 경로로 일괄 재작성 (구 articleNo가 새 URL에서 정상 렌더됨을 검증 후). `detailPath`는 상대경로(`?mode=view...`)라 무영향.
+- **재발 방지**: 학교 사이트 개편은 감지 수단이 에러 로그뿐 — "소스별 연속 list_fetch_failed N틱 이상" 알람 구축 고려 (§7의 coverage 알람과 동일 계열).
+
+### ~~9. 최신 고정 공지가 floor-date early-stop을 무력화하는 잠재 이슈~~ (2026-07-29 해결)
+- **문제**: 상단 고정(`공지`) 행은 게시판의 **모든 리스트 페이지에 반복 노출**되는데, floor stop 판정이 `all(item.date < SERVICE_START_DATE)`라 고정글 하나만 서비스 시작일 이후여도 조건이 영원히 거짓 → 새 글이 올라온 틱마다 게시판 끝(또는 max_pages)까지 페이지네이션. 서비스 시작일 이전 일반 글은 저장되지 않아 all_known stop도 발동 불가.
+- **증상**: 아직 프로덕션 미발현 (현재 크롤 대상 게시판의 고정글이 전부 2026-03-09 이전). 발현 시 데이터 오염은 없고 list fetch 낭비만 발생하는 잠재 이슈였음.
+- **해결**:
+  - skku-standard 파서가 첫 info 셀("공지" vs "No.###")로 `NoticeListItem.pinned` 플래그 세팅 (`infoParser: labeled` 게시판은 해당 셀 구조가 없어 기본값 False).
+  - floor 판정을 `_page_below_floor()` 순수 함수로 추출, **일반 행만** 대상으로 판정. 고정글만 있는 페이지는 stop하지 않음(페이지 0의 고정글 처리 누락 방지) — 다음 페이지의 empty/all_known이 종료 담당.
+  - 같은 뿌리의 실존 비효율도 함께 수정: `dedup.should_continue()`(all-known early-stop)에서도 고정글 제외. floor 이전 고정글은 저장되지 않아 매 페이지가 "미지 항목 있음"으로 보였고, 조용한 틱에도 date floor까지 매번 페이지네이션했음 (sco 기준 list fetch 6회 → 1회). 고정글은 항상 페이지 0에도 노출되므로 제외해도 내용 누락 없음.
+  - 테스트 10건 추가 (`test_orchestrator.py::TestPageBelowFloor`, `test_skku_standard.py::test_crawl_list_detects_pinned_rows`, `test_dedup.py::TestShouldContinue`).
+- **한계**: pinned 감지는 skku-standard 전략만 구현. 타 전략(gnuboard 등)의 고정글 관례는 상이하며 동일 증상 발현 시 전략별 감지 추가 필요. `pinned`는 DB에 저장하지 않음(앱 상단 고정 기능은 별도 작업).
+
 ### 3. `lastModified` 필드 미구현
 - 상세 페이지 `<span class="date">최종 수정일 : 2026.03.27</span>` 에서 추출 가능
 - 현재는 Notice 모델에 선언만 되어있고 값을 채우지 않음
