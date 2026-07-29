@@ -293,3 +293,54 @@ class TestRealSourcesSmoke:
         errors = ga.validate_departments(sources, valid_app_cats)
         errors += ga.validate_categories(categories, sources)
         assert not errors, "Real SSOT failed validation:\n  " + "\n  ".join(errors)
+
+
+# ──────────────────────────────────────────────────────────────────────
+# exclude-reasons.json (SSOT for excludeReason keys + ko/en copy)
+# ──────────────────────────────────────────────────────────────────────
+class TestExcludeReasons:
+    def _reason(self, **overrides) -> dict:
+        base = {"id": "testReason", "label": {"ko": "한글 문구", "en": "English copy"}}
+        base.update(overrides)
+        return base
+
+    def test_valid_reason_passes(self):
+        assert ga.validate_exclude_reasons([self._reason()]) == []
+
+    def test_duplicate_id_rejected(self):
+        errors = ga.validate_exclude_reasons([self._reason(), self._reason()])
+        assert any("duplicate" in e for e in errors)
+
+    def test_missing_locale_rejected(self):
+        errors = ga.validate_exclude_reasons([self._reason(label={"ko": "한글만"})])
+        assert any("label.en" in e for e in errors)
+
+    def test_empty_label_rejected(self):
+        errors = ga.validate_exclude_reasons(
+            [self._reason(label={"ko": "  ", "en": "ok"})]
+        )
+        assert any("label.ko" in e for e in errors)
+
+    def test_valid_exclude_reasons_derived_from_file(self):
+        """하드코딩 제거 검증 — 파일의 id들이 곧 유효 enum."""
+        reasons = json.loads(
+            (_REPO_ROOT / "exclude-reasons.json").read_text(encoding="utf-8")
+        )
+        assert ga.VALID_EXCLUDE_REASONS == {r["id"] for r in reasons}
+        assert "siteUnreachable" in ga.VALID_EXCLUDE_REASONS
+
+    def test_dept_with_new_reason_passes_validation(self):
+        dept = _make_dept(
+            crawlAvailable=False, crawlEnabled=False, excludeReason="siteUnreachable"
+        )
+        assert not ga.validate_departments([dept], _VALID_APP_CATS)
+
+    def test_map_artifact_shape(self):
+        out = json.loads(ga.gen_exclude_reasons_map([self._reason()]))
+        assert out == {"testReason": {"ko": "한글 문구", "en": "English copy"}}
+
+    def test_real_exclude_reasons_file_passes(self):
+        reasons = json.loads(
+            (_REPO_ROOT / "exclude-reasons.json").read_text(encoding="utf-8")
+        )
+        assert ga.validate_exclude_reasons(reasons) == []
