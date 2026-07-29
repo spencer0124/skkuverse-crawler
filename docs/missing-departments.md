@@ -78,7 +78,7 @@ SKKU 공식 조직도엔 있지만 `sources.json`에 들어 있지 않은 학과
 | 상태 | 항목 | 메모 |
 |:--:|---|---|
 | ⏳ | 센터 10개 (건강센터, 인권센터 등) | 학과 목록 포함 여부 미정 |
-| ⏳ | `hakbu-portal-*` 시리즈 8개 | `skku-notice*`와 역할 중복 가능 — 추후 결정 |
+| ✅ | `hakbu-portal-*` 시리즈 8개 | **제외 확정** (2026-07-30) — 콘텐츠 실측 결과 `skku-notice*` 포털 공지의 신디케이션 미러로 확인, sources.json에서 삭제. 근거·재검토 조건은 [adr-005](decisions/adr-005-hakbu-board-remap.md) |
 | ⏳ | `skku-main` (notice01) vs `skku-notice02` | 학사 소스로 `skku-notice02` 채택됨 (확정) |
 | ⏳ | `skku-notice08` (일반) | 앱 카테고리에 미포함, 추후 결정 |
 

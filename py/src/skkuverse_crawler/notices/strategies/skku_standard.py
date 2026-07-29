@@ -43,10 +43,19 @@ class SkkuStandardStrategy:
                 title = extract_text(title_link).strip()
                 href = extract_attr(title_link, "href") or ""
 
-                # Extract articleNo
-                m = re.search(r"articleNo=(\d+)", href) or re.search(r"itemId=(\d+)", href)
+                # Extract articleNo. The trailing lookahead rejects partial
+                # matches on hex UNIDs that happen to start with digits
+                # (e.g. itemId=75E2... must not parse as articleNo=75).
+                m = re.search(r"articleNo=(\d+)(?![0-9A-Za-z])", href) or re.search(
+                    r"itemId=(\d+)(?![0-9A-Za-z])", href
+                )
                 if not m:
-                    logger.warning("no_article_no", href=href, title=title)
+                    if re.search(r"itemId=[0-9A-Fa-f]{16,}", href):
+                        # Legacy hex-UNID articles predate the 2025 CMS
+                        # migration; intentionally skipped (ADR-005).
+                        logger.debug("legacy_unid_item_skipped", href=href, title=title)
+                    else:
+                        logger.warning("no_article_no", href=href, title=title)
                     continue
                 article_no = int(m.group(1))
 

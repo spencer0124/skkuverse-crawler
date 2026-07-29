@@ -245,3 +245,91 @@ async def test_crawl_list_detects_pinned_rows():
     assert by_no[210002].pinned is False
     assert by_no[210001].date == "2026-05-01"
     assert by_no[210002].views == 10
+
+
+# --- hakbu boards (viewBoardId/itemId links, hex-UNID legacy rows) ---
+
+# hakbu.skku.edu notice_total.do template (post-2026-07 CMS restructure)
+HAKBU_PORTAL_CONFIG = {
+    "baseUrl": "https://hakbu.skku.edu/hakbu/notice_total.do",
+    "selectors": {
+        "listItem": "dl.board-list-content-wrap",
+        "category": "span.c-board-list-category",
+        "titleLink": "dt.board-list-content-title a",
+        "infoList": "dd.board-list-content-info ul li",
+        "detailContent": "dl.board-write-box dd",
+        "attachmentList": "ul.board-view-file-wrap li a",
+    },
+    "pagination": {"type": "offset", "param": "article.offset", "limit": 10},
+    "extraParams": {"boardId": "138880"},
+}
+
+HAKBU_LIST_PAGE = """
+<div>
+  <dl class="board-list-content-wrap">
+    <dt class="board-list-content-title ">
+      <span class="c-board-list-category" data-board-id="138880">[수강신청공지]</span>
+      <a href="?mode=view&link=null&amp;viewBoardId=138880&amp;itemId=161037&amp;article.offset=0&amp;articleLimit=10" title="자세히 보기">수강신청 안내</a>
+    </dt>
+    <dd class="board-list-content-info">
+      <ul><li>No.399</li><li>학부대학</li><li>2026-07-29 16:55</li></ul>
+    </dd>
+  </dl>
+  <dl class="board-list-content-wrap">
+    <dt class="board-list-content-title ">
+      <span class="c-board-list-category" data-board-id="138880">[수강신청공지]</span>
+      <a href="?mode=view&link=null&amp;viewBoardId=138880&amp;itemId=75E2890A6B96EC7B49258B9D000ABFDE&amp;article.offset=0&amp;articleLimit=10" title="자세히 보기">숫자로 시작하는 레거시 UNID</a>
+    </dt>
+    <dd class="board-list-content-info">
+      <ul><li>No.120</li><li>학부대학</li><li>2024-09-26 10:00</li></ul>
+    </dd>
+  </dl>
+  <dl class="board-list-content-wrap">
+    <dt class="board-list-content-title ">
+      <span class="c-board-list-category" data-board-id="138880">[수강신청공지]</span>
+      <a href="?mode=view&link=null&amp;viewBoardId=138880&amp;itemId=C3FE59C22428B09249258BDA005C233F&amp;article.offset=0&amp;articleLimit=10" title="자세히 보기">문자로 시작하는 레거시 UNID</a>
+    </dt>
+    <dd class="board-list-content-info">
+      <ul><li>No.119</li><li>학부대학</li><li>2024-11-26 10:00</li></ul>
+    </dd>
+  </dl>
+</div>
+"""
+
+
+async def test_hakbu_numeric_item_id_parsed():
+    """새 hakbu 링크 포맷(viewBoardId+itemId)에서 숫자 itemId를 articleNo로 추출."""
+    strategy = _make_strategy(HAKBU_LIST_PAGE)
+    items = await strategy.crawl_list(HAKBU_PORTAL_CONFIG, page=0)
+
+    assert len(items) == 1
+    item = items[0]
+    assert item.articleNo == 161037
+    assert item.category == "수강신청공지"
+    assert item.author == "학부대학"
+    assert item.date == "2026-07-29 16:55"
+    assert item.views == 0  # 새 보드 info는 3열(번호/작성자/일시) — 조회수 없음
+    assert item.pinned is False
+
+
+async def test_hakbu_hex_unid_rows_skipped():
+    """레거시 hex UNID 행은 skip — 특히 숫자로 시작하는 UNID(75E2…)가
+    articleNo=75로 오추출되지 않아야 한다."""
+    strategy = _make_strategy(HAKBU_LIST_PAGE)
+    items = await strategy.crawl_list(HAKBU_PORTAL_CONFIG, page=0)
+
+    parsed_nos = {i.articleNo for i in items}
+    assert 75 not in parsed_nos
+    assert parsed_nos == {161037}
+
+
+async def test_hakbu_list_url_includes_board_filter():
+    """extraParams.boardId가 리스트 URL 쿼리에 포함되어야 한다."""
+    strategy = _make_strategy(HAKBU_LIST_PAGE)
+    await strategy.crawl_list(HAKBU_PORTAL_CONFIG, page=0)
+
+    fetched_url = strategy.fetcher.fetch.await_args.args[0]
+    assert fetched_url == (
+        "https://hakbu.skku.edu/hakbu/notice_total.do"
+        "?boardId=138880&mode=list&articleLimit=10&article.offset=0"
+    )
