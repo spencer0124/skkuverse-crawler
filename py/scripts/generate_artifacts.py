@@ -29,6 +29,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 SOURCES_JSON = REPO_ROOT / "sources.json"
 CATEGORIES_JSON = REPO_ROOT / "categories.json"
+EXCLUDE_REASONS_JSON = REPO_ROOT / "exclude-reasons.json"
 GENERATED_DIR = REPO_ROOT / "py" / "generated"
 SOURCE_IDS_PY = (
     REPO_ROOT / "py" / "src" / "skkuverse_crawler"
@@ -41,6 +42,7 @@ BY_APP_CATEGORY_MD = REPO_ROOT / "docs" / "departments-by-app-category.md"
 # Sibling repos
 SERVER_SOURCES_JSON = REPO_ROOT.parent / "skkuverse-server" / "src" / "notices" / "sources.json"
 SERVER_CAT_JSON = REPO_ROOT.parent / "skkuverse-server" / "src" / "notices" / "categories.json"
+SERVER_EXCLUDE_JSON = REPO_ROOT.parent / "skkuverse-server" / "src" / "notices" / "exclude-reasons.json"
 
 # ---------------------------------------------------------------------------
 # Strategy → hasCategory / hasAuthor mapping
@@ -61,16 +63,13 @@ VALID_CAMPUSES = {"hssc", "nsc", "both", None}
 VALID_TAB_MODES = {"fixed", "picker"}
 VALID_CAMPUS_DEFAULT_KEYS = {"hssc", "nsc"}
 
-# excludeReason enum keys. Mirrored on the client as i18n keys
-# (onboarding.unsupportedDept.reason.<key>). Adding a new reason requires
-# updating the client translations in the same release.
-VALID_EXCLUDE_REASONS = {
-    "loginRequired",
-    "noWebsite",
-    "externalSystem",
-    "accessRestricted",
-    "temporarilyUnavailable",
-}
+# excludeReason keys + ko/en copy live in exclude-reasons.json (SSOT, same
+# label pattern as categories.json). The server serves the map to the app,
+# so adding a reason is a crawler-side change only — no client release.
+# Legacy clients still bundle i18n for the original five keys as a fallback.
+with open(EXCLUDE_REASONS_JSON, encoding="utf-8") as _f:
+    EXCLUDE_REASONS: list[dict] = json.load(_f)
+VALID_EXCLUDE_REASONS = {r["id"] for r in EXCLUDE_REASONS}
 
 
 # ---------------------------------------------------------------------------
@@ -146,6 +145,28 @@ def validate_departments(
                 f"(unsupported source cannot be operationally enabled)"
             )
 
+    return errors
+
+
+def validate_exclude_reasons(reasons: list[dict]) -> list[str]:
+    """exclude-reasons.json shape check: unique ids + non-empty ko/en labels."""
+    errors: list[str] = []
+    seen: set[str] = set()
+    for i, reason in enumerate(reasons):
+        rid = reason.get("id", f"<index {i}>")
+        if not isinstance(reason.get("id"), str) or not reason["id"]:
+            errors.append(f"exclude-reason <index {i}>: missing/empty id")
+            continue
+        if rid in seen:
+            errors.append(f"exclude-reason {rid}: duplicate id")
+        seen.add(rid)
+        label = reason.get("label")
+        if not isinstance(label, dict):
+            errors.append(f"exclude-reason {rid}: label must be an object")
+            continue
+        for lang in ("ko", "en"):
+            if not isinstance(label.get(lang), str) or not label[lang].strip():
+                errors.append(f"exclude-reason {rid}: label.{lang} missing/empty")
     return errors
 
 
@@ -321,6 +342,16 @@ def gen_sources_json(sources: list[dict]) -> str:
             "hasAuthor": has_author,
         })
     return json.dumps(entries, ensure_ascii=False, indent=2) + "\n"
+
+
+def gen_exclude_reasons_map(reasons: list[dict]) -> str:
+    """Server-facing artifact (skkuverse-server/src/notices/exclude-reasons.json).
+
+    Key → label map. The server includes it verbatim in the tabs response so
+    the app renders reason copy server-driven (same pattern as tab labels).
+    """
+    payload = {r["id"]: r["label"] for r in reasons}
+    return json.dumps(payload, ensure_ascii=False, indent=2) + "\n"
 
 
 def gen_docker_env(departments: list[dict]) -> str:
@@ -574,7 +605,7 @@ def copy_to_sibling(src: Path, dst: Path, label: str) -> None:
 # ---------------------------------------------------------------------------
 def main() -> None:
     # Load sources
-    for path in (SOURCES_JSON, CATEGORIES_JSON):
+    for path in (SOURCES_JSON, CATEGORIES_JSON, EXCLUDE_REASONS_JSON):
         if not path.exists():
             print(f"ERROR: {path} not found", file=sys.stderr)
             sys.exit(1)
@@ -587,8 +618,10 @@ def main() -> None:
     # Derive valid appCategories from categories.json
     valid_app_categories: set[str | None] = {c["id"] for c in categories} | {None}
 
-    # Validate
-    errors = validate_departments(sources, valid_app_categories)
+    # Validate (VALID_EXCLUDE_REASONS is derived from exclude-reasons.json at
+    # import time — sources.json excludeReason values must be a subset)
+    errors = validate_exclude_reasons(EXCLUDE_REASONS)
+    errors += validate_departments(sources, valid_app_categories)
     errors += validate_categories(categories, sources)
     if errors:
         print("Validation errors:", file=sys.stderr)
@@ -596,7 +629,10 @@ def main() -> None:
             print(f"  - {e}", file=sys.stderr)
         sys.exit(1)
 
-    print(f"Loaded {len(sources)} sources, {len(categories)} categories")
+    print(
+        f"Loaded {len(sources)} sources, {len(categories)} categories, "
+        f"{len(EXCLUDE_REASONS)} exclude reasons"
+    )
 
     # Ensure generated/ exists
     GENERATED_DIR.mkdir(exist_ok=True)
@@ -637,6 +673,12 @@ def main() -> None:
     )
     print("  [7] server-categories.json")
     copy_to_sibling(cat_path, SERVER_CAT_JSON, "skkuverse-server")
+
+    # 8. server-exclude-reasons.json
+    excl_path = GENERATED_DIR / "server-exclude-reasons.json"
+    excl_path.write_text(gen_exclude_reasons_map(EXCLUDE_REASONS), encoding="utf-8")
+    print("  [8] server-exclude-reasons.json")
+    copy_to_sibling(excl_path, SERVER_EXCLUDE_JSON, "skkuverse-server")
 
     print("Done.")
 
