@@ -182,10 +182,10 @@
 | `amse-undergrad` | 신소재공학부(학부생) |  | O |
 | `amse-grad` | 신소재공학부(대학원) |  | O |
 | `qie` | 양자정보공학과 |  | O |
-| `cheme` | 화학공학과 | wordpress-api | O |
+| `cheme` | 화학공학과 | wordpress-api |  |
 | `cal-undergrad` | 건설환경공학부(학부) | custom-php | O |
 | `cal-grad` | 건설환경공학부(대학원) | custom-php | O |
-| `nano` | 나노공학과 | gnuboard-custom | O |
+| `nano` | 나노공학과 | gnuboard-custom |  |
 
 ### (소속 없음)
 
@@ -348,5 +348,5 @@
 ## 요약
 
 - 총 엔트리: 150
-- 크롤링 활성: 150
+- 크롤링 활성: 148
 - 전략 수: 9

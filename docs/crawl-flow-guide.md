@@ -177,4 +177,13 @@ _crawl_department()
         ├── strategy.crawl_detail() → HTML 가져오기
         ├── build_notice() → 5가지 출력 생성
         └── upsert/update → MongoDB 저장
+    │
+    ▼ (전 학과 완료 후, 스케줄러 경로만)
+record_and_alert(results)          ← crawl_health/store.py
+    │
+    ├── 소스별 연속 실패 카운트 갱신 (crawl_health 컬렉션)
+    └── 연속 3틱 page-0 실패 → Discord 알림 1건 (배치) / 회복 시 recovered
 ```
+
+`--once` CLI 실행은 `run_crawl`만 호출하므로 헬스 상태를 건드리지 않는다
+(스케줄러의 `NoticesModule.run`에만 후크됨).

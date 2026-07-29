@@ -24,8 +24,15 @@ py/src/skkuverse_crawler/
 │   ├── db.py                   ← Motor async MongoDB 싱글턴 (config 기반 DB suffix)
 │   ├── logger.py               ← structlog (json/dev 포맷, 시작 시 mode_label 로깅)
 │   ├── fetcher.py              ← httpx + retry(3회, exponential backoff)
+│   ├── discord.py              ← 크롤 헬스 Discord webhook 발송기 (config 게이트, never-raise)
 │   ├── html_cleaner.py         ← 6단계 HTML 정제 파이프라인
 │   └── html_to_markdown.py     ← cleanHtml → GFM 마크다운 변환
+│
+├── crawl_health/               ← 크롤 헬스 관측/알림 모듈
+│   ├── logic.py                ← 순수 판정 (decide_transitions, 메시지 포맷)
+│   ├── store.py                ← crawl_health 컬렉션 상태 저장 + record_and_alert
+│   ├── module.py               ← CrawlHealthSummaryModule (매일 09:00 KST 요약)
+│   └── cli.py                  ← health-summary 서브커맨드
 │
 ├── notices/                    ← 공지 크롤러 모듈
 │   ├── module.py               ← NoticesModule (CrawlModule 구현)
