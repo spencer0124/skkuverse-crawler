@@ -74,11 +74,13 @@
   - itemId 숫자부가 기존 articleNo와 다른 번호공간이면 dedup 키 충돌/중복 삽입 + 재푸시 위험.
   - 구 `boardId=13888X` 카테고리 필터가 새 `notice_total.do`에서 유효한지 미확인 (제목은 boardId 무관 동일).
 - **필요 작업**: 새 링크 체계 분석 → 파서/전략 대응(16진수 itemId 처리 포함) → 소스 매핑 재설계 → 기존 문서 마이그레이션 전략. 학부통합 계열은 앱 주요 소스라 우선순위 높음.
+- **감지**: crawl_health 알림이 커버 중 (지속 실패로 매일 요약에 표시). 수정 완료 시 recovered 알림으로 확인.
 
 ### 11. cheme·nano SSL 인증서 체인 오류 — 크롤 중단 (미해결, 2026-07-29 발견)
 - **문제**: `cheme.skku.edu`/`nano.skku.edu`의 `*.skku.edu` 인증서가 중간 인증서(Thawte TLS RSA CA G1) 없이 서빙됨 (`openssl verify return code: 21 — unable to verify the first certificate`). httpx가 `CERTIFICATE_VERIFY_FAILED`로 매 틱 실패.
 - **원인**: 학교 측 인증서 갱신 시 체인 미포함 배포로 추정 (서버 설정 문제).
 - **선택지**: (a) 학교 측 수정 대기, (b) 크롤러 fetcher에 해당 중간 CA를 추가한 커스텀 SSL 컨텍스트 (호스트 한정), (c) 해당 소스만 verify 완화 — (c)는 지양.
+- **감지**: crawl_health 알림이 커버 중. 수정 완료 시 recovered 알림으로 확인.
 
 ### 3. `lastModified` 필드 미구현
 - 상세 페이지 `<span class="date">최종 수정일 : 2026.03.27</span>` 에서 추출 가능

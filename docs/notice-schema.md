@@ -74,3 +74,22 @@ python -m skkuverse_crawler backfill-content --apply     # 실행
 ```
 
 `content` 필드를 재크롤 없이 재가공. 업데이트한 문서에는 `backfilledAt: datetime(UTC)` 필드가 찍힌다(신규 크롤 문서엔 없음 — backfill 전용 마커).
+
+## crawl_health 컬렉션
+
+크롤 헬스 알림용 소스 단위 상태 (sourceId당 1건, `crawl_health/store.py`가 upsert):
+
+```javascript
+{
+  sourceId: "sls-special",
+  sourceName: "법학전문대학원",
+  consecutiveFailures: 3,        // page-0 list fetch 연속 실패 틱 수
+  lastFailureAt: ISODate,
+  lastError: "Client error '404 ...'",  // 500자 truncate
+  lastSuccessAt: ISODate,
+  alerted: true,                 // 장애당 1회 발화 래치 — 회복 시 false로 리셋
+  updatedAt: ISODate
+}
+```
+
+매 notices 틱마다 전 소스 upsert. DB에 있으므로 컨테이너 재배포에도 카운트 연속. 판정 로직은 `crawl_health/logic.py::decide_transitions` (순수 함수).
