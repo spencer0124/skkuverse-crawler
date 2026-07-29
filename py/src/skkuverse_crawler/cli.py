@@ -34,12 +34,14 @@ async def _start_scheduler(module_filter: str | None = None) -> None:
     from .shared.db import close_client
 
     # Register modules
+    from .crawl_health.module import CrawlHealthSummaryModule
     from .notices.module import NoticesModule, NoticesUpdateCheckModule
     from .notices_summary.module import NoticesSummaryModule
 
     registry.register(NoticesModule())
     registry.register(NoticesUpdateCheckModule())
     registry.register(NoticesSummaryModule())
+    registry.register(CrawlHealthSummaryModule())
 
     scheduler = AsyncIOScheduler()
 
@@ -99,6 +101,7 @@ async def _shutdown_modules(modules: list) -> None:
 
 
 # Register CLI subcommands
+from .crawl_health.cli import health_summary_cli  # noqa: E402
 from .notices.cli import notices_cli, update_check_cli, validate_attachments_cli, validate_markdown_cli  # noqa: E402
 from .notices_summary.cli import summarize_cli  # noqa: E402
 main.add_command(notices_cli)
@@ -106,3 +109,4 @@ main.add_command(update_check_cli)
 main.add_command(validate_attachments_cli)
 main.add_command(validate_markdown_cli)
 main.add_command(summarize_cli)
+main.add_command(health_summary_cli)

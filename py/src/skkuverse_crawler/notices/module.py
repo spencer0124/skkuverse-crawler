@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from ..crawl_health.store import record_and_alert
 from ..modules.base import ModuleConfig
 from ..shared.config import get_config
 from .config.loader import load_and_validate
@@ -25,6 +26,7 @@ class NoticesModule:
             dept_filter=get_config().dept_filter,
         )
         results = await run_crawl(departments, options)
+        await record_and_alert(results)
         return {
             "departments": len(results),
             "inserted": sum(r.inserted for r in results),

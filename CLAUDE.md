@@ -112,6 +112,7 @@ python scripts/generate_artifacts.py    # sources.json + categories.json → 7�
 | notices | CronTrigger | `*/30 * * * *` (30분) |
 | notices-update-check | CronTrigger | `10 8,14,20 * * *` (하루 3회) |
 | notices-summary | CronTrigger | `20 * * * *` (매시 20분) |
+| crawl-health-summary | CronTrigger | `0 9 * * *` (매일 09:00 KST — 컨테이너 TZ가 KST) |
 
 ### DB 이름 규칙
 
@@ -130,6 +131,7 @@ python scripts/generate_artifacts.py    # sources.json + categories.json → 7�
 - `CRAWLER_ENV` — `production` / `development` / `test` (case-insensitive)
 - `LOG_FORMAT` — `json` (기본) / `dev` (컬러 콘솔)
 - `AI_SERVICE_URL` — AI 요약 서비스 URL. 환경별 자동 결정: `production` → `http://ai:4000`, `development`/`test` → `http://127.0.0.1:4000`. 직접 지정 시 우선
+- `DISCORD_WEBHOOK_URL` — 크롤 헬스 알림용 Discord webhook (선택). 미설정 시 알림만 조용히 스킵 (부팅 로그로 상태 1회 고지). 소스가 연속 3틱 page-0 실패하면 1회 알림 + 회복 알림, 매일 09:00 KST 일일 요약. URL은 시크릿 — 레포 커밋 금지
 - `CRAWL_SOURCE_FILTER` — 콤마 구분 학과 ID 필터 (e.g. `skku-main,law`). **dev 오버라이드 전용** ⚠️ 프로덕션 미설정 원칙. 미설정 시 `sources.json`의 `crawlEnabled: true` 항목만 크롤링
 
 
