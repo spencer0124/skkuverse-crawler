@@ -172,10 +172,18 @@ CLI entrypoint (cli.py / notices/cli.py)
 | 파싱 에러 | 해당 글 skip, 경고 로깅 |
 | content: None인 기존 글 | 다음 사이클에서 상세 재크롤링 시도 |
 
+### Crawl Health (관측/알림)
+
+- `crawl_health/` — 소스 단위 헬스 추적 + Discord webhook 알림 (`shared/discord.py`)
+- 신호: `DeptResult.source_down` — **page 0 list fetch 실패**만 다운으로 간주 (부분 에러 제외)
+- L1: `NoticesModule.run` 말미의 `record_and_alert()` — `crawl_health` 컬렉션(sourceId당 1건)에 연속 실패 카운트 저장, 연속 3틱 도달 시 틱당 1개 배치 메시지로 알림, 회복 시 recovered 알림. `alerted` 래치로 중복 발화 방지. 순수 판정은 `crawl_health/logic.py::decide_transitions` (DB 无 유닛테스트 가능)
+- L2: `crawl-health-summary` 모듈 — 매일 09:00 KST 요약 (활성/실패 소스, 최근 24h 신규 건수는 `_id` ObjectId 타임스탬프 범위로 계산)
+- 알림 실패는 절대 크롤을 중단시키지 않음 (never-raise, `dispatch_client.py`와 동일 계약)
+
 ## MongoDB
 
 - DB: `skku_notices` (dev: `skku_notices_dev`, test: `skku_notices_test`)
-- Collection: `notices`
+- Collection: `notices`, `crawl_health`
 - Unique compound index: `{ articleNo: 1, sourceId: 1 }`
 - Upsert: `update_one({ articleNo, sourceId }, { "$set": doc }, upsert=True)`
 

@@ -52,7 +52,7 @@
   - 적대적 검증에서 추가 갭 발견: **`attachments[].url`도 게시판 .do 경로를 내장** (`skku_standard.py`의 `{baseUrl}?mode=download&...`) → 95건(44+51) 추가 마이그레이션. attachNo 체계도 연속이라 새 경로에서 다운로드 정상 (GET 200 검증).
   - **동일 부류**: `success`(학생성공센터)도 같은 개편으로 404 → baseUrl 수정 + sourceUrl 51건/첨부 5건 마이그레이션 (2026-07-29).
 - **주의**: sls 다운로드 핸들러는 HEAD 요청에 404/403을 반환하고 GET만 정상 (www.skku.edu는 HEAD 200). `validate-attachments`가 HEAD 기반이라 sls에서 오탐 발생 — GET(range) fallback 개선 여지.
-- **재발 방지**: SKKU CMS 개편(`/community/` 경로 제거)이 사이트별 순차 진행 중으로 보임 (sls·success·hakbu 확인, sco는 아직 구경로) — "소스별 연속 list_fetch_failed N틱 이상" 알람 구축 고려 (§7의 coverage 알람과 동일 계열).
+- **재발 방지**: SKKU CMS 개편(`/community/` 경로 제거)이 사이트별 순차 진행 중으로 보임 (sls·success·hakbu 확인, sco는 아직 구경로) → **crawl_health 알림 시스템 구축됨** (2026-07-29, `docs/architecture.md` "Crawl Health" 참조): 소스가 연속 3틱 page-0 실패 시 Discord 알림 + 매일 09:00 요약. 다음 개편은 1.5시간 내 감지.
 
 ### ~~9. 최신 고정 공지가 floor-date early-stop을 무력화하는 잠재 이슈~~ (2026-07-29 해결)
 - **문제**: 상단 고정(`공지`) 행은 게시판의 **모든 리스트 페이지에 반복 노출**되는데, floor stop 판정이 `all(item.date < SERVICE_START_DATE)`라 고정글 하나만 서비스 시작일 이후여도 조건이 영원히 거짓 → 새 글이 올라온 틱마다 게시판 끝(또는 max_pages)까지 페이지네이션. 서비스 시작일 이전 일반 글은 저장되지 않아 all_known stop도 발동 불가.

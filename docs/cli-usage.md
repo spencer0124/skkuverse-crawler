@@ -29,6 +29,9 @@ python -m skkuverse_crawler backfill-content
 # 실제 업데이트 (학과/건수 제한 가능)
 python -m skkuverse_crawler backfill-content --apply --source cheme --limit 10
 
+# 크롤 헬스 일일 요약 1회 발송 (DISCORD_WEBHOOK_URL 필요, 미설정 시 스킵)
+python -m skkuverse_crawler health-summary
+
 # AI 요약 (기본 batch-size: 50)
 python -m skkuverse_crawler summarize
 

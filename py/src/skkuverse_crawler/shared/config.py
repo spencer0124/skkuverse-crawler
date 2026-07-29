@@ -27,6 +27,9 @@ class Config:
     # within 30 min instead. See plan: latency-vs-correctness tradeoff.
     dispatch_url: str | None
     internal_dispatch_token: str | None
+    # Crawl-health Discord alerts (optional). Unset → alerts silently skipped;
+    # boot log announces the state once.
+    discord_webhook_url: str | None
 
     @property
     def is_production(self) -> bool:
@@ -92,6 +95,7 @@ def load_config() -> Config:
         ai_service_url=os.getenv("AI_SERVICE_URL") or _ai_service_url(env),
         dispatch_url=os.getenv("DISPATCH_URL") or None,
         internal_dispatch_token=os.getenv("INTERNAL_DISPATCH_TOKEN") or None,
+        discord_webhook_url=os.getenv("DISCORD_WEBHOOK_URL") or None,
     )
 
 

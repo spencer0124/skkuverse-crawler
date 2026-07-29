@@ -58,6 +58,10 @@ class DeptResult:
     skipped: int = 0
     errors: int = 0
     duration_ms: int = 0
+    # Page-0 list fetch failed → the source is unreachable as a whole
+    # (crawl-health alert signal). Partial mid-crawl errors don't set this.
+    source_down: bool = False
+    last_error: str = ""
 
 
 STRATEGY_MAP: dict[str, type] = {
@@ -217,6 +221,9 @@ async def _crawl_department(
         except Exception as exc:
             logger.error("list_fetch_failed", dept_id=dept["id"], page=page, error=str(exc))
             result.errors += 1
+            if page == 0:
+                result.source_down = True
+                result.last_error = str(exc)
             break
 
         if not list_items:
