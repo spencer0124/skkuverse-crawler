@@ -3,13 +3,13 @@
 
 # 크롤링 학과/기관 전수 분류 + 커버리지 분석
 
-> sources.json 기준 150개 엔트리
+> sources.json 기준 142개 엔트리
 
 ## 전략별 분포
 
 | 전략 | 수 |
 |------|----|
-| `skku-standard` | 136 |
+| `skku-standard` | 128 |
 | `gnuboard` | 3 |
 | `pyxis-api` | 3 |
 | `jsp-dorm` | 2 |
@@ -326,19 +326,6 @@
 |----|------|:----:|
 | `skku-notice07` | 성균관대_통합(행사·세미나) | O |
 
-### dept
-
-| ID | 이름 | 활성 |
-|----|------|:----:|
-| `hakbu-portal` | 학부통합(전체) | O |
-| `hakbu-portal-sugang` | 학부통합(수강신청) | O |
-| `hakbu-portal-admission` | 학부통합(입학) | O |
-| `hakbu-portal-job` | 학부통합(취업) | O |
-| `hakbu-portal-recruit` | 학부통합(채용·모집) | O |
-| `hakbu-portal-scholarship` | 학부통합(장학) | O |
-| `hakbu-portal-event` | 학부통합(행사·세미나) | O |
-| `hakbu-portal-general` | 학부통합(일반) | O |
-
 ### library
 
 | ID | 이름 | 활성 |
@@ -347,6 +334,6 @@
 
 ## 요약
 
-- 총 엔트리: 150
-- 크롤링 활성: 148
+- 총 엔트리: 142
+- 크롤링 활성: 140
 - 전략 수: 9

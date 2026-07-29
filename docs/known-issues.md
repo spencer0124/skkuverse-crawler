@@ -52,7 +52,7 @@
   - 적대적 검증에서 추가 갭 발견: **`attachments[].url`도 게시판 .do 경로를 내장** (`skku_standard.py`의 `{baseUrl}?mode=download&...`) → 95건(44+51) 추가 마이그레이션. attachNo 체계도 연속이라 새 경로에서 다운로드 정상 (GET 200 검증).
   - **동일 부류**: `success`(학생성공센터)도 같은 개편으로 404 → baseUrl 수정 + sourceUrl 51건/첨부 5건 마이그레이션 (2026-07-29).
 - **주의**: sls 다운로드 핸들러는 HEAD 요청에 404/403을 반환하고 GET만 정상 (www.skku.edu는 HEAD 200). `validate-attachments`가 HEAD 기반이라 sls에서 오탐 발생 — GET(range) fallback 개선 여지.
-- **재발 방지**: SKKU CMS 개편(`/community/` 경로 제거)이 사이트별 순차 진행 중으로 보임 (sls·success·hakbu 확인, sco는 아직 구경로) → **crawl_health 알림 시스템 구축됨** (2026-07-29, `docs/architecture.md` "Crawl Health" 참조): 소스가 연속 3틱 page-0 실패 시 Discord 알림 + 매일 09:00 요약. 다음 개편은 1.5시간 내 감지.
+- **재발 방지**: SKKU CMS 개편(`/community/` 경로 제거)이 사이트별 순차 진행 중으로 보임 (sls·success·hakbu 확인 — hakbu는 §10에서 해결, sco는 아직 구경로) → **crawl_health 알림 시스템 구축됨** (2026-07-29, `docs/architecture.md` "Crawl Health" 참조): 소스가 연속 3틱 page-0 실패 시 Discord 알림 + 매일 09:00 요약. 다음 개편은 1.5시간 내 감지.
 
 ### ~~9. 최신 고정 공지가 floor-date early-stop을 무력화하는 잠재 이슈~~ (2026-07-29 해결)
 - **문제**: 상단 고정(`공지`) 행은 게시판의 **모든 리스트 페이지에 반복 노출**되는데, floor stop 판정이 `all(item.date < SERVICE_START_DATE)`라 고정글 하나만 서비스 시작일 이후여도 조건이 영원히 거짓 → 새 글이 올라온 틱마다 게시판 끝(또는 max_pages)까지 페이지네이션. 서비스 시작일 이전 일반 글은 저장되지 않아 all_known stop도 발동 불가.
@@ -67,14 +67,19 @@
   - **구분자 전수 실검증** (2026-07-29): 전 skku-standard 게시판 135개 × 2페이지 = 2,793행 라이브 감사. 첫 info 셀은 예외 없이 "공지" 또는 "No.###" (제3 변형 0건), 파서 pinned 플래그와 셀 값 불일치 0건, 고정글의 페이지 반복 전제 위반 0건, 고정글이 번호행으로 중복 노출된 사례 0건 (고정글 보유 게시판 44개·316행 기준).
 - **한계**: pinned 감지는 skku-standard 전략만 구현 (`infoParser: labeled`인 chem은 미적용 — 현재 고정글 0건, 발현 시 성능 저하만). 타 전략(gnuboard 등)의 고정글 관례는 상이하며 동일 증상 발현 시 전략별 감지 추가 필요. `pinned`는 DB에 저장하지 않음(앱 상단 고정 기능은 별도 작업).
 
-### 10. 학부대학(hakbu) 사이트 개편 — 9개 소스 침묵 중단 (미해결, 2026-07-29 발견)
-- **문제**: hakbu.skku.edu도 `/community/` 경로 제거 개편(§8과 동일 부류)으로 `hakbu` + `hakbu-portal` 계열 8개가 404. 매 틱 에러 9건.
-- **§8보다 복잡한 이유**: 단순 경로 이동이 아님 —
-  - 새 게시판(`/hakbu/notice.do`, `/hakbu/notice_total.do`)의 상세 링크가 `articleNo=` 대신 `viewBoardId=...&itemId=...` 체계. itemId가 숫자인 행도 있고 **16진수 문자열인 행도 있음** (`itemId=D7D66C75...`) → 파서의 `articleNo=(\d+)|itemId=(\d+)` 추출 실패로 행 자체가 스킵됨.
-  - itemId 숫자부가 기존 articleNo와 다른 번호공간이면 dedup 키 충돌/중복 삽입 + 재푸시 위험.
-  - 구 `boardId=13888X` 카테고리 필터가 새 `notice_total.do`에서 유효한지 미확인 (제목은 boardId 무관 동일).
-- **필요 작업**: 새 링크 체계 분석 → 파서/전략 대응(16진수 itemId 처리 포함) → 소스 매핑 재설계 → 기존 문서 마이그레이션 전략. 학부통합 계열은 앱 주요 소스라 우선순위 높음.
-- **감지**: crawl_health 알림이 커버 중 (지속 실패로 매일 요약에 표시). 수정 완료 시 recovered 알림으로 확인.
+### ~~10. 학부대학(hakbu) 사이트 개편 — 9개 소스 침묵 중단~~ (2026-07-29 해결, [adr-005](decisions/adr-005-hakbu-board-remap.md))
+- **문제**: hakbu.skku.edu도 `/community/` 경로 제거 개편(§8과 동일 부류)으로 `hakbu` + `hakbu-portal` 계열 8개가 404. 매 틱 에러 9건. crawl_health 알림(연속 3틱 실패)으로 감지 — §8 재발 방지 체계의 첫 실전 작동.
+- **조사 결과** (라이브 검증):
+  - 새 게시판: `/hakbu/notice.do`(나브 "공지사항") · `/hakbu/notice_total.do`(나브 "통합공지"). 리스트·첨부 셀렉터 전부 호환, 상세 content는 §8 부류와 동일하게 코드 fallback(`div.board-view-content-wrap`)이 처리.
+  - 구 `boardId=138880~138886` 필터는 새 `notice_total.do`에서 **그대로 유효** (실검증: `?boardId=138880` 시 해당 보드 글만 반환. 신규 138879=학사 보드도 존재하나 미사용).
+  - 상세 링크는 `viewBoardId=...&itemId=...` 체계. **hex UNID는 전량 2025-05 이전 레거시 글** (구 시스템 마이그레이션 잔재) — 최신 글은 숫자 itemId만 사용.
+  - 기존 파서 `itemId=(\d+)`는 숫자로 시작하는 hex(`itemId=75E2...` → `75`)에서 **잘못된 articleNo를 추출**하는 버그 보유 — 새 보드 크롤 전 필수 수정 대상이었음.
+  - dedup/마이그레이션 우려는 해소: prod DB에 hakbu 계열 문서 **0건** (§7 필터 인시던트와 개편 시점이 겹쳐 한 번도 성공 적재된 적 없음) → 충돌할 기존 데이터 자체가 없음.
+- **해결**:
+  - `hakbu`만 baseUrl 리맵 (`→ /hakbu/notice.do`, name "학부대학(계열제)" 유지). **`hakbu-portal` + 슬라이스 7개는 sources.json에서 삭제** — 콘텐츠 실측(2026-07-30) 결과 통합공지는 대학 포털 공지의 신디케이션 미러로, 동일 글이 이미 `skku-main`/`skku-notice02~07`에 크롤되고 있음을 DB 대조로 확인 (입학·장학 슬라이스는 현행 글 2~3건뿐인 휴면 상태). 근거·재검토 조건은 [adr-005](decisions/adr-005-hakbu-board-remap.md).
+  - `skku_standard.py` ID 추출에 negative lookahead 추가 (`articleNo|itemId=(\d+)(?![0-9A-Za-z])`) — hex 부분 매칭 오추출 차단. hex UNID 행은 의도적 skip + debug 로그(`legacy_unid_item_skipped`, warning 스팸 방지).
+  - 테스트 3건 추가 (`test_skku_standard.py::test_hakbu_*`): 숫자 itemId 추출, hex skip(75 오추출 방지 명시), boardId 쿼리 조립.
+- **주의**: 첫 성공 틱이 빈 DB 기준 자동 백필 (incremental max 100페이지, all-hex 레거시 페이지에서 자연 종료). 첨부 URL은 `portal.skku.edu/...downloadFile.do` 절대 URL — ALLOWED_HOST suffix(`skku.edu`) 통과 확인.
 
 ### ~~11. cheme·nano SSL 인증서 체인 오류 — 크롤 중단~~ (2026-07-29 소스 제외로 종결, 재활성 조건부)
 - **문제**: `cheme.skku.edu`/`nano.skku.edu`의 `*.skku.edu` 인증서(notBefore 2026-07-16, 서버 배포 07-21)가 중간 인증서(Thawte TLS RSA CA G1) 없이 서빙됨 (`openssl verify return code: 21`). httpx가 `CERTIFICATE_VERIFY_FAILED`로 매 틱 실패, 마지막 성공 둘 다 07-21 14:33 KST.

@@ -3,7 +3,7 @@
 
 # 앱 카테고리별 학과 목록
 
-> sources.json 기준 150개 엔트리
+> sources.json 기준 142개 엔트리
 
 ## 학과 (dept)
 
@@ -115,14 +115,6 @@
 | `french-undergrad` | 프랑스어문학과(학부생) | hssc |  | O |
 | `french-grad` | 프랑스어문학과(대학원) | hssc |  | O |
 | `hakbu` | 학부대학(계열제) | hssc |  | O |
-| `hakbu-portal` | 학부통합(전체) | both |  | O |
-| `hakbu-portal-sugang` | 학부통합(수강신청) | both |  | O |
-| `hakbu-portal-admission` | 학부통합(입학) | both |  | O |
-| `hakbu-portal-job` | 학부통합(취업) | both |  | O |
-| `hakbu-portal-recruit` | 학부통합(채용·모집) | both |  | O |
-| `hakbu-portal-scholarship` | 학부통합(장학) | both |  | O |
-| `hakbu-portal-event` | 학부통합(행사·세미나) | both |  | O |
-| `hakbu-portal-general` | 학부통합(일반) | both |  | O |
 | `klccedu` | 한문교육과 | hssc |  | O |
 | `klcc-undergrad` | 한문학과(학부생) | hssc |  | O |
 | `klcc-grad` | 한문학과(대학원) | hssc |  | O |

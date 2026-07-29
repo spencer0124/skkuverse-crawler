@@ -3,7 +3,7 @@
 
 # 단과대학별 학과 목록
 
-> sources.json 기준 150개 엔트리
+> sources.json 기준 142개 엔트리
 
 ## 경영대학
 
@@ -255,14 +255,6 @@
 | `helper` | 인권센터 | both |  | O |
 | `support` | 장애학생지원센터 | both |  | O |
 | `scc` | 카운슬링센터 | both |  | O |
-| `hakbu-portal` | 학부통합(전체) | both |  | O |
-| `hakbu-portal-sugang` | 학부통합(수강신청) | both |  | O |
-| `hakbu-portal-admission` | 학부통합(입학) | both |  | O |
-| `hakbu-portal-job` | 학부통합(취업) | both |  | O |
-| `hakbu-portal-recruit` | 학부통합(채용·모집) | both |  | O |
-| `hakbu-portal-scholarship` | 학부통합(장학) | both |  | O |
-| `hakbu-portal-event` | 학부통합(행사·세미나) | both |  | O |
-| `hakbu-portal-general` | 학부통합(일반) | both |  | O |
 | `success` | 학생성공센터 | both |  | O |
 | `dorm-hssc` | 명륜학사 (인사캠 기숙사) | hssc | jsp-dorm | O |
 | `dorm-nsc` | 봉룡학사 (자과캠 기숙사) | nsc | jsp-dorm | O |
