@@ -6,6 +6,7 @@ from unittest.mock import MagicMock
 from skkuverse_crawler.notices.dedup import (
     find_existing_meta,
     has_changed,
+    should_continue,
     update_with_history,
     upsert_notice,
 )
@@ -199,3 +200,32 @@ class TestFindExistingMeta:
 
         result = await find_existing_meta(mock_collection, "dept-1", [1])
         assert result[1]["contentHash"] is None
+
+
+class TestShouldContinue:
+    """all-known early-stop 판정 — 고정글(pinned)은 제외."""
+
+    def _item(self, article_no: int, pinned: bool = False) -> NoticeListItem:
+        item = NoticeListItem(
+            articleNo=article_no, title="제목", category="", author="a",
+            date="2026-04-15", views=1, detailPath=f"?articleNo={article_no}",
+        )
+        item.pinned = pinned
+        return item
+
+    def test_unknown_regular_continues(self):
+        assert should_continue([self._item(1)], {}) is True
+
+    def test_all_regulars_known_stops(self):
+        meta = {1: {"articleNo": 1}}
+        assert should_continue([self._item(1)], meta) is False
+
+    def test_unknown_old_pinned_does_not_block_stop(self):
+        """floor 이전 고정글은 DB에 없어도 all-known stop을 막지 않음."""
+        meta = {1: {"articleNo": 1}}
+        items = [self._item(99, pinned=True), self._item(1)]
+        assert should_continue(items, meta) is False
+
+    def test_pinned_only_page_stops(self):
+        """고정글만 남은 페이지 = 일반 글 소진 → stop."""
+        assert should_continue([self._item(99, pinned=True)], {}) is False
