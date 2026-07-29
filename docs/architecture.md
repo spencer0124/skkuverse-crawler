@@ -160,7 +160,9 @@ CLI entrypoint (cli.py / notices/cli.py)
 - 1페이지 목록은 항상 fetch하되, DB의 기존 메타(title, date)와 비교
 - **변경된 글만** 상세 fetch + upsert
 - **변경 없는 글**: `bulk_touch_notices()`로 views + crawled_at만 갱신
-- 모든 article_no가 DB에 있으면 → early stop
+- 페이지의 모든 **일반 글**이 DB에 있으면 → all-known early stop (`should_continue()`)
+- 페이지의 **일반 글**이 전부 `SERVICE_START_DATE` 이전이면 → floor stop (`_page_below_floor()`)
+- 상단 고정(`공지`) 행은 모든 페이지에 반복 노출되므로 두 판정 모두에서 제외 — skku-standard 파서가 첫 info 셀("공지" vs "No.###")로 `pinned` 플래그를 세움. 고정글은 페이지 0에서 항상 처리되므로 누락 없음
 
 ### Error Handling
 | 상황 | 처리 |

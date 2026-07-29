@@ -14,6 +14,7 @@ class NoticeListItem:
     date: str  # YYYY-MM-DD
     views: int
     detailPath: str  # relative or absolute URL to detail page
+    pinned: bool = False  # 상단 고정(공지) row — repeats on every list page
 
 
 @dataclass

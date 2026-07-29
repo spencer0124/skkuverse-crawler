@@ -63,7 +63,16 @@ def should_continue(
     page_items: list[NoticeListItem],
     existing_meta: dict[int, dict[str, Any]],
 ) -> bool:
-    return not all(item.articleNo in existing_meta for item in page_items)
+    """True while the page still holds unknown regular rows.
+
+    Pinned rows are excluded: they repeat on every page and, when they
+    pre-date SERVICE_START_DATE, are never stored — counting them would keep
+    every page looking "unknown" and defeat the all-known early-stop. Any
+    pinned notice is always visible on page 0, so ignoring it here never
+    skips content. A page with only pinned rows means regular posts ran out.
+    """
+    regular_items = [item for item in page_items if not item.pinned]
+    return not all(item.articleNo in existing_meta for item in regular_items)
 
 
 async def upsert_notice(

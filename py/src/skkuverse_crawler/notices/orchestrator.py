@@ -141,6 +141,20 @@ async def run_crawl(
     return results
 
 
+def _page_below_floor(list_items: list[NoticeListItem]) -> bool:
+    """True when every regular row on the page pre-dates SERVICE_START_DATE.
+
+    Pinned rows repeat on every page, so a single recent pinned notice would
+    otherwise keep this check false all the way to the last page. Judge the
+    floor on regular rows only; a page with no regular rows falls through and
+    stops via empty_list_page/all_known on the next one.
+    """
+    regular_items = [item for item in list_items if not item.pinned]
+    return bool(regular_items) and all(
+        item.date and item.date < SERVICE_START_DATE for item in regular_items
+    )
+
+
 async def _crawl_department(
     dept: dict[str, Any],
     collection: Any,
@@ -209,11 +223,16 @@ async def _crawl_department(
             logger.info("empty_list_page", dept_id=dept["id"], page=page)
             break
 
-        if all(item.date and item.date < SERVICE_START_DATE for item in list_items):
+        is_first_page = page == 0
+        below_floor = _page_below_floor(list_items)
+
+        # Page 0 must be processed even when its regular rows are all below
+        # the floor: a pinned row dated after the floor only ever surfaces
+        # here, and breaking first would silently drop it forever. Deeper
+        # pages repeat the same pinned rows, so breaking pre-process is safe.
+        if below_floor and not is_first_page:
             logger.info("floor_date_stopping", page=page, dept_id=dept["id"])
             break
-
-        is_first_page = page == 0
 
         if options.incremental:
             article_nos = [item.articleNo for item in list_items]
@@ -236,6 +255,10 @@ async def _crawl_department(
             )
         else:
             await _process_page_full(list_items, strategy, dept, collection, result, logger)
+
+        if below_floor:
+            logger.info("floor_date_stopping", page=page, dept_id=dept["id"])
+            break
 
         page += 1
 

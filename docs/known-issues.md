@@ -43,6 +43,43 @@
 - **해결**: 프로덕션 `py/docker-compose.yml`에서 `- CRAWL_SOURCE_FILTER=...` 라인 삭제 → `docker compose up -d crawler` 재생성. 수동 검증 크롤(`docker exec ... notices --once --source biz-undergrad --pages 1`)에서 11건 신규 수집 확인.
 - **재발 방지**: CLAUDE.md의 `CRAWL_SOURCE_FILTER` 설명에 ⚠️ 경고 강화. 향후 "distinct crawled dept count < enabled dept count" 알람 구축 고려.
 
+### ~~8. 법학전문대학원(sls) 사이트 개편으로 게시판 URL 404 → 크롤 침묵 중단~~ (2026-07-29 해결)
+- **문제**: sls.skku.edu가 게시판 경로에서 `/community/` 세그먼트를 제거하고 법전원 게시판을 개명(`notice_special_law.do` → `notice_sls.do`). `sls-general`/`sls-special` 두 소스가 2026-07-14경부터 404로 침묵 중단됨.
+- **증상**: 매 크롤 틱마다 `list_fetch_failed` 에러 2건 반복, 신규 공지 미수집 약 2주. update-check도 저장된 구 sourceUrl로 전량 404 — 단, **mass-404 안전장치**(총 시도 ≥5건 중 404 비율 >50%면 soft-delete 보류)가 작동해 오삭제 0건.
+- **해결**:
+  - `sources.json` baseUrl 2건 교체 (`/sls/notice_general_law.do`, `/sls/notice_sls.do`). articleNo 체계가 연속이라 incremental 크롤이 공백 구간을 자동 백필.
+  - 기존 문서 200건(sls-general 55 + sls-special 145)의 `sourceUrl`을 새 경로로 일괄 재작성 (구 articleNo가 새 URL에서 정상 렌더됨을 검증 후). `detailPath`는 상대경로(`?mode=view...`)라 무영향.
+  - 적대적 검증에서 추가 갭 발견: **`attachments[].url`도 게시판 .do 경로를 내장** (`skku_standard.py`의 `{baseUrl}?mode=download&...`) → 95건(44+51) 추가 마이그레이션. attachNo 체계도 연속이라 새 경로에서 다운로드 정상 (GET 200 검증).
+  - **동일 부류**: `success`(학생성공센터)도 같은 개편으로 404 → baseUrl 수정 + sourceUrl 51건/첨부 5건 마이그레이션 (2026-07-29).
+- **주의**: sls 다운로드 핸들러는 HEAD 요청에 404/403을 반환하고 GET만 정상 (www.skku.edu는 HEAD 200). `validate-attachments`가 HEAD 기반이라 sls에서 오탐 발생 — GET(range) fallback 개선 여지.
+- **재발 방지**: SKKU CMS 개편(`/community/` 경로 제거)이 사이트별 순차 진행 중으로 보임 (sls·success·hakbu 확인, sco는 아직 구경로) — "소스별 연속 list_fetch_failed N틱 이상" 알람 구축 고려 (§7의 coverage 알람과 동일 계열).
+
+### ~~9. 최신 고정 공지가 floor-date early-stop을 무력화하는 잠재 이슈~~ (2026-07-29 해결)
+- **문제**: 상단 고정(`공지`) 행은 게시판의 **모든 리스트 페이지에 반복 노출**되는데, floor stop 판정이 `all(item.date < SERVICE_START_DATE)`라 고정글 하나만 서비스 시작일 이후여도 조건이 영원히 거짓 → 새 글이 올라온 틱마다 게시판 끝(또는 max_pages)까지 페이지네이션. 서비스 시작일 이전 일반 글은 저장되지 않아 all_known stop도 발동 불가.
+- **증상**: 아직 프로덕션 미발현 (현재 크롤 대상 게시판의 고정글이 전부 2026-03-09 이전). 발현 시 데이터 오염은 없고 list fetch 낭비만 발생하는 잠재 이슈였음.
+- **해결**:
+  - skku-standard 파서가 첫 info 셀("공지" vs "No.###")로 `NoticeListItem.pinned` 플래그 세팅 (`infoParser: labeled` 게시판은 해당 셀 구조가 없어 기본값 False).
+  - floor 판정을 `_page_below_floor()` 순수 함수로 추출, **일반 행만** 대상으로 판정. 고정글만 있는 페이지는 stop하지 않음(페이지 0의 고정글 처리 누락 방지) — 다음 페이지의 empty/all_known이 종료 담당.
+  - 같은 뿌리의 실존 비효율도 함께 수정: `dedup.should_continue()`(all-known early-stop)에서도 고정글 제외. floor 이전 고정글은 저장되지 않아 매 페이지가 "미지 항목 있음"으로 보였고, 조용한 틱에도 date floor까지 매번 페이지네이션했음 (sco 기준 list fetch 6회 → 1회). 고정글은 항상 페이지 0에도 노출되므로 제외해도 내용 누락 없음.
+  - 테스트 10건 추가 (`test_orchestrator.py::TestPageBelowFloor`, `test_skku_standard.py::test_crawl_list_detects_pinned_rows`, `test_dedup.py::TestShouldContinue`).
+- **후속 보강 (같은 날)**:
+  - 적대적 검증이 잡은 회귀 창: floor break가 페이지 처리 **전에** 실행되어, "page 0 일반 글 전부 floor 이전 + 신규 고정글" 조합에서 신규 고정글이 영구 누락될 수 있었음 → page 0은 처리 후 break, 깊은 페이지는 처리 전 break (고정글은 page 0에 항상 노출되므로 안전).
+  - **구분자 전수 실검증** (2026-07-29): 전 skku-standard 게시판 135개 × 2페이지 = 2,793행 라이브 감사. 첫 info 셀은 예외 없이 "공지" 또는 "No.###" (제3 변형 0건), 파서 pinned 플래그와 셀 값 불일치 0건, 고정글의 페이지 반복 전제 위반 0건, 고정글이 번호행으로 중복 노출된 사례 0건 (고정글 보유 게시판 44개·316행 기준).
+- **한계**: pinned 감지는 skku-standard 전략만 구현 (`infoParser: labeled`인 chem은 미적용 — 현재 고정글 0건, 발현 시 성능 저하만). 타 전략(gnuboard 등)의 고정글 관례는 상이하며 동일 증상 발현 시 전략별 감지 추가 필요. `pinned`는 DB에 저장하지 않음(앱 상단 고정 기능은 별도 작업).
+
+### 10. 학부대학(hakbu) 사이트 개편 — 9개 소스 침묵 중단 (미해결, 2026-07-29 발견)
+- **문제**: hakbu.skku.edu도 `/community/` 경로 제거 개편(§8과 동일 부류)으로 `hakbu` + `hakbu-portal` 계열 8개가 404. 매 틱 에러 9건.
+- **§8보다 복잡한 이유**: 단순 경로 이동이 아님 —
+  - 새 게시판(`/hakbu/notice.do`, `/hakbu/notice_total.do`)의 상세 링크가 `articleNo=` 대신 `viewBoardId=...&itemId=...` 체계. itemId가 숫자인 행도 있고 **16진수 문자열인 행도 있음** (`itemId=D7D66C75...`) → 파서의 `articleNo=(\d+)|itemId=(\d+)` 추출 실패로 행 자체가 스킵됨.
+  - itemId 숫자부가 기존 articleNo와 다른 번호공간이면 dedup 키 충돌/중복 삽입 + 재푸시 위험.
+  - 구 `boardId=13888X` 카테고리 필터가 새 `notice_total.do`에서 유효한지 미확인 (제목은 boardId 무관 동일).
+- **필요 작업**: 새 링크 체계 분석 → 파서/전략 대응(16진수 itemId 처리 포함) → 소스 매핑 재설계 → 기존 문서 마이그레이션 전략. 학부통합 계열은 앱 주요 소스라 우선순위 높음.
+
+### 11. cheme·nano SSL 인증서 체인 오류 — 크롤 중단 (미해결, 2026-07-29 발견)
+- **문제**: `cheme.skku.edu`/`nano.skku.edu`의 `*.skku.edu` 인증서가 중간 인증서(Thawte TLS RSA CA G1) 없이 서빙됨 (`openssl verify return code: 21 — unable to verify the first certificate`). httpx가 `CERTIFICATE_VERIFY_FAILED`로 매 틱 실패.
+- **원인**: 학교 측 인증서 갱신 시 체인 미포함 배포로 추정 (서버 설정 문제).
+- **선택지**: (a) 학교 측 수정 대기, (b) 크롤러 fetcher에 해당 중간 CA를 추가한 커스텀 SSL 컨텍스트 (호스트 한정), (c) 해당 소스만 verify 완화 — (c)는 지양.
+
 ### 3. `lastModified` 필드 미구현
 - 상세 페이지 `<span class="date">최종 수정일 : 2026.03.27</span>` 에서 추출 가능
 - 현재는 Notice 모델에 선언만 되어있고 값을 채우지 않음
