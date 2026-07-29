@@ -1009,7 +1009,7 @@
     "crawlAvailable": true,
     "crawlEnabled": true,
     "excludeReason": null,
-    "baseUrl": "https://sls.skku.edu/sls/community/notice_general_law.do",
+    "baseUrl": "https://sls.skku.edu/sls/notice_general_law.do",
     "selectors": {
       "listItem": "dl.board-list-content-wrap",
       "category": "span.c-board-list-category",
@@ -1034,7 +1034,7 @@
     "crawlAvailable": true,
     "crawlEnabled": true,
     "excludeReason": null,
-    "baseUrl": "https://sls.skku.edu/sls/community/notice_special_law.do",
+    "baseUrl": "https://sls.skku.edu/sls/notice_sls.do",
     "selectors": {
       "listItem": "dl.board-list-content-wrap",
       "category": "span.c-board-list-category",
