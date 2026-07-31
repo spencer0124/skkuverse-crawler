@@ -15,5 +15,6 @@
 | [adr-003](adr-003-hybrid-search-atlas.md) | 하이브리드 검색 — Atlas Search(nori) + Vector Search + $rankFusion | 채택됨 |
 | [adr-004](adr-004-mcp-server.md) | MCP 서버 — 크롤러 레포 내 모듈, fastmcp, 익명 공개 HTTP | 대체됨 (→ skkuverse-ai adr-001) |
 | [adr-005](adr-005-hakbu-board-remap.md) | 학부대학 게시판 개편 — hakbu 단일 복구 + 포털연동 슬라이스 폐기 | 채택됨 |
+| [adr-006](adr-006-core-plugin-split.md) | 코어/플러그인 분리 — 무상태 코어 + 3-포트 seam + 단일 배포물 extras | **제안됨** |
 
-관련 문서: [search-architecture.md](../search-architecture.md) (설계), [search-mcp-plan.md](../search-mcp-plan.md) (단계별 작업 계획). MCP 서버·임베딩 API 문서는 `skkuverse-ai/docs/explanation/{mcp-server,embedding-service}.md`로 이관됨 (크롤러 OSS 공개 계획 때문 — skkuverse-ai adr-001 참조).
+관련 문서: [search-architecture.md](../search-architecture.md) (설계), [search-mcp-plan.md](../search-mcp-plan.md) (단계별 작업 계획), [core-plugin-architecture.md](../core-plugin-architecture.md) (설계) + [core-plugin-plan.md](../core-plugin-plan.md) (단계별 작업 계획). MCP 서버·임베딩 API 문서는 `skkuverse-ai/docs/explanation/{mcp-server,embedding-service}.md`로 이관됨 (크롤러 OSS 공개 계획 때문 — skkuverse-ai adr-001 참조).
