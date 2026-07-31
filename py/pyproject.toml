@@ -25,6 +25,7 @@ dev = [
     "respx>=0.21",
     "ruff>=0.7",
     "mypy>=1.13",
+    "testcontainers[mongodb]>=4.0",
 ]
 
 [project.scripts]
@@ -40,6 +41,10 @@ packages = ["src/skkuverse_crawler"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+markers = [
+    "mongo: requires real MongoDB (Docker via testcontainers, or MONGO_TEST_URL)",
+]
+addopts = "-m 'not mongo'"
 
 [tool.mypy]
 python_version = "3.12"
