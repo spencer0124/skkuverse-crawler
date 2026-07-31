@@ -43,7 +43,7 @@ python scripts/generate_artifacts.py    # sources.json + categories.json → 7�
 
 | 아티팩트 | 출력 위치 | 용도 |
 |---------|----------|------|
-| `source_ids.py` | `py/src/.../config/source_ids.py` | Python SourceId enum |
+| `source_ids.py` | `py/src/.../modules/notices/config/source_ids.py` | Python SourceId enum |
 | `server-sources.json` | `py/generated/` → `skkuverse-server` 복사 | 서버 API 응답용 (noticeAvailable, hasCategory, hasAuthor 포함) |
 | `docker-crawl-filter.env` | `py/generated/` | Docker 참고용 |
 | `coverage-table.md` | `docs/department-coverage-analysis.md` | 캠퍼스/단과대별 학과 테이블 |
@@ -51,7 +51,7 @@ python scripts/generate_artifacts.py    # sources.json + categories.json → 7�
 | `departments-by-app-category.md` | `docs/departments-by-app-category.md` | 앱 카테고리별 학과 목록 |
 | `server-categories.json` | `py/generated/` → `skkuverse-server` 복사 | Server-driven 탭 구성 (탭 순서, 라벨, picker/fixed 모드) |
 | `server-exclude-reasons.json` | `py/generated/` → `skkuverse-server` 복사 | excludeReason 키→문구(ko/en) 맵 — 앱 미지원 사유 문구를 server-driven으로 |
-| `sources.json` (패키지 사본) | `py/src/.../notices/config/sources.json` | wheel/editable/컨테이너용 런타임 패키지 데이터. SSOT는 레포 루트 — codegen이 바이트 동일 복사, 테스트가 동기화 강제 |
+| `sources.json` (패키지 사본) | `py/src/.../modules/notices/config/sources.json` | wheel/editable/컨테이너용 런타임 패키지 데이터. SSOT는 레포 루트 — codegen이 바이트 동일 복사, 테스트가 동기화 강제 |
 
 `py/generated/`는 `.gitignore`에 등록됨.
 
@@ -66,7 +66,7 @@ python scripts/generate_artifacts.py    # sources.json + categories.json → 7�
 
 ### 공통 패턴
 
-**모듈형 구조**: `shared/` (config, DB, logger, HTTP 클라이언트) + 각 모듈 디렉토리 (notices, notices_summary)
+**모듈형 구조**: `shared/` (config, DB, logger, HTTP 클라이언트) + `core/` (모듈 프레임워크·결과 타입) + `modules/` 하위 모듈 디렉토리 (notices; notices_summary·crawl_health는 plugins 이관 전까지 최상위 유지)
 
 **Strategy Pattern**: `CrawlStrategy` 인터페이스 + `sources.json` config-driven. 전략 목록은 `sources.json`의 `strategy` 필드 및 `generate_artifacts.py`의 `STRATEGY_FEATURES` 참조.
 
@@ -89,7 +89,7 @@ python scripts/generate_artifacts.py    # sources.json + categories.json → 7�
 
 **Markdown 변환**: `shared/html_to_markdown.py`. cleanHtml을 입력으로 받아 markdownify + 전처리(박스 테이블 unwrap, 첫 행 all-bold → `<thead><th>` 승격, `<td>` 내부 `<p>/<div>` flatten)로 GFM을 생성 → `cleanMarkdown` 필드에 저장. `content`/`cleanHtml`/`contentText`는 그대로 유지. 이미지에 width/height 속성이 있으면 `{WxH}` 포맷으로 alt text 앞에 prepend: `![{800x600} 포스터](url)`. width만 있으면 `{w800}`, height만 있으면 `{h600}`. 앱에서 `!\[\{(\d+)x(\d+)\}` 정규식으로 파싱.
 
-**이미지 검증**: `notices/image_verifier.py`. 크롤링 시 `<img>` URL마다 HTTP Range 헤더로 첫 32KB만 요청 → `imagesize` 라이브러리로 dimension 파싱. Range 미지원 서버는 Content-Length ≤ 5MB일 때 전체 응답 사용, 초과 시 스킵. 감지된 dimension은 `normalizer._inject_image_dimensions()`이 cleanHtml의 `<img>` 태그에 `width`/`height` 속성으로 주입.
+**이미지 검증**: `modules/notices/image_verifier.py`. 크롤링 시 `<img>` URL마다 HTTP Range 헤더로 첫 32KB만 요청 → `imagesize` 라이브러리로 dimension 파싱. Range 미지원 서버는 Content-Length ≤ 5MB일 때 전체 응답 사용, 초과 시 스킵. 감지된 dimension은 `normalizer._inject_image_dimensions()`이 cleanHtml의 `<img>` 태그에 `width`/`height` 속성으로 주입.
 
 **contentText 추출**: `normalizer._text_from_clean_html()`. 블록 요소(`<tr>`, `<p>`, `<div>`, `<h1-4>`, `<li>`, `<br>`)가 개행을 만들고 `<td>/<th>`는 공백으로 구분(기존 동작). 셀 내부 `<br>`은 행 구분과 충돌하므로 공백으로 대체.
 
@@ -97,14 +97,14 @@ python scripts/generate_artifacts.py    # sources.json + categories.json → 7�
 
 **첨부파일 Referer**: gnuboard 계열 학과(nano, bio-undergrad, bio-grad, pharm)의 `download.php`는 PHP 세션 + Referer 헤더를 검증. 크롤러가 attachment 메타데이터에 `referer` (상세 페이지 URL)를 저장하여 서버 프록시가 세션 수립 후 다운로드할 수 있도록 지원. gnuboard-custom(nano)은 케이스 A(아무 페이지 세션 OK), gnuboard 표준(pharm, bio)은 케이스 B(상세 페이지 방문 필수). bio는 https 미지원(http only).
 
-**첨부파일 검증**: `notices/attachment_validator.py`. URL scheme·host 허용 여부, name 품질, gnuboard referer 존재, 중복 URL, HTTP 도달성(HEAD 요청)을 검사. CLI로 `validate-attachments` 실행. `--no-http`으로 네트워크 체크 스킵, `--json`으로 기계 판독 가능 출력.
+**첨부파일 검증**: `modules/notices/attachment_validator.py`. URL scheme·host 허용 여부, name 품질, gnuboard referer 존재, 중복 URL, HTTP 도달성(HEAD 요청)을 검사. CLI로 `validate-attachments` 실행. `--no-http`으로 네트워크 체크 스킵, `--json`으로 기계 판독 가능 출력.
 
-**Markdown 검증**: `notices/markdown_validator.py`. cleanMarkdown 필드의 렌더링 품질을 검사. broken emphasis(닫히지 않은 `*`/`**`), 빈 링크, 이미지 dimension 포맷(`{WxH}`), 과도한 빈 줄 등을 감지. severity는 `error`/`warning` 두 단계. CLI로 `validate-markdown` 실행.
+**Markdown 검증**: `modules/notices/markdown_validator.py`. cleanMarkdown 필드의 렌더링 품질을 검사. broken emphasis(닫히지 않은 `*`/`**`), 빈 링크, 이미지 dimension 포맷(`{WxH}`), 과도한 빈 줄 등을 감지. severity는 `error`/`warning` 두 단계. CLI로 `validate-markdown` 실행.
 
 ### 모듈 시스템 (`py/src/skkuverse_crawler/`)
 
-- `modules/base.py` — `ModuleConfig` (name, collection_name, cron_schedule 또는 interval_seconds) + `CrawlModule` Protocol
-- `modules/registry.py` — 전역 모듈 레지스트리
+- `core/module.py` — `ModuleConfig` (name, cron_schedule 또는 interval_seconds) + `CrawlModule` Protocol
+- `core/registry.py` — 전역 모듈 레지스트리
 - `cli.py` — APScheduler로 모듈 스케줄링. CronTrigger(notices). `max_instances=1` + `coalesce=True`
 - `shared/config.py` — 중앙집중 환경 설정. frozen `Config` dataclass 싱글턴. `init_config()` → `load_dotenv(override=False)` + validation + 캐시. 모든 `os.getenv()` 호출이 여기에 집중됨
 - `shared/db.py` — Motor async MongoDB 싱글턴. `get_config().mongo_db_name`으로 환경별 DB 라우팅
@@ -147,7 +147,7 @@ Python 테스트는 `py/tests/`에 위치. `respx`로 httpx 요청 목킹, `conf
 
 ## Adding New Modules
 
-1. `py/src/skkuverse_crawler/<module>/` 생성 (module.py, fetcher.py 등)
+1. `py/src/skkuverse_crawler/modules/<module>/` 생성 (module.py, fetcher.py 등)
 2. `CrawlModule` Protocol 구현 (run, shutdown, config)
 3. `cli.py`의 `_start_scheduler()`에 `registry.register()` 추가
 4. `shared/` 인프라 재사용 (config, db, logger, fetcher)
