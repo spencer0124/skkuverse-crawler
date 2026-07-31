@@ -1,0 +1,184 @@
+[
+  [
+    "create_index",
+    {
+      "keys": [
+        [
+          "articleNo",
+          1
+        ],
+        [
+          "sourceId",
+          1
+        ]
+      ],
+      "name": null,
+      "partialFilterExpression": null,
+      "unique": true
+    }
+  ],
+  [
+    "create_index",
+    {
+      "keys": [
+        [
+          "sourceId",
+          1
+        ],
+        [
+          "date",
+          -1
+        ]
+      ],
+      "name": null,
+      "partialFilterExpression": null,
+      "unique": false
+    }
+  ],
+  [
+    "find",
+    {
+      "filter": {
+        "$or": [
+          {
+            "content": null
+          },
+          {
+            "content": ""
+          }
+        ],
+        "sourceId": "golden-std"
+      },
+      "projection": {
+        "articleNo": 1,
+        "detailPath": 1
+      }
+    }
+  ],
+  [
+    "find",
+    {
+      "filter": {
+        "articleNo": {
+          "$in": [
+            100,
+            101,
+            102,
+            103
+          ]
+        },
+        "sourceId": "golden-std"
+      },
+      "projection": {
+        "articleNo": 1,
+        "contentHash": 1,
+        "date": 1,
+        "title": 1
+      }
+    }
+  ],
+  [
+    "update_one",
+    {
+      "filter": {
+        "articleNo": 101,
+        "sourceId": "golden-std"
+      },
+      "update": {
+        "$inc": {
+          "editCount": 1
+        },
+        "$push": {
+          "editHistory": {
+            "$each": [
+              {
+                "contentChanged": false,
+                "detectedAt": "<UTC_DATETIME>",
+                "newHash": "0073590648a74e926c85b191a464906cdc95de1bfd44eff5a86470d735c0191e",
+                "newTitle": "2026학년도 하계 계절수업 신청 안내 (일정 변경)",
+                "oldHash": "0073590648a74e926c85b191a464906cdc95de1bfd44eff5a86470d735c0191e",
+                "oldTitle": "2026학년도 하계 계절수업 신청 안내",
+                "source": "tier1",
+                "titleChanged": true
+              }
+            ],
+            "$slice": -20
+          }
+        },
+        "$set": {
+          "articleNo": 101,
+          "attachments": [
+            {
+              "name": "계절수업_운영계획.pdf",
+              "url": "https://skku-std.test/board/notice.do?mode=download&articleNo=101&attachNo=11"
+            }
+          ],
+          "author": "학사운영팀",
+          "category": "학사",
+          "cleanHtml": "<p>하계 계절수업 수강신청을 아래와 같이 진행합니다.</p>\n<table>\n<tbody><tr><td>신청 기간</td><td>2026-05-01 ~ 2026-05-07</td></tr>\n<tr><td>수업 기간</td><td>2026-06-22 ~ 2026-07-10</td></tr>\n</tbody></table>\n<p>자세한 사항은 첨부 파일을 확인해 주세요.</p>",
+          "cleanMarkdown": "하계 계절수업 수강신청을 아래와 같이 진행합니다.\n\n| 신청 기간 | 2026-05-01 ～ 2026-05-07 |\n| --- | --- |\n| 수업 기간 | 2026-06-22 ～ 2026-07-10 |\n\n자세한 사항은 첨부 파일을 확인해 주세요.",
+          "content": "<p>하계 계절수업 수강신청을 아래와 같이 진행합니다.</p>\n<table>\n<tr><td>신청 기간</td><td>2026-05-01 ~ 2026-05-07</td></tr>\n<tr><td>수업 기간</td><td>2026-06-22 ~ 2026-07-10</td></tr>\n</table>\n<p>자세한 사항은 첨부 파일을 확인해 주세요.</p>",
+          "contentHash": "0073590648a74e926c85b191a464906cdc95de1bfd44eff5a86470d735c0191e",
+          "contentText": "하계 계절수업 수강신청을 아래와 같이 진행합니다.\n\n신청 기간 2026-05-01 ~ 2026-05-07 \n\n수업 기간 2026-06-22 ~ 2026-07-10 \n\n자세한 사항은 첨부 파일을 확인해 주세요.",
+          "crawledAt": "<UTC_DATETIME>",
+          "date": "2026-04-01",
+          "department": "골든 표준 게시판",
+          "detailPath": "?mode=view&articleNo=101&article.offset=0&articleLimit=10",
+          "lastModified": null,
+          "sourceId": "golden-std",
+          "sourceUrl": "https://skku-std.test/board/notice.do?mode=view&articleNo=101&article.offset=0&articleLimit=10",
+          "title": "2026학년도 하계 계절수업 신청 안내 (일정 변경)",
+          "views": 120
+        }
+      },
+      "upsert": false
+    }
+  ],
+  [
+    "bulk_write",
+    {
+      "ops": [
+        {
+          "filter": {
+            "articleNo": 100,
+            "sourceId": "golden-std"
+          },
+          "update": {
+            "$set": {
+              "crawledAt": "<UTC_DATETIME>",
+              "views": 1500
+            }
+          },
+          "upsert": false
+        },
+        {
+          "filter": {
+            "articleNo": 102,
+            "sourceId": "golden-std"
+          },
+          "update": {
+            "$set": {
+              "crawledAt": "<UTC_DATETIME>",
+              "views": 85
+            }
+          },
+          "upsert": false
+        },
+        {
+          "filter": {
+            "articleNo": 103,
+            "sourceId": "golden-std"
+          },
+          "update": {
+            "$set": {
+              "crawledAt": "<UTC_DATETIME>",
+              "views": 60
+            }
+          },
+          "upsert": false
+        }
+      ],
+      "ordered": false
+    }
+  ]
+]

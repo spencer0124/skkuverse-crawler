@@ -1,0 +1,13 @@
+[
+  {
+    "dept_id": "golden-gnb",
+    "dept_name": "골든 그누보드",
+    "duration_ms": 0,
+    "errors": 0,
+    "inserted": 5,
+    "last_error": "",
+    "skipped": 0,
+    "source_down": false,
+    "updated": 0
+  }
+]

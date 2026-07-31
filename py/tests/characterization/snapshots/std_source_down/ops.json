@@ -1,0 +1,58 @@
+[
+  [
+    "create_index",
+    {
+      "keys": [
+        [
+          "articleNo",
+          1
+        ],
+        [
+          "sourceId",
+          1
+        ]
+      ],
+      "name": null,
+      "partialFilterExpression": null,
+      "unique": true
+    }
+  ],
+  [
+    "create_index",
+    {
+      "keys": [
+        [
+          "sourceId",
+          1
+        ],
+        [
+          "date",
+          -1
+        ]
+      ],
+      "name": null,
+      "partialFilterExpression": null,
+      "unique": false
+    }
+  ],
+  [
+    "find",
+    {
+      "filter": {
+        "$or": [
+          {
+            "content": null
+          },
+          {
+            "content": ""
+          }
+        ],
+        "sourceId": "golden-std"
+      },
+      "projection": {
+        "articleNo": 1,
+        "detailPath": 1
+      }
+    }
+  ]
+]

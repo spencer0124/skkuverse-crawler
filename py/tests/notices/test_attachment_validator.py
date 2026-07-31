@@ -4,6 +4,7 @@ import asyncio
 from unittest.mock import AsyncMock, patch
 
 import httpx
+import pytest
 import respx
 
 from skkuverse_crawler.notices.attachment_validator import (
@@ -18,6 +19,10 @@ from skkuverse_crawler.notices.attachment_validator import (
     validate_referer,
     validate_url_scheme,
 )
+
+# validate_attachments() resolves its collection via a lazy `get_db()` import —
+# mock_db_patch is the only way a test reaches it with a mock.
+pytestmark = pytest.mark.usefixtures("mock_db_patch")
 
 # ---------------------------------------------------------------------------
 # Sync: validate_url_scheme
