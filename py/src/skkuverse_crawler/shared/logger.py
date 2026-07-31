@@ -5,12 +5,10 @@ from urllib.parse import urlparse
 
 import structlog
 
-from .config import get_config
+from .config import Config
 
 
-def configure_logging() -> None:
-    cfg = get_config()
-
+def configure_logging(cfg: Config) -> None:
     level = logging.CRITICAL if cfg.is_test else logging.INFO
 
     structlog.reset_defaults()

@@ -4,7 +4,7 @@ import httpx
 import pytest
 import respx
 
-from skkuverse_crawler.shared.config import reset_config
+from skkuverse_crawler.shared.config import init_config, reset_config
 from skkuverse_crawler.shared.discord import send_discord
 
 WEBHOOK = "https://discord.com/api/webhooks/123/token-abc"
@@ -13,7 +13,7 @@ WEBHOOK = "https://discord.com/api/webhooks/123/token-abc"
 @pytest.fixture()
 def _webhook_env(monkeypatch):
     monkeypatch.setenv("DISCORD_WEBHOOK_URL", WEBHOOK)
-    reset_config()
+    init_config(force=True)
     yield
     reset_config()
 
@@ -21,7 +21,7 @@ def _webhook_env(monkeypatch):
 class TestSendDiscord:
     async def test_unconfigured_skips(self, monkeypatch):
         monkeypatch.delenv("DISCORD_WEBHOOK_URL", raising=False)
-        reset_config()
+        init_config(force=True)
         assert await send_discord("hello") is False
 
     @respx.mock
