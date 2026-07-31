@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
 
+from ..core.results import SourceResult
 from ..shared.db import get_db
 from ..shared.fetcher import Fetcher
 from ..shared.html_cleaner import clean_html, normalize_content_urls
@@ -27,15 +28,7 @@ from .hashing import compute_content_hash
 from .image_verifier import ImageCheckResult, verify_notice_images
 from .models import NoticeListItem
 from .normalizer import build_notice
-from .strategies.skku_standard import SkkuStandardStrategy
-from .strategies.wordpress_api import WordPressApiStrategy
-from .strategies.skkumed_asp import SkkumedAspStrategy
-from .strategies.jsp_dorm import JspDormStrategy
-from .strategies.custom_php import CustomPhpStrategy
-from .strategies.gnuboard import GnuboardStrategy
-from .strategies.gnuboard_custom import GnuboardCustomStrategy
-from .strategies.pyxis_api import PyxisApiStrategy
-from .strategies.webflow_skku import WebflowSkkuStrategy
+from .strategies import STRATEGY_MAP
 
 
 _MAX_CONTENT_BYTES = 5 * 1024 * 1024  # 5MB
@@ -49,32 +42,7 @@ class CrawlOptions:
     dept_filter: tuple[str, ...] | None = None
 
 
-@dataclass
-class DeptResult:
-    dept_id: str = ""
-    dept_name: str = ""
-    inserted: int = 0
-    updated: int = 0
-    skipped: int = 0
-    errors: int = 0
-    duration_ms: int = 0
-    # Page-0 list fetch failed → the source is unreachable as a whole
-    # (crawl-health alert signal). Partial mid-crawl errors don't set this.
-    source_down: bool = False
-    last_error: str = ""
-
-
-STRATEGY_MAP: dict[str, type] = {
-    "skku-standard": SkkuStandardStrategy,
-    "wordpress-api": WordPressApiStrategy,
-    "skkumed-asp": SkkumedAspStrategy,
-    "jsp-dorm": JspDormStrategy,
-    "custom-php": CustomPhpStrategy,
-    "gnuboard": GnuboardStrategy,
-    "gnuboard-custom": GnuboardCustomStrategy,
-    "pyxis-api": PyxisApiStrategy,
-    "webflow-skku": WebflowSkkuStrategy,
-}
+DeptResult = SourceResult
 
 
 async def run_crawl(
