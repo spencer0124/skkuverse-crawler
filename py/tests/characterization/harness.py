@@ -126,7 +126,9 @@ async def run_golden(
     async def noop_rate_limit(self: Fetcher) -> None:
         return None
 
-    ops_start = len(collection.ops)
+    # Real Motor collections (level-2 conformance) have no .ops — attribute
+    # access there would create a "notices.ops" sub-collection, not a list.
+    ops_start = len(collection.ops) if isinstance(collection, FakeCollection) else 0
     with (
         patch("skkuverse_crawler.notices.orchestrator.get_db", side_effect=fake_get_db),
         patch.object(Fetcher, "_rate_limit", noop_rate_limit),
