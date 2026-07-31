@@ -4,8 +4,8 @@ import re
 from datetime import datetime
 from urllib.parse import urlparse
 
-from ...shared.fetcher import Fetcher
-from ...shared.logger import get_logger
+from ....shared.fetcher import Fetcher
+from ....shared.logger import get_logger
 from ..models import NoticeDetail, NoticeListItem
 from ..parser import load_html, extract_text, extract_attr
 from ..types import DetailRef

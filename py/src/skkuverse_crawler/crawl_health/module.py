@@ -7,8 +7,8 @@ from typing import Any
 
 from bson import ObjectId
 
-from ..modules.base import ModuleConfig
-from ..notices.config.loader import load_and_validate
+from ..core.module import ModuleConfig
+from ..modules.notices.config.loader import load_and_validate
 from ..shared.db import get_db
 from ..shared.discord import send_discord
 from ..shared.logger import get_logger

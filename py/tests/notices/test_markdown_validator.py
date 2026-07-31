@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from skkuverse_crawler.notices.markdown_validator import (
+from skkuverse_crawler.modules.notices.markdown_validator import (
     MarkdownValidationReport,
     check_broken_link,
     check_cross_line_strong,

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock
 
-from skkuverse_crawler.notices.strategies.webflow_skku import (
+from skkuverse_crawler.modules.notices.strategies.webflow_skku import (
     WebflowSkkuStrategy,
     slug_to_article_no,
 )

@@ -6,8 +6,8 @@ from importlib import resources
 from pathlib import Path
 from typing import Any
 
-from ...core.sources import SourceConfigError
-from ...shared.logger import get_logger
+from ....core.sources import SourceConfigError
+from ....shared.logger import get_logger
 
 logger = get_logger("config_loader")
 
@@ -53,7 +53,7 @@ def _resolve_sources_path(anchor: Path | None = None) -> Path:
 
     # importlib.resources: for a regular (non-zipped) install this is a real
     # filesystem path; we never ship zipped wheels.
-    bundled = Path(str(resources.files("skkuverse_crawler.notices.config") / "sources.json"))
+    bundled = Path(str(resources.files("skkuverse_crawler.modules.notices.config") / "sources.json"))
     if bundled.is_file():
         return bundled
     raise SourceConfigError(

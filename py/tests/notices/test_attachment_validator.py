@@ -7,7 +7,7 @@ import httpx
 import pytest
 import respx
 
-from skkuverse_crawler.notices.attachment_validator import (
+from skkuverse_crawler.modules.notices.attachment_validator import (
     ValidationReport,
     check_reachability,
     validate_attachments,
@@ -306,7 +306,7 @@ class TestValidateAttachmentsPipeline:
         ]
 
         with patch(
-            "skkuverse_crawler.notices.config.loader.load_and_validate",
+            "skkuverse_crawler.modules.notices.config.loader.load_and_validate",
             return_value=dept_data,
         ):
             report = await validate_attachments(check_http=False)
@@ -352,7 +352,7 @@ class TestValidateAttachmentsPipeline:
         ]
 
         with patch(
-            "skkuverse_crawler.notices.config.loader.load_and_validate",
+            "skkuverse_crawler.modules.notices.config.loader.load_and_validate",
             return_value=dept_data,
         ):
             report = await validate_attachments(check_http=True)
@@ -386,7 +386,7 @@ class TestValidateAttachmentsPipeline:
         mock_collection.find = lambda *a, **kw: cursor_mock
 
         with patch(
-            "skkuverse_crawler.notices.config.loader.load_and_validate",
+            "skkuverse_crawler.modules.notices.config.loader.load_and_validate",
             return_value=[],  # empty — dept not found
         ):
             report = await validate_attachments(check_http=False)

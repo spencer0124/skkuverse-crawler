@@ -14,8 +14,8 @@ from pathlib import Path
 import pytest
 
 from skkuverse_crawler.core.sources import SourceConfigError
-from skkuverse_crawler.notices.config import loader
-from skkuverse_crawler.notices.config.loader import (
+from skkuverse_crawler.modules.notices.config import loader
+from skkuverse_crawler.modules.notices.config.loader import (
     _resolve_sources_path,
     load_and_validate,
 )

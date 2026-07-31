@@ -24,7 +24,7 @@ from urllib.parse import urlparse
 
 import httpx
 
-from ..shared.logger import get_logger
+from ...shared.logger import get_logger
 
 logger = get_logger("attachment_validator")
 
@@ -256,7 +256,7 @@ async def validate_attachments(
     http_concurrency:
         Max concurrent HTTP requests.
     """
-    from ..shared.db import get_db
+    from ...shared.db import get_db
     from .config.loader import load_and_validate
 
     departments = load_and_validate()

@@ -4,8 +4,8 @@ import hashlib
 import re
 from urllib.parse import urljoin, urlparse
 
-from ...shared.fetcher import Fetcher
-from ...shared.logger import get_logger
+from ....shared.fetcher import Fetcher
+from ....shared.logger import get_logger
 from ..models import NoticeDetail, NoticeListItem
 from ..parser import extract_attr, extract_text, load_html
 from ..types import DetailRef

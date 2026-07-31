@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock
 
-from skkuverse_crawler.notices.strategies.skku_standard import SkkuStandardStrategy
+from skkuverse_crawler.modules.notices.strategies.skku_standard import SkkuStandardStrategy
 
 
 # Subdomain template (cse.skku.edu, sw.skku.edu, skb.skku.edu, etc.)

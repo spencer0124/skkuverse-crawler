@@ -7,12 +7,12 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
 
-from ..core.results import SourceResult
-from ..shared.db import get_db
-from ..shared.fetcher import Fetcher
-from ..shared.html_cleaner import clean_html, normalize_content_urls
-from ..shared.html_to_markdown import html_to_markdown
-from ..shared.logger import get_logger
+from ...core.results import SourceResult
+from ...shared.db import get_db
+from ...shared.fetcher import Fetcher
+from ...shared.html_cleaner import clean_html, normalize_content_urls
+from ...shared.html_to_markdown import html_to_markdown
+from ...shared.logger import get_logger
 from .dedup import (
     bulk_touch_notices,
     ensure_indexes,

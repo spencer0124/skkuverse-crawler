@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock
 
-from skkuverse_crawler.notices.strategies.gnuboard_custom import GnuboardCustomStrategy
+from skkuverse_crawler.modules.notices.strategies.gnuboard_custom import GnuboardCustomStrategy
 
 
 BASE_CONFIG = {

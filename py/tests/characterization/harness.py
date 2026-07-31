@@ -114,7 +114,7 @@ async def run_golden(
     incremental: bool = True,
     max_pages: int | None = None,
 ) -> GoldenRun:
-    from skkuverse_crawler.notices.orchestrator import CrawlOptions, run_crawl
+    from skkuverse_crawler.modules.notices.orchestrator import CrawlOptions, run_crawl
 
     collection = collection if collection is not None else FakeCollection()
     fake_db = FakeDatabase()
@@ -130,7 +130,7 @@ async def run_golden(
     # access there would create a "notices.ops" sub-collection, not a list.
     ops_start = len(collection.ops) if isinstance(collection, FakeCollection) else 0
     with (
-        patch("skkuverse_crawler.notices.orchestrator.get_db", side_effect=fake_get_db),
+        patch("skkuverse_crawler.modules.notices.orchestrator.get_db", side_effect=fake_get_db),
         patch.object(Fetcher, "_rate_limit", noop_rate_limit),
         respx.mock(assert_all_called=False) as respx_router,
         capture_logs() as logs,

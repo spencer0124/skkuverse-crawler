@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING
 
 import click
 
-from ..shared.db import close_client
-from ..shared.logger import configure_logging
+from ...shared.db import close_client
+from ...shared.logger import configure_logging
 from .config.loader import load_and_validate
 from .orchestrator import CrawlOptions, run_crawl
 from .update_checker import run_update_check
@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 @click.option("--delay", type=int, default=500, help="Delay between requests (ms)")
 def notices_cli(once: bool, full_crawl: bool, dept: tuple[str, ...], pages: int | None, delay: int) -> None:
     """Run the notices crawler."""
-    from ..shared.config import init_config
+    from ...shared.config import init_config
 
     cfg = init_config()
     configure_logging(cfg)
@@ -60,7 +60,7 @@ async def _run(
 @click.option("--source", "dept", multiple=True, help="Department ID(s) to check")
 def update_check_cli(days: int, dept: tuple[str, ...]) -> None:
     """Run Tier 2 update detection on recent notices."""
-    from ..shared.config import init_config
+    from ...shared.config import init_config
 
     cfg = init_config()
     configure_logging(cfg)
@@ -97,7 +97,7 @@ def validate_attachments_cli(
     concurrency: int,
 ) -> None:
     """Validate attachment metadata in the notices collection."""
-    from ..shared.config import init_config
+    from ...shared.config import init_config
 
     cfg = init_config()
     configure_logging(cfg)
@@ -178,7 +178,7 @@ def validate_markdown_cli(
     severity: str,
 ) -> None:
     """Validate markdown rendering in stored cleanMarkdown fields."""
-    from ..shared.config import init_config
+    from ...shared.config import init_config
 
     cfg = init_config()
     configure_logging(cfg)

@@ -5,8 +5,8 @@ import re
 from html import unescape
 from urllib.parse import parse_qs, urlencode, urljoin, urlparse
 
-from ...shared.fetcher import Fetcher
-from ...shared.logger import get_logger
+from ....shared.fetcher import Fetcher
+from ....shared.logger import get_logger
 from ..models import NoticeDetail, NoticeListItem
 from ..parser import load_html
 from ..types import DetailRef

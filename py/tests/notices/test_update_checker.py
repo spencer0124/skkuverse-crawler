@@ -4,8 +4,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
 
-from skkuverse_crawler.notices.models import NoticeDetail
-from skkuverse_crawler.notices.update_checker import _check_department
+from skkuverse_crawler.modules.notices.models import NoticeDetail
+from skkuverse_crawler.modules.notices.update_checker import _check_department
 
 
 MOCK_DEPT = {
@@ -32,13 +32,13 @@ class TestCheckDepartmentHashComparison:
         logger = MagicMock()
 
         with patch(
-            "skkuverse_crawler.notices.update_checker.compute_content_hash",
+            "skkuverse_crawler.modules.notices.update_checker.compute_content_hash",
             return_value="existing_hash",
         ), patch(
-            "skkuverse_crawler.notices.update_checker.clean_html",
+            "skkuverse_crawler.modules.notices.update_checker.clean_html",
             return_value="<p>본문</p>",
         ), patch(
-            "skkuverse_crawler.notices.update_checker.STRATEGY_MAP",
+            "skkuverse_crawler.modules.notices.update_checker.STRATEGY_MAP",
             {"skku-standard": MagicMock(return_value=strategy)},
         ):
             result = await _check_department(MOCK_DEPT, notices, mock_collection, AsyncMock(), logger)
@@ -59,13 +59,13 @@ class TestCheckDepartmentHashComparison:
         logger = MagicMock()
 
         with patch(
-            "skkuverse_crawler.notices.update_checker.compute_content_hash",
+            "skkuverse_crawler.modules.notices.update_checker.compute_content_hash",
             return_value="new_hash",
         ), patch(
-            "skkuverse_crawler.notices.update_checker.clean_html",
+            "skkuverse_crawler.modules.notices.update_checker.clean_html",
             return_value="<p>새 본문</p>",
         ), patch(
-            "skkuverse_crawler.notices.update_checker.STRATEGY_MAP",
+            "skkuverse_crawler.modules.notices.update_checker.STRATEGY_MAP",
             {"skku-standard": MagicMock(return_value=strategy)},
         ):
             result = await _check_department(MOCK_DEPT, notices, mock_collection, AsyncMock(), logger)
@@ -95,13 +95,13 @@ class TestCheckDepartmentHashComparison:
         logger = MagicMock()
 
         with patch(
-            "skkuverse_crawler.notices.update_checker.compute_content_hash",
+            "skkuverse_crawler.modules.notices.update_checker.compute_content_hash",
             return_value="new_hash",
         ), patch(
-            "skkuverse_crawler.notices.update_checker.clean_html",
+            "skkuverse_crawler.modules.notices.update_checker.clean_html",
             return_value="<p>본문</p>",
         ), patch(
-            "skkuverse_crawler.notices.update_checker.STRATEGY_MAP",
+            "skkuverse_crawler.modules.notices.update_checker.STRATEGY_MAP",
             {"skku-standard": MagicMock(return_value=strategy)},
         ):
             result = await _check_department(MOCK_DEPT, notices, mock_collection, AsyncMock(), logger)
@@ -126,7 +126,7 @@ class TestCheckDepartmentEdgeCases:
         logger = MagicMock()
 
         with patch(
-            "skkuverse_crawler.notices.update_checker.STRATEGY_MAP",
+            "skkuverse_crawler.modules.notices.update_checker.STRATEGY_MAP",
             {"skku-standard": MagicMock()},
         ):
             result = await _check_department(MOCK_DEPT, notices, mock_collection, AsyncMock(), logger)
@@ -150,13 +150,13 @@ class TestCheckDepartmentEdgeCases:
         logger = MagicMock()
 
         with patch(
-            "skkuverse_crawler.notices.update_checker.compute_content_hash",
+            "skkuverse_crawler.modules.notices.update_checker.compute_content_hash",
             return_value="h2",  # same hash → no update
         ), patch(
-            "skkuverse_crawler.notices.update_checker.clean_html",
+            "skkuverse_crawler.modules.notices.update_checker.clean_html",
             return_value="<p>ok</p>",
         ), patch(
-            "skkuverse_crawler.notices.update_checker.STRATEGY_MAP",
+            "skkuverse_crawler.modules.notices.update_checker.STRATEGY_MAP",
             {"skku-standard": MagicMock(return_value=strategy)},
         ):
             result = await _check_department(MOCK_DEPT, notices, mock_collection, AsyncMock(), logger)
@@ -192,13 +192,13 @@ class TestChangeRateAnomaly:
             return f"new_{call_count}"
 
         with patch(
-            "skkuverse_crawler.notices.update_checker.compute_content_hash",
+            "skkuverse_crawler.modules.notices.update_checker.compute_content_hash",
             side_effect=varying_hash,
         ), patch(
-            "skkuverse_crawler.notices.update_checker.clean_html",
+            "skkuverse_crawler.modules.notices.update_checker.clean_html",
             return_value="<p>새 본문</p>",
         ), patch(
-            "skkuverse_crawler.notices.update_checker.STRATEGY_MAP",
+            "skkuverse_crawler.modules.notices.update_checker.STRATEGY_MAP",
             {"skku-standard": MagicMock(return_value=strategy)},
         ):
             result = await _check_department(MOCK_DEPT, notices, mock_collection, AsyncMock(), logger)
@@ -235,13 +235,13 @@ class TestChangeRateAnomaly:
             return f"old_{call_count - 1}"  # 동일
 
         with patch(
-            "skkuverse_crawler.notices.update_checker.compute_content_hash",
+            "skkuverse_crawler.modules.notices.update_checker.compute_content_hash",
             side_effect=half_changed_hash,
         ), patch(
-            "skkuverse_crawler.notices.update_checker.clean_html",
+            "skkuverse_crawler.modules.notices.update_checker.clean_html",
             return_value="<p>본문</p>",
         ), patch(
-            "skkuverse_crawler.notices.update_checker.STRATEGY_MAP",
+            "skkuverse_crawler.modules.notices.update_checker.STRATEGY_MAP",
             {"skku-standard": MagicMock(return_value=strategy)},
         ):
             result = await _check_department(MOCK_DEPT, notices, mock_collection, AsyncMock(), logger)
@@ -269,13 +269,13 @@ class TestChangeRateAnomaly:
         logger = MagicMock()
 
         with patch(
-            "skkuverse_crawler.notices.update_checker.compute_content_hash",
+            "skkuverse_crawler.modules.notices.update_checker.compute_content_hash",
             return_value="same",
         ), patch(
-            "skkuverse_crawler.notices.update_checker.clean_html",
+            "skkuverse_crawler.modules.notices.update_checker.clean_html",
             return_value="<p>본문</p>",
         ), patch(
-            "skkuverse_crawler.notices.update_checker.STRATEGY_MAP",
+            "skkuverse_crawler.modules.notices.update_checker.STRATEGY_MAP",
             {"skku-standard": MagicMock(return_value=strategy)},
         ):
             result = await _check_department(MOCK_DEPT, notices, mock_collection, AsyncMock(), logger)
@@ -312,7 +312,7 @@ class TestSoftDelete:
         }
 
         with patch(
-            "skkuverse_crawler.notices.update_checker.STRATEGY_MAP",
+            "skkuverse_crawler.modules.notices.update_checker.STRATEGY_MAP",
             {"skku-standard": MagicMock(return_value=strategy)},
         ):
             result = await _check_department(MOCK_DEPT, notices, mock_collection, AsyncMock(), logger)
@@ -338,7 +338,7 @@ class TestSoftDelete:
         }
 
         with patch(
-            "skkuverse_crawler.notices.update_checker.STRATEGY_MAP",
+            "skkuverse_crawler.modules.notices.update_checker.STRATEGY_MAP",
             {"skku-standard": MagicMock(return_value=strategy)},
         ):
             result = await _check_department(MOCK_DEPT, notices, mock_collection, AsyncMock(), logger)
@@ -360,13 +360,13 @@ class TestSoftDelete:
         logger = MagicMock()
 
         with patch(
-            "skkuverse_crawler.notices.update_checker.compute_content_hash",
+            "skkuverse_crawler.modules.notices.update_checker.compute_content_hash",
             return_value="same",
         ), patch(
-            "skkuverse_crawler.notices.update_checker.clean_html",
+            "skkuverse_crawler.modules.notices.update_checker.clean_html",
             return_value="<p>본문</p>",
         ), patch(
-            "skkuverse_crawler.notices.update_checker.STRATEGY_MAP",
+            "skkuverse_crawler.modules.notices.update_checker.STRATEGY_MAP",
             {"skku-standard": MagicMock(return_value=strategy)},
         ):
             await _check_department(MOCK_DEPT, notices, mock_collection, AsyncMock(), logger)
@@ -403,13 +403,13 @@ class TestSoftDelete:
             return f"h{call_count + 3}"  # h4, h5 → match
 
         with patch(
-            "skkuverse_crawler.notices.update_checker.compute_content_hash",
+            "skkuverse_crawler.modules.notices.update_checker.compute_content_hash",
             side_effect=match_hash,
         ), patch(
-            "skkuverse_crawler.notices.update_checker.clean_html",
+            "skkuverse_crawler.modules.notices.update_checker.clean_html",
             return_value="<p>ok</p>",
         ), patch(
-            "skkuverse_crawler.notices.update_checker.STRATEGY_MAP",
+            "skkuverse_crawler.modules.notices.update_checker.STRATEGY_MAP",
             {"skku-standard": MagicMock(return_value=strategy)},
         ):
             result = await _check_department(MOCK_DEPT, notices, mock_collection, AsyncMock(), logger)
@@ -428,11 +428,11 @@ class TestCutoffFloorDate:
     """SERVICE_START_DATE와 window_days의 max 처리."""
 
     def test_floor_date_wins_when_window_is_wider(self):
-        from skkuverse_crawler.notices.constants import SERVICE_START_DATE
+        from skkuverse_crawler.modules.notices.constants import SERVICE_START_DATE
         # window cutoff가 floor date보다 이전 → floor date 사용
         assert max(SERVICE_START_DATE, "2026-03-01") == SERVICE_START_DATE
 
     def test_window_wins_when_narrower(self):
-        from skkuverse_crawler.notices.constants import SERVICE_START_DATE
+        from skkuverse_crawler.modules.notices.constants import SERVICE_START_DATE
         # window cutoff가 floor date보다 이후 → window cutoff 사용
         assert max(SERVICE_START_DATE, "2026-05-01") == "2026-05-01"
