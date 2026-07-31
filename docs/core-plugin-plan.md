@@ -123,10 +123,19 @@
 
 ## PR 4 — 레이아웃 골격 [순수 이동]
 
-- [ ] `git mv`로 `core/`, `modules/notices/` 생성
-- [ ] `ModuleConfig.collection_name` 삭제 (4곳 write, 0곳 read)
+- [x] `git mv`로 `core/`, `modules/notices/` 생성 — 구현 시 확정: `notices/` → `modules/notices/` 통째 이동(`config/` 내부 구조 유지 — `data/` 개명은 loader가 `core/sources.py`로 해체되는 PR과 동행), `modules/base.py` → `core/module.py` + `modules/registry.py` → `core/registry.py` (adr-006 근거 ⑥의 side effect — modules/ 네임스페이스 비우기)
+- [x] `ModuleConfig.collection_name` 삭제 (4곳 write, 0곳 read) — **이동 전 별도 커밋**으로, `base.py → core/module.py`가 100% similarity rename이 되도록
 
-**검증 게이트**: PR 2와 동일한 `git diff -M` 기계 검사. `docker build && docker run --help`.
+**검증 게이트**: PR 2와 동일한 `git diff -M` 기계 검사. `docker compose build`(bare `docker build`는 additional_contexts 때문에 불성립) + `docker compose run --rm --no-deps crawler python -m skkuverse_crawler --help`.
+
+구현 시 확인된 diff 게이트 **carve-out** (non-import 변경 줄의 전수 — 이 밖은 게이트 위반):
+
+1. `modules/notices/config/loader.py`의 `resources.files()` 앵커 문자열 (src 유일)
+2. `collection_name` 삭제 5줄 (선행 커밋)
+3. 테스트의 `mock.patch(...)` 대상 문자열 — `characterization/harness.py`, `test_attachment_validator.py`, `test_orchestrator.py`, `test_update_checker.py`
+4. `scripts/generate_artifacts.py`의 `SOURCE_IDS_PY`·`PACKAGE_SOURCES_JSON` 경로 상수 + `tests/scripts/test_generate_artifacts.py`의 Path 표현식
+
+참고 문서 내 구경로(`docs/api-design-reference.md`, `docs/strategies/*.md`, `docs/known-issues.md`의 `py/src/skkuverse_crawler/notices/...` ~20줄)는 PR 9 공개 문서 정비로 연기.
 
 ## PR 5 — 포트 도입
 
