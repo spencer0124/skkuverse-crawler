@@ -1,0 +1,8 @@
+[
+  "starting_department_crawl",
+  "fetching_list_page",
+  "non_retryable_error",
+  "list_fetch_failed",
+  "department_crawl_finished",
+  "crawl_completed"
+]

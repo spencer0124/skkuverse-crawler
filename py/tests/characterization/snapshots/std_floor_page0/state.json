@@ -1,0 +1,26 @@
+[
+  {
+    "articleNo": 100,
+    "attachments": [],
+    "author": "학사운영팀",
+    "category": "학사",
+    "cleanHtml": "<p>2026학년도 1학기 수강신청 일정을 안내드립니다.</p>\n<p><strong>신청 기간:</strong> 2026-02-10(화) ~ 2026-02-14(토)</p>\n<p><a href=\"https://skku-std.test/files/sugang_guide.pdf\">수강신청 가이드 내려받기</a></p>",
+    "cleanMarkdown": "2026학년도 1학기 수강신청 일정을 안내드립니다.\n\n**신청 기간:** 2026-02-10(화) ～ 2026-02-14(토)\n\n[수강신청 가이드 내려받기](https://skku-std.test/files/sugang_guide.pdf)",
+    "consecutiveFailures": 0,
+    "content": "<p>2026학년도 1학기 수강신청 일정을 안내드립니다.</p>\n<p><span style=\"font-weight: bold\">신청 기간:</span> 2026-02-10(화) ~ 2026-02-14(토)</p>\n<p><a href=\"https://skku-std.test/files/sugang_guide.pdf\">수강신청 가이드 내려받기</a></p>",
+    "contentHash": "9a610a1419b9c5877ec683afc249066fcfb478c393d66a0583231f535dac9345",
+    "contentText": "2026학년도 1학기 수강신청 일정을 안내드립니다.\n\n신청 기간: 2026-02-10(화) ~ 2026-02-14(토)\n\n수강신청 가이드 내려받기",
+    "crawledAt": "<UTC_DATETIME>",
+    "date": "2026-04-01",
+    "department": "골든 표준 게시판",
+    "detailPath": "?mode=view&articleNo=100&article.offset=0&articleLimit=10",
+    "editCount": 0,
+    "editHistory": [],
+    "isDeleted": false,
+    "lastModified": null,
+    "sourceId": "golden-std",
+    "sourceUrl": "https://skku-std.test/board/notice.do?mode=view&articleNo=100&article.offset=0&articleLimit=10",
+    "title": "[공지] 2026학년도 1학기 수강신청 안내",
+    "views": 1500
+  }
+]

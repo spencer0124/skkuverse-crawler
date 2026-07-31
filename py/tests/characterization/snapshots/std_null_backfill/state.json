@@ -1,0 +1,17 @@
+[
+  {
+    "articleNo": 106,
+    "attachments": [],
+    "cleanHtml": "<p>휴학·복학 신청 절차 안내입니다.</p>\n<p><strong>신청 기한:</strong> 매 학기 개시 30일 전까지</p>\n<p><a href=\"https://skku-std.test/files/leave_form.hwp\">신청서 양식</a></p>",
+    "cleanMarkdown": "휴학·복학 신청 절차 안내입니다.\n\n**신청 기한:** 매 학기 개시 30일 전까지\n\n[신청서 양식](https://skku-std.test/files/leave_form.hwp)",
+    "content": "<p>휴학·복학 신청 절차 안내입니다.</p>\n<p><span style=\"font-weight: bold\">신청 기한:</span> 매 학기 개시 30일 전까지</p>\n<p><a href=\"https://skku-std.test/files/leave_form.hwp\">신청서 양식</a></p>",
+    "contentHash": "d3c2f4a8e43f7dedb9da6ca2ede2a4ff4f87d4665e4757ac7adf4a65464e6c70",
+    "contentText": "휴학·복학 신청 절차 안내입니다.신청 기한:매 학기 개시 30일 전까지신청서 양식",
+    "crawledAt": "<UTC_DATETIME>",
+    "date": "2026-03-14",
+    "detailPath": "?mode=view&articleNo=106&article.offset=0&articleLimit=10",
+    "sourceId": "golden-std",
+    "title": "휴학·복학 신청 절차",
+    "views": 5
+  }
+]

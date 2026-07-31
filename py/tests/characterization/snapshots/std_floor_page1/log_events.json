@@ -1,0 +1,10 @@
+[
+  "starting_department_crawl",
+  "fetching_list_page",
+  "parsed_list_page",
+  "fetching_list_page",
+  "parsed_list_page",
+  "floor_date_stopping",
+  "department_crawl_finished",
+  "crawl_completed"
+]

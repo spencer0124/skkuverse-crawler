@@ -1,0 +1,9 @@
+[
+  "starting_department_crawl",
+  "recrawling_null_content",
+  "fetching_list_page",
+  "parsed_list_page",
+  "empty_list_page",
+  "department_crawl_finished",
+  "crawl_completed"
+]

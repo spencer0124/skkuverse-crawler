@@ -24,7 +24,9 @@ def normalize_bson(value: Any, *, datetime_to: str = "iso", drop_id: bool = True
             for k, v in value.items()
             if not (drop_id and k == "_id")
         }
-    if isinstance(value, list):
+    if isinstance(value, (list, tuple)):
+        # Tuples (e.g. FakeCollection.ops entries, create_index key pairs)
+        # become lists — JSON has no tuple, and the snapshot is JSON anyway.
         return [normalize_bson(v, datetime_to=datetime_to, drop_id=drop_id) for v in value]
     if isinstance(value, datetime):
         if datetime_to == "placeholder":

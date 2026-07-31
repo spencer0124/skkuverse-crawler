@@ -1,0 +1,140 @@
+[
+  [
+    "create_index",
+    {
+      "keys": [
+        [
+          "articleNo",
+          1
+        ],
+        [
+          "sourceId",
+          1
+        ]
+      ],
+      "name": null,
+      "partialFilterExpression": null,
+      "unique": true
+    }
+  ],
+  [
+    "create_index",
+    {
+      "keys": [
+        [
+          "sourceId",
+          1
+        ],
+        [
+          "date",
+          -1
+        ]
+      ],
+      "name": null,
+      "partialFilterExpression": null,
+      "unique": false
+    }
+  ],
+  [
+    "find",
+    {
+      "filter": {
+        "$or": [
+          {
+            "content": null
+          },
+          {
+            "content": ""
+          }
+        ],
+        "sourceId": "golden-std"
+      },
+      "projection": {
+        "articleNo": 1,
+        "detailPath": 1
+      }
+    }
+  ],
+  [
+    "find",
+    {
+      "filter": {
+        "articleNo": {
+          "$in": [
+            100,
+            101,
+            102,
+            103
+          ]
+        },
+        "sourceId": "golden-std"
+      },
+      "projection": {
+        "articleNo": 1,
+        "contentHash": 1,
+        "date": 1,
+        "title": 1
+      }
+    }
+  ],
+  [
+    "bulk_write",
+    {
+      "ops": [
+        {
+          "filter": {
+            "articleNo": 100,
+            "sourceId": "golden-std"
+          },
+          "update": {
+            "$set": {
+              "crawledAt": "<UTC_DATETIME>",
+              "views": 1500
+            }
+          },
+          "upsert": false
+        },
+        {
+          "filter": {
+            "articleNo": 101,
+            "sourceId": "golden-std"
+          },
+          "update": {
+            "$set": {
+              "crawledAt": "<UTC_DATETIME>",
+              "views": 120
+            }
+          },
+          "upsert": false
+        },
+        {
+          "filter": {
+            "articleNo": 102,
+            "sourceId": "golden-std"
+          },
+          "update": {
+            "$set": {
+              "crawledAt": "<UTC_DATETIME>",
+              "views": 85
+            }
+          },
+          "upsert": false
+        },
+        {
+          "filter": {
+            "articleNo": 103,
+            "sourceId": "golden-std"
+          },
+          "update": {
+            "$set": {
+              "crawledAt": "<UTC_DATETIME>",
+              "views": 60
+            }
+          },
+          "upsert": false
+        }
+      ],
+      "ordered": false
+    }
+  ]
+]
