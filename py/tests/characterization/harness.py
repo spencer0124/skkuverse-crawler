@@ -1,7 +1,7 @@
 """Golden-crawl harness: run run_crawl() against fixtures, snapshot 4 artifacts.
 
 Per golden case: ``ops`` (FakeCollection round trips, order + args), ``state``
-(final collection), ``result`` (DeptResult), ``log_events`` (structlog event
+(final collection), ``result`` (SourceResult), ``log_events`` (structlog event
 names in order — fixes the control-flow path without exposing internals).
 
 Injection points (src/ stays untouched):

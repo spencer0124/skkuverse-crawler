@@ -48,10 +48,6 @@ def test_help_does_not_import_motor(tmp_path):
     assert result.returncode == 0, "importing the CLI for --help pulled in motor"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="flips in PR 4/5 (core/ package exists, free of motor)",
-)
 def test_core_import_is_infra_free(tmp_path):
     code = (
         "import sys\n"
@@ -79,6 +75,19 @@ def test_get_config_without_env_raises_typed_error(tmp_path):
         f"exit={result.returncode} (2=SystemExit mine, 3=wrong exception, "
         f"4=config from empty env) stderr={result.stderr[-300:]}"
     )
+
+
+def test_health_logic_import_is_infra_free(tmp_path):
+    """Permanent guard for the PR 2 cut: crawl_health.logic must import
+    without motor/pymongo. Subprocess-only — the root conftest's
+    _no_real_mongo fixture imports motor in-process for every test."""
+    code = (
+        "import sys\n"
+        "import skkuverse_crawler.crawl_health.logic\n"
+        "sys.exit(1 if ('motor' in sys.modules or 'pymongo' in sys.modules) else 0)\n"
+    )
+    result = _run_python(code, empty_env=False, cwd=tmp_path)
+    assert result.returncode == 0, "importing crawl_health.logic pulled in motor/pymongo"
 
 
 def test_whole_package_imports_with_empty_env(tmp_path):

@@ -8,7 +8,7 @@ from skkuverse_crawler.crawl_health.logic import (
     format_alert_message,
     format_daily_summary,
 )
-from skkuverse_crawler.notices.orchestrator import DeptResult
+from skkuverse_crawler.core.results import SourceResult as DeptResult
 
 NOW = datetime(2026, 7, 29, 3, 0, tzinfo=timezone.utc)
 

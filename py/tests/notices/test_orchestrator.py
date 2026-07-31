@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
+from skkuverse_crawler.core.results import SourceResult as DeptResult
 from skkuverse_crawler.notices.models import NoticeDetail, NoticeListItem
 from skkuverse_crawler.notices.orchestrator import (
-    DeptResult,
     _page_below_floor,
     _process_page_full,
     _process_page_smart,
