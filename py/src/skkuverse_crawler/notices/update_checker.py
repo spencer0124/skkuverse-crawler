@@ -16,7 +16,7 @@ from ..shared.logger import get_logger
 from .constants import SERVICE_START_DATE
 from .dedup import ensure_indexes
 from .hashing import compute_content_hash
-from .orchestrator import STRATEGY_MAP
+from .strategies import STRATEGY_MAP
 
 
 @dataclass

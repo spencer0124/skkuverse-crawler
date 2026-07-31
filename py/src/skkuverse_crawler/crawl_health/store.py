@@ -13,7 +13,7 @@ from typing import Any
 
 from pymongo import UpdateOne
 
-from ..notices.orchestrator import DeptResult
+from ..core.results import SourceResult as DeptResult
 from ..shared.db import get_db
 from ..shared.discord import send_discord
 from ..shared.logger import get_logger

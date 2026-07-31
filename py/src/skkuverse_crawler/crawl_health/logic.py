@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from ..notices.orchestrator import DeptResult
+from ..core.results import SourceResult as DeptResult
 
 # Consecutive source-down ticks before a single alert fires (~1.5h at the
 # 30-min notices cadence). Fires once per outage: `alerted` latches until
