@@ -13,8 +13,8 @@ def health_summary_cli() -> None:
     """Send the daily crawl-health summary to Discord once."""
     from ..shared.config import init_config
 
-    init_config()
-    configure_logging()
+    cfg = init_config()
+    configure_logging(cfg)
     asyncio.run(_run())
 
 

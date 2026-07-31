@@ -15,8 +15,8 @@ def summarize_cli(batch_size: int, delay: float) -> None:
     """Run AI summarization on unsummarized notices."""
     from ..shared.config import init_config
 
-    init_config()
-    configure_logging()
+    cfg = init_config()
+    configure_logging(cfg)
     asyncio.run(_run(batch_size, delay))
 
 

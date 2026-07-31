@@ -28,8 +28,8 @@ def notices_cli(once: bool, full_crawl: bool, dept: tuple[str, ...], pages: int 
     """Run the notices crawler."""
     from ..shared.config import init_config
 
-    init_config()
-    configure_logging()
+    cfg = init_config()
+    configure_logging(cfg)
     asyncio.run(_run(once, full_crawl, dept, pages, delay))
 
 
@@ -62,8 +62,8 @@ def update_check_cli(days: int, dept: tuple[str, ...]) -> None:
     """Run Tier 2 update detection on recent notices."""
     from ..shared.config import init_config
 
-    init_config()
-    configure_logging()
+    cfg = init_config()
+    configure_logging(cfg)
     asyncio.run(_run_update_check(days, dept))
 
 
@@ -99,8 +99,8 @@ def validate_attachments_cli(
     """Validate attachment metadata in the notices collection."""
     from ..shared.config import init_config
 
-    init_config()
-    configure_logging()
+    cfg = init_config()
+    configure_logging(cfg)
     asyncio.run(_run_validate_attachments(dept, limit, no_http, json_output, concurrency))
 
 
@@ -180,8 +180,8 @@ def validate_markdown_cli(
     """Validate markdown rendering in stored cleanMarkdown fields."""
     from ..shared.config import init_config
 
-    init_config()
-    configure_logging()
+    cfg = init_config()
+    configure_logging(cfg)
     asyncio.run(_run_validate_markdown(dept, limit, json_output, severity))
 
 

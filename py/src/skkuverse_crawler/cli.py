@@ -20,8 +20,8 @@ def start(module: str | None) -> None:
     """Start the cron scheduler for all (or one) module."""
     from .shared.config import init_config
 
-    init_config()
-    configure_logging()
+    cfg = init_config()
+    configure_logging(cfg)
     asyncio.run(_start_scheduler(module))
 
 

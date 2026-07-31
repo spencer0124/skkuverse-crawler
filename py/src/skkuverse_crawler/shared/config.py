@@ -56,6 +56,21 @@ class Config:
         return base
 
 
+class ConfigNotInitialized(RuntimeError):
+    """get_config() was called before init_config().
+
+    Entrypoints (CLI callbacks) must call init_config() explicitly; library
+    code may then read the singleton via get_config(). Tests set env vars
+    first and call init_config(force=True).
+    """
+
+    def __init__(self) -> None:
+        super().__init__(
+            "config not initialized — call init_config() at your entrypoint "
+            "(tests: set env vars, then init_config(force=True))"
+        )
+
+
 _config: Config | None = None
 
 
@@ -124,9 +139,14 @@ def init_config(*, force: bool = False) -> Config:
 
 
 def get_config() -> Config:
-    """Return cached config, initializing lazily if needed."""
+    """Return the cached config. Raises if init_config() has not run.
+
+    Deliberately NOT lazy: the old fallback made init_config()'s
+    SystemExit(1) reachable from any call depth (configure_logging → deep
+    library code), which is the mine adr-006/PR 1 removes.
+    """
     if _config is None:
-        return init_config()
+        raise ConfigNotInitialized()
     return _config
 
 
