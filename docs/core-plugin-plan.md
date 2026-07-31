@@ -46,7 +46,7 @@
 
 - [ ] `find(filter, projection)` → **async 이터러블 커서** (이것만으로 `find_existing_meta`·`find_null_content`가 테스트 가능해진다 — 현재 `AsyncMock`이 `async for`를 못 해서 커버리지 0)
 - [ ] `update_one(upsert=True)` + 정직한 `upserted_id`, `$set`/`$setOnInsert`/`$inc`/`$push`(`$each`+`$slice: -20`)
-- [ ] `bulk_write([UpdateOne], ordered=False)`, `create_index`, `count_documents`, `find_one_and_update`+`ReturnDocument`
+- [ ] `bulk_write([UpdateOne], ordered=False)`, `create_index`, `count_documents`, `find_one_and_update`+`ReturnDocument` — 구현 시 발견: `update_checker.py:250`의 실사용은 **aggregation-pipeline update**(`$add/$ifNull/$cond`) 형태. FakeCollection은 문서형만 구현하고 pipeline형은 정직하게 `NotImplementedError` (골든 경로 미사용 — PR 5/6에서 update_checker 이관 시 재검토)
 - [ ] **`.ops`** — 인자까지 담은 순서 있는 연산 목록. 골든의 핵심 산출물이며, `mongomock-motor` 대신 손으로 만드는 유일한 이유(최종 상태가 아니라 **왕복 횟수와 순서**가 필요)
 - [ ] **미지원 연산자는 `NotImplementedError`** — 조용히 무시 금지. 가짜가 거짓말하는 실패 유형이 통째로 이거다: 나중에 누가 `$unset`을 추가하면 가짜는 무시하고 골든은 통과하는데 프로덕션만 다르게 동작한다. 5줄로 이 부류 전체를 막는다
 - [ ] **datetime을 ms로 절삭** — BSON은 밀리초, `datetime.now(timezone.utc)`는 마이크로초. 안 맞추면 실제 Mongo와 상태 비교가 깨진다 (그리고 이게 적합성 테스트가 잡아야 할 바로 그 종류의 버그다)
@@ -114,12 +114,12 @@
 
 ## PR 3 — `sources.py` 경로 경화 [이동보다 먼저]
 
-- [ ] `parents[5]` 제거 → `SOURCES_JSON_PATH` → `importlib.resources` 패키지 데이터 → 레포 마커 상향 탐색
-- [ ] `sys.exit(1)` → `SourceConfigError` (라이브러리 코드에서 프로세스 종료 금지)
-- [ ] `sources.json`·`categories.json`·`exclude-reasons.json`을 wheel에 포함
-- [ ] 기동 시 `sources_loaded count=N path=…` 로그
+- [x] `parents[5]` 제거 → `SOURCES_JSON_PATH` → 상향 탐색(`__init__.py` 디렉토리 스킵) → `importlib.resources` 패키지 데이터 (PR #39)
+- [x] `sys.exit(1)` → `SourceConfigError` (라이브러리 코드에서 프로세스 종료 금지)
+- [x] **`sources.json`만** wheel에 포함 — 구현 시 확인: 런타임이 읽는 파일은 sources.json뿐, categories/exclude-reasons는 codegen 전용이라 패키징 불필요. 방식은 force-include가 아니라 **codegen 유지 사본**(Docker 이미지가 editable 설치라 force-include가 컨테이너에 도달 불가; `generate_artifacts.py` step [9] + 바이트 동일성 테스트)
+- [x] 기동 시 `sources_loaded count=N path=…` 로그
 
-**검증 게이트**: `pip wheel . && unzip -l`에 json 존재. `docker build` + 컨테이너에서 1페이지 실크롤.
+**검증 게이트**: `pip wheel . && unzip -l`에 sources.json 존재 ✓. `docker compose build`(bare `docker build`는 additional_contexts 때문에 불성립) + 컨테이너에서 3개 해석 경로 검증 ✓ (실크롤은 컨테이너에 Mongo 부재로 loader 검증 대체 — 크롤 동등성은 골든이 담보).
 
 ## PR 4 — 레이아웃 골격 [순수 이동]
 
