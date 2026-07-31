@@ -2,19 +2,12 @@ from __future__ import annotations
 
 import json
 import os
-import sys
+from importlib import resources
 from pathlib import Path
 from typing import Any
 
+from ...core.sources import SourceConfigError
 from ...shared.logger import get_logger
-
-# sources.json lives at the repo root (SSOT).
-# Docker: set SOURCES_JSON_PATH=/sources.json explicitly.
-# Local:  fallback to parents[5] (loader.py → config → notices → skkuverse_crawler → src → py → repo root).
-_SOURCES_JSON = Path(
-    os.environ.get("SOURCES_JSON_PATH")
-    or str(Path(__file__).resolve().parents[5] / "sources.json")
-)
 
 logger = get_logger("config_loader")
 
@@ -31,10 +24,52 @@ REQUIRED_SELECTORS: dict[str, list[str]] = {
 }
 
 
-def load_and_validate() -> list[dict[str, Any]]:
-    configs: list[dict[str, Any]] = json.loads(
-        _SOURCES_JSON.read_text(encoding="utf-8")
+def _resolve_sources_path(anchor: Path | None = None) -> Path:
+    """Resolve sources.json lazily, in precedence order:
+
+    1. SOURCES_JSON_PATH env var (production compose sets /sources.json).
+    2. Upward search from this file, skipping package directories (those
+       holding an __init__.py) — the bundled copy must never shadow the
+       repo-root SSOT in a checkout. This also finds /sources.json in a
+       bare container (runtime stage copies it to /).
+    3. The bundled package copy (installed wheel with no repo around),
+       kept in sync with the repo root by scripts/generate_artifacts.py.
+
+    Resolution is deliberately NOT module-level: import stays IO/env-free
+    (structure tests import the whole package with env={}), and tests can
+    monkeypatch SOURCES_JSON_PATH.
+    """
+    env_path = os.environ.get("SOURCES_JSON_PATH")
+    if env_path:
+        return Path(env_path)
+
+    start = (anchor or Path(__file__)).resolve()
+    for parent in start.parents:
+        if (parent / "__init__.py").is_file():
+            continue  # still inside the package — bundled copy is not the SSOT
+        candidate = parent / "sources.json"
+        if candidate.is_file():
+            return candidate
+
+    # importlib.resources: for a regular (non-zipped) install this is a real
+    # filesystem path; we never ship zipped wheels.
+    bundled = Path(str(resources.files("skkuverse_crawler.notices.config") / "sources.json"))
+    if bundled.is_file():
+        return bundled
+    raise SourceConfigError(
+        "sources.json not found — set SOURCES_JSON_PATH, run from a repo "
+        "checkout, or install a wheel with the bundled copy"
     )
+
+
+def load_and_validate() -> list[dict[str, Any]]:
+    path = _resolve_sources_path()
+    try:
+        configs: list[dict[str, Any]] = json.loads(path.read_text(encoding="utf-8"))
+    except OSError as exc:
+        raise SourceConfigError(f"cannot read sources.json at {path}: {exc}") from exc
+    except json.JSONDecodeError as exc:
+        raise SourceConfigError(f"invalid JSON in sources.json at {path}: {exc}") from exc
 
     errors: list[str] = []
 
@@ -60,7 +95,12 @@ def load_and_validate() -> list[dict[str, Any]]:
                 errors.append(f'{dept_id}: missing selector "{sel}" for strategy "{strategy}"')
 
     # Duplicate ID check
-    ids = [c["id"] for c in configs]
+    ids: list[str] = []
+    for c in configs:
+        if "id" not in c:
+            errors.append("entry missing required key 'id'")
+            continue
+        ids.append(c["id"])
     seen: set[str] = set()
     dupes: list[str] = []
     for dept_id in ids:
@@ -75,7 +115,7 @@ def load_and_validate() -> list[dict[str, Any]]:
         for err in errors:
             logger.error("config_validation_error", detail=err)
         logger.error("config_validation_failed", count=len(errors))
-        sys.exit(1)
+        raise SourceConfigError(f"sources.json validation failed with {len(errors)} error(s)")
 
-    logger.info("loaded_department_configs", count=len(configs))
+    logger.info("sources_loaded", count=len(configs), path=str(path))
     return configs
