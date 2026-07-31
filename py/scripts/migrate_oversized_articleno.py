@@ -54,7 +54,7 @@ def _slug_of(detail_path: str) -> str:
 
 async def run(source: str, apply: bool) -> int:
     cfg = init_config(force=True)
-    configure_logging()
+    configure_logging(cfg)
     logger = get_logger("migrate_oversized_articleno")
 
     db = await get_db()

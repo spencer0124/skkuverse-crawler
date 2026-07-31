@@ -45,7 +45,7 @@ SUMMARY_FIELDS: tuple[str, ...] = (
 
 async def run(apply: bool) -> int:
     cfg = init_config(force=True)
-    configure_logging()
+    configure_logging(cfg)
     logger = get_logger("cleanup_summary_fields")
 
     db = await get_db()
