@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from ..crawl_health.store import record_and_alert
-from ..modules.base import ModuleConfig
-from ..shared.config import get_config
+from ...crawl_health.store import record_and_alert
+from ...core.module import ModuleConfig
+from ...shared.config import get_config
 from .config.loader import load_and_validate
 from .orchestrator import CrawlOptions, run_crawl
 from .update_checker import run_update_check
@@ -15,7 +15,6 @@ class NoticesModule:
     def config(self) -> ModuleConfig:
         return ModuleConfig(
             name="notices",
-            collection_name="notices",
             cron_schedule="*/30 * * * *",
         )
 
@@ -44,7 +43,6 @@ class NoticesUpdateCheckModule:
     def config(self) -> ModuleConfig:
         return ModuleConfig(
             name="notices-update-check",
-            collection_name="notices",
             cron_schedule="10 8,14,20 * * *",
         )
 

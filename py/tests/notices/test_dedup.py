@@ -3,14 +3,14 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from unittest.mock import MagicMock
 
-from skkuverse_crawler.notices.dedup import (
+from skkuverse_crawler.modules.notices.dedup import (
     find_existing_meta,
     has_changed,
     should_continue,
     update_with_history,
     upsert_notice,
 )
-from skkuverse_crawler.notices.models import Notice, NoticeListItem
+from skkuverse_crawler.modules.notices.models import Notice, NoticeListItem
 
 
 def _make_notice(**overrides) -> Notice:

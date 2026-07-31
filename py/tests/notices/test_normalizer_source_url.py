@@ -10,8 +10,8 @@ from __future__ import annotations
 
 import pytest
 
-from skkuverse_crawler.notices.normalizer import _inject_image_dimensions, build_notice
-from skkuverse_crawler.notices.models import NoticeDetail, NoticeListItem
+from skkuverse_crawler.modules.notices.normalizer import _inject_image_dimensions, build_notice
+from skkuverse_crawler.modules.notices.models import NoticeDetail, NoticeListItem
 
 
 def _item(*, detail_path: str, article_no: int = 1) -> NoticeListItem:

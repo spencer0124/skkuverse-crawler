@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import json
 
-from ...shared.fetcher import Fetcher
-from ...shared.logger import get_logger
+from ....shared.fetcher import Fetcher
+from ....shared.logger import get_logger
 from ..models import NoticeDetail, NoticeListItem
 from ..parser import load_html
 from ..types import DetailRef

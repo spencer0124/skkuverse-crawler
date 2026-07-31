@@ -38,7 +38,7 @@ _spec.loader.exec_module(ga)
 def test_package_sources_json_target():
     """Step [9] writes the bundled runtime copy into the package."""
     expected = (
-        _REPO_PY_ROOT / "src" / "skkuverse_crawler" / "notices" / "config" / "sources.json"
+        _REPO_PY_ROOT / "src" / "skkuverse_crawler" / "modules" / "notices" / "config" / "sources.json"
     )
     assert ga.PACKAGE_SOURCES_JSON == expected
     assert ga.PACKAGE_SOURCES_JSON.is_file()

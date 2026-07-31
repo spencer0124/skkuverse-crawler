@@ -29,7 +29,7 @@ import httpx
 import imagesize
 from bs4 import BeautifulSoup
 
-from ..shared.logger import get_logger
+from ...shared.logger import get_logger
 
 logger = get_logger("image_verifier")
 

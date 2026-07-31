@@ -6,9 +6,9 @@ from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup, Tag
 
-from ..shared.html_cleaner import clean_html, normalize_content_urls
-from ..shared.html_to_markdown import html_to_markdown
-from ..shared.logger import get_logger
+from ...shared.html_cleaner import clean_html, normalize_content_urls
+from ...shared.html_to_markdown import html_to_markdown
+from ...shared.logger import get_logger
 from .hashing import compute_content_hash
 from .models import Notice, NoticeDetail, NoticeListItem
 

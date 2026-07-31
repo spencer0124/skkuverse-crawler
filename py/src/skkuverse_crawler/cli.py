@@ -30,12 +30,12 @@ async def _start_scheduler(module_filter: str | None = None) -> None:
     from apscheduler.triggers.cron import CronTrigger
     from apscheduler.triggers.interval import IntervalTrigger
 
-    from .modules import registry
+    from .core import registry
     from .shared.db import close_client
 
     # Register modules
     from .crawl_health.module import CrawlHealthSummaryModule
-    from .notices.module import NoticesModule, NoticesUpdateCheckModule
+    from .modules.notices.module import NoticesModule, NoticesUpdateCheckModule
     from .notices_summary.module import NoticesSummaryModule
 
     registry.register(NoticesModule())
@@ -102,7 +102,7 @@ async def _shutdown_modules(modules: list) -> None:
 
 # Register CLI subcommands
 from .crawl_health.cli import health_summary_cli  # noqa: E402
-from .notices.cli import notices_cli, update_check_cli, validate_attachments_cli, validate_markdown_cli  # noqa: E402
+from .modules.notices.cli import notices_cli, update_check_cli, validate_attachments_cli, validate_markdown_cli  # noqa: E402
 from .notices_summary.cli import summarize_cli  # noqa: E402
 main.add_command(notices_cli)
 main.add_command(update_check_cli)

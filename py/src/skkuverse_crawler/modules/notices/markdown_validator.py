@@ -20,7 +20,7 @@ import re
 from collections import Counter
 from dataclasses import dataclass, field
 
-from ..shared.logger import get_logger
+from ...shared.logger import get_logger
 
 logger = get_logger("markdown_validator")
 
@@ -286,7 +286,7 @@ async def validate_markdown(
     min_severity:
         ``"warning"`` (default) or ``"error"``.
     """
-    from ..shared.db import get_db
+    from ...shared.db import get_db
 
     db = await get_db()
     collection = db["notices"]

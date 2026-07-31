@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .base import CrawlModule
+from .module import CrawlModule
 
 _modules: dict[str, CrawlModule] = {}
 

@@ -1,7 +1,7 @@
 """contentText 품질 개선 검증 — 105건 QA 실패 케이스 재현."""
 
-from skkuverse_crawler.notices.normalizer import _text_from_clean_html, build_notice
-from skkuverse_crawler.notices.models import NoticeListItem, NoticeDetail
+from skkuverse_crawler.modules.notices.normalizer import _text_from_clean_html, build_notice
+from skkuverse_crawler.modules.notices.models import NoticeListItem, NoticeDetail
 from skkuverse_crawler.shared.html_cleaner import clean_html
 
 

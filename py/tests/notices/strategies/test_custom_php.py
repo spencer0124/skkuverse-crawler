@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock
 
-from skkuverse_crawler.notices.strategies.custom_php import CustomPhpStrategy
+from skkuverse_crawler.modules.notices.strategies.custom_php import CustomPhpStrategy
 
 
 BASE_CONFIG = {

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock
 
-from skkuverse_crawler.notices.strategies.wordpress_api import WordPressApiStrategy
+from skkuverse_crawler.modules.notices.strategies.wordpress_api import WordPressApiStrategy
 
 
 def _make_strategy() -> WordPressApiStrategy:

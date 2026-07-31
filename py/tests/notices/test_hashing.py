@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from skkuverse_crawler.notices.hashing import compute_content_hash
+from skkuverse_crawler.modules.notices.hashing import compute_content_hash
 
 
 class TestComputeContentHash:

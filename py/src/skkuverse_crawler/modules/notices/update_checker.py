@@ -9,10 +9,10 @@ from typing import Any
 import httpx
 from pymongo import ReturnDocument
 
-from ..shared.db import get_db
-from ..shared.fetcher import Fetcher
-from ..shared.html_cleaner import clean_html, normalize_content_urls
-from ..shared.logger import get_logger
+from ...shared.db import get_db
+from ...shared.fetcher import Fetcher
+from ...shared.html_cleaner import clean_html, normalize_content_urls
+from ...shared.logger import get_logger
 from .constants import SERVICE_START_DATE
 from .dedup import ensure_indexes
 from .hashing import compute_content_hash
