@@ -5,6 +5,7 @@ from unittest.mock import patch
 import pytest
 
 from skkuverse_crawler.shared.config import (
+    ConfigNotInitialized,
     CrawlerEnv,
     get_config,
     init_config,
@@ -173,6 +174,17 @@ class TestSingleton:
         monkeypatch.setenv("MONGO_URL", "mongodb://x")
         cfg2 = init_config(force=True)
         assert cfg2.is_development is True
+
+    def test_get_config_without_init_raises(self):
+        """PR 1 contract: no lazy fallback. The old behavior silently ran
+        init_config(), making its SystemExit reachable from any call depth."""
+        reset_config()
+        with pytest.raises(ConfigNotInitialized):
+            get_config()
+
+    def test_get_config_works_after_explicit_init(self, monkeypatch):
+        _init_fresh(monkeypatch, CRAWLER_ENV="test")
+        assert get_config().is_test is True
 
 
 # ---------------------------------------------------------------------------

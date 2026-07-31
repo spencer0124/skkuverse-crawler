@@ -4,18 +4,25 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from skkuverse_crawler.shared.config import reset_config
+from skkuverse_crawler.shared.config import init_config, reset_config
 
 
 @pytest.fixture(autouse=True)
 def _test_env_and_config(monkeypatch):
-    """Reset config singleton and set test environment.
+    """Give every test an explicitly initialized test-mode config.
 
-    Runs before all other autouse fixtures to ensure config reads
-    see CRAWLER_ENV=test.
+    Since PR 1 get_config() no longer lazy-initializes (it raises
+    ConfigNotInitialized), so this fixture calls init_config() itself.
+    CRAWLER_ENV=test is still load-bearing on its own: it selects the
+    *_test DB-name suffix, the CRITICAL log level, and the is_test guard
+    that waives the MONGO_URL requirement inside init_config().
+
+    Tests that need different env values re-set them and call
+    init_config(force=True).
     """
     reset_config()
     monkeypatch.setenv("CRAWLER_ENV", "test")
+    init_config(force=True)
     yield
     reset_config()
 

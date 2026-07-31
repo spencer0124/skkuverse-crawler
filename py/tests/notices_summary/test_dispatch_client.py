@@ -19,7 +19,7 @@ import pytest
 import respx
 
 from skkuverse_crawler.notices_summary.dispatch_client import notify_cycle_complete
-from skkuverse_crawler.shared.config import reset_config
+from skkuverse_crawler.shared.config import init_config, reset_config
 
 URL = "http://test-api/internal/notices/dispatch-pending"
 TOKEN = "test-token-64"  # noqa: S105 — fixture, not real
@@ -41,7 +41,7 @@ SUCCESS_BODY = {
 def enabled_config(monkeypatch):
     monkeypatch.setenv("DISPATCH_URL", URL)
     monkeypatch.setenv("INTERNAL_DISPATCH_TOKEN", TOKEN)
-    reset_config()
+    init_config(force=True)
     yield
     reset_config()
 
@@ -143,7 +143,7 @@ class TestUnconfigured:
     async def test_both_unset_returns_false_without_http(self, monkeypatch):
         monkeypatch.delenv("DISPATCH_URL", raising=False)
         monkeypatch.delenv("INTERNAL_DISPATCH_TOKEN", raising=False)
-        reset_config()
+        init_config(force=True)
         route = respx.post(URL)  # no responder; would fail if hit
         ok = await notify_cycle_complete(**_kwargs())
         assert ok is False
@@ -154,7 +154,7 @@ class TestUnconfigured:
     async def test_only_url_set_returns_false_without_http(self, monkeypatch):
         monkeypatch.setenv("DISPATCH_URL", URL)
         monkeypatch.delenv("INTERNAL_DISPATCH_TOKEN", raising=False)
-        reset_config()
+        init_config(force=True)
         route = respx.post(URL)
         ok = await notify_cycle_complete(**_kwargs())
         assert ok is False
@@ -165,7 +165,7 @@ class TestUnconfigured:
     async def test_only_token_set_returns_false_without_http(self, monkeypatch):
         monkeypatch.delenv("DISPATCH_URL", raising=False)
         monkeypatch.setenv("INTERNAL_DISPATCH_TOKEN", TOKEN)
-        reset_config()
+        init_config(force=True)
         route = respx.post(URL)
         ok = await notify_cycle_complete(**_kwargs())
         assert ok is False
