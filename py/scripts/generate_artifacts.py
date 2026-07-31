@@ -35,6 +35,13 @@ SOURCE_IDS_PY = (
     REPO_ROOT / "py" / "src" / "skkuverse_crawler"
     / "notices" / "config" / "source_ids.py"
 )
+# Bundled runtime copy of sources.json (package data for wheel/editable/
+# container installs). SSOT stays at the repo root; this copy is regenerated
+# here and a test pins byte-equality with the root file.
+PACKAGE_SOURCES_JSON = (
+    REPO_ROOT / "py" / "src" / "skkuverse_crawler"
+    / "notices" / "config" / "sources.json"
+)
 COVERAGE_MD = REPO_ROOT / "docs" / "department-coverage-analysis.md"
 BY_COLLEGE_MD = REPO_ROOT / "docs" / "departments-by-college.md"
 BY_APP_CATEGORY_MD = REPO_ROOT / "docs" / "departments-by-app-category.md"
@@ -679,6 +686,10 @@ def main() -> None:
     excl_path.write_text(gen_exclude_reasons_map(EXCLUDE_REASONS), encoding="utf-8")
     print("  [8] server-exclude-reasons.json")
     copy_to_sibling(excl_path, SERVER_EXCLUDE_JSON, "skkuverse-server")
+
+    # 9. bundled package copy of sources.json (byte-identical to the SSOT)
+    PACKAGE_SOURCES_JSON.write_bytes(SOURCES_JSON.read_bytes())
+    print("  [9] package sources.json copy")
 
     print("Done.")
 
