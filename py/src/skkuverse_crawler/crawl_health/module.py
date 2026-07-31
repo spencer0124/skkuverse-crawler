@@ -70,7 +70,6 @@ class CrawlHealthSummaryModule:
     def config(self) -> ModuleConfig:
         return ModuleConfig(
             name="crawl-health-summary",
-            collection_name=COLLECTION,
             cron_schedule="0 9 * * *",
         )
 

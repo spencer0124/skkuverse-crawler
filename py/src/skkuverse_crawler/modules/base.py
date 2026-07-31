@@ -7,7 +7,6 @@ from typing import Any, Protocol, runtime_checkable
 @dataclass
 class ModuleConfig:
     name: str
-    collection_name: str
     cron_schedule: str | None = None
     interval_seconds: int | None = None
     run_on_start: bool = False

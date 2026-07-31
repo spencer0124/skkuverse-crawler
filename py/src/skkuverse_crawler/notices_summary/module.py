@@ -11,7 +11,6 @@ class NoticesSummaryModule:
     def config(self) -> ModuleConfig:
         return ModuleConfig(
             name="notices-summary",
-            collection_name="notices",
             cron_schedule="20 * * * *",
             run_on_start=True,
         )

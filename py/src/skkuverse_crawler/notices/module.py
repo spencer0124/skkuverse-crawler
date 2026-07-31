@@ -15,7 +15,6 @@ class NoticesModule:
     def config(self) -> ModuleConfig:
         return ModuleConfig(
             name="notices",
-            collection_name="notices",
             cron_schedule="*/30 * * * *",
         )
 
@@ -44,7 +43,6 @@ class NoticesUpdateCheckModule:
     def config(self) -> ModuleConfig:
         return ModuleConfig(
             name="notices-update-check",
-            collection_name="notices",
             cron_schedule="10 8,14,20 * * *",
         )
 
