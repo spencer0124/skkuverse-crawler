@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock
 
+import pytest
+
 from skkuverse_crawler.notices.markdown_validator import (
     MarkdownValidationReport,
     check_broken_link,
@@ -12,6 +14,10 @@ from skkuverse_crawler.notices.markdown_validator import (
     validate_markdown,
     validate_notice_markdown,
 )
+
+# validate_markdown() resolves its collection via a lazy `get_db()` import —
+# mock_db_patch is the only way a test reaches it with a mock.
+pytestmark = pytest.mark.usefixtures("mock_db_patch")
 
 
 # ── check_cross_line_strong ───────────────────────────
