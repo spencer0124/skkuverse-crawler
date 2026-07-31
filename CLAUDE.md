@@ -51,6 +51,7 @@ python scripts/generate_artifacts.py    # sources.json + categories.json → 7�
 | `departments-by-app-category.md` | `docs/departments-by-app-category.md` | 앱 카테고리별 학과 목록 |
 | `server-categories.json` | `py/generated/` → `skkuverse-server` 복사 | Server-driven 탭 구성 (탭 순서, 라벨, picker/fixed 모드) |
 | `server-exclude-reasons.json` | `py/generated/` → `skkuverse-server` 복사 | excludeReason 키→문구(ko/en) 맵 — 앱 미지원 사유 문구를 server-driven으로 |
+| `sources.json` (패키지 사본) | `py/src/.../notices/config/sources.json` | wheel/editable/컨테이너용 런타임 패키지 데이터. SSOT는 레포 루트 — codegen이 바이트 동일 복사, 테스트가 동기화 강제 |
 
 `py/generated/`는 `.gitignore`에 등록됨.
 
