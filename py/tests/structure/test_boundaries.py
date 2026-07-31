@@ -62,11 +62,6 @@ def test_core_import_is_infra_free(tmp_path):
     assert result.returncode == 0, result.stderr
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="flips in PR 1 (refactor/config-explicit) — lazy get_config() "
-    "currently reaches init_config's SystemExit(1) from arbitrary call depth",
-)
 def test_get_config_without_env_raises_typed_error(tmp_path):
     # cwd=tmp_path so load_dotenv() cannot find a real .env.
     code = (
