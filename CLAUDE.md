@@ -66,7 +66,9 @@ python scripts/generate_artifacts.py    # sources.json + categories.json → 7�
 
 ### 공통 패턴
 
-**모듈형 구조** (adr-006 core/plugin 분리, PR 0~7 완료): `core/` (포트·이벤트·러너·파이프라인 모양 — 인프라 import 금지) + `modules/notices/` (크롤 도메인 로직) + `plugins/` (인프라 어댑터: `mongo` 저장·update_checker·audit, `health`, `discord`, `ai_summary`, `dispatch`, `scheduler`) + `shared/` (config, DB, logger, HTTP 클라이언트, HTML 처리). 조립은 `wiring.py`가 담당 — `modules/`는 `plugins/`를 import하지 않는다 (AST 테스트로 강제). `plugins/`를 import할 수 있는 건 조립 리프(wiring.py, cli.py들)뿐.
+**모듈형 구조** (adr-006 core/plugin 분리, PR 0~8 완료): `core/` (포트·이벤트·러너·파이프라인 모양·설정 타입·JsonLinesSink — 인프라 import 금지) + `modules/notices/` (크롤 도메인 로직) + `plugins/` (인프라 어댑터: `mongo` 저장·update_checker·audit, `health`, `discord`, `ai_summary`, `dispatch`, `scheduler`) + `shared/` (DB, logger, HTTP 클라이언트, HTML 처리) + `env.py` (os.environ·dotenv 유일 접점). 조립은 `wiring.py`가 담당 — `modules/`는 `plugins/`를 import하지 않는다 (AST 테스트로 강제). `plugins/`를 import할 수 있는 건 조립 리프(wiring.py, cli.py들)뿐.
+
+**의존성 extras** (PR 8): `pip install skkuverse-crawler`는 크롤·파싱·정제·CLI만 설치한다. 인프라는 optional — `[mongo]`(motor) / `[sched]`(apscheduler) / `[discord]`·`[ai]`(tenacity) / `[all]`. Dockerfile은 4개 extra를 모두 설치하며, **그 집합이 pyproject와 어긋나면 `test_packaging.py`가 실패한다**. production 프로파일은 필수 플러그인(mongo, sched) 부재 시 `wiring.ProfileError`로 기동 거부. 저장소 없이 돌려보려면 `notices --json` (stdout JSON Lines, 로그는 stderr).
 
 **Strategy Pattern**: `CrawlStrategy` 인터페이스 + `sources.json` config-driven. 전략 목록은 `sources.json`의 `strategy` 필드 및 `generate_artifacts.py`의 `STRATEGY_FEATURES` 참조.
 
@@ -106,7 +108,8 @@ python scripts/generate_artifacts.py    # sources.json + categories.json → 7�
 - `core/module.py` — `ModuleConfig` (name, cron_schedule 또는 interval_seconds) + `CrawlModule` Protocol
 - `core/registry.py` — 전역 모듈 레지스트리
 - `cli.py` — APScheduler로 모듈 스케줄링. CronTrigger(notices). `max_instances=1` + `coalesce=True`
-- `shared/config.py` — 중앙집중 환경 설정. frozen `Config` dataclass 싱글턴. `init_config()` → `load_dotenv(override=False)` + validation + 캐시. 모든 `os.getenv()` 호출이 여기에 집중됨
+- `env.py` — 환경 접점. `settings_from_env()` + `init_config()`/`get_config()` 싱글턴. `load_dotenv(override=False)`. **`os.environ`을 읽는 곳은 여기와 `modules/notices/config/loader.py`(SOURCES_JSON_PATH) 둘뿐** — AST 테스트로 강제
+- `core/settings.py` — frozen `Config` dataclass + `CrawlerEnv` + 순수 파생(db suffix, 기본 AI URL). 환경 접근 없음
 - `shared/db.py` — Motor async MongoDB 싱글턴. `get_config().mongo_db_name`으로 환경별 DB 라우팅
 
 ### 스케줄 주기
@@ -120,7 +123,7 @@ python scripts/generate_artifacts.py    # sources.json + categories.json → 7�
 
 ### DB 이름 규칙
 
-`shared/config.py`의 `_db_name()` 함수에서 환경별 suffix 자동 추가:
+`core/settings.py`의 `db_name_for()` 함수에서 환경별 suffix 자동 추가:
 
 `CRAWLER_ENV=production` → `skku_notices` (suffix 없음), `development` → `skku_notices_dev`, `test` → `skku_notices_test`.
 
@@ -128,9 +131,9 @@ python scripts/generate_artifacts.py    # sources.json + categories.json → 7�
 
 ## Environment
 
-`shared/config.py`에서 중앙 관리. `.env` 파일 (`py/.env`) 또는 시스템 환경변수로 설정. `load_dotenv(override=False)` 사용하므로 시스템 ENV가 `.env`보다 우선 (Docker 배포 시 안전).
+`env.py`에서 중앙 관리. `.env` 파일 (`py/.env`) 또는 시스템 환경변수로 설정. `load_dotenv(override=False)` 사용하므로 시스템 ENV가 `.env`보다 우선 (Docker 배포 시 안전).
 
-- `MONGO_URL` — MongoDB 연결 문자열 (필수, 비-test 모드에서 누락 시 SystemExit)
+- `MONGO_URL` — MongoDB 연결 문자열. PR 8부터 설정 로딩은 이걸 강제하지 않는다(저장소 없는 실행이 정당한 상태). 대신 `shared.db.get_client()`가 `MongoUrlMissing`을 던지고, production 프로파일은 기동을 거부한다
 - `MONGO_DB_NAME` — 기본: `skku_notices`
 - `CRAWLER_ENV` — `production` / `development` / `test` (case-insensitive)
 - `LOG_FORMAT` — `json` (기본) / `dev` (컬러 콘솔)

@@ -2,15 +2,15 @@
 
 크롤러를 **인프라 없이 도는 코어**와 **인프라를 붙이는 플러그인**으로 가르는 설계. 결정 배경은 [decisions/adr-006](decisions/adr-006-core-plugin-split.md), 작업 순서는 [core-plugin-plan.md](core-plugin-plan.md) 참조.
 
-> **상태**: 설계 v2. PR 0~7 구현 완료 (2026-08-01) — Stage/Pipeline은 `core/pipeline.py`(모양) + `modules/notices/stages.py`(구체 스테이지, 설계 스케치의 `core/content/`와 다름: 사유는 plan.md PR 7 확정 사항), 조립 시점 검증은 `wiring.py`의 `_require`, flush 계약은 `core/runner.py`. PR 8(extras)·PR 9(공개 문서)는 미착수. 무엇이 왜 바뀌었는지는 adr-006 근거 ⑦~⑬에 초기안과 함께 보존.
+> **상태**: 설계 v2. PR 0~7 구현 완료 (2026-08-01) — Stage/Pipeline은 `core/pipeline.py`(모양) + `modules/notices/stages.py`(구체 스테이지, 설계 스케치의 `core/content/`와 다름: 사유는 plan.md PR 7 확정 사항), 조립 시점 검증은 `wiring.py`의 `_require`, flush 계약은 `core/runner.py`. PR 8(extras) 완료 — optional-dependencies + 지연 click group + `env.py`/`core/settings.py` 분리 + production 부팅 거부(`wiring.ProfileError`) + `core/sinks.JsonLinesSink`. PR 9(공개 문서)는 미착수. 무엇이 왜 바뀌었는지는 adr-006 근거 ⑦~⑬에 초기안과 함께 보존.
 >
-> **불변식**: `core/`는 `modules/`·`plugins/`를 import하지 않는다. `modules/`는 `plugins/`를 import하지 않는다. `plugins/`를 import하는 파일은 **조립 리프뿐** — `wiring.py`, 루트 `cli.py`, 각 플러그인의 `cli.py` *(PR 7 개정, adr-006 §발동 기록)*. `os.environ`을 읽는 파일은 `env.py` 하나. — AST 테스트로 강제. *(v2)* 증분/전량 같은 실행 모드는 bool 플래그가 아니라 **합 타입**으로 — 불법 조합은 런타임 검증이 아니라 타입 구조로 차단한다.
+> **불변식**: `core/`는 `modules/`·`plugins/`를 import하지 않는다. `modules/`는 `plugins/`를 import하지 않는다. `plugins/`를 import하는 파일은 **조립 리프뿐** — `wiring.py`, 루트 `cli.py`, 각 플러그인의 `cli.py` *(PR 7 개정, adr-006 §발동 기록)*. `os.environ`을 읽는 파일은 `env.py` 하나 — *(PR 8 정정)* 실제로는 **둘**: `env.py`와 `modules/notices/config/loader.py`(SOURCES_JSON_PATH). 경로 해석이 Config 생성보다 먼저라 구조적으로 불가피하며, `test_env_is_the_only_environment_reader`의 허용목록이 두 항목을 명시한다. — AST 테스트로 강제. *(v2)* 증분/전량 같은 실행 모드는 bool 플래그가 아니라 **합 타입**으로 — 불법 조합은 런타임 검증이 아니라 타입 구조로 차단한다.
 
 ## 목표 상태
 
 ```bash
 pip install skkuverse-crawler                      # 코어만
-env -i skku-crawl notices --source skku-main --pages 1 --json   # DB·env·웹훅 없이 동작
+env -i skkuverse-crawler notices --source skku-main --pages 1 --json   # DB·env·웹훅 없이 동작
 
 pip install skkuverse-crawler[mongo,discord,ai,sched]           # 프로덕션
 ```
@@ -53,7 +53,9 @@ skkuverse_crawler/
 
 `shared/`는 해체된다: `config.py` → `env.py` + `core/settings.py` / `db.py` → `plugins/mongo` / `discord.py` → `plugins/discord` / `fetcher.py` → `core/net` / `html_cleaner.py`·`html_to_markdown.py` → `core/content` / `logger.py` → `core/logging.py`.
 
-조립부를 `app/` 패키지가 아니라 리프 모듈 3개로 두는 이유: 아무도 import하지 않는 리프라 코어 전용 설치가 이 파일들을 건드리지 않고, 따라서 `click`·`python-dotenv`도 기본 의존성에서 빠진다.
+조립부를 `app/` 패키지가 아니라 리프 모듈 3개로 두는 이유: 아무도 import하지 않는 리프라 코어 전용 설치가 이 파일들을 건드리지 않는다.
+
+> *(PR 8 기각)* 같은 논리로 `click`·`python-dotenv`까지 기본 의존성에서 빼자는 결론은 채택하지 않았다. `[project.scripts]`가 콘솔 스크립트를 선언하는 이상, 코어 전용 설치가 동작하는 바이너리를 만들지 못하면 §목표 상태의 `env -i skkuverse-crawler notices …` 인수 조건이 구조적으로 불가능해진다. 레이어링 주장(리프는 아무도 import하지 않는다)은 유효하지만 패키징 결론은 따라오지 않는다.
 
 ## 논쟁 지점의 귀속
 
