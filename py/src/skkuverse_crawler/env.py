@@ -14,7 +14,6 @@ part of it.
 from __future__ import annotations
 
 import os
-import sys
 
 from dotenv import load_dotenv
 
@@ -77,14 +76,12 @@ def init_config(*, force: bool = False) -> Config:
 
     load_dotenv()  # override=False by default: system env > .env file
 
-    cfg = settings_from_env()
-
-    missing = [k for k, v in {"MONGO_URL": cfg.mongo_url}.items() if not v]
-    if missing and not cfg.is_test:
-        print(f"Missing required config: {', '.join(missing)}", file=sys.stderr)
-        raise SystemExit(1)
-
-    _config = cfg
+    # No MONGO_URL check here since PR 8. Config loading stops enforcing
+    # deployment policy: "no store" is a legitimate configuration now that
+    # mongo is an extra, and `notices --json` depends on it. The
+    # requirement moved to where a store is actually needed —
+    # shared.db.get_client() and wiring.build_runtime(profile=production).
+    _config = settings_from_env()
     return _config
 
 

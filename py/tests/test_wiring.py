@@ -35,7 +35,9 @@ class TestAssemblyValidation:
         assert isinstance(seen, SeenIndex)
 
     async def test_sink_without_flush_is_refused_by_name(self):
-        with patch("skkuverse_crawler.wiring.MongoSink", _SinkMissingFlush):
+        # Patched at its source: wiring imports the adapters inside
+        # build_notices_runtime now, so motor stays optional.
+        with patch("skkuverse_crawler.plugins.mongo.sink.MongoSink", _SinkMissingFlush):
             with pytest.raises(WiringError) as exc:
                 build_notices_runtime(object())
         message = str(exc.value)
@@ -114,3 +116,82 @@ class TestBuildRuntime:
 
         assert notices._ports_factory is wiring.notices_ports
         assert notices._on_results is not None
+
+
+class TestProductionProfileGate:
+    """The boot refusal that makes extras safe (plan 위험 ⑤).
+
+    Once "no mongo plugin" is a legitimate state, a production deployment
+    that lost MONGO_URL — or an image built without `--extra mongo` —
+    would crawl all 136 sources, fetch every detail page, store nothing,
+    and log a clean success. Deploy's health check ("container running
+    after 10s") would pass it. These tests pin the refusal that turns that
+    into a fast, loud, rollback-triggering exit.
+    """
+
+    @staticmethod
+    def _settings(**overrides):
+        from skkuverse_crawler.core.settings import Config, CrawlerEnv
+
+        base = dict(
+            env=CrawlerEnv.PRODUCTION,
+            mongo_url="mongodb://x/y",
+            mongo_db_name="skku_notices",
+            log_format="json",
+            dept_filter=None,
+            ai_service_url="http://ai:4000",
+            dispatch_url=None,
+            internal_dispatch_token=None,
+            discord_webhook_url=None,
+        )
+        base.update(overrides)
+        return Config(**base)
+
+    async def test_production_refuses_when_a_required_plugin_is_not_installed(self):
+        real = wiring._installed
+
+        with patch.object(wiring, "_installed", lambda dist: False if dist == "motor" else real(dist)):
+            with pytest.raises(wiring.ProfileError) as exc:
+                wiring.build_runtime(self._settings())
+
+        message = str(exc.value)
+        assert "mongo" in message
+        assert "--extra mongo" in message, "the message must say how to fix it"
+        assert "store nothing" in message or "stores nothing" in message or "store" in message
+
+    async def test_production_refuses_when_a_required_plugin_is_unconfigured(self):
+        with pytest.raises(wiring.ProfileError, match="not configured"):
+            wiring.build_runtime(self._settings(mongo_url=None))
+
+    async def test_development_does_not_refuse(self):
+        from skkuverse_crawler.core.settings import CrawlerEnv
+
+        with patch("skkuverse_crawler.core.registry.register"):
+            modules = wiring.build_runtime(
+                self._settings(env=CrawlerEnv.DEVELOPMENT, mongo_url=None)
+            )
+        assert modules, "non-production profiles assemble whatever is available"
+
+    async def test_profile_can_be_overridden_independently_of_the_environment(self):
+        from skkuverse_crawler.core.settings import CrawlerEnv
+
+        with pytest.raises(wiring.ProfileError):
+            wiring.build_runtime(
+                self._settings(env=CrawlerEnv.DEVELOPMENT, mongo_url=None),
+                profile=CrawlerEnv.PRODUCTION,
+            )
+
+
+class TestActivePlugins:
+    def test_derived_from_what_is_installed_and_configured(self):
+        settings = TestProductionProfileGate._settings(discord_webhook_url=None)
+        active = wiring.active_plugins(settings)
+
+        assert "mongo" in active, "installed and configured"
+        assert "discord" not in active, "installed but unconfigured — not active"
+
+    def test_an_uninstalled_plugin_is_not_active(self):
+        settings = TestProductionProfileGate._settings()
+        real = wiring._installed
+        with patch.object(wiring, "_installed", lambda d: False if d == "motor" else real(d)):
+            assert "mongo" not in wiring.active_plugins(settings)
