@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
-from skkuverse_crawler.core.events import CrawlEvent
+from skkuverse_crawler.core.events import CrawlEvent, NoticeCrawled
 from skkuverse_crawler.core.ports import DetailRef, Outcome, SeenRecord, SourceSpec
 
 
@@ -21,11 +21,13 @@ class NullSeenIndex:
 
 
 class RecordingSink:
-    """Captures the orchestrator↔sink conversation for assertions.
+    """Captures the runner↔sink conversation for assertions.
 
     outcomes: optional script of accept() return values, consumed in
-    order; when exhausted (or omitted) accept returns None — which the
-    caller must count as INSERTED.
+    order but ONLY for NoticeCrawled — the sole event whose outcome the
+    runner reads. Progress events flow through accept uniformly and must
+    not eat the script. Exhausted/omitted script ⇒ None ⇒ the runner
+    counts INSERTED.
     """
 
     def __init__(self, outcomes: Sequence[Outcome | None] = ()) -> None:
@@ -39,7 +41,7 @@ class RecordingSink:
 
     async def accept(self, event: CrawlEvent) -> Outcome | None:
         self.events.append(event)
-        if self._outcomes:
+        if self._outcomes and isinstance(event, NoticeCrawled):
             return self._outcomes.pop(0)
         return None
 

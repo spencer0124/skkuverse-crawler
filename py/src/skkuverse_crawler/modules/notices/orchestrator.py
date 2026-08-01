@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import asyncio
-import time
 import uuid
-from collections.abc import AsyncIterator, Mapping
+from collections.abc import AsyncGenerator, AsyncIterator, Mapping
+from contextlib import aclosing
 from dataclasses import dataclass
 from typing import Any, assert_never
 
@@ -21,7 +21,8 @@ from ...core.events import (
     SourceFinished,
     SourceStarted,
 )
-from ...core.ports import Outcome, Ports, SeenIndex, SeenRecord, SourceSpec, WorkSeed
+from ...core.ports import Ports, SeenIndex, SeenRecord, SourceSpec, WorkSeed
+from ...core.runner import run_events
 from ...core.results import SourceResult
 from ...shared.db import get_db
 from ...shared.fetcher import Fetcher
@@ -142,7 +143,6 @@ async def _crawl_department(
     options: CrawlOptions,
     logger: Any,
 ) -> SourceResult:
-    start = time.monotonic()
     strategy_cls = STRATEGY_MAP.get(dept["strategy"])
     if not strategy_cls:
         raise ValueError(f"Unknown strategy: {dept['strategy']}")
@@ -150,44 +150,17 @@ async def _crawl_department(
     strategy = strategy_cls(fetcher)
     result = SourceResult(dept_id=dept["id"], dept_name=dept["name"])
 
-    # Inline aggregation reproducing today's counters exactly; the flip to
-    # the uniform core runner (every event through accept) is the next
-    # commit, so reviewers can read "did the events come out in the right
-    # order" and "did the sink do the right thing with them" separately.
-    async for ev in iter_source(
-        dept, strategy, mode=mode, work_seed=ports.work_seed,
-        options=options, logger=logger,
-    ):
-        match ev:
-            case NoticeCrawled(change=None):
-                outcome = await ports.sink.accept(ev)
-                # None ⇒ INSERTED (architecture §러너 집계 규칙).
-                if outcome is Outcome.UPDATED:
-                    result.updated += 1
-                else:
-                    result.inserted += 1
-            case NoticeCrawled():
-                await ports.sink.accept(ev)
-                result.updated += 1
-            case ContentRefreshed():
-                await ports.sink.accept(ev)
-                result.updated += 1
-            case NoticeUnchanged():
-                await ports.sink.accept(ev)
-                result.skipped += 1
-            case ItemSkipped():
-                result.skipped += 1
-            case ItemFailed() | ListFetchFailed():
-                result.errors += 1
-            case PageCompleted():
-                await ports.sink.flush()
-            case SourceFinished(source_down=source_down, last_error=last_error):
-                result.source_down = source_down
-                result.last_error = last_error
-            case _:
-                pass  # SourceStarted and future progress events
+    # aclosing makes generator teardown deterministic when run_events
+    # raises (accept/flush failure) — without it the suspended generator
+    # is finalized at GC time with flaky asyncio warnings.
+    async with aclosing(
+        iter_source(
+            dept, strategy, mode=mode, work_seed=ports.work_seed,
+            options=options, logger=logger,
+        )
+    ) as events:
+        await run_events(events, ports.sink, result=result)
 
-    result.duration_ms = int((time.monotonic() - start) * 1000)
     logger.info(
         "department_crawl_finished",
         dept_id=result.dept_id,
@@ -208,7 +181,7 @@ async def iter_source(
     work_seed: WorkSeed,
     options: CrawlOptions,
     logger: Any,
-) -> AsyncIterator[CrawlEvent]:
+) -> AsyncGenerator[CrawlEvent, None]:
     """The crawl loop as an event stream — no store, no sink, no counters.
 
     Yields the full vocabulary: write-bearing result events plus the
