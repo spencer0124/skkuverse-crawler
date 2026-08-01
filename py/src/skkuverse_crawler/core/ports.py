@@ -100,14 +100,9 @@ class NullWorkSeed:
 
 @dataclass(frozen=True)
 class Ports:
-    """Port bundle handed to run_crawl.
+    """Port bundle handed to run_crawl. All-defaults: `Ports()` is the
+    plugin-less configuration. The seen index lives in CrawlMode
+    (Incremental(seen) | FullSweep — core/crawl.py), not here."""
 
-    seen is required — NullSeenIndex is deliberately NOT a core default
-    (adr-006 v2: a Null that *induces* behavior is an emergence risk; it
-    lives in tests/support as a stub only). The field dissolves in PR 6
-    when CrawlMode = Incremental(seen) | FullSweep absorbs it.
-    """
-
-    seen: SeenIndex
     sink: Sink = field(default_factory=NullSink)
     work_seed: WorkSeed = field(default_factory=NullWorkSeed)

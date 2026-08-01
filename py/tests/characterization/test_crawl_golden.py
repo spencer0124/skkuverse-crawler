@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import httpx
 
+from skkuverse_crawler.core.crawl import FullSweep
 from tests.characterization import depts
 from tests.characterization.harness import FixtureRouter, run_golden, seed
 from tests.support.fake_mongo import FakeCollection
@@ -138,11 +139,10 @@ async def test_gnuboard_cold_two_pages():
 
 
 async def test_std_full_sweep_no_store_consult():
-    """incremental=False: the 'core requires nothing' acceptance case in its
-    current-API form (재조준: PR 6 swaps this to FullSweep()+NullSink and the
-    same golden must pass). No find_existing_meta, no bulk_touch — every item
-    upserted, stop on empty page."""
-    run = await run_golden(depts.SKKU_STD_DEPT, _std_cold_router(), incremental=False)
+    """FullSweep(): the 'core requires nothing' acceptance case (re-aimed here
+    in PR 6 from CrawlOptions(incremental=False), same golden bytes). No
+    seen.lookup, no bulk_touch — every item upserted, stop on empty page."""
+    run = await run_golden(depts.SKKU_STD_DEPT, _std_cold_router(), mode=FullSweep())
     run.snapshot_all("std_full_sweep")
     op_names = [op[0] for op in run.ops_delta()]
     assert "bulk_write" not in op_names

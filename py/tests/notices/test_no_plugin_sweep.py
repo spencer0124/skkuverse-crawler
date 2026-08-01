@@ -12,13 +12,14 @@ from unittest.mock import patch
 
 import respx
 
+from skkuverse_crawler.core.crawl import FullSweep
 from skkuverse_crawler.core.events import NoticeCrawled
-from skkuverse_crawler.core.ports import NullWorkSeed, Ports, Sink, SourceSpec
+from skkuverse_crawler.core.ports import Ports, Sink, SourceSpec
 from skkuverse_crawler.modules.notices.orchestrator import CrawlOptions, run_crawl
 from skkuverse_crawler.shared.fetcher import Fetcher
 from tests.characterization import depts
 from tests.characterization.harness import FixtureRouter
-from tests.support.ports import NullSeenIndex, RecordingSink
+from tests.support.ports import RecordingSink
 
 
 def _router() -> FixtureRouter:
@@ -35,7 +36,7 @@ def _router() -> FixtureRouter:
 
 async def test_sweep_with_injected_ports_never_touches_db():
     sink = RecordingSink()
-    ports = Ports(seen=NullSeenIndex(), sink=sink, work_seed=NullWorkSeed())
+    ports = Ports(sink=sink)
 
     async def noop_rate_limit(self: Fetcher) -> None:
         return None
@@ -54,8 +55,9 @@ async def test_sweep_with_injected_ports_never_touches_db():
         respx_router.route().mock(side_effect=_router().handler)
         results = await run_crawl(
             [depts.SKKU_STD_DEPT],
-            CrawlOptions(incremental=False, max_pages=1),
+            CrawlOptions(max_pages=1),
             ports=ports,
+            mode=FullSweep(),
         )
 
     assert len(results) == 1

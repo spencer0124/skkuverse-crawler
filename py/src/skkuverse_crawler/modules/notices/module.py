@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from ...crawl_health.store import record_and_alert
+from ...core.crawl import FullSweep
 from ...core.module import ModuleConfig
+from ...crawl_health.store import record_and_alert
 from ...shared.config import get_config
 from .config.loader import load_and_validate
 from .orchestrator import CrawlOptions, run_crawl
@@ -21,10 +22,13 @@ class NoticesModule:
     async def run(self, incremental: bool = True, **kwargs: Any) -> dict:
         departments = load_and_validate()
         options = CrawlOptions(
-            incremental=incremental,
             dept_filter=get_config().dept_filter,
         )
-        results = await run_crawl(departments, options)
+        # bool → CrawlMode translation at the module boundary: None lets
+        # run_crawl resolve Incremental over the lazily-wired Mongo index.
+        results = await run_crawl(
+            departments, options, mode=None if incremental else FullSweep()
+        )
         await record_and_alert(results)
         return {
             "departments": len(results),

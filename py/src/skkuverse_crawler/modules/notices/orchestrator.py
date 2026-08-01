@@ -5,10 +5,11 @@ import time
 import uuid
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, assert_never
 
+from ...core.crawl import CrawlMode, FullSweep, Incremental
 from ...core.events import ChangeInfo, ContentRefreshed, NoticeCrawled, NoticeUnchanged
-from ...core.ports import Outcome, Ports, SeenRecord, Sink, SourceSpec
+from ...core.ports import Outcome, Ports, SeenIndex, SeenRecord, Sink, SourceSpec
 from ...core.results import SourceResult
 from ...shared.db import get_db
 from ...shared.fetcher import Fetcher
@@ -29,7 +30,6 @@ _MAX_CONTENT_BYTES = 5 * 1024 * 1024  # 5MB
 
 @dataclass
 class CrawlOptions:
-    incremental: bool = True
     max_pages: int | None = None
     delay_ms: int | None = None
     dept_filter: tuple[str, ...] | None = None
@@ -42,18 +42,25 @@ async def run_crawl(
     departments: list[dict[str, Any]],
     options: CrawlOptions,
     ports: Ports | None = None,
+    mode: CrawlMode | None = None,
 ) -> list[SourceResult]:
     crawl_id = uuid.uuid4().hex[:8]
     logger = get_logger("orchestrator", crawl_id=crawl_id)
 
+    seen: SeenIndex | None = None
     if ports is None:
         db = await get_db()
         collection = db["notices"]
         # Lazy wiring import — the single plugins import point. Temporary
         # modules→wiring edge, retired in PR 7 when injection inverts.
-        from ...wiring import build_notices_ports
+        from ...wiring import build_notices_runtime
 
-        ports = build_notices_ports(collection)
+        ports, seen = build_notices_runtime(collection)
+    if mode is None:
+        # Production callers (no ports, no mode) keep today's behavior:
+        # incremental over the wired Mongo index. Injected-ports callers
+        # get the honest FullSweep default (architecture §CrawlMode).
+        mode = Incremental(seen) if seen is not None else FullSweep()
 
     fetcher = Fetcher(delay_ms=options.delay_ms or 500)
 
@@ -87,7 +94,7 @@ async def run_crawl(
 
     async def crawl_with_sem(dept: dict) -> SourceResult:
         async with sem:
-            return await _crawl_department(dept, ports, fetcher, options, logger)
+            return await _crawl_department(dept, ports, fetcher, mode, options, logger)
 
     tasks = [crawl_with_sem(dept) for dept in filtered]
     settled = await asyncio.gather(*tasks, return_exceptions=True)
@@ -119,6 +126,7 @@ async def _crawl_department(
     dept: dict[str, Any],
     ports: Ports,
     fetcher: Fetcher,
+    mode: CrawlMode,
     options: CrawlOptions,
     logger: Any,
 ) -> SourceResult:
@@ -171,7 +179,7 @@ async def _crawl_department(
                 result.updated += 1
 
     # Crawl list pages
-    max_pages = options.max_pages or (100 if options.incremental else 2500)
+    max_pages = options.max_pages or (100 if isinstance(mode, Incremental) else 2500)
     page = 0
 
     while page < max_pages:
@@ -200,14 +208,19 @@ async def _crawl_department(
             logger.info("floor_date_stopping", page=page, dept_id=dept["id"])
             break
 
-        if options.incremental:
-            article_nos = [item.articleNo for item in list_items]
-            existing_meta = await ports.seen.lookup(dept["id"], article_nos)
-            all_known = not should_continue(list_items, existing_meta)
-        else:
-            # Explicit assignment (not emergent) — kills the latent
-            # UnboundLocalError of the v1 skeleton (adr-006 근거 ⑦).
-            existing_meta, all_known = {}, False
+        existing_meta: Mapping[int, SeenRecord]
+        match mode:
+            case Incremental(seen=seen_index):
+                article_nos = [item.articleNo for item in list_items]
+                existing_meta = await seen_index.lookup(dept["id"], article_nos)
+                all_known = not should_continue(list_items, existing_meta)
+            case FullSweep():
+                # Explicit assignment (not emergent) — kills the latent
+                # UnboundLocalError of the v1 skeleton (adr-006 근거 ⑦).
+                # No lookup call — matching the old full path's zero DB reads.
+                existing_meta, all_known = {}, False
+            case _:
+                assert_never(mode)
 
         if not is_first_page and all_known:
             logger.info("all_known_stopping", page=page)
