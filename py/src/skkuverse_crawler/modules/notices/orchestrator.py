@@ -204,23 +204,26 @@ async def _crawl_department(
             article_nos = [item.articleNo for item in list_items]
             existing_meta = await ports.seen.lookup(dept["id"], article_nos)
             all_known = not should_continue(list_items, existing_meta)
-
-            if not is_first_page and all_known:
-                logger.info("all_known_stopping", page=page)
-                break
-
-            if is_first_page and all_known:
-                logger.info("all_known_first_page_early_stop")
-                await _process_page_smart(
-                    list_items, existing_meta, strategy, dept, ports.sink, result, logger
-                )
-                break
-
-            await _process_page_smart(
-                list_items, existing_meta, strategy, dept, ports.sink, result, logger
-            )
         else:
-            await _process_page_full(list_items, strategy, dept, ports.sink, result, logger)
+            # Explicit assignment (not emergent) — kills the latent
+            # UnboundLocalError of the v1 skeleton (adr-006 근거 ⑦).
+            existing_meta, all_known = {}, False
+
+        if not is_first_page and all_known:
+            logger.info("all_known_stopping", page=page)
+            break
+
+        if is_first_page and all_known:
+            # Logged BEFORE processing — pinned by the round2/round3 golden
+            # log_events order (precedes change_detected).
+            logger.info("all_known_first_page_early_stop")
+
+        await _process_page(
+            list_items, existing_meta, strategy, dept, options, ports.sink, result, logger
+        )
+
+        if is_first_page and all_known:
+            break
 
         if below_floor:
             logger.info("floor_date_stopping", page=page, dept_id=dept["id"])
@@ -277,18 +280,21 @@ async def _verify_and_measure_images(
         return ImageCheckResult()
 
 
-async def _process_page_smart(
+async def _process_page(
     list_items: list[NoticeListItem],
     existing_meta: Mapping[int, SeenRecord],
     strategy: Any,
     dept: dict[str, Any],
+    options: CrawlOptions,
     sink: Sink,
     result: SourceResult,
     logger: Any,
 ) -> None:
+    """One merged processor for both modes: with existing_meta={} every item
+    takes the previous-is-None branch — the old full-sweep path falls out."""
     for item in list_items:
         try:
-            if item.date and item.date < SERVICE_START_DATE:
+            if options.since_date and item.date and item.date < options.since_date:
                 result.skipped += 1
                 continue
 
@@ -375,55 +381,3 @@ async def _process_page_smart(
 
     await sink.flush()
 
-
-async def _process_page_full(
-    list_items: list[NoticeListItem],
-    strategy: Any,
-    dept: dict[str, Any],
-    sink: Sink,
-    result: SourceResult,
-    logger: Any,
-) -> None:
-    for item in list_items:
-        try:
-            if item.date and item.date < SERVICE_START_DATE:
-                result.skipped += 1
-                continue
-
-            detail = await strategy.crawl_detail(
-                {"articleNo": item.articleNo, "detailPath": item.detailPath}, dept
-            )
-
-            abs_content = (
-                normalize_content_urls(detail.content, dept["baseUrl"])
-                if detail and detail.content
-                else None
-            )
-            source_url = (
-                item.detailPath
-                if item.detailPath.startswith("http")
-                else f"{dept['baseUrl']}{item.detailPath}"
-            )
-            img_result = await _verify_and_measure_images(
-                abs_content, source_url, dept["id"], item.articleNo, logger,
-            )
-
-            notice = build_notice(
-                item, detail,
-                department=dept["name"],
-                source_id=dept["id"],
-                base_url=dept["baseUrl"],
-                image_dimensions=img_result.dimensions or None,
-            )
-            outcome = await sink.accept(
-                NoticeCrawled(source_id=dept["id"], notice=notice)
-            )
-            # None ⇒ INSERTED (architecture §러너 집계 규칙).
-            if outcome is Outcome.UPDATED:
-                result.updated += 1
-            else:
-                result.inserted += 1
-
-        except Exception as exc:
-            logger.error("process_article_failed", articleNo=item.articleNo, error=str(exc))
-            result.errors += 1

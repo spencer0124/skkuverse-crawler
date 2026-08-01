@@ -7,8 +7,8 @@ from skkuverse_crawler.core.ports import Outcome, SeenRecord
 from skkuverse_crawler.core.results import SourceResult as DeptResult
 from skkuverse_crawler.modules.notices.models import NoticeDetail, NoticeListItem
 from skkuverse_crawler.modules.notices.orchestrator import (
-    _process_page_full,
-    _process_page_smart,
+    CrawlOptions,
+    _process_page,
 )
 from tests.support.ports import RecordingSink
 
@@ -39,7 +39,7 @@ class TestFloorDateItemSkip:
         result = DeptResult()
         logger = MagicMock()
 
-        await _process_page_smart([item], {}, strategy, MOCK_DEPT, sink, result, logger)
+        await _process_page([item], {}, strategy, MOCK_DEPT, CrawlOptions(), sink, result, logger)
 
         assert result.skipped == 1
         strategy.crawl_detail.assert_not_awaited()
@@ -55,7 +55,7 @@ class TestFloorDateItemSkip:
         result = DeptResult()
         logger = MagicMock()
 
-        await _process_page_smart([item], {}, strategy, MOCK_DEPT, sink, result, logger)
+        await _process_page([item], {}, strategy, MOCK_DEPT, CrawlOptions(), sink, result, logger)
 
         assert result.inserted == 1
         strategy.crawl_detail.assert_awaited_once()
@@ -71,7 +71,7 @@ class TestFloorDateItemSkip:
         result = DeptResult()
         logger = MagicMock()
 
-        await _process_page_smart([item], {}, strategy, MOCK_DEPT, sink, result, logger)
+        await _process_page([item], {}, strategy, MOCK_DEPT, CrawlOptions(), sink, result, logger)
 
         assert result.skipped == 0
         strategy.crawl_detail.assert_awaited_once()
@@ -83,7 +83,7 @@ class TestFloorDateItemSkip:
         result = DeptResult()
         logger = MagicMock()
 
-        await _process_page_full([item], strategy, MOCK_DEPT, sink, result, logger)
+        await _process_page([item], {}, strategy, MOCK_DEPT, CrawlOptions(), sink, result, logger)
 
         assert result.skipped == 1
         strategy.crawl_detail.assert_not_awaited()
@@ -91,7 +91,7 @@ class TestFloorDateItemSkip:
 
 
 class TestThreeWayBranch:
-    """_process_page_smart 3-way 분기: new / changed / unchanged —
+    """_process_page 3-way 분기: new / changed / unchanged —
     이제 sink가 받는 이벤트가 계약이다."""
 
     @patch("skkuverse_crawler.modules.notices.orchestrator.build_notice")
@@ -105,7 +105,7 @@ class TestThreeWayBranch:
         result = DeptResult()
         logger = MagicMock()
 
-        await _process_page_smart([item], {}, strategy, MOCK_DEPT, sink, result, logger)
+        await _process_page([item], {}, strategy, MOCK_DEPT, CrawlOptions(), sink, result, logger)
 
         assert len(sink.events) == 1
         event = sink.events[0]
@@ -126,7 +126,7 @@ class TestThreeWayBranch:
         result = DeptResult()
         logger = MagicMock()
 
-        await _process_page_smart([item], {}, strategy, MOCK_DEPT, sink, result, logger)
+        await _process_page([item], {}, strategy, MOCK_DEPT, CrawlOptions(), sink, result, logger)
 
         assert result.inserted == 1
         assert result.updated == 0
@@ -141,7 +141,7 @@ class TestThreeWayBranch:
         result = DeptResult()
         logger = MagicMock()
 
-        await _process_page_smart([item], {}, strategy, MOCK_DEPT, sink, result, logger)
+        await _process_page([item], {}, strategy, MOCK_DEPT, CrawlOptions(), sink, result, logger)
 
         assert result.updated == 1
         assert result.inserted == 0
@@ -159,7 +159,7 @@ class TestThreeWayBranch:
         result = DeptResult()
         logger = MagicMock()
 
-        await _process_page_smart([item], {1: existing}, strategy, MOCK_DEPT, sink, result, logger)
+        await _process_page([item], {1: existing}, strategy, MOCK_DEPT, CrawlOptions(), sink, result, logger)
 
         assert len(sink.events) == 1
         event = sink.events[0]
@@ -184,7 +184,7 @@ class TestThreeWayBranch:
         result = DeptResult()
         logger = MagicMock()
 
-        await _process_page_smart([item], {1: existing}, strategy, MOCK_DEPT, sink, result, logger)
+        await _process_page([item], {1: existing}, strategy, MOCK_DEPT, CrawlOptions(), sink, result, logger)
 
         assert result.skipped == 1
         strategy.crawl_detail.assert_not_awaited()
@@ -198,7 +198,7 @@ class TestThreeWayBranch:
         sink = RecordingSink()
         result = DeptResult()
 
-        await _process_page_smart([], {}, AsyncMock(), MOCK_DEPT, sink, result, MagicMock())
+        await _process_page([], {}, AsyncMock(), MOCK_DEPT, CrawlOptions(), sink, result, MagicMock())
 
         assert sink.flushes == 1
         assert sink.events == []
