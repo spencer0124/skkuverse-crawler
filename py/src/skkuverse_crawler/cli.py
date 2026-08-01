@@ -2,10 +2,21 @@ from __future__ import annotations
 
 import asyncio
 import importlib
+import importlib.util
 
 import click
 
 from .shared.logger import configure_logging
+
+# extra name -> a distribution that extra installs, used only to detect
+# absence. Names differ (`mongo` installs `motor`), so the mapping is
+# explicit; test_packaging.py checks it against pyproject.
+_EXTRA_MARKER = {
+    "mongo": "motor",
+    "sched": "apscheduler",
+    "discord": "tenacity",
+    "ai": "tenacity",
+}
 
 # name -> (module, attribute, help text, extras needed to import it)
 #
@@ -41,6 +52,14 @@ _LAZY: dict[str, tuple[str, str, str, str | None]] = {
 }
 
 
+def _missing_extras_message(cmd_name: str, extras: str, detail: str) -> str:
+    return (
+        f"`{cmd_name}` needs the optional `{extras}` dependencies — install with:\n"
+        f"    pip install 'skkuverse-crawler[{extras}]'\n"
+        f"({detail})"
+    )
+
+
 class _LazyGroup(click.Group):
     """Subcommands are imported when invoked, not when the group is built.
 
@@ -65,19 +84,39 @@ class _LazyGroup(click.Group):
         if meta is None:
             return super().get_command(ctx, cmd_name)
         module, attr, _help, extras = meta
+        if extras is not None:
+            self._require_extras(cmd_name, extras)
         try:
             loaded = importlib.import_module(module, __package__)
         except ImportError as exc:
             if extras is None:
                 raise
-            # Without this, a core-only install answers `update-check` with
-            # a bare ModuleNotFoundError from four frames down.
-            raise click.ClickException(
-                f"`{cmd_name}` needs the optional `{extras}` dependencies — install with:\n"
-                f"    pip install 'skkuverse-crawler[{extras}]'\n"
-                f"({exc})"
-            ) from exc
+            raise click.ClickException(_missing_extras_message(cmd_name, extras, str(exc))) from exc
         return getattr(loaded, attr)
+
+    @staticmethod
+    def _require_extras(cmd_name: str, extras: str) -> None:
+        """Fail with an install hint before the command can fail worse.
+
+        Checked with find_spec rather than by catching ImportError: the CLI
+        leaf modules import fine without their driver (that is what makes
+        `--help` cheap), so the failure would otherwise surface much later
+        as a missing MONGO_URL or a ModuleNotFoundError from deep inside a
+        plugin. find_spec does not execute the module, so this stays as
+        import-light as the rest of the group.
+        """
+        for extra in extras.split(","):
+            marker = _EXTRA_MARKER.get(extra.strip())
+            if marker is None:
+                continue
+            try:
+                found = importlib.util.find_spec(marker) is not None
+            except ModuleNotFoundError:
+                found = False
+            if not found:
+                raise click.ClickException(
+                    _missing_extras_message(cmd_name, extras, f"no module named {marker!r}")
+                )
 
     def format_commands(self, ctx: click.Context, formatter: click.HelpFormatter) -> None:
         rows: list[tuple[str, click.Command]] = [

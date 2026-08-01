@@ -2,7 +2,10 @@ name: CI
 
 on:
   pull_request:
-    branches: [main]
+    # dev included since PR 8: the pyproject/uv.lock/Dockerfile triple is
+    # invisible to unit tests, so merging it into dev unchecked is exactly
+    # the case where a green local run proves the least.
+    branches: [main, dev]
 
 jobs:
   test:
@@ -13,8 +16,66 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v4
-      - run: uv sync --extra dev
+      # --frozen: a stale lock should fail here, not be silently re-resolved
+      # into an environment nobody reviewed.
+      - run: uv sync --frozen --extra dev
       - run: uv run pytest tests/ -v
       - run: uv run pytest -m mongo -q
       - run: uv run ruff check src/
       - run: uv run mypy src/
+
+  core-only:
+    # Installs the wheel with no extras at all. This is the only job that can
+    # catch a wrong extras TABLE — the in-suite poison test proves import-graph
+    # isolation but runs in an env where everything is installed.
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: py
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+      - run: uv venv /tmp/core --python 3.12
+      - name: Optional dependencies must be absent
+        run: VIRTUAL_ENV=/tmp/core uv pip install . && /tmp/core/bin/python -c "
+          import importlib.util as u;
+          leaked = [m for m in ('motor','pymongo','bson','apscheduler','tenacity') if u.find_spec(m)];
+          assert not leaked, f'optional deps leaked into base: {leaked}'"
+      - name: Base dependencies must be present
+        # lxml is here deliberately: nothing imports it, so only an explicit
+        # presence check can catch it being demoted to an extra.
+        run: /tmp/core/bin/python -c "
+          import importlib.util as u;
+          missing = [m for m in ('lxml','click','dotenv','bs4','httpx','nh3') if not u.find_spec(m)];
+          assert not missing, f'base deps missing: {missing}'"
+      - name: Importing the CLI must not need a driver
+        run: /tmp/core/bin/python -c "
+          import skkuverse_crawler.cli, sys;
+          assert 'motor' not in sys.modules"
+      # cd /tmp: load_dotenv() searches cwd, so running from the repo would let
+      # a stray .env mask the empty-environment condition.
+      - name: CLI works with no environment at all
+        run: cd /tmp && env -i /tmp/core/bin/skkuverse-crawler --help
+      - name: A command needing an extra explains how to install it
+        run: |
+          cd /tmp
+          set +e
+          out=$(env -i /tmp/core/bin/skkuverse-crawler update-check 2>&1)
+          code=$?
+          set -e
+          echo "$out"
+          test $code -ne 0
+          echo "$out" | grep -q "skkuverse-crawler\[mongo\]"
+
+  docker:
+    # The direct evidence that the Dockerfile's --extra flags took effect.
+    # test_packaging.py asserts the flags statically; this asserts the image.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Bare docker build, not `docker compose build`: compose resolves
+      # `env_file: .env`, which does not exist in a fresh checkout.
+      - run: docker build --build-context repo-root=. -f py/Dockerfile -t crawler:pr py
+      - name: Every runtime extra is installed in the image
+        run: docker run --rm crawler:pr python -c "import motor, pymongo, bson, apscheduler, tenacity; print('extras ok')"
+      - run: docker run --rm crawler:pr python -m skkuverse_crawler --help
