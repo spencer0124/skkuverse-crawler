@@ -5,7 +5,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from skkuverse_crawler.core.results import SourceResult as DeptResult
 from skkuverse_crawler.modules.notices.models import NoticeDetail, NoticeListItem
 from skkuverse_crawler.modules.notices.orchestrator import (
-    _page_below_floor,
     _process_page_full,
     _process_page_smart,
 )
@@ -156,30 +155,3 @@ class TestThreeWayBranch:
         assert touch_items[0]["articleNo"] == 1
 
 
-class TestPageBelowFloor:
-    """_page_below_floor: 고정글(pinned)은 floor 판정에서 제외."""
-
-    def test_all_regular_old_stops(self):
-        items = [_make_item(article_no=n, date="2025-12-01") for n in (1, 2)]
-        assert _page_below_floor(items) is True
-
-    def test_recent_pinned_does_not_block_stop(self):
-        """최신 고정글이 반복 노출되어도 일반 글이 전부 오래됐으면 stop."""
-        pinned = _make_item(article_no=99, date="2026-05-01")
-        pinned.pinned = True
-        regulars = [_make_item(article_no=n, date="2025-12-01") for n in (1, 2)]
-        assert _page_below_floor([pinned, *regulars]) is True
-
-    def test_recent_regular_continues(self):
-        items = [_make_item(article_no=1, date="2025-12-01"), _make_item(article_no=2, date="2026-04-15")]
-        assert _page_below_floor(items) is False
-
-    def test_pinned_only_page_continues(self):
-        """고정글만 있는 페이지는 stop 안 함 — 다음 페이지의 empty/all_known이 처리."""
-        pinned = _make_item(article_no=99, date="2022-03-16")
-        pinned.pinned = True
-        assert _page_below_floor([pinned]) is False
-
-    def test_missing_date_continues(self):
-        items = [_make_item(article_no=1, date="")]
-        assert _page_below_floor(items) is False

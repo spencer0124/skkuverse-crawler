@@ -6,7 +6,7 @@ from typing import Any
 
 from motor.motor_asyncio import AsyncIOMotorCollection
 
-from .models import Notice, NoticeListItem
+from .models import Notice
 
 
 async def ensure_indexes(collection: AsyncIOMotorCollection) -> None:
@@ -37,42 +37,6 @@ async def find_existing_meta(
             "contentHash": doc.get("contentHash"),
         }
     return result
-
-
-def has_changed(item: NoticeListItem, existing: dict[str, Any]) -> bool:
-    if item.date != existing["date"]:
-        return True
-    new_title = item.title
-    old_title = existing["title"]
-    if new_title == old_title:
-        return False
-    # Truncated list title (ends with "...") that matches the DB's full
-    # title prefix is NOT a real change — the list page just shows a
-    # shorter version than the detail-page title stored in the DB.
-    # Some source servers truncate at a byte boundary inside a multi-byte
-    # UTF-8 character, leaving one or more U+FFFD replacement chars before
-    # "..."; strip those so the prefix match still succeeds.
-    if new_title.endswith("..."):
-        prefix = new_title[:-3].rstrip("�")
-        if prefix and old_title.startswith(prefix):
-            return False
-    return True
-
-
-def should_continue(
-    page_items: list[NoticeListItem],
-    existing_meta: dict[int, dict[str, Any]],
-) -> bool:
-    """True while the page still holds unknown regular rows.
-
-    Pinned rows are excluded: they repeat on every page and, when they
-    pre-date SERVICE_START_DATE, are never stored — counting them would keep
-    every page looking "unknown" and defeat the all-known early-stop. Any
-    pinned notice is always visible on page 0, so ignoring it here never
-    skips content. A page with only pinned rows means regular posts ran out.
-    """
-    regular_items = [item for item in page_items if not item.pinned]
-    return not all(item.articleNo in existing_meta for item in regular_items)
 
 
 async def upsert_notice(
