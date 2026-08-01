@@ -7,18 +7,18 @@ from typing import Any
 
 from bson import ObjectId
 
-from ..core.module import ModuleConfig
-from ..modules.notices.config.loader import load_and_validate
-from ..shared.db import get_db
-from ..shared.discord import send_discord
-from ..shared.logger import get_logger
+from ...core.module import ModuleConfig
+from ...core.ports import Notifier
+from ...modules.notices.config.loader import load_and_validate
+from ...shared.db import get_db
+from ...shared.logger import get_logger
 from .logic import format_daily_summary
 from .store import COLLECTION
 
 logger = get_logger("crawl_health_summary")
 
 
-async def run_daily_summary() -> dict:
+async def run_daily_summary(notifier: Notifier) -> dict:
     now = datetime.now(timezone.utc)
     db = await get_db()
 
@@ -49,7 +49,7 @@ async def run_daily_summary() -> dict:
         failing=failing,
         inserted_24h=inserted_24h,
     )
-    sent = await send_discord(message)
+    sent = await notifier.notify(message)
     logger.info(
         "daily_summary_done",
         enabled=enabled_count,
@@ -66,6 +66,11 @@ async def run_daily_summary() -> dict:
 
 
 class CrawlHealthSummaryModule:
+    """Wiring supplies the notifier — this module never picks a channel."""
+
+    def __init__(self, notifier: Notifier) -> None:
+        self._notifier = notifier
+
     @property
     def config(self) -> ModuleConfig:
         return ModuleConfig(
@@ -73,8 +78,8 @@ class CrawlHealthSummaryModule:
             cron_schedule="0 9 * * *",
         )
 
-    async def run(self, incremental: bool = True, **kwargs: Any) -> dict:
-        return await run_daily_summary()
+    async def run(self, **kwargs: Any) -> dict:
+        return await run_daily_summary(self._notifier)
 
     async def shutdown(self) -> None:
         pass

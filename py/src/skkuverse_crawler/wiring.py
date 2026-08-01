@@ -14,13 +14,14 @@ touches into the next one.
 
 from __future__ import annotations
 
+import functools
 from collections.abc import Awaitable, Callable
 
 from motor.motor_asyncio import AsyncIOMotorCollection
 
 from .core import registry
 from .core.module import CrawlModule
-from .core.ports import Ports, SeenIndex, Sink, WorkSeed
+from .core.ports import Notifier, Ports, SeenIndex, Sink, WorkSeed
 from .plugins.mongo.seen import MongoSeenIndex
 from .plugins.mongo.sink import MongoSink
 from .plugins.mongo.work_seed import MongoWorkSeed
@@ -80,24 +81,31 @@ def build_runtime() -> tuple[CrawlModule, ...]:
     enable) arrive in PR 8 with the packaging extras that make "this
     plugin is absent" an expressible state.
     """
-    from .crawl_health.module import CrawlHealthSummaryModule
-    from .crawl_health.store import record_and_alert
     from .modules.notices.module import NoticesModule
     from .notices_summary.module import NoticesSummaryModule
+    from .plugins.discord.webhook import DiscordNotifier
+    from .plugins.health.module import CrawlHealthSummaryModule
+    from .plugins.health.store import record_and_alert
     from .plugins.mongo.update_checker import NoticesUpdateCheckModule
 
+    notifier: Notifier = DiscordNotifier()
+    _require(notifier, Notifier, "Notifier", "notify")
+
     modules: tuple[CrawlModule, ...] = (
-        NoticesModule(ports_factory=notices_ports, on_results=record_and_alert),
+        NoticesModule(
+            ports_factory=notices_ports,
+            on_results=functools.partial(record_and_alert, notifier=notifier),
+        ),
         NoticesUpdateCheckModule(),
         NoticesSummaryModule(),
-        CrawlHealthSummaryModule(),
+        CrawlHealthSummaryModule(notifier),
     )
     for module in modules:
         registry.register(module)
 
     logger.info(
         "active_plugins",
-        plugins=["mongo"],
+        plugins=["mongo", "health", "discord"],
         modules=[m.config.name for m in modules],
     )
     return modules

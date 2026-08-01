@@ -93,7 +93,7 @@ async def _shutdown_modules(modules: list) -> None:
 
 
 # Register CLI subcommands
-from .crawl_health.cli import health_summary_cli  # noqa: E402
+from .plugins.health.cli import health_summary_cli  # noqa: E402
 from .modules.notices.cli import notices_cli, validate_attachments_cli, validate_markdown_cli  # noqa: E402
 from .notices_summary.cli import summarize_cli  # noqa: E402
 from .plugins.mongo.cli import update_check_cli  # noqa: E402

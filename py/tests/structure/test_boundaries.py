@@ -33,8 +33,8 @@ def _run_python(code: str, *, empty_env: bool, cwd: Path | None = None) -> subpr
 
 @pytest.mark.xfail(
     strict=True,
-    reason="flips in PR 8 (lazy click subcommands) — cli.py:104-106 eagerly "
-    "imports every subcommand module, dragging in motor via shared.db",
+    reason="flips in PR 8 (lazy click subcommands) — cli.py's trailing import "
+    "block eagerly imports every subcommand module, dragging in motor via shared.db",
 )
 def test_help_does_not_import_motor(tmp_path):
     code = (
@@ -89,16 +89,16 @@ def test_get_config_without_env_raises_typed_error(tmp_path):
 
 
 def test_health_logic_import_is_infra_free(tmp_path):
-    """Permanent guard for the PR 2 cut: crawl_health.logic must import
-    without motor/pymongo. Subprocess-only — the root conftest's
+    """Permanent guard for the PR 2 cut: the health decision logic must
+    import without motor/pymongo. Subprocess-only — the root conftest's
     _no_real_mongo fixture imports motor in-process for every test."""
     code = (
         "import sys\n"
-        "import skkuverse_crawler.crawl_health.logic\n"
+        "import skkuverse_crawler.plugins.health.logic\n"
         "sys.exit(1 if ('motor' in sys.modules or 'pymongo' in sys.modules) else 0)\n"
     )
     result = _run_python(code, empty_env=False, cwd=tmp_path)
-    assert result.returncode == 0, "importing crawl_health.logic pulled in motor/pymongo"
+    assert result.returncode == 0, "importing plugins.health.logic pulled in motor/pymongo"
 
 
 def test_whole_package_imports_with_empty_env(tmp_path):

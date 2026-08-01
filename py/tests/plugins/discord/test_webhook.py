@@ -5,7 +5,7 @@ import pytest
 import respx
 
 from skkuverse_crawler.shared.config import init_config, reset_config
-from skkuverse_crawler.shared.discord import send_discord
+from skkuverse_crawler.plugins.discord.webhook import send_discord
 
 WEBHOOK = "https://discord.com/api/webhooks/123/token-abc"
 

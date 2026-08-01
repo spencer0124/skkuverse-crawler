@@ -4,14 +4,14 @@ import asyncio
 
 import click
 
-from ..shared.db import close_client
-from ..shared.logger import configure_logging
+from ...shared.db import close_client
+from ...shared.logger import configure_logging
 
 
 @click.command("health-summary")
 def health_summary_cli() -> None:
     """Send the daily crawl-health summary to Discord once."""
-    from ..shared.config import init_config
+    from ...shared.config import init_config
 
     cfg = init_config()
     configure_logging(cfg)
@@ -19,9 +19,12 @@ def health_summary_cli() -> None:
 
 
 async def _run() -> None:
+    # A CLI command is an assembly leaf: picking the concrete notifier is
+    # its job, the same way wiring picks one for the scheduler.
+    from ..discord.webhook import DiscordNotifier
     from .module import run_daily_summary
 
     try:
-        await run_daily_summary()
+        await run_daily_summary(DiscordNotifier())
     finally:
         await close_client()

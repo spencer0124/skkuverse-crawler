@@ -22,8 +22,8 @@ from tenacity import (
     wait_exponential,
 )
 
-from .config import get_config
-from .logger import get_logger
+from ...shared.config import get_config
+from ...shared.logger import get_logger
 
 logger = get_logger("discord")
 
@@ -80,3 +80,15 @@ async def send_discord(content: str) -> bool:
     except Exception as exc:  # noqa: BLE001 — final safety net
         logger.warning("discord_send_failed", err=type(exc).__name__, err_msg=str(exc)[:200])
         return False
+
+
+class DiscordNotifier:
+    """The Notifier port, backed by the webhook above.
+
+    Thin on purpose: it exists so plugins/health can alert without
+    importing this plugin — health depends on core.ports.Notifier, and
+    wiring decides that Discord is what satisfies it.
+    """
+
+    async def notify(self, content: str) -> bool:
+        return await send_discord(content)

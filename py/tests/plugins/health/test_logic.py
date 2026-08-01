@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from skkuverse_crawler.crawl_health.logic import (
+from skkuverse_crawler.plugins.health.logic import (
     THRESHOLD,
     decide_transitions,
     format_alert_message,

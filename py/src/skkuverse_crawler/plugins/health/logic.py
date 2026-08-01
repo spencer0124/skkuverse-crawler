@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from ..core.results import SourceResult as DeptResult
+from ...core.results import SourceResult
 
 # Consecutive source-down ticks before a single alert fires (~1.5h at the
 # 30-min notices cadence). Fires once per outage: `alerted` latches until
@@ -44,7 +44,7 @@ class HealthTransition:
 
 def decide_transitions(
     prev_states: dict[str, dict[str, Any]],
-    results: list[DeptResult],
+    results: list[SourceResult],
     now: datetime,
     threshold: int = THRESHOLD,
 ) -> HealthTransition:
