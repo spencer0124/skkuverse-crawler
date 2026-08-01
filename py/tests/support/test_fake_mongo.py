@@ -269,14 +269,6 @@ class TestBsonFidelity:
 class TestHonestyPins:
     """Unsupported operations must raise, never silently no-op."""
 
-    async def test_aggregation_pipeline_update_raises(self):
-        coll = FakeCollection()
-        await coll.update_one({"articleNo": 1}, {"$set": {"views": 1}}, upsert=True)
-        with pytest.raises(NotImplementedError):
-            await coll.find_one_and_update(
-                {"articleNo": 1}, [{"$set": {"views": {"$add": [1, 1]}}}]
-            )
-
     async def test_expr_filter_raises(self):
         coll = FakeCollection()
         with pytest.raises(NotImplementedError):
@@ -300,3 +292,78 @@ class TestFakeDatabase:
         db = FakeDatabase()
         assert db["notices"] is db["notices"]
         assert db["notices"].name == "notices"
+
+
+class TestPipelineUpdate:
+    """Aggregation-pipeline updates — the shape update_checker's 404
+    counter uses. Fidelity against real Mongo is pinned by level-1
+    conformance; these cover the fake's own guard rails."""
+
+    async def _bump(self, coll, seed):
+        await coll.update_one({"articleNo": 1}, {"$set": seed}, upsert=True)
+        return await coll.find_one_and_update(
+            {"articleNo": 1},
+            [
+                {"$set": {
+                    "consecutiveFailures": {
+                        "$add": [{"$ifNull": ["$consecutiveFailures", 0]}, 1]
+                    },
+                }},
+                {"$set": {
+                    "isDeleted": {
+                        "$cond": {
+                            "if": {"$gte": ["$consecutiveFailures", 3]},
+                            "then": True,
+                            "else": {"$ifNull": ["$isDeleted", False]},
+                        }
+                    },
+                }},
+            ],
+            return_document=ReturnDocument.AFTER,
+        )
+
+    async def test_stages_are_sequential_not_parallel(self):
+        """Stage 2 reads what stage 1 wrote — a doc at 2 crosses the
+        threshold on this pass, not the next one."""
+        coll = FakeCollection()
+        after = await self._bump(coll, {"consecutiveFailures": 2})
+        assert after["consecutiveFailures"] == 3
+        assert after["isDeleted"] is True
+
+    async def test_below_threshold_leaves_flag_alone(self):
+        coll = FakeCollection()
+        after = await self._bump(coll, {"consecutiveFailures": 1})
+        assert after["consecutiveFailures"] == 2
+        assert after["isDeleted"] is False
+
+    async def test_ifnull_supplies_defaults_for_missing_fields(self):
+        coll = FakeCollection()
+        after = await self._bump(coll, {"title": "no counter yet"})
+        assert after["consecutiveFailures"] == 1
+        assert after["isDeleted"] is False
+
+    async def test_existing_delete_flag_survives_a_below_threshold_bump(self):
+        coll = FakeCollection()
+        after = await self._bump(coll, {"consecutiveFailures": 0, "isDeleted": True})
+        assert after["isDeleted"] is True
+
+    async def test_unknown_expression_operator_raises(self):
+        coll = FakeCollection()
+        await coll.update_one({"articleNo": 1}, {"$set": {"n": 1}}, upsert=True)
+        with pytest.raises(NotImplementedError, match=r"\$multiply"):
+            await coll.find_one_and_update(
+                {"articleNo": 1}, [{"$set": {"n": {"$multiply": ["$n", 2]}}}]
+            )
+
+    async def test_non_set_stage_raises(self):
+        coll = FakeCollection()
+        await coll.update_one({"articleNo": 1}, {"$set": {"n": 1}}, upsert=True)
+        with pytest.raises(NotImplementedError, match="only \\$set"):
+            await coll.find_one_and_update({"articleNo": 1}, [{"$unset": ["n"]}])
+
+    async def test_pipeline_with_upsert_raises(self):
+        coll = FakeCollection()
+        with pytest.raises(NotImplementedError, match="upsert"):
+            await coll.update_one(
+                {"articleNo": 9}, [{"$set": {"n": 1}}], upsert=True
+            )

@@ -11,10 +11,18 @@ diverge only in production). The fidelity of what IS implemented is pinned by
 ``tests/conformance/`` which replays the same operations against a real
 MongoDB.
 
-Known, deliberate gaps (revisit when update_checker moves to plugins/mongo):
+Aggregation-pipeline updates (``update=[...]``) are implemented for the
+shape update_checker's soft-delete counter uses: ``$set`` stages over
+``$add``/``$ifNull``/``$cond``/``$gte``. Stages apply sequentially — stage
+2 sees stage 1's output — which is the whole reason the counter reaches
+its threshold on the third failure and not the fourth. Level-1
+conformance pins that ordering against real Mongo.
 
-- aggregation-pipeline updates (``update=[...]`` — used only by
-  ``update_checker.py:250`` for the views counter) -> NotImplementedError
+Known, deliberate gaps:
+
+- pipeline stages other than ``$set``, expression operators outside the
+  four above, and pipeline updates combined with ``upsert=True``
+  -> NotImplementedError
 - ``$expr`` filters (used only by the notices_summary re-summary query)
   -> NotImplementedError
 
@@ -161,6 +169,66 @@ def _project(doc: dict[str, Any], projection: dict[str, Any] | None) -> dict[str
     return projected
 
 
+_SUPPORTED_EXPR_OPS = {"$add", "$ifNull", "$cond", "$gte"}
+
+
+def _eval_expr(expr: Any, doc: dict[str, Any]) -> Any:
+    """Evaluate one aggregation expression against ``doc``.
+
+    A missing field path evaluates to None, which is what ``$ifNull``
+    exists to catch and what makes ``$gte`` false (null sorts below
+    numbers in BSON ordering).
+    """
+    if isinstance(expr, str) and expr.startswith("$"):
+        return doc.get(expr[1:])
+    if not isinstance(expr, dict):
+        return expr
+    if len(expr) != 1:
+        raise NotImplementedError(f"FakeCollection: multi-key expression {set(expr)}")
+    op, operand = next(iter(expr.items()))
+    if op not in _SUPPORTED_EXPR_OPS:
+        raise NotImplementedError(f"FakeCollection: expression operator {op!r} not implemented")
+    if op == "$add":
+        values = [_eval_expr(a, doc) for a in operand]
+        if any(v is None for v in values):
+            return None
+        return sum(values)
+    if op == "$ifNull":
+        values = [_eval_expr(a, doc) for a in operand]
+        for value in values[:-1]:
+            if value is not None:
+                return value
+        return values[-1]
+    if op == "$cond":
+        if not isinstance(operand, dict):
+            raise NotImplementedError("FakeCollection: array-form $cond not implemented")
+        branch = "then" if _eval_expr(operand["if"], doc) else "else"
+        return _eval_expr(operand[branch], doc)
+    # $gte
+    left, right = (_eval_expr(a, doc) for a in operand)
+    if left is None or right is None:
+        return False
+    return bool(left >= right)
+
+
+def _apply_pipeline_update(doc: dict[str, Any], pipeline: list[Any]) -> None:
+    """Apply an aggregation-pipeline update in place.
+
+    Stages run in order and each sees the previous stage's output; within
+    one stage every expression is evaluated against the stage's input, so
+    values are computed before any is assigned.
+    """
+    for stage in pipeline:
+        if not isinstance(stage, dict) or set(stage) != {"$set"}:
+            raise NotImplementedError(
+                f"FakeCollection: pipeline stage {set(stage) if isinstance(stage, dict) else stage} "
+                f"not implemented (only $set)"
+            )
+        computed = {key: _eval_expr(value, doc) for key, value in stage["$set"].items()}
+        for key, value in computed.items():
+            doc[key] = _trunc_ms(copy.deepcopy(value))
+
+
 def _apply_update(doc: dict[str, Any], update: dict[str, Any], *, insert: bool) -> None:
     for op, spec in update.items():
         if op == "$set":
@@ -285,16 +353,19 @@ class FakeCollection:
     def _apply_update_one(
         self, filter_: dict[str, Any], update: dict[str, Any], upsert: bool
     ) -> _UpdateResult:
-        if isinstance(update, list):
+        if isinstance(update, list) and upsert:
             raise NotImplementedError(
-                "FakeCollection: aggregation-pipeline updates not implemented "
-                "(update_checker only — see module docstring)"
+                "FakeCollection: pipeline update with upsert not implemented "
+                "(no caller needs it — see module docstring)"
             )
         matched = self._find_docs(filter_)
         if matched:
             doc = matched[0]
             before = copy.deepcopy(doc)
-            _apply_update(doc, update, insert=False)
+            if isinstance(update, list):
+                _apply_pipeline_update(doc, update)
+            else:
+                _apply_update(doc, update, insert=False)
             return _UpdateResult(1, int(doc != before), None)
         if not upsert:
             return _UpdateResult(0, 0, None)
@@ -351,17 +422,15 @@ class FakeCollection:
         self._record(
             "find_one_and_update", filter=filter_, update=update, return_document=return_document
         )
-        if isinstance(update, list):
-            raise NotImplementedError(
-                "FakeCollection: aggregation-pipeline updates not implemented "
-                "(update_checker only — see module docstring)"
-            )
         matched = self._find_docs(filter_)
         if not matched:
             return None
         doc = matched[0]
         before = copy.deepcopy(doc)
-        _apply_update(doc, update, insert=False)
+        if isinstance(update, list):
+            _apply_pipeline_update(doc, update)
+        else:
+            _apply_update(doc, update, insert=False)
         return copy.deepcopy(doc) if return_document == ReturnDocument.AFTER else before
 
     async def bulk_write(self, requests: list[Any], ordered: bool = True) -> _BulkWriteResult:

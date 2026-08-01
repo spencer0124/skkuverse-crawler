@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 
 from skkuverse_crawler.modules.notices.models import NoticeDetail
+from tests.support.fake_mongo import FakeCollection
 from skkuverse_crawler.plugins.mongo.update_checker import _check_department
 
 
@@ -436,3 +437,67 @@ class TestCutoffFloorDate:
         from skkuverse_crawler.modules.notices.constants import SERVICE_START_DATE
         # window cutoff가 floor date보다 이후 → window cutoff 사용
         assert max(SERVICE_START_DATE, "2026-05-01") == "2026-05-01"
+
+
+class TestSoftDeleteAgainstTheFakeStore:
+    """The 404 counter as a state transition, not a stipulated response.
+
+    The mock-based tests above hand find_one_and_update its return value,
+    so they pin how the checker REACTS to a store answer. These run the
+    aggregation pipeline against FakeCollection — whose fidelity level-1
+    conformance pins against real Mongo — so they check that the pipeline
+    actually produces that answer.
+    """
+
+    @staticmethod
+    async def _run_404(collection, seed: dict) -> tuple:
+        await collection.update_one(
+            {"articleNo": 1, "sourceId": "test-dept"},
+            {"$set": {"detailPath": "?a=1", "title": "제목", **seed}},
+            upsert=True,
+        )
+        strategy = AsyncMock()
+        strategy.crawl_detail.side_effect = _make_404_error()
+        notices = [{"articleNo": 1, "sourceId": "test-dept", "detailPath": "?a=1", **seed}]
+
+        with patch(
+            "skkuverse_crawler.plugins.mongo.update_checker.STRATEGY_MAP",
+            {"skku-standard": MagicMock(return_value=strategy)},
+        ):
+            result = await _check_department(
+                MOCK_DEPT, notices, collection, AsyncMock(), MagicMock()
+            )
+        # find(), not find_one() — the fake implements only what src calls.
+        cursor = collection.find({"articleNo": 1, "sourceId": "test-dept"})
+        stored = [doc async for doc in cursor][0]
+        return result, stored
+
+    async def test_first_404_increments_without_deleting(self):
+        collection = FakeCollection()
+        result, stored = await self._run_404(collection, {"consecutiveFailures": 0})
+        assert stored["consecutiveFailures"] == 1
+        assert stored["isDeleted"] is False
+        assert result.soft_deleted == 0
+
+    async def test_third_404_flips_the_delete_flag(self):
+        collection = FakeCollection()
+        result, stored = await self._run_404(collection, {"consecutiveFailures": 2})
+        assert stored["consecutiveFailures"] == 3
+        assert stored["isDeleted"] is True
+        assert result.soft_deleted == 1
+
+    async def test_already_deleted_is_not_counted_twice(self):
+        """soft_deleted counts transitions, not states — a doc that was
+        already flagged must not inflate the number again."""
+        collection = FakeCollection()
+        result, stored = await self._run_404(
+            collection, {"consecutiveFailures": 5, "isDeleted": True}
+        )
+        assert stored["consecutiveFailures"] == 6
+        assert result.soft_deleted == 0
+
+    async def test_missing_counter_field_starts_at_one(self):
+        collection = FakeCollection()
+        _, stored = await self._run_404(collection, {})
+        assert stored["consecutiveFailures"] == 1
+        assert stored["isDeleted"] is False
