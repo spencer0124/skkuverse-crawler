@@ -1,28 +1,231 @@
+"""Pure validation predicates for stored notice data.
+
+Two families, one home: attachment metadata checks and cleanMarkdown
+rendering checks. Both are decisions about a notice's content, so they
+belong to the notices module — the code that scans a database FOR them
+lives in plugins/mongo/audit.py, and both the CLI and any library caller
+can reach these directly.
+
+``check_reachability`` is here too: it is HTTP, not storage, and the
+module already owns HTTP content checks (image_verifier).
 """
-Validate cleanMarkdown fields stored in the notices collection.
 
-Baseline static analysis: detects patterns that are either invalid CommonMark
-(guaranteed rendering break) or valid CommonMark but historically problematic
-in many renderers (suspicious, not confirmed break).
-
-Severity interpretation:
-- ``error``  — invalid CommonMark, will break in any renderer
-- ``warning`` — valid CommonMark but suspicious, may break depending on renderer
-
-Public API:
-- ``validate_notice_markdown()`` — sync, per-notice check list
-- ``validate_markdown()``        — async orchestrator (DB scan)
-- Result dataclasses for structured reporting
-"""
 from __future__ import annotations
 
+import asyncio
 import re
 from collections import Counter
 from dataclasses import dataclass, field
+from urllib.parse import urlparse
+
+import httpx
 
 from ...shared.logger import get_logger
 
-logger = get_logger("markdown_validator")
+logger = get_logger("notices_validation")
+
+# ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
+
+ALLOWED_HOST_SUFFIXES = ("skku.edu", "skkumed.ac.kr")
+GNUBOARD_STRATEGIES = frozenset({"gnuboard", "gnuboard-custom"})
+
+_BROWSER_UA = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
+)
+_TIMEOUT = httpx.Timeout(30.0, connect=10.0)
+
+# ---------------------------------------------------------------------------
+# Result dataclasses
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class AttachmentIssue:
+    """A single validation problem on one attachment."""
+
+    check: str  # e.g. "invalid_scheme", "blank_name", ...
+    attachment_index: int
+    detail: str
+    url: str
+    name: str
+
+
+@dataclass
+class NoticeValidationResult:
+    """All issues found for one notice."""
+
+    notice_id: str
+    article_no: int
+    source_id: str
+    source_url: str
+    issues: list[AttachmentIssue] = field(default_factory=list)
+
+
+@dataclass
+class ValidationReport:
+    """Aggregated results across all scanned notices."""
+
+    total_notices: int = 0
+    total_attachments: int = 0
+    notices_with_issues: int = 0
+    issue_counts: dict[str, int] = field(default_factory=lambda: Counter())  # type: ignore[arg-type]
+    results: list[NoticeValidationResult] = field(default_factory=list)
+    skipped_http_checks: int = 0
+
+
+# ---------------------------------------------------------------------------
+# Sync validation functions (pure)
+# ---------------------------------------------------------------------------
+
+
+def validate_url_scheme(att: dict[str, str], index: int) -> AttachmentIssue | None:
+    """URL must start with ``http://`` or ``https://``."""
+    url = att.get("url", "")
+    name = att.get("name", "")
+    if not url or not url.strip():
+        return AttachmentIssue("invalid_scheme", index, "empty URL", url, name)
+    if url.strip() == "#":
+        return AttachmentIssue("invalid_scheme", index, "anchor-only URL '#'", url, name)
+    if not url.startswith(("http://", "https://")):
+        return AttachmentIssue(
+            "invalid_scheme", index, f"URL does not start with http(s)://: {url[:80]}", url, name,
+        )
+    return None
+
+
+def validate_name(att: dict[str, str], index: int) -> AttachmentIssue | None:
+    """Name must not be blank or ``'unknown'``."""
+    url = att.get("url", "")
+    name = att.get("name", "")
+    if not name or not name.strip():
+        return AttachmentIssue("blank_name", index, "empty attachment name", url, name)
+    if name.strip().lower() == "unknown":
+        return AttachmentIssue("blank_name", index, "name is 'unknown'", url, name)
+    return None
+
+
+def validate_name_is_url(att: dict[str, str], index: int) -> AttachmentIssue | None:
+    """Flag when the name looks like a URL (lazy extraction)."""
+    name = att.get("name", "")
+    url = att.get("url", "")
+    if name.startswith(("http://", "https://")):
+        return AttachmentIssue("name_is_url", index, "name is a URL (likely extraction bug)", url, name)
+    return None
+
+
+def validate_referer(
+    att: dict[str, str], index: int, strategy: str | None,
+) -> AttachmentIssue | None:
+    """Gnuboard/gnuboard-custom attachments must carry a ``referer``."""
+    if strategy not in GNUBOARD_STRATEGIES:
+        return None
+    url = att.get("url", "")
+    name = att.get("name", "")
+    referer = att.get("referer", "")
+    if not referer or not referer.strip():
+        return AttachmentIssue(
+            "missing_referer", index, "gnuboard attachment missing referer field", url, name,
+        )
+    return None
+
+
+def validate_host_allowed(att: dict[str, str], index: int) -> AttachmentIssue | None:
+    """Hostname must match the server proxy's ALLOWED_HOSTS."""
+    url = att.get("url", "")
+    name = att.get("name", "")
+    if not url.startswith(("http://", "https://")):
+        return None  # scheme check will flag this separately
+    try:
+        hostname = urlparse(url).hostname or ""
+    except Exception:
+        return AttachmentIssue("disallowed_host", index, f"malformed URL: {url[:80]}", url, name)
+    if not any(hostname.endswith(suffix) for suffix in ALLOWED_HOST_SUFFIXES):
+        return AttachmentIssue(
+            "disallowed_host", index, f"host '{hostname}' not in allowed list", url, name,
+        )
+    return None
+
+
+def validate_duplicates(attachments: list[dict[str, str]]) -> list[AttachmentIssue]:
+    """Flag attachments that share the same URL within one notice."""
+    seen: dict[str, int] = {}
+    issues: list[AttachmentIssue] = []
+    for i, att in enumerate(attachments):
+        url = att.get("url", "")
+        if not url:
+            continue
+        if url in seen:
+            issues.append(AttachmentIssue(
+                "duplicate_url", i,
+                f"same URL as attachment[{seen[url]}]",
+                url, att.get("name", ""),
+            ))
+        else:
+            seen[url] = i
+    return issues
+
+
+def validate_notice_attachments(
+    attachments: list[dict[str, str]],
+    strategy: str | None = None,
+) -> list[AttachmentIssue]:
+    """Run all sync checks on one notice's attachments."""
+    issues: list[AttachmentIssue] = []
+    for i, att in enumerate(attachments):
+        for check_fn in (_per_attachment_checks):
+            issue = check_fn(att, i, strategy) if check_fn is validate_referer else check_fn(att, i)  # type: ignore[call-arg]
+            if issue is not None:
+                issues.append(issue)
+    issues.extend(validate_duplicates(attachments))
+    return issues
+
+
+_per_attachment_checks = (
+    validate_url_scheme,
+    validate_name,
+    validate_name_is_url,
+    validate_referer,
+    validate_host_allowed,
+)
+
+# ---------------------------------------------------------------------------
+# Async HTTP reachability
+# ---------------------------------------------------------------------------
+
+
+async def check_reachability(
+    url: str,
+    referer: str,
+    client: httpx.AsyncClient,
+    semaphore: asyncio.Semaphore,
+    index: int,
+    name: str,
+) -> AttachmentIssue | None:
+    """HEAD-request a single URL; return issue if unreachable."""
+    async with semaphore:
+        try:
+            resp = await client.head(
+                url,
+                headers={"Referer": referer},
+                follow_redirects=True,
+            )
+            if resp.status_code >= 400:
+                return AttachmentIssue(
+                    "unreachable", index,
+                    f"HEAD returned {resp.status_code}",
+                    url, name,
+                )
+        except httpx.TimeoutException:
+            return AttachmentIssue("unreachable", index, "timeout", url, name)
+        except httpx.HTTPError as exc:
+            return AttachmentIssue("unreachable", index, f"HTTP error: {exc}", url, name)
+        except Exception as exc:
+            return AttachmentIssue("unreachable", index, f"unexpected error: {exc}", url, name)
+    return None
+
 
 # ---------------------------------------------------------------------------
 # Result dataclasses
@@ -262,76 +465,3 @@ def validate_notice_markdown(
     if min_severity == "error":
         issues = [i for i in issues if i.severity == "error"]
     return issues
-
-
-# ---------------------------------------------------------------------------
-# Async DB orchestrator
-# ---------------------------------------------------------------------------
-
-
-async def validate_markdown(
-    *,
-    dept_filter: tuple[str, ...] | None = None,
-    limit: int | None = None,
-    min_severity: str = "warning",
-) -> MarkdownValidationReport:
-    """Scan notices in MongoDB and validate their cleanMarkdown fields.
-
-    Parameters
-    ----------
-    dept_filter:
-        Restrict to specific ``sourceId`` values.
-    limit:
-        Max notices to scan.
-    min_severity:
-        ``"warning"`` (default) or ``"error"``.
-    """
-    from ...shared.db import get_db
-
-    db = await get_db()
-    collection = db["notices"]
-
-    query: dict = {"cleanMarkdown": {"$exists": True, "$ne": None}}
-    if dept_filter:
-        query["sourceId"] = {"$in": list(dept_filter)}
-
-    report = MarkdownValidationReport()
-
-    cursor = collection.find(
-        query,
-        {"cleanMarkdown": 1, "articleNo": 1, "sourceId": 1, "sourceUrl": 1},
-    )
-    if limit:
-        cursor = cursor.limit(limit)
-
-    count = 0
-    async for doc in cursor:
-        count += 1
-        md = doc.get("cleanMarkdown", "")
-        notice_id = str(doc["_id"])
-
-        report.total_notices += 1
-
-        issues = validate_notice_markdown(md, min_severity=min_severity)
-
-        if issues:
-            report.notices_with_issues += 1
-            for issue in issues:
-                report.issue_counts[issue.check] += 1
-            report.results.append(NoticeMarkdownResult(
-                notice_id=notice_id,
-                article_no=doc.get("articleNo", 0),
-                source_id=doc.get("sourceId", ""),
-                source_url=doc.get("sourceUrl", ""),
-                issues=issues,
-            ))
-
-        if count % 200 == 0:
-            logger.info("validation_progress", scanned=count)
-
-    logger.info(
-        "validation_complete",
-        total=report.total_notices,
-        issues=report.notices_with_issues,
-    )
-    return report

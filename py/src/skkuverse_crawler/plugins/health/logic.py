@@ -3,7 +3,8 @@
 No I/O here — ``store.py`` loads previous states, calls
 ``decide_transitions``, persists the new states, and sends the message.
 This split keeps the alert/recovery semantics unit-testable without a DB
-(same architecture as attachment_validator: pure checks + thin orchestrator).
+(same architecture as the notice validators: pure checks in
+modules/notices/validation.py, thin DB orchestrator in plugins/mongo/audit.py).
 """
 
 from __future__ import annotations

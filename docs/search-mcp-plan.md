@@ -14,47 +14,64 @@
 
 ## 상태 보드 (전체)
 
+> [!IMPORTANT]
+> **2026-08-01 재구성** — [adr-007](decisions/adr-007-atlas-auto-embedding.md)(Atlas Automated Embedding 채택)로 Phase 2a 가 **삭제**되고 2b 가 대폭 축소됐다. 크롤러는 벡터를 만들지도 저장하지도 않는다. 근거 실험은 `skkuverse-ai/docs/internal/autoembed-verification.md`.
+
 | Phase | 레포 | 내용 | 브랜치 | 상태 |
 |-------|------|------|--------|------|
-| D | crawler·ai | 착수 전 문서화 (ADR·설계·계획) | — | ✅ 완료 (2026-07-29, 이관 반영 포함) |
-| 0 | **ai** (A0) | 평가 체계 — 30문항 + eval 스크립트 + regex 베이스라인 | ai 레포 | ⬜ |
+| D | crawler·ai | 착수 전 문서화 (ADR·설계·계획) | — | ✅ 완료 (2026-07-29) |
+| 0 | **ai** (A0) | 평가 체계 — 26문항 + eval 하네스 + regex 베이스라인 | `feat/search-eval` | ✅ **완료 (2026-07-29)** |
+| 0.5 | **ai** | 모델 비교 (게이트 A) + auto-embed 실검증 | `feat/search-eval` | ✅ **완료 (2026-08-01)** |
 | 1 | **crawler** | search.json SSOT + codegen 확장 | `feat/search-ssot` | ⬜ |
-| 2a | **ai** (A1) | `/api/embed` 엔드포인트 | ai 레포 | ⬜ |
-| 2b | **crawler** | Atlas 인덱스 스크립트 + notices_embedding 모듈 + 백필 | `feat/notices-embedding` | ⬜ |
-| 3 | **ai** (A2) | 품질 실측 — 모델 5종 비교 + 가중치 (게이트 2개) | ai 레포 | ⬜ |
+| ~~2a~~ | ~~ai (A1)~~ | ~~`/api/embed` 엔드포인트~~ | — | ❌ **삭제 (adr-007)** |
+| 2b | **crawler** | Atlas autoEmbed 인덱스 + `embeddingInput` 조합 + 백필 | `feat/notices-embedding` | ⬜ |
+| 3 | **ai** (A2) | 가중치 스윕 (게이트 B) — 게이트 A 는 0.5 에서 완료 | ai 레포 | ⬜ |
 | 4 | **ai** (A3) | 공개 MCP 서버 | ai 레포 | ⬜ |
 | 5 | **server** | TS 검색 연동 | server 레포 | ⬜ |
 
-의존 순서: 0 → 1 → 2a → 2b → 3 → 4. (5는 3 이후 병행 가능)
+의존 순서: ~~0 → 1 → 2a → 2b → 3 → 4~~ → **0 → 1 → 2b → 3 → 4**. (5는 3 이후 병행 가능)
+
+> Phase 0.5 는 계획에 없던 단계다. 게이트 A(모델 비교)가 원래 Phase 3 소속이었는데 **Atlas 인덱스 없이 오프라인으로 잴 수 있어** 순서를 앞당겼다 — 계획서의 "의존 순서"가 실제보다 빡빡했던 셈이다.
 
 ---
 
-## Phase 0 — 평가 체계 [skkuverse-ai]
+## Phase 0 / 0.5 — 평가 체계 + 모델 확정 [skkuverse-ai] ✅ 완료
 
-상세는 ai 레포 계획 A0. 모든 후속 판단(모델·가중치·청킹)의 잣대 — 평가 셋 30문항은 **사용자 검수 필수**.
+상세는 ai 레포 계획 A0, 수치는 `skkuverse-ai/eval/results.md`.
+
+- 평가 셋 **26문항**(keyword5/paraphrase5/concept5/scoped4/english4/typo3) + 마감일 전용 4문항 분리. 사용자 검수 완료
+- regex 베이스라인 hit@1 **0.192**
+- 게이트 A: Voyage `voyage-4-large` **0.654** vs OpenAI 3-large **0.577** — MRR@10 0.724 vs 0.718 로 **동률**. Voyage 확정 (adr-002)
+- auto-embed 실검증 → adr-007 (`skkuverse-ai/docs/internal/autoembed-verification.md`)
 
 ## Phase 1 — search.json SSOT + codegen [crawler]
 
-- [ ] 레포 루트 `search.json` 생성 (스키마: [search-architecture.md](search-architecture.md) §①)
-- [ ] `py/scripts/generate_artifacts.py` 확장 — `SEARCH_JSON` 경로 + `validate_search()` + `gen_server_search()` + main() `# 8.` 블록 + `copy_to_sibling` **2곳** (`skkuverse-server/src/notices/search.json`, `skkuverse-ai/` 수신 위치는 ai와 협의 — sources 화이트리스트 사본도 ai에 추가)
-- [ ] docstring·CLAUDE.md 아티팩트 표 갱신, `py/tests/scripts/test_generate_artifacts.py` 확장
+- [ ] 레포 루트 `search.json` 생성 (스키마: [search-architecture.md](search-architecture.md) §① — adr-007 로 `embedding` 섹션이 `model`/`quantization`/`inputVersion` 3개로 축소됨)
+- [ ] `py/scripts/generate_artifacts.py` 확장 — `SEARCH_JSON` 경로 + `validate_search()` + `gen_server_search()` + main() 블록 + `copy_to_sibling` **2곳**: `skkuverse-server/src/notices/search.json`, **`skkuverse-ai/app/generated/search.json`** (ai 측 확정 경로 — 수신 디렉터리는 이미 생성·커밋돼 있다). sources 화이트리스트 사본도 ai 에 추가
+- [ ] docstring·CLAUDE.md 아티팩트 표 갱신 (현재 표는 7개라 적혀 있으나 실제 9행), `py/tests/scripts/test_generate_artifacts.py` 확장
+
+⚠️ `copy_to_sibling()` 은 **대상의 부모 디렉터리가 없으면 조용히 건너뛴다** (`-- Skipped` 한 줄, 에러 없음, 반환값 없음). ai 측 `app/generated/` 는 이 함정 때문에 미리 만들어 커밋해뒀다.
+
+⚠️ `main()` 의 검증 프리앰블은 SSOT 파일 누락 시 `sys.exit(1)` 한다 — `SEARCH_JSON` 을 그 튜플에 넣으면 **모든 codegen 실행에 이 파일이 필수**가 된다.
 
 **검증 게이트**: ruff+pytest green. codegen 실행 → 두 형제 레포에 사본 착지.
 
-## Phase 2a — `/api/embed` [skkuverse-ai]
+## Phase 2b — autoEmbed 인덱스 + `embeddingInput` 조합 [crawler]
 
-상세는 ai 레포 계획 A1. 크롤러 Phase 2b는 이 엔드포인트에 의존.
+> adr-007 로 **`ai_client.py`·벡터 `$set`·실패 카운터·9시간 백필이 전부 삭제**됐다. 크롤러가 하는 일은 문자열 조합 + `$set` 뿐이다.
 
-## Phase 2b — Atlas 인덱스 + notices_embedding + 백필 [crawler]
+- [ ] `py/scripts/manage_search_indexes.py` — search.json 에서 인덱스 2종을 코드로 구성 (`notices_search` nori / `notices_vector` **autoEmbed** — 사양은 [search-architecture.md](search-architecture.md) §③). `create|update|status`, `--env`, `queryable` 폴링, 기본 dry-run + `--apply` (migrate 스크립트 패턴). `create_search_index()` 는 설치된 pymongo 4.16 에 이미 있음
+- [ ] `embeddingInput` 조합기 — `title + category + summaryOneLiner + summary + contentText`, 16,000자 캡. **한 곳에 두고 두 곳에서 호출**한다:
+  - `modules/notices/normalizer.py` `to_notice()` — 크롤 시점 (title/category/contentText 확보 상태)
+  - `notices_summary/processor.py` 의 `$set` — 요약이 붙은 뒤 재조합 (요약은 크롤보다 늦게 온다)
+- [ ] `$set` 필드는 §② — `embeddingInput` / `embeddingInputVersion` / `embeddingInputHash` / `embeddingInputAt`. ⚠️ **`aiSummaryAt` 절대 미기록** (서버 FCM 디스패치 게이트)
+- [ ] 백필 스크립트 (일회성) — 기존 문서에 `embeddingInput` 채우기. `ContentRefreshed` 우회 경로와 6,714건 기존 문서는 크롤에 편승할 수 없다. `cleanup_summary_fields.py` 의 dry-run + `--apply` 패턴
+- [ ] 테스트: 조합기 단위 테스트(캡·null 필드·순서), **`aiSummaryAt` 미기록 assert**, 재조합 predicate
+- [ ] dev DB 인덱스 + 리허설 → prod
 
-- [ ] `py/scripts/manage_search_indexes.py` — search.json에서 인덱스 2종 정의를 코드로 구성 (`notices_search` nori / `notices_vector` — 사양은 [search-architecture.md](search-architecture.md) §③). `create|update|status`, `--env`, `queryable` 폴링, 기본 dry-run + `--apply` 확인 (migrate 스크립트 패턴)
-- [ ] `notices_embedding/` 모듈 — `notices_summary` 미러: `composer.py`(입력 조합 v1 + inputVersion), `query.py`(find_unembedded / find_stale — stale 3경로, failures `{"$not": {"$gte": 3}}`), `processor.py`(ai `/api/embed` 호출 — `ai_client.py` 패턴, `$set` 필드는 [search-architecture.md](search-architecture.md) §②, **BinData float32**, ⚠️ `aiSummaryAt` 절대 미기록), `module.py`(cron `40 * * * *`), `cli.py`(`embed --once --batch-size`)
-- [ ] `cli.py` 등록, `shared/config.py`에 embed 엔드포인트 설정 (`AI_SERVICE_URL` 재사용)
-- [ ] `pyproject.toml` — motor 3.7.x bump (pymongo≥4.10 = `Binary.from_vector`) + `uv lock`
-- [ ] 테스트: `tests/notices_embedding/` — predicate dict, processor patch 스택, **aiSummaryAt 미기록 assert**, respx로 `/api/embed` 목킹
-- [ ] dev DB 인덱스 + 백필 리허설 → prod 인덱스 + 백필 (~13M 토큰, 무료 한도 내)
+**검증 게이트**: `embeddingInput` 보유 수 == 대상 수, 인덱스 2종 `queryable: true`, `query.text` 왕복 스모크. ruff+pytest green.
 
-**검증 게이트**: dev·prod embedded 수 == 대상 수, 벡터 차원/BinData 스팟체크, 인덱스 2종 `queryable: true`. ruff+pytest green.
+> **새 모듈·크론이 필요한가?** 아마 아니다. 조합기를 기존 두 쓰기 경로에 얹고 일회성 백필 스크립트를 돌리면 `notices_embedding/` 모듈도 `40 * * * *` 크론도 없이 끝난다. 자가 치유 리컨실러가 필요하다고 판단될 때만 모듈로 승격한다.
 
 ## Phase 3 — 품질 실측 [skkuverse-ai]
 
