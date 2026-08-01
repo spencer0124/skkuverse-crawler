@@ -35,14 +35,11 @@ class CrawlOptions:
     dept_filter: tuple[str, ...] | None = None
 
 
-DeptResult = SourceResult
-
-
 async def run_crawl(
     departments: list[dict[str, Any]],
     options: CrawlOptions,
     ports: Ports | None = None,
-) -> list[DeptResult]:
+) -> list[SourceResult]:
     crawl_id = uuid.uuid4().hex[:8]
     logger = get_logger("orchestrator", crawl_id=crawl_id)
 
@@ -83,9 +80,9 @@ async def run_crawl(
         await ports.sink.prepare(SourceSpec(source_id=dept["id"], name=dept["name"]))
 
     sem = asyncio.Semaphore(5)
-    results: list[DeptResult] = []
+    results: list[SourceResult] = []
 
-    async def crawl_with_sem(dept: dict) -> DeptResult:
+    async def crawl_with_sem(dept: dict) -> SourceResult:
         async with sem:
             return await _crawl_department(dept, ports, fetcher, options, logger)
 
@@ -93,7 +90,7 @@ async def run_crawl(
     settled = await asyncio.gather(*tasks, return_exceptions=True)
 
     for r in settled:
-        if isinstance(r, DeptResult):
+        if isinstance(r, SourceResult):
             results.append(r)
         else:
             logger.error("department_crawl_failed", error=str(r))
@@ -121,14 +118,14 @@ async def _crawl_department(
     fetcher: Fetcher,
     options: CrawlOptions,
     logger: Any,
-) -> DeptResult:
+) -> SourceResult:
     start = time.monotonic()
     strategy_cls = STRATEGY_MAP.get(dept["strategy"])
     if not strategy_cls:
         raise ValueError(f"Unknown strategy: {dept['strategy']}")
 
     strategy = strategy_cls(fetcher)
-    result = DeptResult(dept_id=dept["id"], dept_name=dept["name"])
+    result = SourceResult(dept_id=dept["id"], dept_name=dept["name"])
 
     logger.info("starting_department_crawl", dept_id=dept["id"], dept_name=dept["name"])
 
@@ -283,7 +280,7 @@ async def _process_page_smart(
     strategy: Any,
     dept: dict[str, Any],
     sink: Sink,
-    result: DeptResult,
+    result: SourceResult,
     logger: Any,
 ) -> None:
     for item in list_items:
@@ -381,7 +378,7 @@ async def _process_page_full(
     strategy: Any,
     dept: dict[str, Any],
     sink: Sink,
-    result: DeptResult,
+    result: SourceResult,
     logger: Any,
 ) -> None:
     for item in list_items:
