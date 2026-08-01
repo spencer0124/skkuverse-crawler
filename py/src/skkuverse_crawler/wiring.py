@@ -1,6 +1,8 @@
-"""Composition root — the ONLY module that may import plugins.* (adr-006;
-pinned by tests/structure test_modules_do_not_import_plugins, which bans
-plugins imports under modules/).
+"""Composition root — the ONLY module that may import plugins.* (adr-006).
+
+The AST rule (tests/structure test_modules_do_not_import_plugins) enforces
+this for modules/ only; for shared/, crawl_health/, notices_summary/ the
+rule is convention until their PR 7 moves — don't import plugins there.
 
 TEMPORARY EDGE (PR 5 → PR 7): modules/notices reaches up here via *lazy*
 function-body imports until PR 7 inverts injection (entry points receive

@@ -135,7 +135,7 @@
 3. 테스트의 `mock.patch(...)` 대상 문자열 — `characterization/harness.py`, `test_attachment_validator.py`, `test_orchestrator.py`, `test_update_checker.py`
 4. `scripts/generate_artifacts.py`의 `SOURCE_IDS_PY`·`PACKAGE_SOURCES_JSON` 경로 상수 + `tests/scripts/test_generate_artifacts.py`의 Path 표현식
 
-참고 문서 내 구경로(`docs/api-design-reference.md`, `docs/strategies/*.md`, `docs/known-issues.md`의 `py/src/skkuverse_crawler/notices/...` ~20줄)는 PR 9 공개 문서 정비로 연기.
+참고 문서 내 구경로(`docs/api-design-reference.md`, `docs/strategies/*.md`, `docs/known-issues.md`의 `py/src/skkuverse_crawler/notices/...` ~20줄, `docs/architecture.md`의 dedup.py 트리 표기)는 PR 9 공개 문서 정비로 연기.
 
 ## PR 5 — 포트 도입
 
@@ -175,6 +175,7 @@
 - [ ] `scheduler` 플러그인화, validators 3분할
 - [ ] `notices/module.py:29`의 `record_and_alert`를 wiring이 설치하는 훅으로
 - [ ] wiring 조립 시점 `isinstance` 검증 — `@runtime_checkable` 기반, `flush` 누락 등이 부팅 시 명확한 에러 (설계 §런타임 검증)
+- [ ] ⚠️ **주입 역전 시 Ports 수명 결정** (PR 5 리뷰 지적): `MongoSink._prepared` 가드와 touch 버퍼는 인스턴스 상태 — Ports 번들을 run_crawl 호출 간 재사용하면 2회차에 ensure_indexes가 안 돌고, 마지막 flush 실패 시 잔류 touch가 다음 run으로 샌다. run당 새 번들 생성이 기본이어야 함
 
 **검증 게이트**: 골든. health logic 테스트 무수정 통과.
 

@@ -49,10 +49,18 @@ def test_help_does_not_import_motor(tmp_path):
 
 
 def test_core_import_is_infra_free(tmp_path):
+    # Submodules imported explicitly — core/__init__.py is empty, so the
+    # bare package import alone would prove nothing about ports/events.
     code = (
         "import sys\n"
         "import skkuverse_crawler.core\n"
-        "sys.exit(1 if 'motor' in sys.modules else 0)\n"
+        "import skkuverse_crawler.core.events\n"
+        "import skkuverse_crawler.core.module\n"
+        "import skkuverse_crawler.core.ports\n"
+        "import skkuverse_crawler.core.registry\n"
+        "import skkuverse_crawler.core.results\n"
+        "import skkuverse_crawler.core.sources\n"
+        "sys.exit(1 if 'motor' in sys.modules or 'pymongo' in sys.modules else 0)\n"
     )
     result = _run_python(code, empty_env=False, cwd=tmp_path)
     assert result.returncode == 0, result.stderr
