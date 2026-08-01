@@ -5,7 +5,6 @@ import asyncio
 import click
 
 from ...core.crawl import FullSweep, Incremental
-from ...shared.db import close_client
 from ...shared.logger import configure_logging
 from .config.loader import load_and_validate
 from .orchestrator import CrawlOptions, run_crawl
@@ -42,7 +41,9 @@ async def _run(
 
     # Assembly at the entry point, not in the crawl logic: this is a CLI
     # leaf, so reaching for wiring here is the sanctioned direction (the
-    # orchestrator no longer does). Lazy so `--help` stays import-light.
+    # orchestrator no longer does). Lazy because motor is an optional
+    # dependency now — a module under modules/ must import without it.
+    from ...shared.db import close_client
     from ...wiring import notices_ports
 
     # Inside the try: get_db() creates the Motor client, so an assembly

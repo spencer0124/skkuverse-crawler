@@ -15,9 +15,7 @@ from typing import TYPE_CHECKING
 
 import click
 
-from ...shared.db import close_client
 from ...shared.logger import configure_logging
-from .update_checker import run_update_check
 
 if TYPE_CHECKING:
     from ...modules.notices.validation import (
@@ -43,6 +41,8 @@ async def _run_update_check(
     dept_filter: tuple[str, ...],
 ) -> None:
     from ...modules.notices.config.loader import load_and_validate
+    from ...shared.db import close_client
+    from .update_checker import run_update_check
 
     departments = load_and_validate()
 
@@ -84,6 +84,8 @@ async def _run_validate_attachments(
     json_output: bool,
     concurrency: int,
 ) -> None:
+    from ...shared.db import close_client
+
     try:
         from .audit import validate_attachments
 
@@ -164,6 +166,8 @@ async def _run_validate_markdown(
     json_output: bool,
     severity: str,
 ) -> None:
+    from ...shared.db import close_client
+
     try:
         from .audit import validate_markdown
 

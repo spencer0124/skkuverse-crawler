@@ -4,7 +4,6 @@ import asyncio
 
 import click
 
-from ...shared.db import close_client
 from ...shared.logger import configure_logging
 
 
@@ -21,6 +20,7 @@ def health_summary_cli() -> None:
 async def _run() -> None:
     # A CLI command is an assembly leaf: picking the concrete notifier is
     # its job, the same way wiring picks one for the scheduler.
+    from ...shared.db import close_client
     from ..discord.webhook import DiscordNotifier
     from .module import run_daily_summary
 

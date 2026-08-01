@@ -4,7 +4,6 @@ import asyncio
 
 import click
 
-from ...shared.db import close_client
 from ...shared.logger import configure_logging
 
 
@@ -21,6 +20,7 @@ def summarize_cli(batch_size: int, delay: float) -> None:
 
 
 async def _run(batch_size: int, delay: float) -> None:
+    from ...shared.db import close_client
     from .processor import run_summary_batch
 
     try:

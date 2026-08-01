@@ -1,11 +1,13 @@
 """Structural boundary tests for the core/plugin split (adr-006).
 
-Target-state tests that CANNOT pass yet are committed as
+Target-state tests that cannot pass yet are committed as
 ``xfail(strict=True)`` ratchets: the PR that enables one turns it into an
 XPASS *failure*, forcing the marker's removal in that same diff. Reviewers
 approve the target behavior here, in PR 0, not in the enabling PR.
 
-Unmarked tests pass today and are permanent regression guards.
+**No ratchets remain.** The last one, `--help` importing motor, was retired
+in PR 8; every test below is a permanent regression guard. Add a new ratchet
+the same way if a future PR needs one.
 """
 from __future__ import annotations
 
@@ -13,8 +15,6 @@ import ast
 import subprocess
 import sys
 from pathlib import Path
-
-import pytest
 
 PY_ROOT = Path(__file__).parents[2]
 SRC_PKG = PY_ROOT / "src" / "skkuverse_crawler"
@@ -31,21 +31,28 @@ def _run_python(code: str, *, empty_env: bool, cwd: Path | None = None) -> subpr
     )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="flips in PR 8 (lazy click subcommands) — cli.py's trailing import "
-    "block eagerly imports every subcommand module, dragging in motor via shared.db",
-)
-def test_help_does_not_import_motor(tmp_path):
+def test_help_does_not_import_optional_deps(tmp_path):
+    """`--help` must not pay for infrastructure it will not use.
+
+    Ratchet retired in PR 8: the CLI leaves now import shared.db inside
+    function bodies, so nothing on the help path reaches motor. Widened
+    beyond motor at the same time — pymongo/bson arrive independently
+    (plugins/mongo/update_checker imports pymongo directly), and
+    apscheduler/tenacity would regress the same way if a leaf grew an
+    eager import.
+    """
     code = (
         "import sys\n"
         "from click.testing import CliRunner\n"
         "from skkuverse_crawler.cli import main\n"
         "CliRunner().invoke(main, ['--help'])\n"
-        "sys.exit(1 if 'motor' in sys.modules else 0)\n"
+        "leaked = sorted(m for m in sys.modules if m.split('.')[0] in "
+        "{'motor', 'pymongo', 'bson', 'apscheduler', 'tenacity'})\n"
+        "print(','.join(leaked))\n"
+        "sys.exit(1 if leaked else 0)\n"
     )
     result = _run_python(code, empty_env=False, cwd=tmp_path)
-    assert result.returncode == 0, "importing the CLI for --help pulled in motor"
+    assert result.returncode == 0, f"--help imported optional deps: {result.stdout.strip()}"
 
 
 def test_core_import_is_infra_free(tmp_path):
