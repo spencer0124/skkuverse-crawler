@@ -2,9 +2,9 @@
 
 크롤러를 **인프라 없이 도는 코어**와 **인프라를 붙이는 플러그인**으로 가르는 설계. 결정 배경은 [decisions/adr-006](decisions/adr-006-core-plugin-split.md), 작업 순서는 [core-plugin-plan.md](core-plugin-plan.md) 참조.
 
-> **상태**: 설계 v2, 구현 전 (2026-07-30 최초 설계 → 같은 날 설계 리뷰 라운드 후 개정). 무엇이 왜 바뀌었는지는 adr-006 근거 ⑦~⑬에 초기안과 함께 보존. 구현되면 "예정" 표기를 걷어내고 코드 참조로 대체할 것.
+> **상태**: 설계 v2. PR 0~7 구현 완료 (2026-08-01) — Stage/Pipeline은 `core/pipeline.py`(모양) + `modules/notices/stages.py`(구체 스테이지, 설계 스케치의 `core/content/`와 다름: 사유는 plan.md PR 7 확정 사항), 조립 시점 검증은 `wiring.py`의 `_require`, flush 계약은 `core/runner.py`. PR 8(extras)·PR 9(공개 문서)는 미착수. 무엇이 왜 바뀌었는지는 adr-006 근거 ⑦~⑬에 초기안과 함께 보존.
 >
-> **불변식**: `core/`는 `modules/`·`plugins/`를 import하지 않는다. `modules/`는 `plugins/`를 import하지 않는다. `plugins/`를 import하는 파일은 `wiring.py` 하나. `os.environ`을 읽는 파일은 `env.py` 하나. — AST 테스트로 강제. *(v2)* 증분/전량 같은 실행 모드는 bool 플래그가 아니라 **합 타입**으로 — 불법 조합은 런타임 검증이 아니라 타입 구조로 차단한다.
+> **불변식**: `core/`는 `modules/`·`plugins/`를 import하지 않는다. `modules/`는 `plugins/`를 import하지 않는다. `plugins/`를 import하는 파일은 **조립 리프뿐** — `wiring.py`, 루트 `cli.py`, 각 플러그인의 `cli.py` *(PR 7 개정, adr-006 §발동 기록)*. `os.environ`을 읽는 파일은 `env.py` 하나. — AST 테스트로 강제. *(v2)* 증분/전량 같은 실행 모드는 bool 플래그가 아니라 **합 타입**으로 — 불법 조합은 런타임 검증이 아니라 타입 구조로 차단한다.
 
 ## 목표 상태
 

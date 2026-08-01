@@ -5,8 +5,10 @@ Per golden case: ``ops`` (FakeCollection round trips, order + args), ``state``
 names in order — fixes the control-flow path without exposing internals).
 
 Injection points (src/ stays untouched):
-- ``orchestrator.get_db`` — patched at the *binding site* (the module-level
-  ``from ..shared.db import get_db`` makes patching shared.db a no-op).
+- Ports — built from the fake collection via ``wiring.build_notices_runtime``
+  and passed to ``run_crawl``, exactly as the CLI and NoticesModule do since
+  PR 7's injection inversion. No get_db patch: the orchestrator no longer
+  knows the function exists.
 - ``Fetcher._rate_limit`` — no-op'd. ``run_crawl`` hardcodes
   ``delay_ms or 500`` so 0 is unreachable via options; patching the method
   (not asyncio.sleep) leaves retry backoff semantics observable.
@@ -31,9 +33,9 @@ import httpx
 import respx
 from structlog.testing import capture_logs
 
-from skkuverse_crawler.core.crawl import CrawlMode
+from skkuverse_crawler.core.crawl import CrawlMode, Incremental
 from skkuverse_crawler.shared.fetcher import Fetcher
-from tests.support.fake_mongo import FakeCollection, FakeDatabase
+from tests.support.fake_mongo import FakeCollection
 from tests.support.normalize import normalize_bson, sort_docs
 
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures" / "html"
@@ -115,17 +117,14 @@ async def run_golden(
     mode: CrawlMode | None = None,
     max_pages: int | None = None,
 ) -> GoldenRun:
-    """mode=None exercises run_crawl's production default (Incremental over
-    the lazily-wired index — here wrapping the fake collection); pass
-    FullSweep() for the plugin-less sweep case."""
+    """mode=None takes the production mode NoticesModule builds for a
+    scheduled run (Incremental over the wired index — here wrapping the
+    fake collection); pass FullSweep() for the plugin-less sweep case."""
     from skkuverse_crawler.modules.notices.orchestrator import CrawlOptions, run_crawl
+    from skkuverse_crawler.wiring import build_notices_runtime
 
     collection = collection if collection is not None else FakeCollection()
-    fake_db = FakeDatabase()
-    fake_db.collections["notices"] = collection
-
-    async def fake_get_db() -> FakeDatabase:
-        return fake_db
+    ports, seen = build_notices_runtime(collection)
 
     async def noop_rate_limit(self: Fetcher) -> None:
         return None
@@ -134,14 +133,16 @@ async def run_golden(
     # access there would create a "notices.ops" sub-collection, not a list.
     ops_start = len(collection.ops) if isinstance(collection, FakeCollection) else 0
     with (
-        patch("skkuverse_crawler.modules.notices.orchestrator.get_db", side_effect=fake_get_db),
         patch.object(Fetcher, "_rate_limit", noop_rate_limit),
         respx.mock(assert_all_called=False) as respx_router,
         capture_logs() as logs,
     ):
         respx_router.route().mock(side_effect=router.handler)
         results = await run_crawl(
-            [dept], CrawlOptions(max_pages=max_pages), mode=mode
+            [dept],
+            CrawlOptions(max_pages=max_pages),
+            ports=ports,
+            mode=mode if mode is not None else Incremental(seen),
         )
     return GoldenRun(collection=collection, results=results, logs=logs, ops_start=ops_start)
 

@@ -186,3 +186,33 @@ ABC 상속안(인스턴스 생성 즉시 실패)도 검토했으나 기각 — P
 - *(v2)* **결과 계층에 이벤트 추가가 필요해지면** → 그 자체가 major 버전 신호. 진행 계층이 ~10종을 넘으면 2계층 구분 자체를 재평가 (§⑧)
 - *(v2)* **1.0 태깅** → `schedule` 모듈이 프레임워크 위에 실제로 올라가 두 번째 소비자 검증을 통과한 뒤에만 (§⑬)
 - *(v2)* **flush 소스 내 격리** (부분 실패 시 소스 계속 + `ItemFailed` 집계) → 1.0 전 재검토. 채택 시 골든 갱신 필요 (§⑪)
+
+## 재검토 조건 발동 기록
+
+### PR 7 (2026-08-01) — "plugins/가 5개를 넘으면" **발동**
+
+`plugins/`가 1개(mongo) → 6개(mongo, health, discord, ai_summary, dispatch, scheduler).
+
+**판정: 단일 배포물 + extras 유지 (재개봉하지 않음).** 트리거가 걱정하는 것은 의존성 격리이고, 그건 PR 8의 optional-dependencies가 제공한다. 트리거의 비용 동인(배포물 N개의 릴리스 기계 — 버전 동기화, 교차 호환 매트릭스)은 플러그인 수가 늘어도 변하지 않았다. **다시 열 조건**: extras로 부족하다는 증거 — 예컨대 `modules/` 트리 없이 `plugins/mongo`만 쓰려는 소비자가 나타나는 경우.
+
+### 하드 엣지 인벤토리 (PR 7 시점)
+
+- **로직 엣지 1개**: `plugins/ai_summary/processor.py` → `plugins/dispatch/client.py` (사이클 종료 FCM ping). import 지점에 주석으로 표시. "2개 이상" 미발동.
+- `plugins/health/cli.py` → `plugins/discord`는 **조립 리프**라 미산입 — CLI 명령의 일이 세계를 조립하는 것이므로 wiring과 같은 범주.
+- `plugins/health` → `plugins/discord` 로직 엣지는 `core.ports.Notifier`가 회피 (설계 ownership table 의도대로).
+
+### 런타임 `plugins → modules` 엣지 (신설 클래스)
+
+기존 역방향 엣지는 `TYPE_CHECKING` 전용이었으나, PR 7에서 처음 런타임 엣지가 생겼다: `plugins/mongo/update_checker.py`(STRATEGY_MAP·hashing·constants), `plugins/mongo/audit.py`(validation·config.loader), `plugins/health/module.py`(config.loader).
+
+**정당성**: plugins는 최외곽 레이어이므로 core·modules 양쪽에 의존할 수 있다. AST 룰이 `modules → plugins`만 막는 것은 누락이 아니라 설계다. 다만 비-가드 방향이므로 이 기록이 관리 장치 — 각 파일 docstring에도 명시.
+
+### 미발동 확인
+
+- **"`Stage`가 서비스 의존 단계 3개 이상"**: 미발동. PR 7의 유일한 서비스 의존 스테이지는 선택적 `VerifyImages`이고, `SummarizeStage`는 의도적으로 만들지 않았다 (ai_summary는 배치이지 아이템별 스테이지가 아님).
+
+### 불변식 개정 (PR 7)
+
+> ~~`plugins/`를 import하는 파일은 `wiring.py` 하나.~~ → **`plugins/`를 import하는 파일은 조립 리프뿐** — `wiring.py`, 루트 `cli.py`, 그리고 각 플러그인의 `cli.py`.
+
+이유: CLI 명령은 정의상 조립 지점이다(설정 초기화 → 세계 구성 → 호출). PR 5가 `wiring.py`를 앞당긴 것도 "modules/ 아래 호출자가 조립을 해야 했기 때문"이었고, PR 7의 주입 역전으로 크롤 로직에서는 그 필요가 사라졌다. 남은 것은 진짜 진입점뿐이며, 이들을 예외로 두는 편이 "wiring 하나"를 지키려고 진입점마다 간접층을 만드는 것보다 정직하다. AST 룰(`modules → plugins` 금지)은 그대로.

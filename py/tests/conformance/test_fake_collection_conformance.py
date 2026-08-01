@@ -172,6 +172,44 @@ async def _datetime_ms_truncation(coll: Any) -> Any:
     return None
 
 
+def _soft_delete_counter(seed: dict[str, Any]) -> Callable:
+    """update_checker's 404 counter, verbatim.
+
+    The two $set stages are sequential: stage 2's $consecutiveFailures is
+    the value stage 1 just wrote. That is what makes the third failure —
+    not the fourth — cross the threshold, so it is exactly the semantic
+    the fake must not get wrong.
+    """
+
+    async def run(coll: Any) -> Any:
+        await coll.update_one(
+            {"articleNo": 1, "sourceId": "s"}, {"$set": {"title": "t", **seed}}, upsert=True
+        )
+        updated = await coll.find_one_and_update(
+            {"articleNo": 1, "sourceId": "s"},
+            [
+                {"$set": {
+                    "consecutiveFailures": {
+                        "$add": [{"$ifNull": ["$consecutiveFailures", 0]}, 1]
+                    },
+                }},
+                {"$set": {
+                    "isDeleted": {
+                        "$cond": {
+                            "if": {"$gte": ["$consecutiveFailures", 3]},
+                            "then": True,
+                            "else": {"$ifNull": ["$isDeleted", False]},
+                        }
+                    },
+                }},
+            ],
+            return_document=ReturnDocument.AFTER,
+        )
+        return normalize_bson([updated])
+
+    return run
+
+
 @dataclass(frozen=True)
 class Case:
     name: str
@@ -191,6 +229,17 @@ CASES = [
     Case("unique_violation", _unique_violation, "DuplicateKeyError"),
     Case("find_filters", _find_filters),
     Case("datetime_ms_truncation", _datetime_ms_truncation),
+    # Pipeline updates: the counter matrix, including the missing-field
+    # cases $ifNull exists for.
+    Case("pipeline_counter_absent_fields", _soft_delete_counter({})),
+    Case("pipeline_counter_from_zero", _soft_delete_counter({"consecutiveFailures": 0})),
+    Case("pipeline_counter_below_threshold", _soft_delete_counter({"consecutiveFailures": 1})),
+    Case("pipeline_counter_crosses_threshold", _soft_delete_counter({"consecutiveFailures": 2})),
+    Case("pipeline_counter_past_threshold", _soft_delete_counter({"consecutiveFailures": 5})),
+    Case(
+        "pipeline_counter_preserves_existing_delete_flag",
+        _soft_delete_counter({"consecutiveFailures": 0, "isDeleted": True}),
+    ),
 ]
 
 

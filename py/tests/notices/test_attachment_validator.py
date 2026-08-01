@@ -7,10 +7,9 @@ import httpx
 import pytest
 import respx
 
-from skkuverse_crawler.modules.notices.attachment_validator import (
+from skkuverse_crawler.modules.notices.validation import (
     ValidationReport,
     check_reachability,
-    validate_attachments,
     validate_duplicates,
     validate_host_allowed,
     validate_name,
@@ -19,6 +18,7 @@ from skkuverse_crawler.modules.notices.attachment_validator import (
     validate_referer,
     validate_url_scheme,
 )
+from skkuverse_crawler.plugins.mongo.audit import validate_attachments
 
 # validate_attachments() resolves its collection via a lazy `get_db()` import —
 # mock_db_patch is the only way a test reaches it with a mock.

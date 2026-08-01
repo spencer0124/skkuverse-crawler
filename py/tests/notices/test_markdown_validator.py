@@ -5,15 +5,15 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from skkuverse_crawler.modules.notices.markdown_validator import (
+from skkuverse_crawler.modules.notices.validation import (
     MarkdownValidationReport,
     check_broken_link,
     check_cross_line_strong,
     check_empty_table_header,
     check_space_before_close_emphasis,
-    validate_markdown,
     validate_notice_markdown,
 )
+from skkuverse_crawler.plugins.mongo.audit import validate_markdown
 
 # validate_markdown() resolves its collection via a lazy `get_db()` import —
 # mock_db_patch is the only way a test reaches it with a mock.

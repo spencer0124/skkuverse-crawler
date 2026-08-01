@@ -178,15 +178,27 @@
 
 ## PR 7 — 나머지 플러그인 이관
 
-- [ ] `Stage`/`Pipeline` + `ContentDoc` (설계 §Stage — **팬아웃**이지 체인이 아님)
-- [ ] `notices_summary` → `plugins/{ai_summary,dispatch}`
-- [ ] `crawl_health` → `plugins/health` + `core.ports.Notifier`
-- [ ] `scheduler` 플러그인화, validators 3분할
-- [ ] `notices/module.py:29`의 `record_and_alert`를 wiring이 설치하는 훅으로
-- [ ] wiring 조립 시점 `isinstance` 검증 — `@runtime_checkable` 기반, `flush` 누락 등이 부팅 시 명확한 에러 (설계 §런타임 검증)
-- [ ] ⚠️ **주입 역전 시 Ports 수명 결정** (PR 5 리뷰 지적): `MongoSink._prepared` 가드와 touch 버퍼는 인스턴스 상태 — Ports 번들을 run_crawl 호출 간 재사용하면 2회차에 ensure_indexes가 안 돌고, 마지막 flush 실패 시 잔류 touch가 다음 run으로 샌다. run당 새 번들 생성이 기본이어야 함
+- [x] `Stage`/`Pipeline` + `ContentDoc` (설계 §Stage — **팬아웃**이지 체인이 아님)
+- [x] `notices_summary` → `plugins/{ai_summary,dispatch}`
+- [x] `crawl_health` → `plugins/health` + `core.ports.Notifier`
+- [x] `scheduler` 플러그인화, validators 3분할
+- [x] `notices/module.py:29`의 `record_and_alert`를 wiring이 설치하는 훅으로
+- [x] wiring 조립 시점 `isinstance` 검증 — `@runtime_checkable` 기반, `flush` 누락 등이 부팅 시 명확한 에러 (설계 §런타임 검증)
+- [x] ⚠️ **주입 역전 시 Ports 수명 결정** (PR 5 리뷰 지적): `MongoSink._prepared` 가드와 touch 버퍼는 인스턴스 상태 — Ports 번들을 run_crawl 호출 간 재사용하면 2회차에 ensure_indexes가 안 돌고, 마지막 flush 실패 시 잔류 touch가 다음 run으로 샌다. run당 새 번들 생성이 기본이어야 함
+- [x] update_checker 이관 (`plugins/mongo/update_checker.py`) + FakeCollection aggregation-pipeline update (plan.md:49/:154 재검토 해소)
 
-**검증 게이트**: 골든. health logic 테스트 무수정 통과.
+**검증 게이트**: 골든 바이트 동일 (매 커밋). health logic 테스트 무수정 통과 — `git diff dev -- tests/plugins/health/test_logic.py`가 import 1줄. **적합성(-m mongo) 필수로 격상** (store-semantic 코드 이관 + fake 연산자 추가 — 새 fake가 진실을 말하는지 검증할 유일한 수단).
+
+### 구현 시 확정 사항
+
+- **스테이지 위치는 `modules/notices/stages.py`** (설계 스케치의 `core/content/stages.py` 아님). 코어는 모양만 정의(`core/pipeline.py`), 구체 스테이지는 콘텐츠 의미를 소유한 모듈에 — `iter_source`가 modules 소유인 것과 같은 이유(PR 6 reconcile). shared/ 해체 시 재검토.
+- **`build_notice(content=None)` 이중 경로 유지**: 파이프라인 경로와 인라인 경로가 공존하고, `tests/notices/test_stages.py`의 parity 테스트가 5개 콘텐츠 형태(`""`/`None` 포함)에서 동치를 강제. 직접 호출자(품질 테스트 등)가 파이프라인 설정 없이 남을 수 있게 하는 값. 단일화는 PR 9 계열.
+- **백필(ContentRefreshed) 경로는 파이프라인으로 전환하지 않음**: emit 경로는 `if detail.content` 가드로 빈 문자열이 `None`이 되고, 백필 경로는 무가드라 `""`가 그대로 남는다. 통합은 의미 결정이지 기계적 이동이 아니므로 별건.
+- **`build_runtime()`은 무인자**: `settings`/`profile`과 부팅 거부는 "플러그인 부재"가 표현 가능한 상태가 되는 PR 8 extras와 함께.
+- **`run_crawl` fallback은 null object**: `ports=None → Ports()`, `mode=None → FullSweep()`. 이전의 "몰래 Mongo 조립"이 사라져 `mode=None`의 의미가 호출자에 따라 갈리지 않는다.
+- **`CrawlModule.run(**kwargs)`**: `incremental: bool`은 NoticesModule 로컬 API로 강등 (프레임워크 개념 아님).
+- **`SummarizeStage` 미구현**: ai_summary는 저장된 공지에 대한 주기적 배치이지 아이템별 크롤 스테이지가 아니다. 억지로 맞추면 요약 시점이 바뀐다 → adr 재검토 조건(서비스 의존 스테이지 3개) 미발동.
+- **update_checker stale `cleanMarkdown` 버그는 이동 중 수정하지 않음** (별건 티켓, §범위 밖).
 
 ## PR 8 — extras + 패키징
 

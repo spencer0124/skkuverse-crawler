@@ -269,14 +269,6 @@ class TestBsonFidelity:
 class TestHonestyPins:
     """Unsupported operations must raise, never silently no-op."""
 
-    async def test_aggregation_pipeline_update_raises(self):
-        coll = FakeCollection()
-        await coll.update_one({"articleNo": 1}, {"$set": {"views": 1}}, upsert=True)
-        with pytest.raises(NotImplementedError):
-            await coll.find_one_and_update(
-                {"articleNo": 1}, [{"$set": {"views": {"$add": [1, 1]}}}]
-            )
-
     async def test_expr_filter_raises(self):
         coll = FakeCollection()
         with pytest.raises(NotImplementedError):
@@ -300,3 +292,196 @@ class TestFakeDatabase:
         db = FakeDatabase()
         assert db["notices"] is db["notices"]
         assert db["notices"].name == "notices"
+
+
+class TestPipelineUpdate:
+    """Aggregation-pipeline updates — the shape update_checker's 404
+    counter uses. Fidelity against real Mongo is pinned by level-1
+    conformance; these cover the fake's own guard rails."""
+
+    async def _bump(self, coll, seed):
+        await coll.update_one({"articleNo": 1}, {"$set": seed}, upsert=True)
+        return await coll.find_one_and_update(
+            {"articleNo": 1},
+            [
+                {"$set": {
+                    "consecutiveFailures": {
+                        "$add": [{"$ifNull": ["$consecutiveFailures", 0]}, 1]
+                    },
+                }},
+                {"$set": {
+                    "isDeleted": {
+                        "$cond": {
+                            "if": {"$gte": ["$consecutiveFailures", 3]},
+                            "then": True,
+                            "else": {"$ifNull": ["$isDeleted", False]},
+                        }
+                    },
+                }},
+            ],
+            return_document=ReturnDocument.AFTER,
+        )
+
+    async def test_stages_are_sequential_not_parallel(self):
+        """Stage 2 reads what stage 1 wrote — a doc at 2 crosses the
+        threshold on this pass, not the next one."""
+        coll = FakeCollection()
+        after = await self._bump(coll, {"consecutiveFailures": 2})
+        assert after["consecutiveFailures"] == 3
+        assert after["isDeleted"] is True
+
+    async def test_below_threshold_leaves_flag_alone(self):
+        coll = FakeCollection()
+        after = await self._bump(coll, {"consecutiveFailures": 1})
+        assert after["consecutiveFailures"] == 2
+        assert after["isDeleted"] is False
+
+    async def test_ifnull_supplies_defaults_for_missing_fields(self):
+        coll = FakeCollection()
+        after = await self._bump(coll, {"title": "no counter yet"})
+        assert after["consecutiveFailures"] == 1
+        assert after["isDeleted"] is False
+
+    async def test_existing_delete_flag_survives_a_below_threshold_bump(self):
+        coll = FakeCollection()
+        after = await self._bump(coll, {"consecutiveFailures": 0, "isDeleted": True})
+        assert after["isDeleted"] is True
+
+    async def test_unknown_expression_operator_raises(self):
+        coll = FakeCollection()
+        await coll.update_one({"articleNo": 1}, {"$set": {"n": 1}}, upsert=True)
+        with pytest.raises(NotImplementedError, match=r"\$multiply"):
+            await coll.find_one_and_update(
+                {"articleNo": 1}, [{"$set": {"n": {"$multiply": ["$n", 2]}}}]
+            )
+
+    async def test_non_set_stage_raises(self):
+        coll = FakeCollection()
+        await coll.update_one({"articleNo": 1}, {"$set": {"n": 1}}, upsert=True)
+        with pytest.raises(NotImplementedError, match="only \\$set"):
+            await coll.find_one_and_update({"articleNo": 1}, [{"$unset": ["n"]}])
+
+    async def test_pipeline_with_upsert_raises(self):
+        coll = FakeCollection()
+        with pytest.raises(NotImplementedError, match="upsert"):
+            await coll.update_one(
+                {"articleNo": 9}, [{"$set": {"n": 1}}], upsert=True
+            )
+
+
+class TestPipelineExpressionFidelity:
+    """Mongo semantics the fake must not approximate with Python's.
+
+    Each case below was measured against a real MongoDB 7 during review;
+    the fake used to disagree silently on every one of them.
+    """
+
+    async def _set(self, coll, seed: dict, expr: dict):
+        await coll.update_one({"articleNo": 1}, {"$set": seed}, upsert=True)
+        return await coll.find_one_and_update(
+            {"articleNo": 1}, [{"$set": expr}], return_document=ReturnDocument.AFTER
+        )
+
+    async def test_gte_ranks_by_bson_type_not_python_none(self):
+        # 3 >= missing is TRUE in Mongo (numbers sort above null); the
+        # naive "either side is None → False" shortcut got this backwards.
+        coll = FakeCollection()
+        after = await self._set(coll, {"n": 3}, {"r": {"$gte": ["$n", "$missing"]}})
+        assert after["r"] is True
+
+    async def test_gte_with_null_on_the_left_is_false(self):
+        coll = FakeCollection()
+        after = await self._set(coll, {"n": 3}, {"r": {"$gte": ["$missing", "$n"]}})
+        assert after["r"] is False
+
+    async def test_gte_null_to_null_is_true(self):
+        coll = FakeCollection()
+        after = await self._set(coll, {"n": 1}, {"r": {"$gte": ["$missing", "$absent"]}})
+        assert after["r"] is True
+
+    async def test_cond_treats_empty_string_as_true(self):
+        # Python says "" is falsy; Mongo says only false/null/0/missing are.
+        coll = FakeCollection()
+        after = await self._set(
+            coll, {"s": ""}, {"r": {"$cond": {"if": "$s", "then": "T", "else": "F"}}}
+        )
+        assert after["r"] == "T"
+
+    async def test_cond_treats_zero_as_false(self):
+        coll = FakeCollection()
+        after = await self._set(
+            coll, {"z": 0}, {"r": {"$cond": {"if": "$z", "then": "T", "else": "F"}}}
+        )
+        assert after["r"] == "F"
+
+
+class TestPipelineHonestyPins:
+    """Unsupported shapes must raise. A silent wrong answer here would
+    make every golden that touches a pipeline update lie."""
+
+    async def _seeded(self):
+        coll = FakeCollection()
+        await coll.update_one({"articleNo": 1}, {"$set": {"n": 5}}, upsert=True)
+        return coll
+
+    async def test_dotted_field_path_raises(self):
+        coll = await self._seeded()
+        with pytest.raises(NotImplementedError, match="dotted field paths"):
+            await coll.find_one_and_update({"articleNo": 1}, [{"$set": {"x": "$sub.b"}}])
+
+    async def test_system_variable_raises(self):
+        coll = await self._seeded()
+        with pytest.raises(NotImplementedError, match="system variable"):
+            await coll.find_one_and_update({"articleNo": 1}, [{"$set": {"at": "$$NOW"}}])
+
+    async def test_array_valued_expression_raises(self):
+        coll = await self._seeded()
+        with pytest.raises(NotImplementedError, match="array-valued"):
+            await coll.find_one_and_update({"articleNo": 1}, [{"$set": {"m": ["$n", 2]}}])
+
+    async def test_non_array_operand_raises(self):
+        coll = await self._seeded()
+        with pytest.raises(NotImplementedError, match="non-array operand"):
+            await coll.find_one_and_update({"articleNo": 1}, [{"$set": {"x": {"$add": "$n"}}}])
+
+    async def test_ifnull_with_one_argument_raises(self):
+        coll = await self._seeded()
+        with pytest.raises(NotImplementedError, match="two arguments"):
+            await coll.find_one_and_update({"articleNo": 1}, [{"$set": {"x": {"$ifNull": ["$n"]}}}])
+
+    async def test_unsupported_operator_in_untaken_branch_raises(self):
+        """Mongo rejects the pipeline at parse time; evaluating only the
+        taken branch would let an unsupported operator read as supported."""
+        coll = await self._seeded()
+        with pytest.raises(NotImplementedError, match=r"\$multiply"):
+            await coll.find_one_and_update(
+                {"articleNo": 1},
+                [{"$set": {"x": {"$cond": {
+                    "if": {"$gte": ["$n", 0]},
+                    "then": 1,
+                    "else": {"$multiply": ["$n", 2]},
+                }}}}],
+            )
+
+    async def test_dotted_set_key_raises(self):
+        coll = await self._seeded()
+        with pytest.raises(NotImplementedError, match=r"dotted \$set keys"):
+            await coll.find_one_and_update({"articleNo": 1}, [{"$set": {"sub.b": 9}}])
+
+    async def test_empty_pipeline_raises(self):
+        coll = await self._seeded()
+        with pytest.raises(NotImplementedError, match="empty pipeline"):
+            await coll.find_one_and_update({"articleNo": 1}, [])
+
+    async def test_failed_pipeline_leaves_the_document_untouched(self):
+        """Mongo rolls the whole update back; a half-applied document is a
+        state it could never produce, so tests must never observe one."""
+        coll = await self._seeded()
+        with pytest.raises(NotImplementedError):
+            await coll.find_one_and_update(
+                {"articleNo": 1},
+                [{"$set": {"n": {"$add": ["$n", 1]}}}, {"$set": {"x": {"$multiply": ["$n", 2]}}}],
+            )
+        cursor = coll.find({"articleNo": 1})
+        (stored,) = [doc async for doc in cursor]
+        assert stored["n"] == 5

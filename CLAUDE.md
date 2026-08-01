@@ -66,7 +66,7 @@ python scripts/generate_artifacts.py    # sources.json + categories.json → 7�
 
 ### 공통 패턴
 
-**모듈형 구조**: `shared/` (config, DB, logger, HTTP 클라이언트) + `core/` (모듈 프레임워크·결과 타입) + `modules/` 하위 모듈 디렉토리 (notices; notices_summary·crawl_health는 plugins 이관 전까지 최상위 유지)
+**모듈형 구조** (adr-006 core/plugin 분리, PR 0~7 완료): `core/` (포트·이벤트·러너·파이프라인 모양 — 인프라 import 금지) + `modules/notices/` (크롤 도메인 로직) + `plugins/` (인프라 어댑터: `mongo` 저장·update_checker·audit, `health`, `discord`, `ai_summary`, `dispatch`, `scheduler`) + `shared/` (config, DB, logger, HTTP 클라이언트, HTML 처리). 조립은 `wiring.py`가 담당 — `modules/`는 `plugins/`를 import하지 않는다 (AST 테스트로 강제). `plugins/`를 import할 수 있는 건 조립 리프(wiring.py, cli.py들)뿐.
 
 **Strategy Pattern**: `CrawlStrategy` 인터페이스 + `sources.json` config-driven. 전략 목록은 `sources.json`의 `strategy` 필드 및 `generate_artifacts.py`의 `STRATEGY_FEATURES` 참조.
 
@@ -89,7 +89,7 @@ python scripts/generate_artifacts.py    # sources.json + categories.json → 7�
 
 **Markdown 변환**: `shared/html_to_markdown.py`. cleanHtml을 입력으로 받아 markdownify + 전처리(박스 테이블 unwrap, 첫 행 all-bold → `<thead><th>` 승격, `<td>` 내부 `<p>/<div>` flatten)로 GFM을 생성 → `cleanMarkdown` 필드에 저장. `content`/`cleanHtml`/`contentText`는 그대로 유지. 이미지에 width/height 속성이 있으면 `{WxH}` 포맷으로 alt text 앞에 prepend: `![{800x600} 포스터](url)`. width만 있으면 `{w800}`, height만 있으면 `{h600}`. 앱에서 `!\[\{(\d+)x(\d+)\}` 정규식으로 파싱.
 
-**이미지 검증**: `modules/notices/image_verifier.py`. 크롤링 시 `<img>` URL마다 HTTP Range 헤더로 첫 32KB만 요청 → `imagesize` 라이브러리로 dimension 파싱. Range 미지원 서버는 Content-Length ≤ 5MB일 때 전체 응답 사용, 초과 시 스킵. 감지된 dimension은 `normalizer._inject_image_dimensions()`이 cleanHtml의 `<img>` 태그에 `width`/`height` 속성으로 주입.
+**이미지 검증**: `modules/notices/image_verifier.py`. 크롤링 시 `<img>` URL마다 HTTP Range 헤더로 첫 32KB만 요청 → `imagesize` 라이브러리로 dimension 파싱. Range 미지원 서버는 Content-Length ≤ 5MB일 때 전체 응답 사용, 초과 시 스킵. 감지된 dimension은 `normalizer._inject_image_dimensions()`이 cleanHtml의 `<img>` 태그에 `width`/`height` 속성으로 주입. 크롤 경로에서는 `modules/notices/stages.py`의 `VerifyImages`(선택 스테이지) + `InjectImageDimensions`가 이 둘을 수행 — `DEFAULT_PIPELINE.without("verify-images")`로 비활성화 가능.
 
 **contentText 추출**: `normalizer._text_from_clean_html()`. 블록 요소(`<tr>`, `<p>`, `<div>`, `<h1-4>`, `<li>`, `<br>`)가 개행을 만들고 `<td>/<th>`는 공백으로 구분(기존 동작). 셀 내부 `<br>`은 행 구분과 충돌하므로 공백으로 대체.
 
@@ -97,9 +97,9 @@ python scripts/generate_artifacts.py    # sources.json + categories.json → 7�
 
 **첨부파일 Referer**: gnuboard 계열 학과(nano, bio-undergrad, bio-grad, pharm)의 `download.php`는 PHP 세션 + Referer 헤더를 검증. 크롤러가 attachment 메타데이터에 `referer` (상세 페이지 URL)를 저장하여 서버 프록시가 세션 수립 후 다운로드할 수 있도록 지원. gnuboard-custom(nano)은 케이스 A(아무 페이지 세션 OK), gnuboard 표준(pharm, bio)은 케이스 B(상세 페이지 방문 필수). bio는 https 미지원(http only).
 
-**첨부파일 검증**: `modules/notices/attachment_validator.py`. URL scheme·host 허용 여부, name 품질, gnuboard referer 존재, 중복 URL, HTTP 도달성(HEAD 요청)을 검사. CLI로 `validate-attachments` 실행. `--no-http`으로 네트워크 체크 스킵, `--json`으로 기계 판독 가능 출력.
+**첨부파일 검증**: 순수 검사는 `modules/notices/validation.py`, DB 스캔 드라이버는 `plugins/mongo/audit.py`. URL scheme·host 허용 여부, name 품질, gnuboard referer 존재, 중복 URL, HTTP 도달성(HEAD 요청)을 검사. CLI로 `validate-attachments` 실행. `--no-http`으로 네트워크 체크 스킵, `--json`으로 기계 판독 가능 출력.
 
-**Markdown 검증**: `modules/notices/markdown_validator.py`. cleanMarkdown 필드의 렌더링 품질을 검사. broken emphasis(닫히지 않은 `*`/`**`), 빈 링크, 이미지 dimension 포맷(`{WxH}`), 과도한 빈 줄 등을 감지. severity는 `error`/`warning` 두 단계. CLI로 `validate-markdown` 실행.
+**Markdown 검증**: 순수 검사는 `modules/notices/validation.py`, DB 스캔 드라이버는 `plugins/mongo/audit.py`. cleanMarkdown 필드의 렌더링 품질을 검사. broken emphasis(닫히지 않은 `*`/`**`), 빈 링크, 이미지 dimension 포맷(`{WxH}`), 과도한 빈 줄 등을 감지. severity는 `error`/`warning` 두 단계. CLI로 `validate-markdown` 실행.
 
 ### 모듈 시스템 (`py/src/skkuverse_crawler/`)
 
