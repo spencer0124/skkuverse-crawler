@@ -54,6 +54,7 @@ def test_core_import_is_infra_free(tmp_path):
     code = (
         "import sys\n"
         "import skkuverse_crawler.core\n"
+        "import skkuverse_crawler.core.crawl\n"
         "import skkuverse_crawler.core.events\n"
         "import skkuverse_crawler.core.module\n"
         "import skkuverse_crawler.core.ports\n"
