@@ -14,7 +14,6 @@ from ...shared.fetcher import Fetcher
 from ...shared.html_cleaner import clean_html, normalize_content_urls
 from ...shared.logger import get_logger
 from .constants import SERVICE_START_DATE
-from .dedup import ensure_indexes
 from .hashing import compute_content_hash
 from .strategies import STRATEGY_MAP
 
@@ -39,9 +38,13 @@ async def run_update_check(
 ) -> list[UpdateCheckResult]:
     logger = get_logger("update_checker")
 
+    # Lazy wiring import: the "single plugins import point" shim (temporary
+    # edge, retired in PR 7 when update_checker moves into plugins/mongo).
+    from ...wiring import ensure_notice_indexes
+
     db = await get_db()
     collection = db["notices"]
-    await ensure_indexes(collection)
+    await ensure_notice_indexes(collection)
 
     fetcher = Fetcher(delay_ms=500)
 
