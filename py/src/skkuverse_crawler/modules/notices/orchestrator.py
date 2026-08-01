@@ -33,6 +33,9 @@ class CrawlOptions:
     max_pages: int | None = None
     delay_ms: int | None = None
     dept_filter: tuple[str, ...] | None = None
+    # Deployment policy, not a core constant (architecture ownership table):
+    # the notices module supplies the current floor as the default.
+    since_date: str | None = SERVICE_START_DATE
 
 
 async def run_crawl(
@@ -187,7 +190,7 @@ async def _crawl_department(
             break
 
         is_first_page = page == 0
-        below_floor = page_below_floor(list_items)
+        below_floor = page_below_floor(list_items, since=options.since_date)
 
         # Page 0 must be processed even when its regular rows are all below
         # the floor: a pinned row dated after the floor only ever surfaces
