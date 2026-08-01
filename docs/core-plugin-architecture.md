@@ -227,6 +227,8 @@ v1은 전량 스윕을 `NullSeenIndex`가 `{}`를 흘리면 `should_continue`가
 
 `NoticeCrawled` → sink 반환값, **sink가 `None`이면 `INSERTED`** · `NoticeUnchanged`/`ItemSkipped` → `skipped` (러너 직접 집계; sink는 보통 무시) · `ItemFailed`/`ListFetchFailed` → `errors` · `PageCompleted` → `sink.flush()` · `SourceFinished` → `source_down`/`last_error`/`duration_ms`.
 
+*(PR 6 구현 addendum)* `ContentRefreshed` → `updated` (outcome 무시 — 현행 백필 계수) · `SourceStarted` → 무집계 · 미지의 이벤트 → accept 후 무집계. 구현은 `core/runner.py::run_events`.
+
 ### facade — `core/simple.py` *(v2 신설, adr-006 §⑨)*
 
 ```python

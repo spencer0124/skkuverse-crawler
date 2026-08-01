@@ -157,15 +157,24 @@
 
 ## PR 6 — orchestrator 해체 ⚠️ 최고 위험
 
-**2개 커밋으로 나눠 올린다**: (A) sink 호출은 러너에 인라인으로 둔 채 `iter_source`만 제너레이터로 추출 → **이벤트 순서**가 맞는지 증명. (B) 뒤집기. 리뷰어가 A를 "이벤트가 옳은 순서로 나왔나", B를 "sink가 그걸로 옳은 일을 했나"로 따로 읽을 수 있다.
+**2개 커밋으로 나눠 올린다**: (A) sink 호출은 러너에 인라인으로 둔 채 `iter_source`만 제너레이터로 추출 → **이벤트 순서**가 맞는지 증명. (B) 뒤집기. 리뷰어가 A를 "이벤트가 옳은 순서로 나왔나", B를 "sink가 그걸로 옳은 일을 했나"로 따로 읽을 수 있다. — 구현은 A/B 앞에 준비 커밋 3개(since_date 배관 → CrawlMode 타입 → smart/full 병합-still-bool)를 두어 A가 verbatim lift가 되게 함 (재편과 이동의 커밋 분리, 위험 ③ 규율의 연장).
 
-- [ ] `iter_source` + `run_source`
-- [ ] `CrawlOptions.incremental` 삭제 → `CrawlMode = Incremental(seen) | FullSweep` (설계 §CrawlMode). `case FullSweep(): meta, all_known = {}, False` **명시 대입** — v1 골격의 잠복 UnboundLocalError를 구조 해소
-- [ ] `max_pages` 유도 보존: 미지정 시 Incremental→100 / FullSweep→2500. `WorkSeed`는 mode와 직교 파라미터 (adr-006 §⑫ — 전량 재크롤도 백필 수행)
-- [ ] `_process_page_smart`/`_process_page_full` 병합
-- [ ] `SERVICE_START_DATE` → `options.since_date` (notices 모듈이 현행 값을 기본 공급)
+- [x] `iter_source` + `run_source` — 구현 시 확정: **`iter_source`는 modules/notices 소유** (policy·build_notice·이미지 검증 의존 — core→modules 불변식이 레이아웃 스케치보다 우선; generic화(정책/emitter 주입 설계)가 선결이라 core 이동은 보류, PR 9 facade가 재수출 검토). **core엔 범용 `runner.run_events(events, sink, *, result)`** — 집계 테이블(공개 계약)이 core에 살고 modules 의존 0. `run_source`라는 이름은 core API용으로 예약, 모듈 측 조립은 `_crawl_department`가 유지 (`aclosing`으로 제너레이터 정리 결정화)
+- [x] `CrawlOptions.incremental` 삭제 → `CrawlMode = Incremental(seen) | FullSweep` (`core/crawl.py`). `case FullSweep(): meta, all_known = {}, False` **명시 대입** + `assert_never` (닫힌 union). `run_crawl(…, mode: CrawlMode | None = None)` — None은 lazy wiring 후 `Incremental(seen)`으로 해석 (프로덕션 무변화 + 골든 harness의 get_db seam 보존); 주입 ports 호출자는 정직한 FullSweep 기본. **`Ports.seen` 해체** — `Ports(sink, work_seed)` 전부 기본값, wiring은 `build_notices_runtime -> (Ports, SeenIndex)`
+- [x] `max_pages` 유도 보존: 미지정 시 Incremental→100 / FullSweep→2500. `WorkSeed`는 mode와 직교 파라미터 (adr-006 §⑫ — 전량 재크롤도 백필 수행)
+- [x] `_process_page_smart`/`_process_page_full` 병합 → `_emit_page` (meta={}로 full 경로 자동 도출; FullSweep이 빈 버퍼 flush를 얻음 — MongoSink no-op이라 골든 불변)
+- [x] `SERVICE_START_DATE` → `options.since_date` (notices 모듈이 현행 값을 기본 공급; `CrawlOptions`는 당분간 modules 잔류 — core 이동 시 기본값이 None이 되어 harness가 floor를 잃는 문제, PR 9 계열에서 재론)
 
-**검증 게이트**: 골든 바이트 동일. **`-m mongo` 적합성 재실행.** scratch DB 대상 shadow run 후 문서 대조.
+**검증 게이트**: 골든 바이트 동일 ✓ (전 커밋). **`-m mongo` 적합성 재실행** ✓. scratch DB 대상 shadow run 후 문서 대조.
+
+구현 시 확정 사항:
+
+- **집계 테이블 addendum**: `ContentRefreshed → updated += 1` (outcome 무시 — 현행 백필 계수), `SourceStarted → 무집계`. 변경 분기 `NoticeCrawled(change=…)`도 **outcome 주도**로 통일 — MongoSink가 history 경로에서 UPDATED를 반환해 프로덕션 계수 불변; None 반환 서드파티 sink만 inserted로 계수 (러너 테스트가 의도적으로 pin)
+- **⚠️ accept 예외 범위 delta** (골든 비가시 — FakeCollection이 throw하지 않음): 페이지 항목의 `sink.accept`가 per-item try 밖(러너)으로 이동 — 저장 쓰기 실패가 item error 계수가 아니라 **소스 전체 중단**이 됨. §⑪ fail-fast 계약과 정합해 수용; flush 격리 재방문(1.0 전) 시 함께 재검토
+- **`stopped_by`는 `SourceFinished` 이벤트 전용** (empty_page / floor_date / all_known / all_known_first_page / list_fetch_failed / max_pages). `SourceResult`에 필드를 추가하지 않은 것은 의도 — result.json 골든 10개 보존. 시나리오별 단언은 iter_source 유닛 테스트가 수행
+- **`pipeline` 파라미터는 iter_source에서 생략** (PR 7 어휘; pre-1.0 시그니처 성장 수용)
+- **모든 이벤트가 accept에 균일하게** (v1 ItemSkipped 특례 폐지) — MongoSink의 `case _`가 진행 이벤트를 무시 (parametrized 테스트로 pin)
+- 기존 드리프트 명기 (이 PR에서 몰래 고치지 않음): `run_crawl`의 no_matching_departments 조기 return이 `fetcher.close()`를 건너뜀 (leak, follow-up 별건)
 
 ## PR 7 — 나머지 플러그인 이관
 
