@@ -4,12 +4,12 @@ from unittest.mock import patch
 
 import pytest
 
-from skkuverse_crawler.shared.config import (
+from skkuverse_crawler.env import (
     ConfigNotInitialized,
     CrawlerEnv,
     get_config,
     init_config,
-    load_config,
+    settings_from_env,
     reset_config,
 )
 
@@ -105,7 +105,7 @@ class TestModeLabel:
 class TestValidation:
     """Patch load_dotenv so .env file doesn't re-inject MONGO_URL."""
 
-    @patch("skkuverse_crawler.shared.config.load_dotenv")
+    @patch("skkuverse_crawler.env.load_dotenv")
     def test_missing_mongo_url_exits_in_production(self, _mock_ld, monkeypatch):
         monkeypatch.setenv("CRAWLER_ENV", "production")
         monkeypatch.delenv("MONGO_URL", raising=False)
@@ -113,7 +113,7 @@ class TestValidation:
         with pytest.raises(SystemExit):
             init_config(force=True)
 
-    @patch("skkuverse_crawler.shared.config.load_dotenv")
+    @patch("skkuverse_crawler.env.load_dotenv")
     def test_missing_mongo_url_exits_in_development(self, _mock_ld, monkeypatch):
         monkeypatch.setenv("CRAWLER_ENV", "development")
         monkeypatch.delenv("MONGO_URL", raising=False)
@@ -121,7 +121,7 @@ class TestValidation:
         with pytest.raises(SystemExit):
             init_config(force=True)
 
-    @patch("skkuverse_crawler.shared.config.load_dotenv")
+    @patch("skkuverse_crawler.env.load_dotenv")
     def test_missing_mongo_url_ok_in_test(self, _mock_ld, monkeypatch):
         monkeypatch.setenv("CRAWLER_ENV", "test")
         monkeypatch.delenv("MONGO_URL", raising=False)
@@ -142,7 +142,7 @@ class TestDefaults:
         monkeypatch.delenv("LOG_FORMAT", raising=False)
         monkeypatch.setenv("MONGO_URL", "mongodb://x")
         reset_config()
-        cfg = load_config()
+        cfg = settings_from_env()
         assert cfg.env == CrawlerEnv.PRODUCTION
         assert cfg.mongo_db_name == "skku_notices"
         assert cfg.log_format == "json"

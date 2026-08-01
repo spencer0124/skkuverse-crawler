@@ -100,7 +100,7 @@ def main() -> None:
 @click.option("--module", "-m", default=None, help="Run specific module only")
 def start(module: str | None) -> None:
     """Start the cron scheduler for all (or one) module."""
-    from .shared.config import init_config
+    from .env import init_config
 
     cfg = init_config()
     configure_logging(cfg)

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
-from .config import get_config
+from ..env import get_config
 
 _client: AsyncIOMotorClient | None = None
 

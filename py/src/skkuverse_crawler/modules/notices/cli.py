@@ -17,7 +17,7 @@ from .orchestrator import CrawlOptions, run_crawl
 @click.option("--delay", type=int, default=500, help="Delay between requests (ms)")
 def notices_cli(once: bool, full_crawl: bool, dept: tuple[str, ...], pages: int | None, delay: int) -> None:
     """Run the notices crawler."""
-    from ...shared.config import init_config
+    from ...env import init_config
 
     cfg = init_config()
     configure_logging(cfg)

@@ -69,6 +69,7 @@ def test_core_import_is_infra_free(tmp_path):
         "import skkuverse_crawler.core.registry\n"
         "import skkuverse_crawler.core.results\n"
         "import skkuverse_crawler.core.runner\n"
+        "import skkuverse_crawler.core.settings\n"
         "import skkuverse_crawler.core.sources\n"
         "sys.exit(1 if 'motor' in sys.modules or 'pymongo' in sys.modules else 0)\n"
     )
@@ -79,7 +80,7 @@ def test_core_import_is_infra_free(tmp_path):
 def test_get_config_without_env_raises_typed_error(tmp_path):
     # cwd=tmp_path so load_dotenv() cannot find a real .env.
     code = (
-        "from skkuverse_crawler.shared.config import get_config\n"
+        "from skkuverse_crawler.env import get_config\n"
         "try:\n"
         "    get_config()\n"
         "except SystemExit:\n"
@@ -126,6 +127,37 @@ def test_whole_package_imports_with_empty_env(tmp_path):
     result = _run_python(code, empty_env=True, cwd=tmp_path)
     assert result.returncode == 0, result.stderr
     assert "ok" in result.stdout
+
+
+def test_env_is_the_only_environment_reader():
+    """adr-006 결정 ①: `env.py` is the only file that touches os.environ.
+
+    Stated in the architecture doc since v1 but never enforced — this is
+    the guard. `os.environ`, `os.getenv` and `os.environ.get` all count.
+
+    The allowlist has a second entry, and its presence is the honest
+    record that the invariant as written was already false: the sources
+    loader reads SOURCES_JSON_PATH directly, because path resolution runs
+    before any Config exists (the container passes it as an env var, see
+    PR 3). Routing it through env.py would mean initializing config to
+    find the config file. Two readers, both named, is the real invariant.
+    """
+    allowed = {"env.py", "config/loader.py"}
+    violations = []
+    for py_file in SRC_PKG.rglob("*.py"):
+        rel = py_file.relative_to(SRC_PKG)
+        if rel.as_posix().endswith(tuple(allowed)):
+            continue
+        tree = ast.parse(py_file.read_text(), filename=str(py_file))
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Attribute):
+                continue
+            value = node.value
+            if isinstance(value, ast.Name) and value.id == "os" and node.attr in {"environ", "getenv"}:
+                violations.append(f"{rel}:{node.lineno}: os.{node.attr}")
+    assert not violations, (
+        "only env.py may read the environment (adr-006 결정 ①):\n" + "\n".join(violations)
+    )
 
 
 def test_modules_do_not_import_plugins():

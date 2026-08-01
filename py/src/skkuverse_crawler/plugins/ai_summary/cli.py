@@ -12,7 +12,7 @@ from ...shared.logger import configure_logging
 @click.option("--delay", type=float, default=1.0, help="Delay between API calls (seconds)")
 def summarize_cli(batch_size: int, delay: float) -> None:
     """Run AI summarization on unsummarized notices."""
-    from ...shared.config import init_config
+    from ...env import init_config
 
     cfg = init_config()
     configure_logging(cfg)

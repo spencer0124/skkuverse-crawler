@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 
 import structlog
 
-from .config import Config
+from ..core.settings import Config
 
 
 def configure_logging(cfg: Config) -> None:

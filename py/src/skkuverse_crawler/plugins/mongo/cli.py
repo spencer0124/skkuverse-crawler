@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 @click.option("--source", "dept", multiple=True, help="Department ID(s) to check")
 def update_check_cli(days: int, dept: tuple[str, ...]) -> None:
     """Run Tier 2 update detection on recent notices."""
-    from ...shared.config import init_config
+    from ...env import init_config
 
     cfg = init_config()
     configure_logging(cfg)
@@ -70,7 +70,7 @@ def validate_attachments_cli(
     concurrency: int,
 ) -> None:
     """Validate attachment metadata in the notices collection."""
-    from ...shared.config import init_config
+    from ...env import init_config
 
     cfg = init_config()
     configure_logging(cfg)
@@ -153,7 +153,7 @@ def validate_markdown_cli(
     severity: str,
 ) -> None:
     """Validate markdown rendering in stored cleanMarkdown fields."""
-    from ...shared.config import init_config
+    from ...env import init_config
 
     cfg = init_config()
     configure_logging(cfg)
