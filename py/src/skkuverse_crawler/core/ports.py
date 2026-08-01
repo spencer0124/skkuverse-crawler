@@ -60,14 +60,27 @@ class Outcome(enum.Enum):
     UPDATED = "updated"
 
 
+@runtime_checkable
 class SeenIndex(Protocol):
     async def lookup(
         self, source_id: str, article_nos: Sequence[int]
     ) -> Mapping[int, SeenRecord]: ...
 
 
+@runtime_checkable
 class WorkSeed(Protocol):
     async def pending_refs(self, source_id: str) -> Sequence[DetailRef]: ...
+
+
+@runtime_checkable
+class Notifier(Protocol):
+    """Outbound operator notification (architecture ownership table —
+    plugins/health depends on this, never on plugins/discord directly).
+
+    Returns True when delivered. Implementations must not raise: callers
+    sit on never-fail paths (the post-crawl health hook)."""
+
+    async def notify(self, content: str) -> bool: ...
 
 
 @runtime_checkable

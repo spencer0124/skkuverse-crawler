@@ -18,13 +18,16 @@ from skkuverse_crawler.core.events import (
 )
 from skkuverse_crawler.core.ports import (
     DetailRef,
+    Notifier,
     NullSink,
     NullWorkSeed,
     Outcome,
     Ports,
+    SeenIndex,
     SeenRecord,
     Sink,
     SourceSpec,
+    WorkSeed,
 )
 
 
@@ -82,6 +85,42 @@ def test_ports_defaults_to_null_objects():
     ports = Ports()
     assert isinstance(ports.sink, NullSink)
     assert isinstance(ports.work_seed, NullWorkSeed)
+
+
+def test_runtime_checkable_ports_accept_conforming_objects():
+    # wiring's assembly-time isinstance validation (plan PR 7) relies on
+    # these three protocols being runtime_checkable.
+    class _Seen:
+        async def lookup(self, source_id, article_nos):
+            return {}
+
+    class _Seed:
+        async def pending_refs(self, source_id):
+            return ()
+
+    class _Notifier:
+        async def notify(self, content: str) -> bool:
+            return True
+
+    assert isinstance(_Seen(), SeenIndex)
+    assert isinstance(_Seed(), WorkSeed)
+    assert isinstance(_Notifier(), Notifier)
+
+
+def test_runtime_checkable_ports_reject_missing_methods():
+    class _NoFlush:
+        async def prepare(self, source):
+            return None
+
+        async def accept(self, event):
+            return None
+
+    class _NotANotifier:
+        async def send(self, content: str) -> bool:
+            return True
+
+    assert not isinstance(_NoFlush(), Sink)
+    assert not isinstance(_NotANotifier(), Notifier)
 
 
 def test_change_info_carries_module_side_facts_only():
