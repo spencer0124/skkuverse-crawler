@@ -43,11 +43,17 @@ async def run_daily_summary(notifier: Notifier) -> dict:
     cutoff = ObjectId.from_datetime(now - timedelta(hours=24))
     inserted_24h = await db["notices"].count_documents({"_id": {"$gte": cutoff}})
 
+    from ...env import get_config
+    from ...wiring import active_plugins
+
+    plugins = active_plugins(get_config())
+
     message = format_daily_summary(
         now=now,
         enabled_count=enabled_count,
         failing=failing,
         inserted_24h=inserted_24h,
+        plugins=plugins,
     )
     sent = await notifier.notify(message)
     logger.info(
@@ -55,6 +61,7 @@ async def run_daily_summary(notifier: Notifier) -> dict:
         enabled=enabled_count,
         failing=len(failing),
         inserted_24h=inserted_24h,
+        plugins=list(plugins),
         sent=sent,
     )
     return {

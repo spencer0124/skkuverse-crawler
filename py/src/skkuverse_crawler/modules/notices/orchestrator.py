@@ -88,6 +88,22 @@ async def run_crawl(
             if d.get("crawlAvailable", False) and d.get("crawlEnabled", False)
         ]
 
+    # attempted vs enabled, side by side, once per run. The 2026-04-21
+    # incident (known-issues §7) went unnoticed for days because a stray
+    # CRAWL_SOURCE_FILTER silently cut 132 sources and nobody was
+    # comparing the two numbers — every individual log looked healthy.
+    enabled = sum(
+        1 for d in departments
+        if d.get("crawlAvailable", False) and d.get("crawlEnabled", False)
+    )
+    logger.info(
+        "crawl_coverage",
+        attempted=len(filtered),
+        enabled=enabled,
+        total=len(departments),
+        dept_filter=options.dept_filter,
+    )
+
     if not filtered:
         logger.warning("no_matching_departments", dept_filter=options.dept_filter)
         return []

@@ -1,4 +1,5 @@
 [
+  "crawl_coverage",
   "starting_department_crawl",
   "recrawling_null_content",
   "fetching_list_page",
