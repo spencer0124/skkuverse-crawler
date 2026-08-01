@@ -53,6 +53,7 @@ async def run_crawl(
     options: CrawlOptions,
     ports: Ports | None = None,
     mode: CrawlMode | None = None,
+    pipeline: Pipeline = DEFAULT_PIPELINE,
 ) -> list[SourceResult]:
     crawl_id = uuid.uuid4().hex[:8]
     logger = get_logger("orchestrator", crawl_id=crawl_id)
@@ -99,7 +100,9 @@ async def run_crawl(
 
     async def crawl_with_sem(dept: dict) -> SourceResult:
         async with sem:
-            return await _crawl_department(dept, ports, fetcher, mode, options, logger)
+            return await _crawl_department(
+                dept, ports, fetcher, mode, options, logger, pipeline
+            )
 
     tasks = [crawl_with_sem(dept) for dept in filtered]
     settled = await asyncio.gather(*tasks, return_exceptions=True)
@@ -134,6 +137,7 @@ async def _crawl_department(
     mode: CrawlMode,
     options: CrawlOptions,
     logger: Any,
+    pipeline: Pipeline,
 ) -> SourceResult:
     strategy_cls = STRATEGY_MAP.get(dept["strategy"])
     if not strategy_cls:
@@ -148,7 +152,7 @@ async def _crawl_department(
     async with aclosing(
         iter_source(
             dept, strategy, mode=mode, work_seed=ports.work_seed,
-            options=options, logger=logger,
+            options=options, logger=logger, pipeline=pipeline,
         )
     ) as events:
         await run_events(events, ports.sink, result=result)

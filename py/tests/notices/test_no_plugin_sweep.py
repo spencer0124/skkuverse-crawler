@@ -62,10 +62,32 @@ async def _run_sweep(sink: RecordingSink, **run_kwargs):
 
 
 def test_orchestrator_has_no_database_seam():
-    """The inversion, stated structurally: there is no get_db to patch."""
+    """The inversion, stated structurally: the crawl logic cannot reach a
+    database at all.
+
+    An attribute check alone would miss the ways the seam could come back
+    without the name reappearing at module scope — an aliased import, or
+    a function-body `from ...shared.db import get_db` (the lazy pattern
+    wiring and plugins/mongo/audit legitimately use elsewhere). So this
+    scans the source for any reference to the db module or its accessor.
+    """
+    import ast
+    import inspect
+
     from skkuverse_crawler.modules.notices import orchestrator
 
     assert not hasattr(orchestrator, "get_db")
+
+    tree = ast.parse(inspect.getsource(orchestrator))
+    reached = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom) and "db" in (node.module or "").split("."):
+            reached.append(f"from {node.module}")
+        elif isinstance(node, ast.Import):
+            reached += [a.name for a in node.names if "db" in a.name.split(".")]
+        elif isinstance(node, ast.Name) and node.id == "get_db":
+            reached.append("get_db reference")
+    assert not reached, f"orchestrator reaches for a database: {reached}"
 
 
 async def test_sweep_with_injected_ports_never_touches_db():

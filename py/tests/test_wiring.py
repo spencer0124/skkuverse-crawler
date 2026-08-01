@@ -51,6 +51,37 @@ class TestAssemblyValidation:
         assert not hasattr(ports, "seen")
 
 
+class TestNoticesPortsFactory:
+    """The production factory itself.
+
+    Everything else injects an already-built bundle, so without this the
+    collection name is unchecked: `db["notice"]` would leave the whole
+    suite green and write every notice to an empty collection.
+    """
+
+    async def test_binds_the_notices_collection(self, mock_db_patch):
+        ports, seen = await wiring.notices_ports()
+        assert ports.sink._collection is mock_db_patch
+        assert ports.work_seed._collection is mock_db_patch
+        assert seen._collection is mock_db_patch
+
+    async def test_asks_the_db_for_notices_by_name(self):
+        seen_keys: list[str] = []
+
+        class _DB:
+            def __getitem__(self, key):
+                seen_keys.append(key)
+                return object()
+
+        async def fake_get_db():
+            return _DB()
+
+        with patch("skkuverse_crawler.shared.db.get_db", side_effect=fake_get_db):
+            await wiring.notices_ports()
+
+        assert seen_keys == ["notices"]
+
+
 class TestPortsLifetime:
     async def test_each_call_builds_a_fresh_bundle(self):
         """Never cache: MongoSink's prepare guard and touch buffer are

@@ -15,7 +15,7 @@ class NoticesSummaryModule:
             run_on_start=True,
         )
 
-    async def run(self, incremental: bool = True, **kwargs: Any) -> dict:
+    async def run(self, **kwargs: Any) -> dict:
         return await run_summary_batch()
 
     async def shutdown(self) -> None:

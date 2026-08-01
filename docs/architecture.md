@@ -10,6 +10,10 @@ Strategy 패턴으로 게시판 유형별 파서를 분리하고 asyncio.Semapho
 
 ## Directory Layout
 
+> ⚠️ **이 트리는 core/plugin 분리(adr-006) 이전 레이아웃이다.** PR 4가 `notices/`를 `modules/notices/`로 옮겼고, PR 7이 `crawl_health/`·`notices_summary/`·`shared/discord.py`를 `plugins/` 아래로, 검증기를 `modules/notices/validation.py` + `plugins/mongo/audit.py`로, `update_checker.py`를 `plugins/mongo/`로 옮겼다. 아래 트리의 `dedup.py`·`backfill*.py`는 더 이상 존재하지 않는다.
+>
+> **현재 구조의 정확한 출처**: `CLAUDE.md` §공통 패턴(모듈형 구조) 및 [core-plugin-architecture.md](core-plugin-architecture.md) §목표 상태. 이 문서의 전면 갱신은 PR 9(공개 문서)로 예정 — [core-plugin-plan.md](core-plugin-plan.md):138 참조. 아래 내용은 **각 컴포넌트의 역할** 설명으로는 여전히 유효하고, **경로**만 낡았다.
+
 ```
 py/src/skkuverse_crawler/
 ├── __main__.py                 ← 진입점

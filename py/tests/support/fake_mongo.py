@@ -18,13 +18,24 @@ shape update_checker's soft-delete counter uses: ``$set`` stages over
 its threshold on the third failure and not the fourth. Level-1
 conformance pins that ordering against real Mongo.
 
-Known, deliberate gaps:
+Comparison and boolean coercion inside those expressions follow Mongo,
+not Python: ``$gte`` ranks by BSON type first (``3 >= null`` is true,
+``null >= 3`` is false), and ``$cond`` treats ``""`` and ``[]`` as true.
 
-- pipeline stages other than ``$set``, expression operators outside the
-  four above, and pipeline updates combined with ``upsert=True``
-  -> NotImplementedError
+Known, deliberate gaps — all raise:
+
+- pipeline stages other than ``$set``; expression operators outside the
+  four above (including inside an untaken ``$cond`` branch, which Mongo
+  rejects at parse time); pipeline updates with ``upsert=True``; an empty
+  pipeline
+- dotted field paths (``"$a.b"``) and ``$set`` keys, system variables
+  (``"$$NOW"``), array-valued expressions, non-array operands, and
+  ``$ifNull`` with fewer than two arguments
 - ``$expr`` filters (used only by the ai_summary re-summary query)
-  -> NotImplementedError
+
+The non-pipeline ``_apply_update`` still writes a dotted ``$set`` key as a
+literal top-level key — unchanged from before this fake grew pipelines,
+and unreachable from src/, but it is not the same guard.
 
 BSON fidelity: datetimes are truncated to millisecond precision at write
 time, because BSON stores milliseconds while ``datetime.now()`` carries
@@ -171,23 +182,108 @@ def _project(doc: dict[str, Any], projection: dict[str, Any] | None) -> dict[str
 
 _SUPPORTED_EXPR_OPS = {"$add", "$ifNull", "$cond", "$gte"}
 
+# Mongo's canonical type ordering, trimmed to the types this fake stores.
+# Comparison operators rank by type FIRST, which is why null >= 3 is false
+# but 3 >= null is true — the asymmetry a "None means false" shortcut gets
+# wrong in one direction.
+_BSON_TYPE_RANK: list[tuple[Any, int]] = [
+    (bool, 8),  # before int — bool is an int subclass in Python, not in BSON
+    (datetime, 9),
+    ((int, float), 2),
+    (str, 3),
+    (dict, 4),
+    (list, 5),
+]
 
-def _eval_expr(expr: Any, doc: dict[str, Any]) -> Any:
-    """Evaluate one aggregation expression against ``doc``.
 
-    A missing field path evaluates to None, which is what ``$ifNull``
-    exists to catch and what makes ``$gte`` false (null sorts below
-    numbers in BSON ordering).
+def _bson_rank(value: Any) -> int:
+    if value is None:
+        return 1
+    for types, rank in _BSON_TYPE_RANK:
+        if isinstance(value, types):
+            return rank
+    raise NotImplementedError(f"FakeCollection: BSON ordering for {type(value).__name__}")
+
+
+def _bson_cmp(left: Any, right: Any) -> int:
+    """Three-way compare under Mongo's type-then-value ordering."""
+    left_rank, right_rank = _bson_rank(left), _bson_rank(right)
+    if left_rank != right_rank:
+        return -1 if left_rank < right_rank else 1
+    if left_rank in (1, 4, 5):  # null, object, array — equal-by-type is enough here
+        return 0
+    if left == right:
+        return 0
+    return -1 if left < right else 1
+
+
+def _expr_truthy(value: Any) -> bool:
+    """Mongo's boolean coercion: only false/null/0/missing are false.
+
+    Notably "" and [] are TRUE — Python's truthiness disagrees, and that
+    disagreement silently flips a $cond branch.
+    """
+    if value is None or value is False:
+        return False
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return value != 0
+    return True
+
+
+def _validate_expr(expr: Any) -> None:
+    """Reject expression shapes this fake does not model — once, before
+    evaluation, like Mongo's parse-time operator check.
+
+    Separate from _eval_expr so that an unsupported operator hidden in an
+    untaken $cond branch still raises (Mongo rejects the whole pipeline at
+    parse time) while evaluation itself stays lazy.
     """
     if isinstance(expr, str) and expr.startswith("$"):
-        return doc.get(expr[1:])
+        if expr.startswith("$$"):
+            raise NotImplementedError(
+                f"FakeCollection: system variable {expr!r} not implemented"
+            )
+        if "." in expr:
+            raise NotImplementedError("FakeCollection: dotted field paths not implemented")
+        return
+    if isinstance(expr, list):
+        # Mongo evaluates array elements; treating one as a literal would
+        # silently store {"m": ["$n", 2]} instead of ["$n", 2] resolved.
+        raise NotImplementedError("FakeCollection: array-valued expressions not implemented")
     if not isinstance(expr, dict):
-        return expr
+        return
     if len(expr) != 1:
         raise NotImplementedError(f"FakeCollection: multi-key expression {set(expr)}")
     op, operand = next(iter(expr.items()))
     if op not in _SUPPORTED_EXPR_OPS:
         raise NotImplementedError(f"FakeCollection: expression operator {op!r} not implemented")
+    if op == "$cond":
+        if not isinstance(operand, dict):
+            raise NotImplementedError("FakeCollection: array-form $cond not implemented")
+        for key in ("if", "then", "else"):
+            _validate_expr(operand[key])
+        return
+    if not isinstance(operand, list):
+        raise NotImplementedError(f"FakeCollection: non-array operand for {op!r}")
+    if op == "$ifNull" and len(operand) < 2:
+        raise NotImplementedError(f"FakeCollection: {op!r} needs at least two arguments")
+    for item in operand:
+        _validate_expr(item)
+
+
+def _eval_expr(expr: Any, doc: dict[str, Any]) -> Any:
+    """Evaluate one validated aggregation expression against ``doc``.
+
+    A missing field path evaluates to None — what ``$ifNull`` exists to
+    catch. Call _validate_expr first; this assumes supported shapes.
+    """
+    if isinstance(expr, str) and expr.startswith("$"):
+        return doc.get(expr[1:])
+    if not isinstance(expr, dict):
+        return expr
+    op, operand = next(iter(expr.items()))
     if op == "$add":
         values = [_eval_expr(a, doc) for a in operand]
         if any(v is None for v in values):
@@ -200,15 +296,11 @@ def _eval_expr(expr: Any, doc: dict[str, Any]) -> Any:
                 return value
         return values[-1]
     if op == "$cond":
-        if not isinstance(operand, dict):
-            raise NotImplementedError("FakeCollection: array-form $cond not implemented")
-        branch = "then" if _eval_expr(operand["if"], doc) else "else"
+        branch = "then" if _expr_truthy(_eval_expr(operand["if"], doc)) else "else"
         return _eval_expr(operand[branch], doc)
     # $gte
     left, right = (_eval_expr(a, doc) for a in operand)
-    if left is None or right is None:
-        return False
-    return bool(left >= right)
+    return _bson_cmp(left, right) >= 0
 
 
 def _apply_pipeline_update(doc: dict[str, Any], pipeline: list[Any]) -> None:
@@ -217,16 +309,31 @@ def _apply_pipeline_update(doc: dict[str, Any], pipeline: list[Any]) -> None:
     Stages run in order and each sees the previous stage's output; within
     one stage every expression is evaluated against the stage's input, so
     values are computed before any is assigned.
+
+    Staged through a working copy so a mid-pipeline raise leaves the
+    stored document untouched — real Mongo rolls the whole update back,
+    and a half-applied document is a state it could never produce.
     """
+    if not pipeline:
+        raise NotImplementedError(
+            "FakeCollection: empty pipeline update (Mongo requires atomic operators)"
+        )
+    working = copy.deepcopy(doc)
     for stage in pipeline:
         if not isinstance(stage, dict) or set(stage) != {"$set"}:
             raise NotImplementedError(
                 f"FakeCollection: pipeline stage {set(stage) if isinstance(stage, dict) else stage} "
                 f"not implemented (only $set)"
             )
-        computed = {key: _eval_expr(value, doc) for key, value in stage["$set"].items()}
+        for key, value in stage["$set"].items():
+            if "." in key:
+                raise NotImplementedError("FakeCollection: dotted $set keys not implemented")
+            _validate_expr(value)
+        computed = {key: _eval_expr(value, working) for key, value in stage["$set"].items()}
         for key, value in computed.items():
-            doc[key] = _trunc_ms(copy.deepcopy(value))
+            working[key] = _trunc_ms(copy.deepcopy(value))
+    doc.clear()
+    doc.update(working)
 
 
 def _apply_update(doc: dict[str, Any], update: dict[str, Any], *, insert: bool) -> None:

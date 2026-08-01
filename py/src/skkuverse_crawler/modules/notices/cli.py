@@ -45,9 +45,10 @@ async def _run(
     # orchestrator no longer does). Lazy so `--help` stays import-light.
     from ...wiring import notices_ports
 
-    ports, seen = await notices_ports()
-
+    # Inside the try: get_db() creates the Motor client, so an assembly
+    # failure after that point must still reach close_client().
     try:
+        ports, seen = await notices_ports()
         await run_crawl(
             departments,
             options,

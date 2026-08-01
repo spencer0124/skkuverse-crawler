@@ -123,13 +123,18 @@ class TestVerifyImages:
 
     async def test_pipeline_without_verify_images_makes_no_http_call(self):
         """The disable knob of adr-006 결정 ④: dropping the stage must
-        remove the network dependency, not just its effect."""
+        remove the network dependency, not just its effect.
+
+        Asserted with a call recorder, not a raising side_effect —
+        verify_and_measure_images catches bare Exception (AssertionError
+        included), so a raiser would be swallowed and prove nothing."""
         slimmed = DEFAULT_PIPELINE.without("verify-images", "inject-image-dimensions")
+        spy = AsyncMock(return_value=ImageCheckResult())
         with patch(
-            "skkuverse_crawler.modules.notices.stages.verify_notice_images",
-            AsyncMock(side_effect=AssertionError("must not be called")),
+            "skkuverse_crawler.modules.notices.stages.verify_notice_images", spy
         ):
             doc = await slimmed.run(ContentDoc(raw="<p>hi</p>"), _ctx(article_no=1))
+        spy.assert_not_awaited()
         assert doc.clean_html is not None
         assert "image_dimensions" not in doc.meta
 
@@ -191,6 +196,95 @@ class TestBuildNoticeTwoPathParity:
         assert inline.contentText == piped.contentText
         assert inline.cleanMarkdown == piped.cleanMarkdown
         assert inline.contentHash == piped.contentHash
+
+    async def test_paths_agree_when_the_detail_page_is_missing(self):
+        """The real absent-content case is `detail=None` (orchestrator
+        passes it when crawl_detail returns nothing) — distinct from a
+        detail whose body is empty, and not covered by the parametrization
+        above because that one always supplies a NoticeDetail."""
+        item = NoticeListItem(
+            articleNo=5,
+            title="제목",
+            category="",
+            author="",
+            date="2026-01-01",
+            views=0,
+            detailPath="?no=5",
+        )
+        kwargs = dict(department="테스트학과", source_id="test-dept", base_url=BASE_URL)
+
+        inline = build_notice(item, None, **kwargs)
+        doc = await DEFAULT_PIPELINE.without("verify-images").run(
+            ContentDoc(raw=None), _ctx(article_no=item.articleNo)
+        )
+        piped = build_notice(item, None, **kwargs, content=doc)
+
+        assert inline.content == piped.content is None
+        assert inline.cleanHtml == piped.cleanHtml is None
+        assert inline.contentText == piped.contentText is None
+        assert inline.cleanMarkdown == piped.cleanMarkdown
+        assert inline.contentHash == piped.contentHash is None
+
+    async def test_paths_agree_with_image_dimensions(self):
+        """The inline path's injection branch — reachable only via the
+        image_dimensions argument, which the pipeline path replaces with
+        InjectImageDimensions. Without this case the parity pin would not
+        cover injection at all."""
+        item = NoticeListItem(
+            articleNo=3,
+            title="포스터",
+            category="공지",
+            author="관리자",
+            date="2026-01-01",
+            views=0,
+            detailPath="?no=3",
+        )
+        url = "https://cdn.test/poster.png"
+        detail = NoticeDetail(
+            content=f'<p><img src="{url}">포스터</p>', contentText="", attachments=[]
+        )
+        dimensions = {url: (891, 1260)}
+        kwargs = dict(department="테스트학과", source_id="test-dept", base_url=BASE_URL)
+
+        inline = build_notice(item, detail, **kwargs, image_dimensions=dimensions)
+
+        with patch(
+            "skkuverse_crawler.modules.notices.stages.verify_notice_images",
+            AsyncMock(return_value=ImageCheckResult(checked=1, dimensions=dimensions)),
+        ):
+            doc = await DEFAULT_PIPELINE.run(
+                ContentDoc(raw=detail.content), _ctx(article_no=item.articleNo)
+            )
+        piped = build_notice(item, detail, **kwargs, content=doc)
+
+        assert 'width="891"' in inline.cleanHtml
+        assert inline.cleanHtml == piped.cleanHtml
+        assert inline.cleanMarkdown == piped.cleanMarkdown
+        assert inline.contentHash == piped.contentHash
+
+    async def test_passing_both_content_and_dimensions_is_refused(self):
+        """They mean the same thing applied twice — a caller bug, so it
+        must not silently pick one."""
+        item = NoticeListItem(
+            articleNo=4,
+            title="t",
+            category="",
+            author="",
+            date="2026-01-01",
+            views=0,
+            detailPath="?no=4",
+        )
+        detail = NoticeDetail(content="<p>x</p>", contentText="", attachments=[])
+        with pytest.raises(ValueError, match="not both"):
+            build_notice(
+                item,
+                detail,
+                department="d",
+                source_id="test-dept",
+                base_url=BASE_URL,
+                content=ContentDoc(raw="<p>x</p>"),
+                image_dimensions={"https://cdn.test/a.png": (1, 1)},
+            )
 
     async def test_contenttext_falls_back_to_detail_only_without_clean_html(self):
         item = NoticeListItem(

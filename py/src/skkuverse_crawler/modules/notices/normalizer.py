@@ -95,7 +95,18 @@ def build_notice(
     pinned equal by tests/notices/test_stages.py. The inline path keeps
     direct callers (fixtures, quality tests) free of pipeline setup; it
     retires when the last one moves (PR 9 계열).
+
+    ``image_dimensions`` belongs to the inline path only: with a pipeline
+    doc, injection already happened (InjectImageDimensions) and honoring
+    it here would inject twice. Passing both is a caller bug, not a
+    precedence question, so it raises rather than silently dropping one.
     """
+    if content is not None and image_dimensions is not None:
+        raise ValueError(
+            "build_notice: pass image_dimensions or content, not both — "
+            "a ContentDoc already carries injected dimensions"
+        )
+
     # Build sourceUrl from detailPath
     if list_item.detailPath.startswith("http"):
         source_url = list_item.detailPath

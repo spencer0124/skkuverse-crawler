@@ -61,8 +61,9 @@ async def test_ports_factory_is_awaited_once_per_run():
         await module.run()
 
     assert factory.calls == 2
-    first, second = factory.handed_out
-    assert first is not second
+    # ...and run 2 must actually USE run 2's bundle. Calling the factory
+    # twice while reusing the first bundle would satisfy the count alone.
+    assert run_crawl.await_args.kwargs["ports"] is factory.handed_out[1]
 
 
 async def test_incremental_true_builds_incremental_mode_over_the_factory_index():

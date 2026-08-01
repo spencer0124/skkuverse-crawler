@@ -1,11 +1,15 @@
 """Content pipeline vocabulary (adr-006 결정 ④, architecture §Stage).
 
-Fan-out, not a chain: every derived slot of a ContentDoc is computed from
-``raw`` (or refines its own slot in place, like dimension injection) —
-never from a sibling derivation. normalizer.py derives cleanHtml and
-content independently from the raw detail HTML; wiring stages as a linear
-chain would hand clean_html an already-normalized string and silently
-rewrite every notice's cleanHtml (adr-006 §④).
+Fan-out, not a chain: the *primary* derivations are siblings, each read
+from ``raw``. Chaining them would hand clean_html an already-normalized
+string and silently rewrite every notice's cleanHtml (adr-006 §④).
+
+"Fan-out" constrains which slot a stage may derive FROM; it does not mean
+no slot ever depends on another. A pipeline may legitimately have a stage
+read a slot it does not own — a text extractor works from sanitized HTML,
+not from raw. What it must not do is re-derive a sibling's slot through
+another sibling. The module that defines the concrete stages states which
+reads it relies on.
 
 Infra-free by contract — importing this module must never pull in
 motor/pymongo (pinned by tests/structure test_core_import_is_infra_free).
@@ -23,9 +27,9 @@ from typing import Any, Protocol
 class ContentDoc:
     """One item's content in flight through the pipeline.
 
-    ``raw`` is the untouched detail HTML; stages read it, not each other.
-    ``meta`` is the extension surface for stages whose product is not a
-    content slot (e.g. measured image dimensions).
+    ``raw`` is the untouched detail HTML and is never written. ``meta`` is
+    the extension surface for stages whose product is not a content slot
+    (e.g. measured image dimensions).
     """
 
     raw: str | None

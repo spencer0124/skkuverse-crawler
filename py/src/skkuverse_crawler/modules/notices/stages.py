@@ -1,17 +1,32 @@
 """The notices content pipeline — concrete stages (architecture §Stage).
 
-Fan-out, not a chain: every derivation reads ``doc.raw``, never a sibling
-slot. ``cleanHtml`` and ``content`` are independent products of the same
-raw detail HTML; feeding one into the other would silently rewrite every
-notice's cleanHtml (adr-006 §④).
+The dependency graph, exactly as it is (not a chain):
 
-Two stages touch slots rather than derive them, and that is the point:
-``InjectImageDimensions`` and ``SizeGuard`` refine ``clean_html`` in
-place. ``VerifyImages`` *reads* ``content`` — image ``src`` must be
-absolute to be fetchable — but writes only ``doc.meta``.
+    raw ─┬─→ content        (NormalizeUrls)
+         └─→ clean_html     (CleanHtml)  ← from raw, NOT from content
 
-Order is pinned by the goldens: dimension injection precedes the size
-guard, because the guard measures the injected HTML.
+``content`` and ``clean_html`` are siblings. Deriving one from the other
+would silently rewrite every notice's cleanHtml (adr-006 §④) — that is
+the invariant worth protecting, and the only one this docstring asserts.
+
+Everything downstream reads ``clean_html`` by design, because sanitized
+HTML is what they are supposed to describe:
+
+    clean_html ─→ text (ExtractText), markdown (ToMarkdown),
+                  content_hash (ContentHash)
+
+Pointing any of those at ``raw`` instead would put script/style and WPDM
+download-block text into contentText — so do not "fix" them to read raw.
+
+Three stages refine rather than derive. ``VerifyImages`` reads
+``content`` (image ``src`` must be absolute to be fetchable) and writes
+only ``doc.meta``; ``InjectImageDimensions`` and ``SizeGuard`` rewrite
+``clean_html`` in place.
+
+Order: dimension injection must precede the size guard, because the guard
+measures the injected HTML. The goldens do NOT pin this — no fixture
+contains an ``<img>``, so image stages are inert there. It is pinned by
+tests/notices/test_stages.py.
 
 Stage bodies are the pre-existing expressions verbatim; the guards
 (``if doc.raw``) reproduce the old ``if detail and detail.content``
