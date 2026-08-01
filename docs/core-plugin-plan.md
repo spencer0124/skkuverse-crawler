@@ -107,7 +107,7 @@
 
 ## PR 2 — 순환 끊기 [순수 이동]
 
-- [ ] `DeptResult` → `core/results.SourceResult` (`DeptResult = SourceResult` 별칭은 이 PR 한정, 다음 PR에서 삭제)
+- [ ] `DeptResult` → `core/results.SourceResult` (`DeptResult = SourceResult` 별칭은 이 PR 한정 — 실제 삭제는 PR 5에서 orchestrator 내부 개명과 함께 수행됨. crawl_health의 독립 `as DeptResult` import 2곳은 PR 7 이관 때)
 - [ ] `STRATEGY_MAP` → `modules/notices/strategies/__init__.py`
 
 **검증 게이트**: health logic import 후 `sys.modules`에 `motor`/`pymongo` 없음. **`git diff -M`에 import 문이 아닌 변경 줄이 0** — 하나라도 있으면 순수 이동이 아니므로 다른 PR로 뺀다.
@@ -139,14 +139,21 @@
 
 ## PR 5 — 포트 도입
 
-- [ ] `core/ports.py`(`Sink`에 `@runtime_checkable`) + `core/events.py` — 베이스 `CrawlEvent(source_id)` + **결과/진행 2계층** (설계 §이벤트, adr-006 §⑧)
-- [ ] sink **contract test** — 미지의 이벤트를 `accept`에 넣어 `None` 반환(무시 계약) 확인. 서드파티 sink 작성자에게 제공할 스위트의 원형
-- [ ] `plugins/mongo/{seen,sink,work_seed}.py`를 `dedup.py`의 **본문 그대로** 옮겨 구성
-- [ ] `dedup.py` → `modules/notices/policy.py` — 순수 술어만 남긴다
-- [ ] **기존 루프는 건드리지 않는다.** 포트를 경유하게만 바꾼다
-- [ ] `SeenRecord.content_hash: str | None = None` — 기본값 필수 (위험 목록 참조)
+- [x] `core/ports.py`(`Sink`에 `@runtime_checkable`) + `core/events.py` — 베이스 `CrawlEvent(source_id)` + **결과/진행 2계층** (설계 §이벤트, adr-006 §⑧). PR 5는 쓰기 동반 이벤트(NoticeCrawled/NoticeUnchanged/ContentRefreshed)만 인라인 방출 — 진행 계층 + ItemFailed/ItemSkipped 방출은 PR 6 제너레이터 몫
+- [x] sink **contract test** — 미지의 이벤트를 `accept`에 넣어 `None` 반환(무시 계약) 확인. 서드파티 sink 작성자에게 제공할 스위트의 원형 (`tests/core/test_ports_events.py` + `tests/plugins/mongo/test_sink.py::TestTolerantReader`)
+- [x] `plugins/mongo/{seen,sink,work_seed}.py`를 `dedup.py`의 **본문 그대로** 옮겨 구성 — 유일 승인 편차: `find_existing_meta`의 dict 반환 → `SeenRecord`. tier1 `edit_entry` 조립은 orchestrator에서 sink로 이동 (`ChangeInfo`가 모듈 측 사실만 운반)
+- [x] `dedup.py` → `modules/notices/policy.py` — 순수 술어만 남긴다. orchestrator의 `_page_below_floor`도 `policy.page_below_floor`로 동행 (소유권 표대로; since 파라미터화는 PR 6). 바이트 동일 이동 커밋과 `has_changed`의 SeenRecord 전환 커밋은 분리 (위험 ③↔⑥ 충돌 해소 — 전환이 re-route보다 선행해야 양쪽 커밋이 green)
+- [x] **기존 루프는 건드리지 않는다.** 포트를 경유하게만 바꾼다 — `run_crawl(…, ports: Ports | None = None)`; None이면 get_db + wiring 조립(골든 하네스의 `orchestrator.get_db` seam 보존), 주입 시 get_db 미접촉(플러그인 없는 스윕 게이트)
+- [x] `SeenRecord.content_hash: str | None = None` — 기본값 필수 (위험 목록 참조)
 
-**검증 게이트**: PR 0 골든 바이트 동일 + 플러그인 없는 스윕 테스트. **`-m mongo` 적합성 재실행** (store 의미를 건드리는 PR이므로).
+**검증 게이트**: PR 0 골든 바이트 동일 ✓ (snapshot diff 0, UPDATE_GOLDEN 미사용) + 플러그인 없는 스윕 테스트 ✓ (`tests/notices/test_no_plugin_sweep.py` — 주입 ports + get_db 호출 시 AssertionError). **`-m mongo` 적합성 재실행** (store 의미를 건드리는 PR이므로).
+
+구현 시 확정 사항:
+
+- **`wiring.py` 조기 도입** (계획상 PR 7 → PR 5로 앞당김): `test_modules_do_not_import_plugins`가 modules/ 하위의 모든 plugins import(lazy 포함)를 금지하는데 `run_crawl` 호출자가 전부 modules/ 아래라 조립 지점이 필요했음. wiring이 유일한 plugins import 지점; orchestrator/update_checker의 modules→wiring **lazy** import는 임시 edge로 PR 7 주입 역전 때 소멸 (lazy가 필수인 이유: PR 7의 wiring→module.py 순환 예방)
+- **update_checker 이관은 PR 7 확정** (§PR 0 각주의 "PR 5/6 재검토" 해소). PR 5에서는 dedup 의존(`ensure_indexes`)만 wiring shim(`ensure_notice_indexes`) 경유로 전환. FakeCollection의 aggregation-pipeline update 재검토도 함께 PR 7로
+- **공유 touch 버퍼 semantic delta**: MongoSink의 버퍼가 페이지-로컬에서 run-레벨로 — Semaphore(5) 동시성에서 소스 A의 flush가 B의 mid-page touch를 함께 배출 가능. 데이터 안전(op별 articleNo+sourceId 필터, unordered), 골든 비가시(전부 단일 소스); 드리프트는 실패 **귀속**뿐. flush 격리는 §⑪대로 1.0 전 재방문 항목
+- **승인된 역방향 타입 edge 2건** (둘 다 `TYPE_CHECKING` 한정, Notice의 최종 거처 결정 시까지): `core/events.py → modules.notices.models.Notice`, `plugins/mongo/sink.py → 동일`. plugins→modules 방향은 AST 미감시 — 규칙 추가 대신 여기 기록으로 관리
 
 ## PR 6 — orchestrator 해체 ⚠️ 최고 위험
 
