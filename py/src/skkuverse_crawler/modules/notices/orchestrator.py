@@ -5,24 +5,16 @@ import time
 import uuid
 from collections.abc import Mapping
 from dataclasses import dataclass
-from datetime import datetime, timezone
 from typing import Any
 
-from ...core.ports import SeenRecord
+from ...core.events import ChangeInfo, ContentRefreshed, NoticeCrawled, NoticeUnchanged
+from ...core.ports import Outcome, Ports, SeenRecord, Sink, SourceSpec
 from ...core.results import SourceResult
 from ...shared.db import get_db
 from ...shared.fetcher import Fetcher
 from ...shared.html_cleaner import clean_html, normalize_content_urls
 from ...shared.html_to_markdown import html_to_markdown
 from ...shared.logger import get_logger
-from .dedup import (
-    bulk_touch_notices,
-    ensure_indexes,
-    find_existing_meta,
-    find_null_content,
-    update_with_history,
-    upsert_notice,
-)
 from .constants import SERVICE_START_DATE
 from .policy import has_changed, page_below_floor, should_continue
 from .hashing import compute_content_hash
@@ -49,13 +41,19 @@ DeptResult = SourceResult
 async def run_crawl(
     departments: list[dict[str, Any]],
     options: CrawlOptions,
+    ports: Ports | None = None,
 ) -> list[DeptResult]:
     crawl_id = uuid.uuid4().hex[:8]
     logger = get_logger("orchestrator", crawl_id=crawl_id)
 
-    db = await get_db()
-    collection = db["notices"]
-    await ensure_indexes(collection)
+    if ports is None:
+        db = await get_db()
+        collection = db["notices"]
+        # Lazy wiring import — the single plugins import point. Temporary
+        # modules→wiring edge, retired in PR 7 when injection inverts.
+        from ...wiring import build_notices_ports
+
+        ports = build_notices_ports(collection)
 
     fetcher = Fetcher(delay_ms=options.delay_ms or 500)
 
@@ -81,12 +79,15 @@ async def run_crawl(
         logger.warning("no_matching_departments", dept_filter=options.dept_filter)
         return []
 
+    for dept in filtered:
+        await ports.sink.prepare(SourceSpec(source_id=dept["id"], name=dept["name"]))
+
     sem = asyncio.Semaphore(5)
     results: list[DeptResult] = []
 
     async def crawl_with_sem(dept: dict) -> DeptResult:
         async with sem:
-            return await _crawl_department(dept, collection, fetcher, options, logger)
+            return await _crawl_department(dept, ports, fetcher, options, logger)
 
     tasks = [crawl_with_sem(dept) for dept in filtered]
     settled = await asyncio.gather(*tasks, return_exceptions=True)
@@ -116,7 +117,7 @@ async def run_crawl(
 
 async def _crawl_department(
     dept: dict[str, Any],
-    collection: Any,
+    ports: Ports,
     fetcher: Fetcher,
     options: CrawlOptions,
     logger: Any,
@@ -131,13 +132,14 @@ async def _crawl_department(
 
     logger.info("starting_department_crawl", dept_id=dept["id"], dept_name=dept["name"])
 
-    # Re-crawl null content
-    null_refs = await find_null_content(collection, dept["id"])
+    # Re-crawl null content — deliberately divergent from the upsert path
+    # (위험 ④): explicit field list, no build_notice, no editHistory.
+    null_refs = await ports.work_seed.pending_refs(dept["id"])
     if null_refs:
         logger.info("recrawling_null_content", count=len(null_refs), dept_id=dept["id"])
         for ref in null_refs:
             detail = await strategy.crawl_detail(
-                {"articleNo": ref["articleNo"], "detailPath": ref["detailPath"]}, dept
+                {"articleNo": ref.article_no, "detailPath": ref.detail_path}, dept
             )
             if detail:
                 cleaned = clean_html(detail.content, dept["baseUrl"])
@@ -145,24 +147,26 @@ async def _crawl_department(
                 if cleaned and len(cleaned.encode()) > _MAX_CONTENT_BYTES:
                     logger.warning(
                         "oversized_content_dropped",
-                        articleNo=ref["articleNo"],
+                        articleNo=ref.article_no,
                         dept=dept["id"],
                         size=len(cleaned.encode()),
                     )
                     cleaned = None
                     raw_content = None
                 clean_markdown = html_to_markdown(cleaned)
-                await collection.update_one(
-                    {"articleNo": ref["articleNo"], "sourceId": dept["id"]},
-                    {"$set": {
-                        "content": raw_content,
-                        "contentText": detail.contentText,
-                        "cleanHtml": cleaned,
-                        "cleanMarkdown": clean_markdown,
-                        "contentHash": compute_content_hash(cleaned),
-                        "attachments": detail.attachments,
-                        "crawledAt": datetime.now(timezone.utc),
-                    }},
+                await ports.sink.accept(
+                    ContentRefreshed(
+                        source_id=dept["id"],
+                        ref=ref,
+                        fields={
+                            "content": raw_content,
+                            "contentText": detail.contentText,
+                            "cleanHtml": cleaned,
+                            "cleanMarkdown": clean_markdown,
+                            "contentHash": compute_content_hash(cleaned),
+                            "attachments": detail.attachments,
+                        },
+                    )
                 )
                 result.updated += 1
 
@@ -198,18 +202,7 @@ async def _crawl_department(
 
         if options.incremental:
             article_nos = [item.articleNo for item in list_items]
-            raw_meta = await find_existing_meta(collection, dept["id"], article_nos)
-            # Temporary adapter until the port re-route lands: SeenIndex
-            # returns SeenRecord natively.
-            existing_meta = {
-                no: SeenRecord(
-                    article_no=m["articleNo"],
-                    title=m["title"],
-                    date=m["date"],
-                    content_hash=m["contentHash"],
-                )
-                for no, m in raw_meta.items()
-            }
+            existing_meta = await ports.seen.lookup(dept["id"], article_nos)
             all_known = not should_continue(list_items, existing_meta)
 
             if not is_first_page and all_known:
@@ -219,15 +212,15 @@ async def _crawl_department(
             if is_first_page and all_known:
                 logger.info("all_known_first_page_early_stop")
                 await _process_page_smart(
-                    list_items, existing_meta, strategy, dept, collection, result, logger
+                    list_items, existing_meta, strategy, dept, ports.sink, result, logger
                 )
                 break
 
             await _process_page_smart(
-                list_items, existing_meta, strategy, dept, collection, result, logger
+                list_items, existing_meta, strategy, dept, ports.sink, result, logger
             )
         else:
-            await _process_page_full(list_items, strategy, dept, collection, result, logger)
+            await _process_page_full(list_items, strategy, dept, ports.sink, result, logger)
 
         if below_floor:
             logger.info("floor_date_stopping", page=page, dept_id=dept["id"])
@@ -289,12 +282,10 @@ async def _process_page_smart(
     existing_meta: Mapping[int, SeenRecord],
     strategy: Any,
     dept: dict[str, Any],
-    collection: Any,
+    sink: Sink,
     result: DeptResult,
     logger: Any,
 ) -> None:
-    to_touch: list[dict[str, Any]] = []
-
     for item in list_items:
         try:
             if item.date and item.date < SERVICE_START_DATE:
@@ -304,11 +295,13 @@ async def _process_page_smart(
             existing = existing_meta.get(item.articleNo)
 
             if existing and not has_changed(item, existing):
-                to_touch.append({
-                    "articleNo": item.articleNo,
-                    "sourceId": dept["id"],
-                    "views": item.views,
-                })
+                await sink.accept(
+                    NoticeUnchanged(
+                        source_id=dept["id"],
+                        article_no=item.articleNo,
+                        views=item.views,
+                    )
+                )
                 result.skipped += 1
                 continue
 
@@ -341,11 +334,14 @@ async def _process_page_smart(
             )
 
             if not existing:
-                action = await upsert_notice(collection, notice)
-                if action == "inserted":
-                    result.inserted += 1
-                else:
+                outcome = await sink.accept(
+                    NoticeCrawled(source_id=dept["id"], notice=notice)
+                )
+                # None ⇒ INSERTED (architecture §러너 집계 규칙).
+                if outcome is Outcome.UPDATED:
                     result.updated += 1
+                else:
+                    result.inserted += 1
             else:
                 logger.info(
                     "change_detected",
@@ -355,32 +351,36 @@ async def _process_page_smart(
                 )
                 old_hash = existing.content_hash
                 new_hash = notice.contentHash
-                edit_entry = {
-                    "detectedAt": datetime.now(timezone.utc),
-                    "oldHash": old_hash,
-                    "newHash": new_hash,
-                    "oldTitle": existing.title,
-                    "newTitle": item.title,
-                    "titleChanged": existing.title != item.title,
-                    "contentChanged": old_hash is not None and old_hash != new_hash,
-                    "source": "tier1",
-                }
-                await update_with_history(collection, notice, edit_entry)
+                change = ChangeInfo(
+                    old_hash=old_hash,
+                    new_hash=new_hash,
+                    old_title=existing.title,
+                    new_title=item.title,
+                    title_changed=existing.title != item.title,
+                    content_changed=old_hash is not None and old_hash != new_hash,
+                )
+                await sink.accept(
+                    NoticeCrawled(
+                        source_id=dept["id"],
+                        notice=notice,
+                        previous=existing,
+                        change=change,
+                    )
+                )
                 result.updated += 1
 
         except Exception as exc:
             logger.error("process_article_failed", articleNo=item.articleNo, error=str(exc))
             result.errors += 1
 
-    if to_touch:
-        await bulk_touch_notices(collection, to_touch)
+    await sink.flush()
 
 
 async def _process_page_full(
     list_items: list[NoticeListItem],
     strategy: Any,
     dept: dict[str, Any],
-    collection: Any,
+    sink: Sink,
     result: DeptResult,
     logger: Any,
 ) -> None:
@@ -415,11 +415,14 @@ async def _process_page_full(
                 base_url=dept["baseUrl"],
                 image_dimensions=img_result.dimensions or None,
             )
-            action = await upsert_notice(collection, notice)
-            if action == "inserted":
-                result.inserted += 1
-            else:
+            outcome = await sink.accept(
+                NoticeCrawled(source_id=dept["id"], notice=notice)
+            )
+            # None ⇒ INSERTED (architecture §러너 집계 규칙).
+            if outcome is Outcome.UPDATED:
                 result.updated += 1
+            else:
+                result.inserted += 1
 
         except Exception as exc:
             logger.error("process_article_failed", articleNo=item.articleNo, error=str(exc))
