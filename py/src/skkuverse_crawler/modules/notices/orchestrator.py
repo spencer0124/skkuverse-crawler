@@ -21,6 +21,7 @@ from ...core.events import (
     SourceFinished,
     SourceStarted,
 )
+from ...core.pipeline import ContentDoc, Pipeline, StageContext
 from ...core.ports import Ports, SeenIndex, SeenRecord, SourceSpec, WorkSeed
 from ...core.runner import run_events
 from ...core.results import SourceResult
@@ -32,13 +33,10 @@ from ...shared.logger import get_logger
 from .constants import SERVICE_START_DATE
 from .policy import has_changed, page_below_floor, should_continue
 from .hashing import compute_content_hash
-from .image_verifier import ImageCheckResult, verify_notice_images
 from .models import NoticeListItem
-from .normalizer import build_notice
+from .normalizer import MAX_CONTENT_BYTES, build_notice
+from .stages import DEFAULT_PIPELINE
 from .strategies import STRATEGY_MAP
-
-
-_MAX_CONTENT_BYTES = 5 * 1024 * 1024  # 5MB
 
 
 @dataclass
@@ -181,6 +179,7 @@ async def iter_source(
     work_seed: WorkSeed,
     options: CrawlOptions,
     logger: Any,
+    pipeline: Pipeline = DEFAULT_PIPELINE,
 ) -> AsyncGenerator[CrawlEvent, None]:
     """The crawl loop as an event stream — no store, no sink, no counters.
 
@@ -205,7 +204,7 @@ async def iter_source(
             if detail:
                 cleaned = clean_html(detail.content, dept["baseUrl"])
                 raw_content = normalize_content_urls(detail.content, dept["baseUrl"])
-                if cleaned and len(cleaned.encode()) > _MAX_CONTENT_BYTES:
+                if cleaned and len(cleaned.encode()) > MAX_CONTENT_BYTES:
                     logger.warning(
                         "oversized_content_dropped",
                         articleNo=ref.article_no,
@@ -295,7 +294,7 @@ async def iter_source(
         # mid-page, _emit_page is closed deterministically instead of at
         # GC time via the event loop's asyncgen finalizer.
         async with aclosing(
-            _emit_page(list_items, existing_meta, strategy, dept, options, logger)
+            _emit_page(list_items, existing_meta, strategy, dept, options, logger, pipeline)
         ) as page_events:
             async for ev in page_events:
                 yield ev
@@ -320,42 +319,6 @@ async def iter_source(
     )
 
 
-async def _verify_and_measure_images(
-    content_html: str | None,
-    source_url: str,
-    dept_id: str,
-    article_no: int,
-    logger: Any,
-) -> ImageCheckResult:
-    """Best-effort image verification + dimension detection. Never raises."""
-    try:
-        result = await verify_notice_images(content_html, source_url)
-        if result.broken:
-            logger.warning(
-                "broken_notice_images",
-                articleNo=article_no,
-                dept_id=dept_id,
-                checked=result.checked,
-                broken_count=len(result.broken),
-                broken=result.broken[:5],  # cap log payload
-            )
-        if result.dimensions:
-            logger.debug(
-                "image_dimensions_detected",
-                articleNo=article_no,
-                count=len(result.dimensions),
-            )
-        return result
-    except Exception as exc:
-        logger.warning(
-            "image_verify_failed",
-            articleNo=article_no,
-            dept_id=dept_id,
-            error=str(exc),
-        )
-        return ImageCheckResult()
-
-
 async def _emit_page(
     list_items: list[NoticeListItem],
     existing_meta: Mapping[int, SeenRecord],
@@ -363,6 +326,7 @@ async def _emit_page(
     dept: dict[str, Any],
     options: CrawlOptions,
     logger: Any,
+    pipeline: Pipeline,
 ) -> AsyncGenerator[CrawlEvent, None]:
     """One merged page emitter for both modes: with existing_meta={} every
     item takes the previous-is-None branch — the old full-sweep path falls
@@ -393,20 +357,23 @@ async def _emit_page(
                 {"articleNo": item.articleNo, "detailPath": item.detailPath}, dept
             )
 
-            # Verify images + detect dimensions before build_notice so
-            # dimensions can be injected into cleanHtml/cleanMarkdown.
-            abs_content = (
-                normalize_content_urls(detail.content, dept["baseUrl"])
-                if detail and detail.content
-                else None
-            )
+            # The content pipeline owns every derived slot (stages.py);
+            # image verification runs inside it, before build_notice, so
+            # dimensions land in cleanHtml/cleanMarkdown.
             source_url = (
                 item.detailPath
                 if item.detailPath.startswith("http")
                 else f"{dept['baseUrl']}{item.detailPath}"
             )
-            img_result = await _verify_and_measure_images(
-                abs_content, source_url, dept["id"], item.articleNo, logger,
+            doc = await pipeline.run(
+                ContentDoc(raw=detail.content if detail else None),
+                StageContext(
+                    source_id=dept["id"],
+                    base_url=dept["baseUrl"],
+                    source_url=source_url,
+                    article_no=item.articleNo,
+                    logger=logger,
+                ),
             )
 
             notice = build_notice(
@@ -414,7 +381,7 @@ async def _emit_page(
                 department=dept["name"],
                 source_id=dept["id"],
                 base_url=dept["baseUrl"],
-                image_dimensions=img_result.dimensions or None,
+                content=doc,
             )
 
             if not existing:

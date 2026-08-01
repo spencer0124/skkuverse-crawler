@@ -47,6 +47,7 @@ class StageContext:
 
     source_id: str = ""
     base_url: str = ""
+    source_url: str = ""
     article_no: int | None = None
     logger: Any = None
 
