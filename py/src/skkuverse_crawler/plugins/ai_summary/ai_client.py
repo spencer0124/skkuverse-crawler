@@ -4,7 +4,7 @@ import asyncio
 
 import httpx
 
-from ..shared.logger import get_logger
+from ...shared.logger import get_logger
 
 logger = get_logger("ai_client")
 

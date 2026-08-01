@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from bson import ObjectId
 
-from skkuverse_crawler.notices_summary.processor import run_summary_batch
+from skkuverse_crawler.plugins.ai_summary.processor import run_summary_batch
 
 SAMPLE_AI_RESPONSE = {
     "oneLiner": "4/30까지 등록금 납부",
@@ -45,11 +45,11 @@ def _make_doc(**overrides) -> dict:
 
 
 class TestRunSummaryBatch:
-    @patch("skkuverse_crawler.notices_summary.processor.find_stale_summaries")
-    @patch("skkuverse_crawler.notices_summary.processor.find_unsummarized")
-    @patch("skkuverse_crawler.notices_summary.processor.ensure_summary_indexes")
-    @patch("skkuverse_crawler.notices_summary.processor.AiClient")
-    @patch("skkuverse_crawler.notices_summary.processor.get_db")
+    @patch("skkuverse_crawler.plugins.ai_summary.processor.find_stale_summaries")
+    @patch("skkuverse_crawler.plugins.ai_summary.processor.find_unsummarized")
+    @patch("skkuverse_crawler.plugins.ai_summary.processor.ensure_summary_indexes")
+    @patch("skkuverse_crawler.plugins.ai_summary.processor.AiClient")
+    @patch("skkuverse_crawler.plugins.ai_summary.processor.get_db")
     async def test_summarizes_unsummarized_docs(
         self, mock_get_db, mock_ai_cls, mock_indexes, mock_find, mock_find_stale,
     ):
@@ -89,11 +89,11 @@ class TestRunSummaryBatch:
         assert "summaryEndDate" not in update_doc["$set"]
         assert "summaryEndTime" not in update_doc["$set"]
 
-    @patch("skkuverse_crawler.notices_summary.processor.find_stale_summaries")
-    @patch("skkuverse_crawler.notices_summary.processor.find_unsummarized")
-    @patch("skkuverse_crawler.notices_summary.processor.ensure_summary_indexes")
-    @patch("skkuverse_crawler.notices_summary.processor.AiClient")
-    @patch("skkuverse_crawler.notices_summary.processor.get_db")
+    @patch("skkuverse_crawler.plugins.ai_summary.processor.find_stale_summaries")
+    @patch("skkuverse_crawler.plugins.ai_summary.processor.find_unsummarized")
+    @patch("skkuverse_crawler.plugins.ai_summary.processor.ensure_summary_indexes")
+    @patch("skkuverse_crawler.plugins.ai_summary.processor.AiClient")
+    @patch("skkuverse_crawler.plugins.ai_summary.processor.get_db")
     async def test_increments_failures_on_error(
         self, mock_get_db, mock_ai_cls, mock_indexes, mock_find, mock_find_stale,
     ):
@@ -121,11 +121,11 @@ class TestRunSummaryBatch:
         failure_call = mock_collection.update_one.call_args[0][1]
         assert failure_call["$inc"]["summaryFailures"] == 1
 
-    @patch("skkuverse_crawler.notices_summary.processor.find_stale_summaries")
-    @patch("skkuverse_crawler.notices_summary.processor.find_unsummarized")
-    @patch("skkuverse_crawler.notices_summary.processor.ensure_summary_indexes")
-    @patch("skkuverse_crawler.notices_summary.processor.AiClient")
-    @patch("skkuverse_crawler.notices_summary.processor.get_db")
+    @patch("skkuverse_crawler.plugins.ai_summary.processor.find_stale_summaries")
+    @patch("skkuverse_crawler.plugins.ai_summary.processor.find_unsummarized")
+    @patch("skkuverse_crawler.plugins.ai_summary.processor.ensure_summary_indexes")
+    @patch("skkuverse_crawler.plugins.ai_summary.processor.AiClient")
+    @patch("skkuverse_crawler.plugins.ai_summary.processor.get_db")
     async def test_handles_stale_summaries(
         self, mock_get_db, mock_ai_cls, mock_indexes, mock_find, mock_find_stale,
     ):
@@ -149,11 +149,11 @@ class TestRunSummaryBatch:
         assert result["stale_updated"] == 1
         assert result["summarized"] == 0
 
-    @patch("skkuverse_crawler.notices_summary.processor.find_stale_summaries")
-    @patch("skkuverse_crawler.notices_summary.processor.find_unsummarized")
-    @patch("skkuverse_crawler.notices_summary.processor.ensure_summary_indexes")
-    @patch("skkuverse_crawler.notices_summary.processor.AiClient")
-    @patch("skkuverse_crawler.notices_summary.processor.get_db")
+    @patch("skkuverse_crawler.plugins.ai_summary.processor.find_stale_summaries")
+    @patch("skkuverse_crawler.plugins.ai_summary.processor.find_unsummarized")
+    @patch("skkuverse_crawler.plugins.ai_summary.processor.ensure_summary_indexes")
+    @patch("skkuverse_crawler.plugins.ai_summary.processor.AiClient")
+    @patch("skkuverse_crawler.plugins.ai_summary.processor.get_db")
     async def test_empty_batch(
         self, mock_get_db, mock_ai_cls, mock_indexes, mock_find, mock_find_stale,
     ):
@@ -176,11 +176,11 @@ class TestRunSummaryBatch:
         assert result["errors"] == 0
         mock_client.summarize.assert_not_called()
 
-    @patch("skkuverse_crawler.notices_summary.processor.find_stale_summaries")
-    @patch("skkuverse_crawler.notices_summary.processor.find_unsummarized")
-    @patch("skkuverse_crawler.notices_summary.processor.ensure_summary_indexes")
-    @patch("skkuverse_crawler.notices_summary.processor.AiClient")
-    @patch("skkuverse_crawler.notices_summary.processor.get_db")
+    @patch("skkuverse_crawler.plugins.ai_summary.processor.find_stale_summaries")
+    @patch("skkuverse_crawler.plugins.ai_summary.processor.find_unsummarized")
+    @patch("skkuverse_crawler.plugins.ai_summary.processor.ensure_summary_indexes")
+    @patch("skkuverse_crawler.plugins.ai_summary.processor.AiClient")
+    @patch("skkuverse_crawler.plugins.ai_summary.processor.get_db")
     async def test_handles_missing_response_fields(
         self, mock_get_db, mock_ai_cls, mock_indexes, mock_find, mock_find_stale,
     ):

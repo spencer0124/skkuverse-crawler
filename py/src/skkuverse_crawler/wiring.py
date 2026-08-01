@@ -82,7 +82,7 @@ def build_runtime() -> tuple[CrawlModule, ...]:
     plugin is absent" an expressible state.
     """
     from .modules.notices.module import NoticesModule
-    from .notices_summary.module import NoticesSummaryModule
+    from .plugins.ai_summary.module import NoticesSummaryModule
     from .plugins.discord.webhook import DiscordNotifier
     from .plugins.health.module import CrawlHealthSummaryModule
     from .plugins.health.store import record_and_alert

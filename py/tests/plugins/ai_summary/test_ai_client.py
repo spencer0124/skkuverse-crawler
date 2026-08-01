@@ -4,7 +4,7 @@ import httpx
 import pytest
 import respx
 
-from skkuverse_crawler.notices_summary.ai_client import AiClient
+from skkuverse_crawler.plugins.ai_summary.ai_client import AiClient
 
 BASE_URL = "http://test-ai:4000"
 ENDPOINT = f"{BASE_URL}/api/notices/summarize"

@@ -18,7 +18,7 @@ import httpx
 import pytest
 import respx
 
-from skkuverse_crawler.notices_summary.dispatch_client import notify_cycle_complete
+from skkuverse_crawler.plugins.dispatch.client import notify_cycle_complete
 from skkuverse_crawler.shared.config import init_config, reset_config
 
 URL = "http://test-api/internal/notices/dispatch-pending"

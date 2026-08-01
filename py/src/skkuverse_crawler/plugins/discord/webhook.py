@@ -1,6 +1,6 @@
 """Discord webhook sender for crawl-health alerts.
 
-Mirrors the behavior contract of ``notices_summary/dispatch_client.py``:
+Mirrors the behavior contract of ``plugins/dispatch/client.py``:
 
 * Returns ``True`` on a 2xx response, ``False`` on any failure or skip.
 * Never raises — an alert failure must not take down a crawl cycle.

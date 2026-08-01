@@ -9,14 +9,14 @@ from typing import Any
 
 import structlog
 
-from ..shared.config import get_config
-from ..shared.db import get_db
-from ..shared.logger import get_logger
+from ...shared.config import get_config
+from ...shared.db import get_db
+from ...shared.logger import get_logger
+from ..dispatch.client import notify_cycle_complete  # plugin→plugin edge #1 (adr-006)
 from .ai_client import AiClient
-from .dispatch_client import notify_cycle_complete
 from .query import ensure_summary_indexes, find_stale_summaries, find_unsummarized
 
-logger = get_logger("notices_summary")
+logger = get_logger("ai_summary")
 
 
 @dataclass

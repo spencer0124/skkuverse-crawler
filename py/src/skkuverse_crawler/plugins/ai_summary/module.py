@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ..core.module import ModuleConfig
+from ...core.module import ModuleConfig
 from .processor import run_summary_batch
 
 

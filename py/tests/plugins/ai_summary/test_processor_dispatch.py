@@ -15,7 +15,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from bson import ObjectId
 
-from skkuverse_crawler.notices_summary.processor import run_summary_batch
+from skkuverse_crawler.plugins.ai_summary.processor import run_summary_batch
 
 SAMPLE_AI_RESPONSE = {
     "oneLiner": "한 줄 요약",
@@ -47,12 +47,12 @@ def _patches():
 
     def wrap(fn):
         return (
-            patch("skkuverse_crawler.notices_summary.processor.notify_cycle_complete")(
-                patch("skkuverse_crawler.notices_summary.processor.find_stale_summaries")(
-                    patch("skkuverse_crawler.notices_summary.processor.find_unsummarized")(
-                        patch("skkuverse_crawler.notices_summary.processor.ensure_summary_indexes")(
-                            patch("skkuverse_crawler.notices_summary.processor.AiClient")(
-                                patch("skkuverse_crawler.notices_summary.processor.get_db")(
+            patch("skkuverse_crawler.plugins.ai_summary.processor.notify_cycle_complete")(
+                patch("skkuverse_crawler.plugins.ai_summary.processor.find_stale_summaries")(
+                    patch("skkuverse_crawler.plugins.ai_summary.processor.find_unsummarized")(
+                        patch("skkuverse_crawler.plugins.ai_summary.processor.ensure_summary_indexes")(
+                            patch("skkuverse_crawler.plugins.ai_summary.processor.AiClient")(
+                                patch("skkuverse_crawler.plugins.ai_summary.processor.get_db")(
                                     fn
                                 )
                             )

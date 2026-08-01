@@ -23,7 +23,7 @@ Known, deliberate gaps:
 - pipeline stages other than ``$set``, expression operators outside the
   four above, and pipeline updates combined with ``upsert=True``
   -> NotImplementedError
-- ``$expr`` filters (used only by the notices_summary re-summary query)
+- ``$expr`` filters (used only by the ai_summary re-summary query)
   -> NotImplementedError
 
 BSON fidelity: datetimes are truncated to millisecond precision at write
@@ -109,7 +109,7 @@ def _validate_filter(filter_: dict[str, Any]) -> None:
                 _validate_filter(sub)
         elif field == "$expr":
             raise NotImplementedError(
-                "FakeCollection: $expr not implemented (notices_summary query only)"
+                "FakeCollection: $expr not implemented (ai_summary query only)"
             )
         elif field.startswith("$"):
             raise NotImplementedError(f"FakeCollection: query operator {field!r} not implemented")
@@ -137,7 +137,7 @@ def _matches(doc: dict[str, Any], filter_: dict[str, Any]) -> bool:
             continue
         if field == "$expr":
             raise NotImplementedError(
-                "FakeCollection: $expr not implemented (notices_summary query only)"
+                "FakeCollection: $expr not implemented (ai_summary query only)"
             )
         if field.startswith("$"):
             raise NotImplementedError(f"FakeCollection: query operator {field!r} not implemented")

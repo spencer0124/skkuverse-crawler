@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 
 from bson import ObjectId
 
-from skkuverse_crawler.notices_summary.query import (
+from skkuverse_crawler.plugins.ai_summary.query import (
     find_stale_summaries,
     find_unsummarized,
 )

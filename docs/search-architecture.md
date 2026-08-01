@@ -2,21 +2,23 @@
 
 앱 자연어 검색·AI 챗봇·공개 MCP 서버가 **같은 검색 인프라를 공유**하기 위한 설계. 결정 배경은 [decisions/](decisions/README.md) (adr-001~003 + skkuverse-ai adr-001), 작업 순서는 [search-mcp-plan.md](search-mcp-plan.md) 참조.
 
-> **상태**: 설계 확정, 구현 전 (2026-07-29). 구현되면 이 문서의 "예정" 표기를 걷어내고 코드 참조로 대체할 것.
+> **상태**: 설계 확정, 구현 전. **2026-08-01 [adr-007](decisions/adr-007-atlas-auto-embedding.md) 로 임베딩 방식이 뒤집혀 ②가 재작성됨.** 구현되면 "예정" 표기를 걷어내고 코드 참조로 대체할 것.
 >
-> **레포 분담** (skkuverse-ai adr-001, 크롤러 OSS 공개 계획 반영): 이 레포는 **쓰기 측**(SSOT·codegen·임베딩 오케스트레이션·인덱스 생성)을, **skkuverse-ai**는 **질의 측**(`/api/embed`·MCP 서버·검색 파이프라인·eval)을 소유한다.
+> **레포 분담** (skkuverse-ai adr-001, 크롤러 OSS 공개 계획 반영): 이 레포는 **쓰기 측**(SSOT·codegen·`embeddingInput` 조합·인덱스 생성)을, **skkuverse-ai**는 **질의 측**(MCP 서버·검색 파이프라인·eval)을 소유한다.
 
 ## 공통 모듈 — 겹침의 3개 레이어
 
-원칙: **문서 임베딩은 크롤러가 조율해 쓰고(write), 모두가 읽는다(read)**. 모델 호출은 요약(`notices_summary` ↔ ai `/api/notices/summarize`)과 동일한 분업.
+원칙: **크롤러는 임베딩할 텍스트만 만들고, 벡터는 Atlas 가 만든다** ([adr-007](decisions/adr-007-atlas-auto-embedding.md)).
 
 | 레이어 | 소유/위치 | 소비자 |
 |--------|----------|--------|
 | ① 설정 SSOT | 레포 루트 `search.json` (예정) → codegen이 **skkuverse-server·skkuverse-ai 양쪽**에 사본 복사 | 3개 레포 전부 |
-| ② 문서 임베딩 (write) | 크롤러 `notices_embedding/` 모듈 (예정)이 stale 감지 + `$set` — 모델 호출은 ai `/api/embed`에 위임 (벤더 키는 ai 레포에만) | `notices` 컬렉션에 저장, 모두가 read |
-| ③ 질의 임베딩 + 검색 파이프라인 (read) | **skkuverse-ai** — `/api/embed`(질의)·$rankFusion 빌더·eval. 앱 서버(TS)는 질의 벡터를 ai에서 받고 파이프라인만 search.json 기반 재구현 | MCP 서버(ai 내부), 앱 서버, eval |
+| ② 임베딩 입력 (write) | 크롤러가 `embeddingInput` **텍스트 필드**를 조합해 `$set`. **API 호출 없음, 벡터 없음** — Atlas `autoEmbed` 인덱스가 자동 임베딩·동기화 | Atlas 내부 (앱은 벡터를 직접 다루지 않음) |
+| ③ 검색 파이프라인 (read) | **skkuverse-ai** — `$rankFusion` 빌더·eval. 질의는 `$vectorSearch { query: {text}, model }` 로 텍스트를 그대로 넘김 | MCP 서버(ai 내부), 앱 서버, eval |
 
-**드리프트 방어**: 원래 세 소비자가 각자 임베딩을 만들 계획일 때는 4중 방어(SSOT+codegen+model echo+스모크)가 필요했으나, 모든 임베딩 호출이 ai `/api/embed` 하나를 거치면서 모델 정합성 문제가 구조적으로 축소됨. 남는 방어: search.json codegen(인덱스명·차원·가중치) + `/api/embed` 응답의 `model` echo + eval 스모크.
+**드리프트 방어**: 원래 세 소비자가 각자 임베딩을 만들 계획일 때는 4중 방어(SSOT+codegen+model echo+스모크)가 필요했다. adr-007 이후 **색인 모델과 질의 모델이 인덱스 정의 하나에서 나오므로 드리프트가 구조적으로 불가능**하다. 소비자가 모델을 지정할 여지 자체가 없다. `search.json` 이 배포하는 것은 이제 **인덱스명·하이브리드 가중치·`inputVersion`** 이지 모델 pin 이 아니다.
+
+> ⚠️ **비대칭 임베딩을 잃었다.** 원안은 문서 `voyage-4-large` + 질의 `voyage-4-lite` 였는데, `autoEmbed` 인덱스는 `model` 을 하나만 받는다. `voyage-4-large` 단일로 간다 (adr-002 개정).
 
 ## ① search.json SSOT
 
