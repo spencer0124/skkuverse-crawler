@@ -75,7 +75,10 @@
 
 ## Phase 3 — 품질 실측 [skkuverse-ai]
 
-상세는 ai 레포 계획 A2. **게이트 A**: 모델 5종(Voyage/KURE/BGE-M3/OpenAI/Gemini) 오프라인 비교 → [adr-002](decisions/adr-002-embedding-model.md) 결과 표 기입 + status 확정. **게이트 B**: 하이브리드 가중치 → `search.json` 갱신 + codegen 재실행 (crawler에서).
+상세는 ai 레포 계획 A2.
+
+- ~~**게이트 A**: 모델 5종 오프라인 비교~~ → ✅ **Phase 0.5 에서 완료** (2종 실측, [adr-002](decisions/adr-002-embedding-model.md) 결과 표 기입 + status 확정). 미측정 3종의 사유도 ADR 에 기록
+- **게이트 B**: 하이브리드 가중치 스윕 → `search.json` 갱신 + codegen 재실행 (crawler 에서). **Phase 2b(인덱스 생성) 이후에만 가능** — `text-only(nori)` 변형을 재려면 Atlas Search 인덱스가 있어야 한다
 
 ## Phase 4 — 공개 MCP 서버 [skkuverse-ai]
 
@@ -84,16 +87,19 @@
 ## Phase 5 — 앱 서버 검색 연동 [skkuverse-server]
 
 - [ ] codegen이 배달한 `src/notices/search.json` 수용 — 기존 trio 패턴 (loader + `types.ts` + boot validation, `tabconfig.provider.ts` 참조)
-- [ ] 질의 임베딩: ai `POST /api/embed` 호출 (`inputType: "query"`) — 벤더 SDK 불필요
+- [ ] ~~질의 임베딩: ai `POST /api/embed` 호출~~ → **불필요** (adr-007). `$vectorSearch` 에 `query: {text}` + `model` 을 그대로 넘긴다
 - [ ] TS $rankFusion 파이프라인 — 기존 regex 검색(`notices.search.ts`) 신규 엔드포인트 병행 후 단계적 대체
+- [ ] ⚠️ **결과 dedup** — 정규화 제목 기준. 안 하면 `limit` 안이 같은 공지 사본으로 찬다 (코퍼스 67% 중복)
 - [ ] 헬스체크에 "알려진 질의 → 정답 top-3" 스모크
 - [ ] AI 챗봇 RAG는 이 검색 레이어 위 후속 (별도 계획)
 
 ## 크롤러 Ops (코드 밖)
 
 - ⚠️ `.mcp.json` 평문 자격증명 로테이트 + 외부화 — MCP 공개 블로킹
-- Atlas read-only 유저 생성 (`read@skku_notices`) → ai 레포 `MONGO_URL_MCP`
-- **Atlas 티어 재점검** — auto-embed 기각으로 M10 강제 사유 소멸 ([search-architecture.md](search-architecture.md) 비용 절 참조). 티어 변경 시 `$rankFusion`(8.1+) 재확인
+- ✅ Atlas read-only 유저 생성 (`skku_read`, `read@skku_notices`) → ai 레포 `MONGO_URL_MCP` — **완료 2026-07-29**, 쓰기·타 DB 접근 거부까지 검증
+- **Atlas 티어 재점검** — ~~auto-embed 기각으로 M10 강제 사유 소멸~~ → **adr-007 로 auto-embed 를 채택했으므로 M10+ 오토스케일링 조건이 다시 살아난다.** 2026-08-01 실측에서 이 클러스터는 인덱스 생성이 그대로 수락됐으나, 티어를 바꾸면 재확인 필요. ~~`$rankFusion`(8.1+)~~ → **8.0 도입 기능이라 현 클러스터(8.0.29)에서 동작** (잘못된 버전 근거 정정)
+- **클러스터 8.3 업그레이드 검토** — Atlas 네이티브 `$rerank` 사용 조건. 현재 8.0.29 에서 `$rerank is not allowed`. RAG 품질 개선 여지가 큰 항목(vector 대비 +10.82% by MongoDB)이라 후속 과제로 등록
+- **`date` 포맷 정규화** — 829건(12.6%)이 `"2026-07-29 16:18"` 형태. adr-003 의 사전식 범위 필터 상한이 마지막 하루를 누락시킨다. **크롤러 소유 선행 과제**
 - OSS 공개 준비는 별도 트랙: git 히스토리 시크릿 스캔 포함
 
 ## 의도적 범위 밖 (Out of Scope)
@@ -109,8 +115,12 @@
 
 | 리스크 | 대응 |
 |--------|------|
-| 임베딩 모델 관성 선택 (Voyage 미검증) | Phase 3 게이트 A — 후보 5종 자체 데이터 실측 (adr-002) |
-| 모델 정합성 드리프트 | ai `/api/embed` 단일 초크포인트로 구조적 축소 + search.json codegen + model echo |
+| ~~임베딩 모델 관성 선택 (Voyage 미검증)~~ | ✅ **해소** — 게이트 A 실측 완료, Voyage 확정 (adr-002) |
+| ~~모델 정합성 드리프트~~ | ✅ **구조적 소멸** — autoEmbed 인덱스 정의 하나에서 색인·질의 모델이 나온다 (adr-007) |
+| **`find_similar_notices` 가 비문서화 내부 네임스페이스 의존** | 주 기능(`search_notices`)은 공식 경로만 사용 → 내부 구조가 깨져도 검색은 안 죽는다. 상세는 adr-007 "감수하는 것" |
+| **auto-embed 초기 빌드 처리량 미측정** | 50건 표본(70초)으로 6,714건을 외삽할 수 없음. Phase 2b 백필 시 실측 |
+| **Atlas 임베딩 과금이 조직 인보이스로** | Voyage 무료 200M 이 Atlas 경로에도 적용되는지 미확인. Phase 2b 백필 후 청구서 확인 |
+| **`date` 포맷 혼재 → 범위 필터 상한 누락** | 크롤러 정규화 선행 (Ops 절) |
 | fastmcp 3.x API 드리프트 | 구현 시 검증, 폴백 명세 (ai 레포 문서) |
 | nori 옵션 비노출 | 문제 시 `lucene.cjk` 비교를 eval로 |
 | `schedule` 컬렉션 prod 부재 | `get_academic_schedule`은 배포 전까지 안내 메시지 |
