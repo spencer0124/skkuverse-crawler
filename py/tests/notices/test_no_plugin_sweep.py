@@ -39,10 +39,7 @@ def _router() -> FixtureRouter:
     return router
 
 
-async def test_sweep_with_injected_ports_never_touches_db():
-    sink = RecordingSink()
-    ports = Ports(sink=sink)
-
+async def _run_sweep(sink: RecordingSink, **run_kwargs):
     async def noop_rate_limit(self: Fetcher) -> None:
         return None
 
@@ -58,12 +55,17 @@ async def test_sweep_with_injected_ports_never_touches_db():
         respx.mock(assert_all_called=False) as respx_router,
     ):
         respx_router.route().mock(side_effect=_router().handler)
-        results = await run_crawl(
+        return await run_crawl(
             [depts.SKKU_STD_DEPT],
             CrawlOptions(max_pages=1),
-            ports=ports,
-            mode=FullSweep(),
+            ports=Ports(sink=sink),
+            **run_kwargs,
         )
+
+
+async def test_sweep_with_injected_ports_never_touches_db():
+    sink = RecordingSink()
+    results = await _run_sweep(sink, mode=FullSweep())
 
     assert len(results) == 1
     result = results[0]
@@ -89,3 +91,18 @@ async def test_sweep_with_injected_ports_never_touches_db():
     # prepare received this source's spec; the sink satisfies the protocol.
     assert sink.prepared == [SourceSpec(source_id="golden-std", name="골든 표준 게시판")]
     assert isinstance(sink, Sink)
+
+
+async def test_injected_ports_without_mode_defaults_to_full_sweep():
+    """The honest OSS default (architecture §CrawlMode): no wired seen
+    index + no explicit mode ⇒ FullSweep — pinned so the fallback branch
+    in run_crawl's mode resolution has direct coverage."""
+    sink = RecordingSink()
+    results = await _run_sweep(sink)  # mode omitted on purpose
+
+    assert results[0].errors == 0
+    crawled = [e for e in sink.events if isinstance(e, NoticeCrawled)]
+    assert crawled and all(e.change is None for e in crawled)
+    finished = sink.events[-1]
+    assert isinstance(finished, SourceFinished)
+    assert finished.stopped_by == "max_pages"

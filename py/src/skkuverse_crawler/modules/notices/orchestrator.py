@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import uuid
-from collections.abc import AsyncGenerator, AsyncIterator, Mapping
+from collections.abc import AsyncGenerator, Mapping
 from contextlib import aclosing
 from dataclasses import dataclass
 from typing import Any, assert_never
@@ -291,8 +291,14 @@ async def iter_source(
             # log_events order (precedes change_detected).
             logger.info("all_known_first_page_early_stop")
 
-        async for ev in _emit_page(list_items, existing_meta, strategy, dept, options, logger):
-            yield ev
+        # aclosing on the inner generator too: if iter_source is torn down
+        # mid-page, _emit_page is closed deterministically instead of at
+        # GC time via the event loop's asyncgen finalizer.
+        async with aclosing(
+            _emit_page(list_items, existing_meta, strategy, dept, options, logger)
+        ) as page_events:
+            async for ev in page_events:
+                yield ev
         yield PageCompleted(source_id=dept["id"], page=page)
 
         if is_first_page and all_known:
@@ -357,7 +363,7 @@ async def _emit_page(
     dept: dict[str, Any],
     options: CrawlOptions,
     logger: Any,
-) -> AsyncIterator[CrawlEvent]:
+) -> AsyncGenerator[CrawlEvent, None]:
     """One merged page emitter for both modes: with existing_meta={} every
     item takes the previous-is-None branch — the old full-sweep path falls
     out. Yields events only; storage and counters are the runner's job."""
