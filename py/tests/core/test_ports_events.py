@@ -35,11 +35,6 @@ class _UnknownFutureEvent(CrawlEvent):
     payload: str = "surprise"
 
 
-class _StubSeen:
-    async def lookup(self, source_id, article_nos):
-        return {}
-
-
 async def test_sink_tolerates_unknown_events():
     sink = NullSink()
     assert await sink.accept(_UnknownFutureEvent(source_id="test")) is None
@@ -84,7 +79,7 @@ def test_outcome_values_inherit_legacy_strings():
 
 
 def test_ports_defaults_to_null_objects():
-    ports = Ports(seen=_StubSeen())
+    ports = Ports()
     assert isinstance(ports.sink, NullSink)
     assert isinstance(ports.work_seed, NullWorkSeed)
 

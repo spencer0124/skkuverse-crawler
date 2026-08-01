@@ -12,13 +12,19 @@ from unittest.mock import patch
 
 import respx
 
-from skkuverse_crawler.core.events import NoticeCrawled
-from skkuverse_crawler.core.ports import NullWorkSeed, Ports, Sink, SourceSpec
+from skkuverse_crawler.core.crawl import FullSweep
+from skkuverse_crawler.core.events import (
+    NoticeCrawled,
+    PageCompleted,
+    SourceFinished,
+    SourceStarted,
+)
+from skkuverse_crawler.core.ports import Ports, Sink, SourceSpec
 from skkuverse_crawler.modules.notices.orchestrator import CrawlOptions, run_crawl
 from skkuverse_crawler.shared.fetcher import Fetcher
 from tests.characterization import depts
 from tests.characterization.harness import FixtureRouter
-from tests.support.ports import NullSeenIndex, RecordingSink
+from tests.support.ports import RecordingSink
 
 
 def _router() -> FixtureRouter:
@@ -33,10 +39,7 @@ def _router() -> FixtureRouter:
     return router
 
 
-async def test_sweep_with_injected_ports_never_touches_db():
-    sink = RecordingSink()
-    ports = Ports(seen=NullSeenIndex(), sink=sink, work_seed=NullWorkSeed())
-
+async def _run_sweep(sink: RecordingSink, **run_kwargs):
     async def noop_rate_limit(self: Fetcher) -> None:
         return None
 
@@ -52,24 +55,54 @@ async def test_sweep_with_injected_ports_never_touches_db():
         respx.mock(assert_all_called=False) as respx_router,
     ):
         respx_router.route().mock(side_effect=_router().handler)
-        results = await run_crawl(
+        return await run_crawl(
             [depts.SKKU_STD_DEPT],
-            CrawlOptions(incremental=False, max_pages=1),
-            ports=ports,
+            CrawlOptions(max_pages=1),
+            ports=Ports(sink=sink),
+            **run_kwargs,
         )
+
+
+async def test_sweep_with_injected_ports_never_touches_db():
+    sink = RecordingSink()
+    results = await _run_sweep(sink, mode=FullSweep())
 
     assert len(results) == 1
     result = results[0]
     assert result.errors == 0
     assert result.source_down is False
 
-    # Full sweep through a write-bearing-only sink: every event is a fresh
-    # NoticeCrawled, and None outcomes all count as INSERTED.
+    # Uniform emission: the sink sees the full stream, bookended by the
+    # progress tier; every result-tier event is a fresh NoticeCrawled and
+    # None outcomes all count as INSERTED.
+    assert isinstance(sink.events[0], SourceStarted)
+    finished = sink.events[-1]
+    assert isinstance(finished, SourceFinished)
+    assert finished.stopped_by == "max_pages"
+    assert finished.source_down is False
+    assert any(isinstance(e, PageCompleted) for e in sink.events)
+
     crawled = [e for e in sink.events if isinstance(e, NoticeCrawled)]
-    assert crawled and len(crawled) == len(sink.events)
+    assert crawled
     assert all(e.change is None for e in crawled)
     assert result.inserted == len(crawled)
+    assert sink.flushes == 1  # PageCompleted → flush, once for the one page
 
     # prepare received this source's spec; the sink satisfies the protocol.
     assert sink.prepared == [SourceSpec(source_id="golden-std", name="골든 표준 게시판")]
     assert isinstance(sink, Sink)
+
+
+async def test_injected_ports_without_mode_defaults_to_full_sweep():
+    """The honest OSS default (architecture §CrawlMode): no wired seen
+    index + no explicit mode ⇒ FullSweep — pinned so the fallback branch
+    in run_crawl's mode resolution has direct coverage."""
+    sink = RecordingSink()
+    results = await _run_sweep(sink)  # mode omitted on purpose
+
+    assert results[0].errors == 0
+    crawled = [e for e in sink.events if isinstance(e, NoticeCrawled)]
+    assert crawled and all(e.change is None for e in crawled)
+    finished = sink.events[-1]
+    assert isinstance(finished, SourceFinished)
+    assert finished.stopped_by == "max_pages"

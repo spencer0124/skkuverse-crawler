@@ -31,6 +31,7 @@ import httpx
 import respx
 from structlog.testing import capture_logs
 
+from skkuverse_crawler.core.crawl import CrawlMode
 from skkuverse_crawler.shared.fetcher import Fetcher
 from tests.support.fake_mongo import FakeCollection, FakeDatabase
 from tests.support.normalize import normalize_bson, sort_docs
@@ -111,9 +112,12 @@ async def run_golden(
     router: FixtureRouter,
     *,
     collection: FakeCollection | None = None,
-    incremental: bool = True,
+    mode: CrawlMode | None = None,
     max_pages: int | None = None,
 ) -> GoldenRun:
+    """mode=None exercises run_crawl's production default (Incremental over
+    the lazily-wired index — here wrapping the fake collection); pass
+    FullSweep() for the plugin-less sweep case."""
     from skkuverse_crawler.modules.notices.orchestrator import CrawlOptions, run_crawl
 
     collection = collection if collection is not None else FakeCollection()
@@ -137,7 +141,7 @@ async def run_golden(
     ):
         respx_router.route().mock(side_effect=router.handler)
         results = await run_crawl(
-            [dept], CrawlOptions(incremental=incremental, max_pages=max_pages)
+            [dept], CrawlOptions(max_pages=max_pages), mode=mode
         )
     return GoldenRun(collection=collection, results=results, logs=logs, ops_start=ops_start)
 

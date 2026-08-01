@@ -54,11 +54,13 @@ def test_core_import_is_infra_free(tmp_path):
     code = (
         "import sys\n"
         "import skkuverse_crawler.core\n"
+        "import skkuverse_crawler.core.crawl\n"
         "import skkuverse_crawler.core.events\n"
         "import skkuverse_crawler.core.module\n"
         "import skkuverse_crawler.core.ports\n"
         "import skkuverse_crawler.core.registry\n"
         "import skkuverse_crawler.core.results\n"
+        "import skkuverse_crawler.core.runner\n"
         "import skkuverse_crawler.core.sources\n"
         "sys.exit(1 if 'motor' in sys.modules or 'pymongo' in sys.modules else 0)\n"
     )

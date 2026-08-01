@@ -128,3 +128,12 @@ class TestPageBelowFloor:
     def test_missing_date_continues(self):
         items = [_make_list_item(articleNo=1, date="")]
         assert page_below_floor(items) is False
+
+    def test_since_none_disables_floor(self):
+        items = [_make_list_item(articleNo=1, date="2000-01-01")]
+        assert page_below_floor(items, since=None) is False
+
+    def test_custom_since_respected(self):
+        items = [_make_list_item(articleNo=1, date="2026-04-01")]
+        assert page_below_floor(items, since="2026-05-01") is True
+        assert page_below_floor(items, since="2026-03-01") is False

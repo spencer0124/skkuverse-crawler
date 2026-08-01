@@ -4,12 +4,20 @@ import dataclasses
 from datetime import datetime, timezone
 from unittest.mock import MagicMock
 
+import pytest
+
 from skkuverse_crawler.core.events import (
     ChangeInfo,
     ContentRefreshed,
     CrawlEvent,
+    ItemFailed,
+    ItemSkipped,
+    ListFetchFailed,
     NoticeCrawled,
     NoticeUnchanged,
+    PageCompleted,
+    SourceFinished,
+    SourceStarted,
 )
 from skkuverse_crawler.core.ports import DetailRef, Outcome, SourceSpec
 from skkuverse_crawler.modules.notices.models import Notice
@@ -221,6 +229,27 @@ class TestTolerantReader:
     async def test_unknown_event_ignored_without_touching_db(self, mock_collection):
         sink = MongoSink(mock_collection)
         assert await sink.accept(_UnknownFutureEvent(source_id="test")) is None
+        mock_collection.update_one.assert_not_awaited()
+        mock_collection.bulk_write.assert_not_awaited()
+        mock_collection.create_index.assert_not_awaited()
+
+    @pytest.mark.parametrize(
+        "event",
+        [
+            SourceStarted(source_id="s", source_name="n"),
+            PageCompleted(source_id="s", page=0),
+            ListFetchFailed(source_id="s", page=0, error="net"),
+            SourceFinished(source_id="s", stopped_by="empty_page", source_down=False, last_error=""),
+            ItemSkipped(source_id="s", article_no=1, reason="below_floor"),
+            ItemFailed(source_id="s", article_no=1, error="boom"),
+        ],
+        ids=type,
+    )
+    async def test_progress_and_module_events_ignored(self, mock_collection, event):
+        """PR 6's uniform emission sends every event through accept — the
+        Mongo sink must ignore all non-write-bearing ones with zero ops."""
+        sink = MongoSink(mock_collection)
+        assert await sink.accept(event) is None
         mock_collection.update_one.assert_not_awaited()
         mock_collection.bulk_write.assert_not_awaited()
         mock_collection.create_index.assert_not_awaited()

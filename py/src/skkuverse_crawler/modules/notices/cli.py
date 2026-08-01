@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 import click
 
+from ...core.crawl import FullSweep
 from ...shared.db import close_client
 from ...shared.logger import configure_logging
 from .config.loader import load_and_validate
@@ -43,14 +44,15 @@ async def _run(
     departments = load_and_validate()
 
     options = CrawlOptions(
-        incremental=not full_crawl,
         max_pages=max_pages,
         delay_ms=delay_ms,
         dept_filter=dept_filter if dept_filter else None,
     )
 
     try:
-        await run_crawl(departments, options)
+        await run_crawl(
+            departments, options, mode=FullSweep() if full_crawl else None
+        )
     finally:
         await close_client()
 

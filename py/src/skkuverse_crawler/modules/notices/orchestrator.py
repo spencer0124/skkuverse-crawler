@@ -1,14 +1,28 @@
 from __future__ import annotations
 
 import asyncio
-import time
 import uuid
-from collections.abc import Mapping
+from collections.abc import AsyncGenerator, Mapping
+from contextlib import aclosing
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, assert_never
 
-from ...core.events import ChangeInfo, ContentRefreshed, NoticeCrawled, NoticeUnchanged
-from ...core.ports import Outcome, Ports, SeenRecord, Sink, SourceSpec
+from ...core.crawl import CrawlMode, FullSweep, Incremental
+from ...core.events import (
+    ChangeInfo,
+    ContentRefreshed,
+    CrawlEvent,
+    ItemFailed,
+    ItemSkipped,
+    ListFetchFailed,
+    NoticeCrawled,
+    NoticeUnchanged,
+    PageCompleted,
+    SourceFinished,
+    SourceStarted,
+)
+from ...core.ports import Ports, SeenIndex, SeenRecord, SourceSpec, WorkSeed
+from ...core.runner import run_events
 from ...core.results import SourceResult
 from ...shared.db import get_db
 from ...shared.fetcher import Fetcher
@@ -29,28 +43,37 @@ _MAX_CONTENT_BYTES = 5 * 1024 * 1024  # 5MB
 
 @dataclass
 class CrawlOptions:
-    incremental: bool = True
     max_pages: int | None = None
     delay_ms: int | None = None
     dept_filter: tuple[str, ...] | None = None
+    # Deployment policy, not a core constant (architecture ownership table):
+    # the notices module supplies the current floor as the default.
+    since_date: str | None = SERVICE_START_DATE
 
 
 async def run_crawl(
     departments: list[dict[str, Any]],
     options: CrawlOptions,
     ports: Ports | None = None,
+    mode: CrawlMode | None = None,
 ) -> list[SourceResult]:
     crawl_id = uuid.uuid4().hex[:8]
     logger = get_logger("orchestrator", crawl_id=crawl_id)
 
+    seen: SeenIndex | None = None
     if ports is None:
         db = await get_db()
         collection = db["notices"]
         # Lazy wiring import — the single plugins import point. Temporary
         # modules→wiring edge, retired in PR 7 when injection inverts.
-        from ...wiring import build_notices_ports
+        from ...wiring import build_notices_runtime
 
-        ports = build_notices_ports(collection)
+        ports, seen = build_notices_runtime(collection)
+    if mode is None:
+        # Production callers (no ports, no mode) keep today's behavior:
+        # incremental over the wired Mongo index. Injected-ports callers
+        # get the honest FullSweep default (architecture §CrawlMode).
+        mode = Incremental(seen) if seen is not None else FullSweep()
 
     fetcher = Fetcher(delay_ms=options.delay_ms or 500)
 
@@ -84,7 +107,7 @@ async def run_crawl(
 
     async def crawl_with_sem(dept: dict) -> SourceResult:
         async with sem:
-            return await _crawl_department(dept, ports, fetcher, options, logger)
+            return await _crawl_department(dept, ports, fetcher, mode, options, logger)
 
     tasks = [crawl_with_sem(dept) for dept in filtered]
     settled = await asyncio.gather(*tasks, return_exceptions=True)
@@ -116,10 +139,10 @@ async def _crawl_department(
     dept: dict[str, Any],
     ports: Ports,
     fetcher: Fetcher,
+    mode: CrawlMode,
     options: CrawlOptions,
     logger: Any,
 ) -> SourceResult:
-    start = time.monotonic()
     strategy_cls = STRATEGY_MAP.get(dept["strategy"])
     if not strategy_cls:
         raise ValueError(f"Unknown strategy: {dept['strategy']}")
@@ -127,11 +150,52 @@ async def _crawl_department(
     strategy = strategy_cls(fetcher)
     result = SourceResult(dept_id=dept["id"], dept_name=dept["name"])
 
+    # aclosing makes generator teardown deterministic when run_events
+    # raises (accept/flush failure) — without it the suspended generator
+    # is finalized at GC time with flaky asyncio warnings.
+    async with aclosing(
+        iter_source(
+            dept, strategy, mode=mode, work_seed=ports.work_seed,
+            options=options, logger=logger,
+        )
+    ) as events:
+        await run_events(events, ports.sink, result=result)
+
+    logger.info(
+        "department_crawl_finished",
+        dept_id=result.dept_id,
+        inserted=result.inserted,
+        updated=result.updated,
+        skipped=result.skipped,
+        errors=result.errors,
+        duration_ms=result.duration_ms,
+    )
+    return result
+
+
+async def iter_source(
+    dept: dict[str, Any],
+    strategy: Any,
+    *,
+    mode: CrawlMode,
+    work_seed: WorkSeed,
+    options: CrawlOptions,
+    logger: Any,
+) -> AsyncGenerator[CrawlEvent, None]:
+    """The crawl loop as an event stream — no store, no sink, no counters.
+
+    Yields the full vocabulary: write-bearing result events plus the
+    progress tier. The consumer (runner) owns aggregation and flush
+    semantics. Break positions and log call sites are byte-pinned by the
+    characterization goldens — do not reorder.
+    """
     logger.info("starting_department_crawl", dept_id=dept["id"], dept_name=dept["name"])
+    yield SourceStarted(source_id=dept["id"], source_name=dept["name"])
 
     # Re-crawl null content — deliberately divergent from the upsert path
     # (위험 ④): explicit field list, no build_notice, no editHistory.
-    null_refs = await ports.work_seed.pending_refs(dept["id"])
+    # Unconditional, mode-independent (adr-006 §⑫).
+    null_refs = await work_seed.pending_refs(dept["id"])
     if null_refs:
         logger.info("recrawling_null_content", count=len(null_refs), dept_id=dept["id"])
         for ref in null_refs:
@@ -151,43 +215,48 @@ async def _crawl_department(
                     cleaned = None
                     raw_content = None
                 clean_markdown = html_to_markdown(cleaned)
-                await ports.sink.accept(
-                    ContentRefreshed(
-                        source_id=dept["id"],
-                        ref=ref,
-                        fields={
-                            "content": raw_content,
-                            "contentText": detail.contentText,
-                            "cleanHtml": cleaned,
-                            "cleanMarkdown": clean_markdown,
-                            "contentHash": compute_content_hash(cleaned),
-                            "attachments": detail.attachments,
-                        },
-                    )
+                yield ContentRefreshed(
+                    source_id=dept["id"],
+                    ref=ref,
+                    fields={
+                        "content": raw_content,
+                        "contentText": detail.contentText,
+                        "cleanHtml": cleaned,
+                        "cleanMarkdown": clean_markdown,
+                        "contentHash": compute_content_hash(cleaned),
+                        "attachments": detail.attachments,
+                    },
                 )
-                result.updated += 1
 
     # Crawl list pages
-    max_pages = options.max_pages or (100 if options.incremental else 2500)
+    max_pages = options.max_pages or (100 if isinstance(mode, Incremental) else 2500)
     page = 0
+    stopped_by = "max_pages"
+    source_down = False
+    last_error = ""
 
     while page < max_pages:
         try:
             list_items = await strategy.crawl_list(dept, page)
         except Exception as exc:
             logger.error("list_fetch_failed", dept_id=dept["id"], page=page, error=str(exc))
-            result.errors += 1
+            yield ListFetchFailed(source_id=dept["id"], page=page, error=str(exc))
             if page == 0:
-                result.source_down = True
-                result.last_error = str(exc)
+                # Decided here, surfaced only via SourceFinished — the runner
+                # must not infer source_down from ListFetchFailed (a page-3
+                # failure is not a downed source).
+                source_down = True
+                last_error = str(exc)
+            stopped_by = "list_fetch_failed"
             break
 
         if not list_items:
             logger.info("empty_list_page", dept_id=dept["id"], page=page)
+            stopped_by = "empty_page"
             break
 
         is_first_page = page == 0
-        below_floor = page_below_floor(list_items)
+        below_floor = page_below_floor(list_items, since=options.since_date)
 
         # Page 0 must be processed even when its regular rows are all below
         # the floor: a pinned row dated after the floor only ever surfaces
@@ -195,47 +264,60 @@ async def _crawl_department(
         # pages repeat the same pinned rows, so breaking pre-process is safe.
         if below_floor and not is_first_page:
             logger.info("floor_date_stopping", page=page, dept_id=dept["id"])
+            stopped_by = "floor_date"
             break
 
-        if options.incremental:
-            article_nos = [item.articleNo for item in list_items]
-            existing_meta = await ports.seen.lookup(dept["id"], article_nos)
-            all_known = not should_continue(list_items, existing_meta)
+        existing_meta: Mapping[int, SeenRecord]
+        match mode:
+            case Incremental(seen=seen_index):
+                article_nos = [item.articleNo for item in list_items]
+                existing_meta = await seen_index.lookup(dept["id"], article_nos)
+                all_known = not should_continue(list_items, existing_meta)
+            case FullSweep():
+                # Explicit assignment (not emergent) — kills the latent
+                # UnboundLocalError of the v1 skeleton (adr-006 근거 ⑦).
+                # No lookup call — matching the old full path's zero DB reads.
+                existing_meta, all_known = {}, False
+            case _:
+                assert_never(mode)
 
-            if not is_first_page and all_known:
-                logger.info("all_known_stopping", page=page)
-                break
+        if not is_first_page and all_known:
+            logger.info("all_known_stopping", page=page)
+            stopped_by = "all_known"
+            break
 
-            if is_first_page and all_known:
-                logger.info("all_known_first_page_early_stop")
-                await _process_page_smart(
-                    list_items, existing_meta, strategy, dept, ports.sink, result, logger
-                )
-                break
+        if is_first_page and all_known:
+            # Logged BEFORE processing — pinned by the round2/round3 golden
+            # log_events order (precedes change_detected).
+            logger.info("all_known_first_page_early_stop")
 
-            await _process_page_smart(
-                list_items, existing_meta, strategy, dept, ports.sink, result, logger
-            )
-        else:
-            await _process_page_full(list_items, strategy, dept, ports.sink, result, logger)
+        # aclosing on the inner generator too: if iter_source is torn down
+        # mid-page, _emit_page is closed deterministically instead of at
+        # GC time via the event loop's asyncgen finalizer.
+        async with aclosing(
+            _emit_page(list_items, existing_meta, strategy, dept, options, logger)
+        ) as page_events:
+            async for ev in page_events:
+                yield ev
+        yield PageCompleted(source_id=dept["id"], page=page)
+
+        if is_first_page and all_known:
+            stopped_by = "all_known_first_page"
+            break
 
         if below_floor:
             logger.info("floor_date_stopping", page=page, dept_id=dept["id"])
+            stopped_by = "floor_date"
             break
 
         page += 1
 
-    result.duration_ms = int((time.monotonic() - start) * 1000)
-    logger.info(
-        "department_crawl_finished",
-        dept_id=result.dept_id,
-        inserted=result.inserted,
-        updated=result.updated,
-        skipped=result.skipped,
-        errors=result.errors,
-        duration_ms=result.duration_ms,
+    yield SourceFinished(
+        source_id=dept["id"],
+        stopped_by=stopped_by,
+        source_down=source_down,
+        last_error=last_error,
     )
-    return result
 
 
 async def _verify_and_measure_images(
@@ -274,32 +356,37 @@ async def _verify_and_measure_images(
         return ImageCheckResult()
 
 
-async def _process_page_smart(
+async def _emit_page(
     list_items: list[NoticeListItem],
     existing_meta: Mapping[int, SeenRecord],
     strategy: Any,
     dept: dict[str, Any],
-    sink: Sink,
-    result: SourceResult,
+    options: CrawlOptions,
     logger: Any,
-) -> None:
+) -> AsyncGenerator[CrawlEvent, None]:
+    """One merged page emitter for both modes: with existing_meta={} every
+    item takes the previous-is-None branch — the old full-sweep path falls
+    out. Yields events only; storage and counters are the runner's job."""
     for item in list_items:
         try:
-            if item.date and item.date < SERVICE_START_DATE:
-                result.skipped += 1
+            if options.since_date and item.date and item.date < options.since_date:
+                # Silent today (no log line) — event only; adding a log here
+                # would break the golden log_events byte-identity.
+                yield ItemSkipped(
+                    source_id=dept["id"],
+                    article_no=item.articleNo,
+                    reason="below_floor",
+                )
                 continue
 
             existing = existing_meta.get(item.articleNo)
 
             if existing and not has_changed(item, existing):
-                await sink.accept(
-                    NoticeUnchanged(
-                        source_id=dept["id"],
-                        article_no=item.articleNo,
-                        views=item.views,
-                    )
+                yield NoticeUnchanged(
+                    source_id=dept["id"],
+                    article_no=item.articleNo,
+                    views=item.views,
                 )
-                result.skipped += 1
                 continue
 
             detail = await strategy.crawl_detail(
@@ -331,14 +418,7 @@ async def _process_page_smart(
             )
 
             if not existing:
-                outcome = await sink.accept(
-                    NoticeCrawled(source_id=dept["id"], notice=notice)
-                )
-                # None ⇒ INSERTED (architecture §러너 집계 규칙).
-                if outcome is Outcome.UPDATED:
-                    result.updated += 1
-                else:
-                    result.inserted += 1
+                yield NoticeCrawled(source_id=dept["id"], notice=notice)
             else:
                 logger.info(
                     "change_detected",
@@ -356,71 +436,22 @@ async def _process_page_smart(
                     title_changed=existing.title != item.title,
                     content_changed=old_hash is not None and old_hash != new_hash,
                 )
-                await sink.accept(
-                    NoticeCrawled(
-                        source_id=dept["id"],
-                        notice=notice,
-                        previous=existing,
-                        change=change,
-                    )
+                yield NoticeCrawled(
+                    source_id=dept["id"],
+                    notice=notice,
+                    previous=existing,
+                    change=change,
                 )
-                result.updated += 1
 
+        # Must stay `except Exception` (never broaden): yield points sit
+        # inside this try, so aclose()'s GeneratorExit (a BaseException) has
+        # to pass through — a broader catch would turn cancellation into a
+        # phantom ItemFailed.
         except Exception as exc:
             logger.error("process_article_failed", articleNo=item.articleNo, error=str(exc))
-            result.errors += 1
-
-    await sink.flush()
-
-
-async def _process_page_full(
-    list_items: list[NoticeListItem],
-    strategy: Any,
-    dept: dict[str, Any],
-    sink: Sink,
-    result: SourceResult,
-    logger: Any,
-) -> None:
-    for item in list_items:
-        try:
-            if item.date and item.date < SERVICE_START_DATE:
-                result.skipped += 1
-                continue
-
-            detail = await strategy.crawl_detail(
-                {"articleNo": item.articleNo, "detailPath": item.detailPath}, dept
-            )
-
-            abs_content = (
-                normalize_content_urls(detail.content, dept["baseUrl"])
-                if detail and detail.content
-                else None
-            )
-            source_url = (
-                item.detailPath
-                if item.detailPath.startswith("http")
-                else f"{dept['baseUrl']}{item.detailPath}"
-            )
-            img_result = await _verify_and_measure_images(
-                abs_content, source_url, dept["id"], item.articleNo, logger,
-            )
-
-            notice = build_notice(
-                item, detail,
-                department=dept["name"],
+            yield ItemFailed(
                 source_id=dept["id"],
-                base_url=dept["baseUrl"],
-                image_dimensions=img_result.dimensions or None,
+                article_no=item.articleNo,
+                error=str(exc),
             )
-            outcome = await sink.accept(
-                NoticeCrawled(source_id=dept["id"], notice=notice)
-            )
-            # None ⇒ INSERTED (architecture §러너 집계 규칙).
-            if outcome is Outcome.UPDATED:
-                result.updated += 1
-            else:
-                result.inserted += 1
 
-        except Exception as exc:
-            logger.error("process_article_failed", articleNo=item.articleNo, error=str(exc))
-            result.errors += 1
