@@ -69,9 +69,12 @@ def mock_db_patch(mock_collection):
     """Patch `shared.db.get_db` to return a mock db backed by `mock_collection`.
 
     Only effective for consumers that import `get_db` lazily inside a function
-    body (attachment_validator, markdown_validator). Consumers that bind
-    `get_db` at import time (orchestrator, update_checker, processor,
-    crawl_health) are NOT covered — patch their own binding site instead.
+    body (plugins/mongo/audit.py). Consumers that bind `get_db` at import time
+    (plugins/mongo/update_checker, plugins/ai_summary/processor,
+    plugins/health) are NOT covered — patch their own binding site instead.
+
+    The orchestrator dropped off this list in PR 7: it no longer imports
+    get_db at all, because it receives ports instead of fetching them.
     """
     mock_db = MagicMock()
     mock_db.__getitem__ = MagicMock(return_value=mock_collection)
