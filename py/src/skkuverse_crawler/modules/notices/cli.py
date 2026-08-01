@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import click
 
-from ...core.crawl import FullSweep
+from ...core.crawl import FullSweep, Incremental
 from ...shared.db import close_client
 from ...shared.logger import configure_logging
 from .config.loader import load_and_validate
@@ -49,9 +49,19 @@ async def _run(
         dept_filter=dept_filter if dept_filter else None,
     )
 
+    # Assembly at the entry point, not in the crawl logic: this is a CLI
+    # leaf, so reaching for wiring here is the sanctioned direction (the
+    # orchestrator no longer does). Lazy so `--help` stays import-light.
+    from ...wiring import notices_ports
+
+    ports, seen = await notices_ports()
+
     try:
         await run_crawl(
-            departments, options, mode=FullSweep() if full_crawl else None
+            departments,
+            options,
+            ports=ports,
+            mode=FullSweep() if full_crawl else Incremental(seen),
         )
     finally:
         await close_client()

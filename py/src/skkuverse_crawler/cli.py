@@ -32,16 +32,9 @@ async def _start_scheduler(module_filter: str | None = None) -> None:
 
     from .core import registry
     from .shared.db import close_client
+    from .wiring import build_runtime
 
-    # Register modules
-    from .crawl_health.module import CrawlHealthSummaryModule
-    from .modules.notices.module import NoticesModule, NoticesUpdateCheckModule
-    from .notices_summary.module import NoticesSummaryModule
-
-    registry.register(NoticesModule())
-    registry.register(NoticesUpdateCheckModule())
-    registry.register(NoticesSummaryModule())
-    registry.register(CrawlHealthSummaryModule())
+    build_runtime()
 
     scheduler = AsyncIOScheduler()
 
@@ -56,7 +49,6 @@ async def _start_scheduler(module_filter: str | None = None) -> None:
             continue
         scheduler.add_job(
             mod.run, trigger,
-            kwargs={"incremental": True},
             max_instances=1,
             coalesce=True,
             misfire_grace_time=10,
@@ -70,7 +62,7 @@ async def _start_scheduler(module_filter: str | None = None) -> None:
             continue
         if not mod.config.run_on_start:
             continue
-        await mod.run(incremental=True)
+        await mod.run()
 
     # Wait for signal
     stop_event = asyncio.Event()

@@ -22,10 +22,9 @@ from ...core.events import (
     SourceStarted,
 )
 from ...core.pipeline import ContentDoc, Pipeline, StageContext
-from ...core.ports import Ports, SeenIndex, SeenRecord, SourceSpec, WorkSeed
+from ...core.ports import Ports, SeenRecord, SourceSpec, WorkSeed
 from ...core.runner import run_events
 from ...core.results import SourceResult
-from ...shared.db import get_db
 from ...shared.fetcher import Fetcher
 from ...shared.html_cleaner import clean_html, normalize_content_urls
 from ...shared.html_to_markdown import html_to_markdown
@@ -58,20 +57,15 @@ async def run_crawl(
     crawl_id = uuid.uuid4().hex[:8]
     logger = get_logger("orchestrator", crawl_id=crawl_id)
 
-    seen: SeenIndex | None = None
+    # Null objects, not lazy wiring: callers that want a store inject it
+    # (wiring builds the bundle, NoticesModule and the CLI pass it in).
+    # Defaults are the honest plugin-less configuration — no store to
+    # consult means nothing is known, which is FullSweep
+    # (architecture §CrawlMode).
     if ports is None:
-        db = await get_db()
-        collection = db["notices"]
-        # Lazy wiring import — the single plugins import point. Temporary
-        # modules→wiring edge, retired in PR 7 when injection inverts.
-        from ...wiring import build_notices_runtime
-
-        ports, seen = build_notices_runtime(collection)
+        ports = Ports()
     if mode is None:
-        # Production callers (no ports, no mode) keep today's behavior:
-        # incremental over the wired Mongo index. Injected-ports callers
-        # get the honest FullSweep default (architecture §CrawlMode).
-        mode = Incremental(seen) if seen is not None else FullSweep()
+        mode = FullSweep()
 
     fetcher = Fetcher(delay_ms=options.delay_ms or 500)
 

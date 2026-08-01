@@ -1,9 +1,14 @@
 """The plugin-less sweep gate (plan PR 5 검증 게이트).
 
 run_crawl with injected Null/Recording ports must complete a real
-fixture-served crawl without ever touching get_db or importing wiring's
-Mongo plugins — the "core requires nothing" acceptance case in its PR 5
-form (PR 6 re-aims it at FullSweep()+NullSink).
+fixture-served crawl without ever touching a database — the "core
+requires nothing" acceptance case in its PR 5 form (PR 6 re-aimed it at
+FullSweep()+NullSink; PR 7 at the inverted injection).
+
+The forbidden-get_db patch is gone because the seam it guarded is gone:
+the orchestrator no longer imports get_db at all, which the structural
+assertion below pins directly. The autouse _no_real_mongo fixture is the
+backstop — any real Motor client construction is an AssertionError.
 """
 
 from __future__ import annotations
@@ -43,14 +48,7 @@ async def _run_sweep(sink: RecordingSink, **run_kwargs):
     async def noop_rate_limit(self: Fetcher) -> None:
         return None
 
-    async def forbidden_get_db():
-        raise AssertionError("get_db must not be called when ports are injected")
-
     with (
-        patch(
-            "skkuverse_crawler.modules.notices.orchestrator.get_db",
-            side_effect=forbidden_get_db,
-        ),
         patch.object(Fetcher, "_rate_limit", noop_rate_limit),
         respx.mock(assert_all_called=False) as respx_router,
     ):
@@ -61,6 +59,13 @@ async def _run_sweep(sink: RecordingSink, **run_kwargs):
             ports=Ports(sink=sink),
             **run_kwargs,
         )
+
+
+def test_orchestrator_has_no_database_seam():
+    """The inversion, stated structurally: there is no get_db to patch."""
+    from skkuverse_crawler.modules.notices import orchestrator
+
+    assert not hasattr(orchestrator, "get_db")
 
 
 async def test_sweep_with_injected_ports_never_touches_db():
