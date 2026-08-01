@@ -22,17 +22,13 @@ from .core import registry
 from .core.module import CrawlModule
 from .core.ports import Ports, SeenIndex, Sink, WorkSeed
 from .plugins.mongo.seen import MongoSeenIndex
-from .plugins.mongo.sink import MongoSink, ensure_indexes
+from .plugins.mongo.sink import MongoSink
 from .plugins.mongo.work_seed import MongoWorkSeed
 from .shared.logger import get_logger
 
-__all__ = ["WiringError", "build_notices_runtime", "build_runtime", "ensure_notice_indexes"]
+__all__ = ["WiringError", "build_notices_runtime", "build_runtime"]
 
 logger = get_logger("wiring")
-
-# Shim for modules/notices/update_checker (its only former dedup import);
-# retired in PR 7 when update_checker moves into plugins/mongo.
-ensure_notice_indexes = ensure_indexes
 
 PortsFactory = Callable[[], Awaitable[tuple[Ports, SeenIndex]]]
 
@@ -86,8 +82,9 @@ def build_runtime() -> tuple[CrawlModule, ...]:
     """
     from .crawl_health.module import CrawlHealthSummaryModule
     from .crawl_health.store import record_and_alert
-    from .modules.notices.module import NoticesModule, NoticesUpdateCheckModule
+    from .modules.notices.module import NoticesModule
     from .notices_summary.module import NoticesSummaryModule
+    from .plugins.mongo.update_checker import NoticesUpdateCheckModule
 
     modules: tuple[CrawlModule, ...] = (
         NoticesModule(ports_factory=notices_ports, on_results=record_and_alert),

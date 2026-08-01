@@ -1,3 +1,16 @@
+"""Tier-2 update detection — a Mongo-shaped scan over recent notices.
+
+Lives in plugins/ because it is a store scan: it decides what to re-fetch
+from what the collection already holds, and writes editHistory back.
+
+It reaches into modules/notices for the crawl vocabulary it re-uses
+(STRATEGY_MAP, the content hash, the service floor date). That direction
+— plugins→modules — is sanctioned and un-guarded by design: plugins are
+the outermost layer and may depend on core and modules alike. It is the
+first RUNTIME instance of that edge (the earlier ones are
+TYPE_CHECKING-only); the adr records it.
+"""
+
 from __future__ import annotations
 
 import asyncio
@@ -9,13 +22,16 @@ from typing import Any
 import httpx
 from pymongo import ReturnDocument
 
+from ...core.module import ModuleConfig
+from ...modules.notices.constants import SERVICE_START_DATE
+from ...modules.notices.hashing import compute_content_hash
+from ...modules.notices.strategies import STRATEGY_MAP
+from ...shared.config import get_config
 from ...shared.db import get_db
 from ...shared.fetcher import Fetcher
 from ...shared.html_cleaner import clean_html, normalize_content_urls
 from ...shared.logger import get_logger
-from .constants import SERVICE_START_DATE
-from .hashing import compute_content_hash
-from .strategies import STRATEGY_MAP
+from .sink import ensure_indexes
 
 
 @dataclass
@@ -38,13 +54,9 @@ async def run_update_check(
 ) -> list[UpdateCheckResult]:
     logger = get_logger("update_checker")
 
-    # Lazy wiring import: the "single plugins import point" shim (temporary
-    # edge, retired in PR 7 when update_checker moves into plugins/mongo).
-    from ...wiring import ensure_notice_indexes
-
     db = await get_db()
     collection = db["notices"]
-    await ensure_notice_indexes(collection)
+    await ensure_indexes(collection)
 
     fetcher = Fetcher(delay_ms=500)
 
@@ -309,3 +321,34 @@ async def _check_department(
             )
 
     return result
+
+
+class NoticesUpdateCheckModule:
+    """Scheduled Tier-2 pass. Lives with the scan it runs — moving it here
+    is what lets modules/notices/module.py hold only the crawl."""
+
+    @property
+    def config(self) -> ModuleConfig:
+        return ModuleConfig(
+            name="notices-update-check",
+            cron_schedule="10 8,14,20 * * *",
+        )
+
+    async def run(self, **kwargs: Any) -> dict:
+        from ...modules.notices.config.loader import load_and_validate
+
+        departments = load_and_validate()
+        results = await run_update_check(
+            departments,
+            dept_filter=get_config().dept_filter,
+        )
+        return {
+            "departments": len(results),
+            "checked": sum(r.total_checked for r in results),
+            "changed": sum(r.content_changed for r in results),
+            "backfilled": sum(r.hash_backfilled for r in results),
+            "errors": sum(r.fetch_errors for r in results),
+        }
+
+    async def shutdown(self) -> None:
+        pass
