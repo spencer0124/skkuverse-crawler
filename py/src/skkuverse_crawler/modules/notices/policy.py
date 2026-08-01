@@ -11,17 +11,18 @@ dedup.py / orchestrator.py (plan 위험 ③: 이동과 수정을 같은 커밋�
 
 from __future__ import annotations
 
-from typing import Any
+from collections.abc import Mapping
 
+from ...core.ports import SeenRecord
 from .constants import SERVICE_START_DATE
 from .models import NoticeListItem
 
 
-def has_changed(item: NoticeListItem, existing: dict[str, Any]) -> bool:
-    if item.date != existing["date"]:
+def has_changed(item: NoticeListItem, previous: SeenRecord) -> bool:
+    if item.date != previous.date:
         return True
     new_title = item.title
-    old_title = existing["title"]
+    old_title = previous.title
     if new_title == old_title:
         return False
     # Truncated list title (ends with "...") that matches the DB's full
@@ -39,7 +40,7 @@ def has_changed(item: NoticeListItem, existing: dict[str, Any]) -> bool:
 
 def should_continue(
     page_items: list[NoticeListItem],
-    existing_meta: dict[int, dict[str, Any]],
+    existing_meta: Mapping[int, SeenRecord],
 ) -> bool:
     """True while the page still holds unknown regular rows.
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from skkuverse_crawler.core.ports import SeenRecord
 from skkuverse_crawler.modules.notices.models import NoticeListItem
 from skkuverse_crawler.modules.notices.policy import (
     has_changed,
@@ -25,17 +26,17 @@ def _make_list_item(**overrides) -> NoticeListItem:
 class TestHasChanged:
     def test_identical_title_and_date_not_changed(self):
         item = _make_list_item(title="Hello", date="2026-03-01")
-        existing = {"title": "Hello", "date": "2026-03-01"}
+        existing = SeenRecord(article_no=1, title="Hello", date="2026-03-01")
         assert has_changed(item, existing) is False
 
     def test_date_differs_is_changed(self):
         item = _make_list_item(title="Hello", date="2026-03-02")
-        existing = {"title": "Hello", "date": "2026-03-01"}
+        existing = SeenRecord(article_no=1, title="Hello", date="2026-03-01")
         assert has_changed(item, existing) is True
 
     def test_truncated_title_with_ellipsis_matches_prefix(self):
         item = _make_list_item(title="Very long announcemen...", date="2026-03-01")
-        existing = {"title": "Very long announcement about stuff", "date": "2026-03-01"}
+        existing = SeenRecord(article_no=1, title="Very long announcement about stuff", date="2026-03-01")
         assert has_changed(item, existing) is False
 
     def test_truncated_title_with_ufffd_before_ellipsis(self):
@@ -45,27 +46,26 @@ class TestHasChanged:
             title="[IBK기업은행] 2026년 전문·일반계약직 및 전문준정규직 채용�...",
             date="2026-04-20",
         )
-        existing = {
-            "title": "[IBK기업은행] 2026년 전문·일반계약직 및 전문준정규직 채용공고 (~5/4, 10:00)",
-            "date": "2026-04-20",
-        }
+        existing = SeenRecord(
+            article_no=1, title="[IBK기업은행] 2026년 전문·일반계약직 및 전문준정규직 채용공고 (~5/4, 10:00)", date="2026-04-20",
+        )
         assert has_changed(item, existing) is False
 
     def test_truncated_title_with_multiple_ufffd(self):
         item = _make_list_item(title="Hello wor��...", date="2026-03-01")
-        existing = {"title": "Hello world peace", "date": "2026-03-01"}
+        existing = SeenRecord(article_no=1, title="Hello world peace", date="2026-03-01")
         assert has_changed(item, existing) is False
 
     def test_real_title_change_still_detected(self):
         item = _make_list_item(title="Totally different title", date="2026-03-01")
-        existing = {"title": "Original title", "date": "2026-03-01"}
+        existing = SeenRecord(article_no=1, title="Original title", date="2026-03-01")
         assert has_changed(item, existing) is True
 
     def test_empty_prefix_after_stripping_does_not_match_everything(self):
         # If everything before "..." is U+FFFD, we can't safely infer a match;
         # treat as changed rather than declaring a silent match on any old title.
         item = _make_list_item(title="�...", date="2026-03-01")
-        existing = {"title": "Completely unrelated", "date": "2026-03-01"}
+        existing = SeenRecord(article_no=1, title="Completely unrelated", date="2026-03-01")
         assert has_changed(item, existing) is True
 
 
@@ -84,12 +84,12 @@ class TestShouldContinue:
         assert should_continue([self._item(1)], {}) is True
 
     def test_all_regulars_known_stops(self):
-        meta = {1: {"articleNo": 1}}
+        meta = {1: SeenRecord(article_no=1, title="제목", date="2026-04-15")}
         assert should_continue([self._item(1)], meta) is False
 
     def test_unknown_old_pinned_does_not_block_stop(self):
         """floor 이전 고정글은 DB에 없어도 all-known stop을 막지 않음."""
-        meta = {1: {"articleNo": 1}}
+        meta = {1: SeenRecord(article_no=1, title="제목", date="2026-04-15")}
         items = [self._item(99, pinned=True), self._item(1)]
         assert should_continue(items, meta) is False
 

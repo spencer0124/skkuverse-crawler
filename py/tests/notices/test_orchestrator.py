@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
+from skkuverse_crawler.core.ports import SeenRecord
 from skkuverse_crawler.core.results import SourceResult as DeptResult
 from skkuverse_crawler.modules.notices.models import NoticeDetail, NoticeListItem
 from skkuverse_crawler.modules.notices.orchestrator import (
@@ -120,7 +121,9 @@ class TestThreeWayBranch:
     ):
         """existing + has_changed → update_with_history with source=tier1."""
         item = _make_item(article_no=1, title="새 제목")
-        existing_meta = {1: {"articleNo": 1, "title": "옛 제목", "date": "2026-04-15", "contentHash": "old_hash"}}
+        existing_meta = {
+            1: SeenRecord(article_no=1, title="옛 제목", date="2026-04-15", content_hash="old_hash")
+        }
         strategy = AsyncMock()
         strategy.crawl_detail.return_value = MOCK_DETAIL
         mock_build.return_value = MagicMock(articleNo=1, sourceId="test-dept", contentHash="new_hash")
@@ -140,7 +143,9 @@ class TestThreeWayBranch:
     async def test_unchanged_item_goes_to_touch(self, mock_touch, mock_collection):
         """existing + not changed → bulk_touch_notices."""
         item = _make_item(article_no=1, title="동일 제목", date="2026-04-15")
-        existing_meta = {1: {"articleNo": 1, "title": "동일 제목", "date": "2026-04-15", "contentHash": "hash"}}
+        existing_meta = {
+            1: SeenRecord(article_no=1, title="동일 제목", date="2026-04-15", content_hash="hash")
+        }
         strategy = AsyncMock()
         result = DeptResult()
         logger = MagicMock()

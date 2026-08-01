@@ -3,10 +3,12 @@ from __future__ import annotations
 import asyncio
 import time
 import uuid
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
 
+from ...core.ports import SeenRecord
 from ...core.results import SourceResult
 from ...shared.db import get_db
 from ...shared.fetcher import Fetcher
@@ -196,7 +198,18 @@ async def _crawl_department(
 
         if options.incremental:
             article_nos = [item.articleNo for item in list_items]
-            existing_meta = await find_existing_meta(collection, dept["id"], article_nos)
+            raw_meta = await find_existing_meta(collection, dept["id"], article_nos)
+            # Temporary adapter until the port re-route lands: SeenIndex
+            # returns SeenRecord natively.
+            existing_meta = {
+                no: SeenRecord(
+                    article_no=m["articleNo"],
+                    title=m["title"],
+                    date=m["date"],
+                    content_hash=m["contentHash"],
+                )
+                for no, m in raw_meta.items()
+            }
             all_known = not should_continue(list_items, existing_meta)
 
             if not is_first_page and all_known:
@@ -273,7 +286,7 @@ async def _verify_and_measure_images(
 
 async def _process_page_smart(
     list_items: list[NoticeListItem],
-    existing_meta: dict[int, dict[str, Any]],
+    existing_meta: Mapping[int, SeenRecord],
     strategy: Any,
     dept: dict[str, Any],
     collection: Any,
@@ -337,18 +350,18 @@ async def _process_page_smart(
                 logger.info(
                     "change_detected",
                     articleNo=item.articleNo,
-                    old_title=existing["title"],
+                    old_title=existing.title,
                     new_title=item.title,
                 )
-                old_hash = existing.get("contentHash")
+                old_hash = existing.content_hash
                 new_hash = notice.contentHash
                 edit_entry = {
                     "detectedAt": datetime.now(timezone.utc),
                     "oldHash": old_hash,
                     "newHash": new_hash,
-                    "oldTitle": existing["title"],
+                    "oldTitle": existing.title,
                     "newTitle": item.title,
-                    "titleChanged": existing["title"] != item.title,
+                    "titleChanged": existing.title != item.title,
                     "contentChanged": old_hash is not None and old_hash != new_hash,
                     "source": "tier1",
                 }
