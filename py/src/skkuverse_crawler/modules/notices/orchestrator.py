@@ -3,13 +3,25 @@ from __future__ import annotations
 import asyncio
 import time
 import uuid
-from collections.abc import Mapping
+from collections.abc import AsyncIterator, Mapping
 from dataclasses import dataclass
 from typing import Any, assert_never
 
 from ...core.crawl import CrawlMode, FullSweep, Incremental
-from ...core.events import ChangeInfo, ContentRefreshed, NoticeCrawled, NoticeUnchanged
-from ...core.ports import Outcome, Ports, SeenIndex, SeenRecord, Sink, SourceSpec
+from ...core.events import (
+    ChangeInfo,
+    ContentRefreshed,
+    CrawlEvent,
+    ItemFailed,
+    ItemSkipped,
+    ListFetchFailed,
+    NoticeCrawled,
+    NoticeUnchanged,
+    PageCompleted,
+    SourceFinished,
+    SourceStarted,
+)
+from ...core.ports import Outcome, Ports, SeenIndex, SeenRecord, SourceSpec, WorkSeed
 from ...core.results import SourceResult
 from ...shared.db import get_db
 from ...shared.fetcher import Fetcher
@@ -138,11 +150,79 @@ async def _crawl_department(
     strategy = strategy_cls(fetcher)
     result = SourceResult(dept_id=dept["id"], dept_name=dept["name"])
 
+    # Inline aggregation reproducing today's counters exactly; the flip to
+    # the uniform core runner (every event through accept) is the next
+    # commit, so reviewers can read "did the events come out in the right
+    # order" and "did the sink do the right thing with them" separately.
+    async for ev in iter_source(
+        dept, strategy, mode=mode, work_seed=ports.work_seed,
+        options=options, logger=logger,
+    ):
+        match ev:
+            case NoticeCrawled(change=None):
+                outcome = await ports.sink.accept(ev)
+                # None ⇒ INSERTED (architecture §러너 집계 규칙).
+                if outcome is Outcome.UPDATED:
+                    result.updated += 1
+                else:
+                    result.inserted += 1
+            case NoticeCrawled():
+                await ports.sink.accept(ev)
+                result.updated += 1
+            case ContentRefreshed():
+                await ports.sink.accept(ev)
+                result.updated += 1
+            case NoticeUnchanged():
+                await ports.sink.accept(ev)
+                result.skipped += 1
+            case ItemSkipped():
+                result.skipped += 1
+            case ItemFailed() | ListFetchFailed():
+                result.errors += 1
+            case PageCompleted():
+                await ports.sink.flush()
+            case SourceFinished(source_down=source_down, last_error=last_error):
+                result.source_down = source_down
+                result.last_error = last_error
+            case _:
+                pass  # SourceStarted and future progress events
+
+    result.duration_ms = int((time.monotonic() - start) * 1000)
+    logger.info(
+        "department_crawl_finished",
+        dept_id=result.dept_id,
+        inserted=result.inserted,
+        updated=result.updated,
+        skipped=result.skipped,
+        errors=result.errors,
+        duration_ms=result.duration_ms,
+    )
+    return result
+
+
+async def iter_source(
+    dept: dict[str, Any],
+    strategy: Any,
+    *,
+    mode: CrawlMode,
+    work_seed: WorkSeed,
+    options: CrawlOptions,
+    logger: Any,
+) -> AsyncIterator[CrawlEvent]:
+    """The crawl loop as an event stream — no store, no sink, no counters.
+
+    Yields the full vocabulary: write-bearing result events plus the
+    progress tier. The consumer (runner) owns aggregation and flush
+    semantics. Break positions and log call sites are byte-pinned by the
+    characterization goldens — do not reorder.
+    """
     logger.info("starting_department_crawl", dept_id=dept["id"], dept_name=dept["name"])
+    yield SourceStarted(source_id=dept["id"], source_name=dept["name"])
 
     # Re-crawl null content — deliberately divergent from the upsert path
     # (위험 ④): explicit field list, no build_notice, no editHistory.
-    null_refs = await ports.work_seed.pending_refs(dept["id"])
+    # Unconditional, mode-independent (adr-006 §⑫).
+    null_refs = await work_seed.pending_refs(dept["id"])
     if null_refs:
         logger.info("recrawling_null_content", count=len(null_refs), dept_id=dept["id"])
         for ref in null_refs:
@@ -162,39 +242,44 @@ async def _crawl_department(
                     cleaned = None
                     raw_content = None
                 clean_markdown = html_to_markdown(cleaned)
-                await ports.sink.accept(
-                    ContentRefreshed(
-                        source_id=dept["id"],
-                        ref=ref,
-                        fields={
-                            "content": raw_content,
-                            "contentText": detail.contentText,
-                            "cleanHtml": cleaned,
-                            "cleanMarkdown": clean_markdown,
-                            "contentHash": compute_content_hash(cleaned),
-                            "attachments": detail.attachments,
-                        },
-                    )
+                yield ContentRefreshed(
+                    source_id=dept["id"],
+                    ref=ref,
+                    fields={
+                        "content": raw_content,
+                        "contentText": detail.contentText,
+                        "cleanHtml": cleaned,
+                        "cleanMarkdown": clean_markdown,
+                        "contentHash": compute_content_hash(cleaned),
+                        "attachments": detail.attachments,
+                    },
                 )
-                result.updated += 1
 
     # Crawl list pages
     max_pages = options.max_pages or (100 if isinstance(mode, Incremental) else 2500)
     page = 0
+    stopped_by = "max_pages"
+    source_down = False
+    last_error = ""
 
     while page < max_pages:
         try:
             list_items = await strategy.crawl_list(dept, page)
         except Exception as exc:
             logger.error("list_fetch_failed", dept_id=dept["id"], page=page, error=str(exc))
-            result.errors += 1
+            yield ListFetchFailed(source_id=dept["id"], page=page, error=str(exc))
             if page == 0:
-                result.source_down = True
-                result.last_error = str(exc)
+                # Decided here, surfaced only via SourceFinished — the runner
+                # must not infer source_down from ListFetchFailed (a page-3
+                # failure is not a downed source).
+                source_down = True
+                last_error = str(exc)
+            stopped_by = "list_fetch_failed"
             break
 
         if not list_items:
             logger.info("empty_list_page", dept_id=dept["id"], page=page)
+            stopped_by = "empty_page"
             break
 
         is_first_page = page == 0
@@ -206,6 +291,7 @@ async def _crawl_department(
         # pages repeat the same pinned rows, so breaking pre-process is safe.
         if below_floor and not is_first_page:
             logger.info("floor_date_stopping", page=page, dept_id=dept["id"])
+            stopped_by = "floor_date"
             break
 
         existing_meta: Mapping[int, SeenRecord]
@@ -224,6 +310,7 @@ async def _crawl_department(
 
         if not is_first_page and all_known:
             logger.info("all_known_stopping", page=page)
+            stopped_by = "all_known"
             break
 
         if is_first_page and all_known:
@@ -231,30 +318,27 @@ async def _crawl_department(
             # log_events order (precedes change_detected).
             logger.info("all_known_first_page_early_stop")
 
-        await _process_page(
-            list_items, existing_meta, strategy, dept, options, ports.sink, result, logger
-        )
+        async for ev in _emit_page(list_items, existing_meta, strategy, dept, options, logger):
+            yield ev
+        yield PageCompleted(source_id=dept["id"], page=page)
 
         if is_first_page and all_known:
+            stopped_by = "all_known_first_page"
             break
 
         if below_floor:
             logger.info("floor_date_stopping", page=page, dept_id=dept["id"])
+            stopped_by = "floor_date"
             break
 
         page += 1
 
-    result.duration_ms = int((time.monotonic() - start) * 1000)
-    logger.info(
-        "department_crawl_finished",
-        dept_id=result.dept_id,
-        inserted=result.inserted,
-        updated=result.updated,
-        skipped=result.skipped,
-        errors=result.errors,
-        duration_ms=result.duration_ms,
+    yield SourceFinished(
+        source_id=dept["id"],
+        stopped_by=stopped_by,
+        source_down=source_down,
+        last_error=last_error,
     )
-    return result
 
 
 async def _verify_and_measure_images(
@@ -293,35 +377,37 @@ async def _verify_and_measure_images(
         return ImageCheckResult()
 
 
-async def _process_page(
+async def _emit_page(
     list_items: list[NoticeListItem],
     existing_meta: Mapping[int, SeenRecord],
     strategy: Any,
     dept: dict[str, Any],
     options: CrawlOptions,
-    sink: Sink,
-    result: SourceResult,
     logger: Any,
-) -> None:
-    """One merged processor for both modes: with existing_meta={} every item
-    takes the previous-is-None branch — the old full-sweep path falls out."""
+) -> AsyncIterator[CrawlEvent]:
+    """One merged page emitter for both modes: with existing_meta={} every
+    item takes the previous-is-None branch — the old full-sweep path falls
+    out. Yields events only; storage and counters are the runner's job."""
     for item in list_items:
         try:
             if options.since_date and item.date and item.date < options.since_date:
-                result.skipped += 1
+                # Silent today (no log line) — event only; adding a log here
+                # would break the golden log_events byte-identity.
+                yield ItemSkipped(
+                    source_id=dept["id"],
+                    article_no=item.articleNo,
+                    reason="below_floor",
+                )
                 continue
 
             existing = existing_meta.get(item.articleNo)
 
             if existing and not has_changed(item, existing):
-                await sink.accept(
-                    NoticeUnchanged(
-                        source_id=dept["id"],
-                        article_no=item.articleNo,
-                        views=item.views,
-                    )
+                yield NoticeUnchanged(
+                    source_id=dept["id"],
+                    article_no=item.articleNo,
+                    views=item.views,
                 )
-                result.skipped += 1
                 continue
 
             detail = await strategy.crawl_detail(
@@ -353,14 +439,7 @@ async def _process_page(
             )
 
             if not existing:
-                outcome = await sink.accept(
-                    NoticeCrawled(source_id=dept["id"], notice=notice)
-                )
-                # None ⇒ INSERTED (architecture §러너 집계 규칙).
-                if outcome is Outcome.UPDATED:
-                    result.updated += 1
-                else:
-                    result.inserted += 1
+                yield NoticeCrawled(source_id=dept["id"], notice=notice)
             else:
                 logger.info(
                     "change_detected",
@@ -378,19 +457,22 @@ async def _process_page(
                     title_changed=existing.title != item.title,
                     content_changed=old_hash is not None and old_hash != new_hash,
                 )
-                await sink.accept(
-                    NoticeCrawled(
-                        source_id=dept["id"],
-                        notice=notice,
-                        previous=existing,
-                        change=change,
-                    )
+                yield NoticeCrawled(
+                    source_id=dept["id"],
+                    notice=notice,
+                    previous=existing,
+                    change=change,
                 )
-                result.updated += 1
 
+        # Must stay `except Exception` (never broaden): yield points sit
+        # inside this try, so aclose()'s GeneratorExit (a BaseException) has
+        # to pass through — a broader catch would turn cancellation into a
+        # phantom ItemFailed.
         except Exception as exc:
             logger.error("process_article_failed", articleNo=item.articleNo, error=str(exc))
-            result.errors += 1
-
-    await sink.flush()
+            yield ItemFailed(
+                source_id=dept["id"],
+                article_no=item.articleNo,
+                error=str(exc),
+            )
 
