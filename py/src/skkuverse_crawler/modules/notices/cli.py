@@ -20,7 +20,8 @@ from .orchestrator import CrawlOptions, run_crawl
     "json_output",
     is_flag=True,
     help="Print each notice as JSON on stdout and store nothing "
-    "(implies a full sweep — with no store there is nothing to compare against).",
+    "(implies a full sweep — with no store there is nothing to compare "
+    "against — and defaults to 1 page per source; raise it with --pages).",
 )
 def notices_cli(
     once: bool,
@@ -85,6 +86,14 @@ async def _run(
         await close_client()
 
 
+# A store-less run cannot be incremental, so `max_pages` is the only thing
+# standing between a casual `--json` and a full historical sweep of every
+# enabled source. The orchestrator's own default for FullSweep is 2500,
+# which across 140 university servers is not something a first-run command
+# should do by accident.
+STORE_LESS_DEFAULT_PAGES = 1
+
+
 async def _run_store_less(departments: list, options: CrawlOptions) -> None:
     """The core-only path: no wiring, no shared.db, no optional dependency.
 
@@ -93,15 +102,20 @@ async def _run_store_less(departments: list, options: CrawlOptions) -> None:
     is not a choice: without a store there is no seen index, so every item
     is new by definition.
     """
+    import dataclasses
+
     from ...core.ports import Ports
     from ...core.sinks import JsonLinesSink
 
-    await run_crawl(
-        departments,
-        options,
-        ports=Ports(sink=JsonLinesSink()),
-        mode=FullSweep(),
-    )
+    if options.max_pages is None:
+        options = dataclasses.replace(options, max_pages=STORE_LESS_DEFAULT_PAGES)
+
+    sink = JsonLinesSink()
+    await run_crawl(departments, options, ports=Ports(sink=sink), mode=FullSweep())
+    # run_events flushes on PageCompleted, but a source that dies at page 0
+    # emits backfill events before the first one. stdout flushes at exit;
+    # an injected file handle would not.
+    await sink.flush()
 
 
 def _require_store() -> None:

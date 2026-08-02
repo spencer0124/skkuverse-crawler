@@ -39,20 +39,37 @@ PortsFactory = Callable[[], Awaitable[tuple[Ports, SeenIndex]]]
 # plugin -> (a distribution its extra installs, is it configured?)
 #
 # The marker only answers "is the code installed". Whether it is usable is
-# a config question, so both are checked. discord/ai/dispatch share
-# tenacity and therefore cannot be told apart by marker alone — their
-# predicates carry that weight. The one that matters operationally, mongo,
-# is exact on both counts.
+# a config question, so both are checked. discord/ai/dispatch all install
+# tenacity and cannot be told apart by marker alone; their predicates carry
+# that weight, so a predicate that cannot be False makes its plugin
+# unconditionally "active" and the log stops being evidence.
+#
+# `ai` is exactly that case and is deliberately marker-only: ai_service_url
+# always has a value (core.settings.default_ai_service_url), so there is no
+# configuration that says "no AI". Reporting it whenever the code is
+# installed is the honest reading — reachability is not a config question
+# and is not claimed here.
 _PLUGIN_PROBES: dict[str, tuple[str, Callable[[Config], bool]]] = {
     "mongo": ("motor", lambda s: bool(s.mongo_url)),
     "sched": ("apscheduler", lambda s: True),
     "discord": ("tenacity", lambda s: bool(s.discord_webhook_url)),
-    "ai": ("tenacity", lambda s: bool(s.ai_service_url)),
+    "ai": ("tenacity", lambda s: True),
     "dispatch": ("tenacity", lambda s: bool(s.dispatch_url and s.internal_dispatch_token)),
 }
 
-# Without these, `start` is not a crawler — it is a bandwidth bill.
-REQUIRED_IN_PRODUCTION = ("mongo", "sched")
+# Two different requirements, deliberately separate.
+#
+# INSTALLED is everything build_runtime imports unconditionally. Leaving
+# discord/ai out would let the gate pass and the process die three lines
+# later on `import tenacity` — loud, but without the message naming the
+# missing --extra, which is the gate's whole purpose.
+#
+# CONFIGURED is narrower, and only mongo belongs in it. A production
+# deployment with no Discord webhook is a documented, supported state
+# (alerts are skipped and the boot log says so); refusing to start over it
+# would take the crawler down for a missing nice-to-have.
+REQUIRED_INSTALLED = ("mongo", "sched", "discord", "ai")
+REQUIRED_CONFIGURED = ("mongo",)
 
 
 class WiringError(RuntimeError):
@@ -142,14 +159,16 @@ def _refuse_if_required_plugins_are_missing(settings: Config, profile: CrawlerEn
         return
 
     problems = []
-    for name in REQUIRED_IN_PRODUCTION:
-        marker, configured = _PLUGIN_PROBES[name]
+    for name in REQUIRED_INSTALLED:
+        marker, _configured = _PLUGIN_PROBES[name]
         if not _installed(marker):
             problems.append(
                 f"plugin {name!r} is not installed — the image needs "
                 f"`--extra {name}` (provides {marker})"
             )
-        elif not configured(settings):
+    for name in REQUIRED_CONFIGURED:
+        marker, configured = _PLUGIN_PROBES[name]
+        if _installed(marker) and not configured(settings):
             problems.append(f"plugin {name!r} is installed but not configured")
 
     if problems:

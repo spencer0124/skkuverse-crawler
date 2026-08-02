@@ -12,17 +12,18 @@ ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 # scheduler — the failure the extras themselves introduce (plan 위험 ⑤).
 # The flag set is pinned against pyproject by test_packaging.py.
 #
-# --frozen on both: a stale lock must fail the build loudly rather than
-# silently re-resolve into a non-reproducible image.
+# --locked on both, NOT --frozen: --frozen merely skips re-resolution and
+# happily installs from a lock that no longer matches pyproject. --locked
+# asserts they agree, which is the failure worth failing the build for.
 
 # Dependencies layer (cached if unchanged)
 COPY uv.lock pyproject.toml ./
-RUN uv sync --frozen --no-install-project --no-dev \
+RUN uv sync --locked --no-install-project --no-dev \
     --extra mongo --extra sched --extra discord --extra ai
 
 # Project code
 COPY . .
-RUN uv sync --frozen --no-dev \
+RUN uv sync --locked --no-dev \
     --extra mongo --extra sched --extra discord --extra ai
 
 # Runtime stage (no uv binary)

@@ -23,9 +23,17 @@ from .ports import Outcome, SourceSpec
 
 
 def _fallback(value: Any) -> str:
+    """Serialise what JSON cannot, and refuse the rest.
+
+    A blanket ``str(value)`` would turn an ObjectId into a 24-hex string a
+    consumer cannot tell from a real string field, and bytes into
+    ``"b'\\x00…'"``. Silent corruption is worse than a crash here: raising
+    means a field that changes shape fails the crawl instead of emitting a
+    plausible-looking lie.
+    """
     if isinstance(value, (datetime, date)):
         return value.isoformat()
-    return str(value)
+    raise TypeError(f"{type(value).__name__} is not JSON-serialisable")
 
 
 class JsonLinesSink:
@@ -46,7 +54,15 @@ class JsonLinesSink:
         if isinstance(event, NoticeCrawled):
             self._write(dataclasses.asdict(event.notice))
         elif isinstance(event, ContentRefreshed):
-            self._write({"articleNo": event.ref.article_no, **event.fields})
+            # sourceId keeps the two line shapes uniform — every other line
+            # carries it, and a consumer merging sources needs it.
+            self._write(
+                {
+                    "articleNo": event.ref.article_no,
+                    "sourceId": event.source_id,
+                    **event.fields,
+                }
+            )
         # Everything else — the whole progress tier and any event type this
         # sink has never heard of — is deliberately not an error.
         return None
@@ -55,6 +71,8 @@ class JsonLinesSink:
         self._stream.flush()
 
     def _write(self, payload: dict[str, Any]) -> None:
+        # allow_nan=False: the default emits bare NaN/Infinity, which is
+        # valid Python and invalid JSON — jq, JS and Go all reject it.
         self._stream.write(
-            json.dumps(payload, ensure_ascii=False, default=_fallback) + "\n"
+            json.dumps(payload, ensure_ascii=False, allow_nan=False, default=_fallback) + "\n"
         )

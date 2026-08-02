@@ -17,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v4
-      - run: uv sync --frozen --extra dev
+      - run: uv sync --locked --extra dev
       - run: uv run pytest tests/ -v
       # A push straight to main previously ran no conformance test at all.
       - run: uv run pytest -m mongo -q
@@ -61,6 +61,10 @@ jobs:
             # built without the mongo extra boots, logs cleanly, writes nothing,
             # and passes the check above (plan 위험 ⑤). Assert it actually
             # assembled the store instead.
-            LOGS=$(docker compose logs crawler --since 60s)
-            echo "$LOGS" | grep -q 'active_plugins' || { echo "no active_plugins log"; rollback; exit 1; }
-            echo "$LOGS" | grep 'active_plugins' | grep -q 'mongo' || { echo "mongo plugin absent"; rollback; exit 1; }
+            # Bare assignment under `set -e` would abort WITHOUT rolling back,
+            # leaving the new image running unverified.
+            LOGS=$(docker compose logs crawler --since 60s) || { echo "could not read logs"; rollback; exit 1; }
+            # Match inside the plugins array specifically: scanning the whole
+            # line would also match a module name containing "mongo".
+            echo "$LOGS" | grep -q '"plugins": \[[^]]*"mongo"' \
+              || { echo "mongo plugin absent from active_plugins"; rollback; exit 1; }

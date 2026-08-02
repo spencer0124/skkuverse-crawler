@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import json as _json
+import sys
 from dataclasses import asdict
 from typing import TYPE_CHECKING
 
@@ -73,7 +74,9 @@ def validate_attachments_cli(
     from ...env import init_config
 
     cfg = init_config()
-    configure_logging(cfg)
+    # Same rule as `notices --json`: when stdout carries the report, logs go
+    # to stderr or the output is not parseable.
+    configure_logging(cfg, stream=sys.stderr if json_output else None)
     asyncio.run(_run_validate_attachments(dept, limit, no_http, json_output, concurrency))
 
 
@@ -156,7 +159,7 @@ def validate_markdown_cli(
     from ...env import init_config
 
     cfg = init_config()
-    configure_logging(cfg)
+    configure_logging(cfg, stream=sys.stderr if json_output else None)
     asyncio.run(_run_validate_markdown(dept, limit, json_output, severity))
 
 

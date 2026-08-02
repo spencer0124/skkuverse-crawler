@@ -119,7 +119,9 @@ cli.py (Click CLI / APScheduler)
 
 ## Key Design Decisions
 
-### Centralized Config (`shared/config.py`)
+### Centralized Config (`env.py` + `core/settings.py`)
+
+> ⚠️ *(PR 8)* `shared/config.py`는 둘로 갈렸다: 값 타입은 `core/settings.py`(환경 접근 없음), 환경 읽기는 `env.py`(`os.environ`·dotenv 유일 접점, `test_env_is_the_only_environment_reader`가 강제). `load_config()`는 `settings_from_env()`로 개명. **`MONGO_URL` 필수 검증은 제거됐다** — extras 도입으로 "저장소 없음"이 정당한 상태가 됐고, 요구는 `shared.db.get_client()`(`MongoUrlMissing`)와 production 프로파일 게이트(`wiring.ProfileError`)로 이동했다.
 
 skkuverse-server의 `lib/config.js` 패턴을 Python으로 포팅한 중앙집중 환경 설정 모듈.
 
@@ -148,8 +150,7 @@ skkuverse-server의 `lib/config.js` 패턴을 Python으로 포팅한 중앙집�
 CLI entrypoint (cli.py / notices/cli.py)
   → init_config()
     → load_dotenv(override=False)   # .env 로드 (시스템 ENV 우선)
-    → load_config()                 # os.environ → Config dataclass
-    → validate (MONGO_URL 필수)     # 누락 시 SystemExit
+    → settings_from_env()           # os.environ → Config dataclass (env.py)
     → 싱글턴 캐시
   → configure_logging()             # config에서 env, log_format 읽기
   → mode_label 로깅                 # "DEVELOPMENT (dev DB)" 등
@@ -200,7 +201,7 @@ CLI entrypoint (cli.py / notices/cli.py)
 
 ## Environment
 
-모든 환경변수는 `shared/config.py`에서 중앙 관리. 직접 `os.getenv()` 호출 금지.
+모든 환경변수는 `env.py`에서 중앙 관리. 직접 `os.getenv()` 호출 금지 (예외는 `modules/notices/config/loader.py`의 `SOURCES_JSON_PATH` 하나 — 경로 해석이 Config 생성보다 먼저다).
 
 | 변수 | 필수 | 기본값 | 설명 |
 |------|------|--------|------|

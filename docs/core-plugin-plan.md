@@ -222,6 +222,8 @@
 - **`MONGO_URL` 요구는 사라진 게 아니라 이동**했다: config 로딩 → `shared.db.get_client()`(`MongoUrlMissing`) + `wiring` production 프로파일 게이트. 설정 로딩이 배포 정책을 강제하지 않게 된 것이 `notices --json`을 가능하게 한다.
 - **os.environ 리더는 1개가 아니라 2개** — `env.py`와 `modules/notices/config/loader.py`(SOURCES_JSON_PATH). 경로 해석이 Config보다 먼저 일어나므로 구조적으로 불가피. 불변식 문구가 이미 거짓이었다는 기록으로 허용목록에 남김.
 - **콘솔 스크립트는 `skkuverse-crawler` 유지**, 문서의 `skku-crawl`을 정정.
+- **부팅 거부는 "설치됨"과 "설정됨"을 나눈다** (`REQUIRED_INSTALLED` vs `REQUIRED_CONFIGURED`). build_runtime이 discord·ai를 무조건 import하므로 코드 부재는 게이트에서 잡아야 하지만, Discord 웹훅 미설정은 문서화된 정당한 프로덕션 상태라 거부 사유가 아니다. 둘을 뭉치면 nice-to-have 하나로 크롤러 전체가 죽는다.
+- **행동 델타 기록**: development 프로파일 + `MONGO_URL` 미설정 시 예전에는 `init_config`이 즉시 `SystemExit`했으나, 이제 부팅에 성공하고 매 틱 `MongoUrlMissing`이 APScheduler에 삼켜진다. production은 게이트가 막고 `CRAWLER_ENV` 기본값도 production이라 실 배포엔 영향 없음 — 로컬 개발자가 겪을 수 있는 변화로 기록.
 - **CI가 dev PR에도 트리거되도록 변경** + `core-only`·`docker` 잡 추가, `deploy.yml`에 `-m mongo`와 `active_plugins` 양성 로그 단언 추가.
 
 ## PR 9 — 공개 문서

@@ -25,9 +25,12 @@ _EXTRA_MARKER = {
 # guarded, not trusted: tests/cli/test_lazy_group.py imports every entry
 # and asserts the text still matches.
 _LAZY: dict[str, tuple[str, str, str, str | None]] = {
+    # Extras must list everything the command's import chain needs, not just
+    # the one it is named after: health reads crawl_health state out of Mongo
+    # (bson + shared.db) and summarize writes summaries back to it.
     "health-summary": (
         ".plugins.health.cli", "health_summary_cli",
-        "Send the daily crawl-health summary to Discord once.", "discord",
+        "Send the daily crawl-health summary to Discord once.", "mongo,discord",
     ),
     "notices": (
         ".modules.notices.cli", "notices_cli",
@@ -35,7 +38,7 @@ _LAZY: dict[str, tuple[str, str, str, str | None]] = {
     ),
     "summarize": (
         ".plugins.ai_summary.cli", "summarize_cli",
-        "Run AI summarization on unsummarized notices.", "ai",
+        "Run AI summarization on unsummarized notices.", "mongo,ai",
     ),
     "update-check": (
         ".plugins.mongo.cli", "update_check_cli",
@@ -84,12 +87,15 @@ class _LazyGroup(click.Group):
         if meta is None:
             return super().get_command(ctx, cmd_name)
         module, attr, _help, extras = meta
-        if extras is not None:
+        # Shell completion calls get_command for every name and click treats
+        # it as a lookup that returns None, not one that raises — a missing
+        # extra there must not put a traceback in the user's terminal.
+        if extras is not None and not ctx.resilient_parsing:
             self._require_extras(cmd_name, extras)
         try:
             loaded = importlib.import_module(module, __package__)
         except ImportError as exc:
-            if extras is None:
+            if extras is None or ctx.resilient_parsing:
                 raise
             raise click.ClickException(_missing_extras_message(cmd_name, extras, str(exc))) from exc
         return getattr(loaded, attr)
@@ -119,11 +125,21 @@ class _LazyGroup(click.Group):
                 )
 
     def format_commands(self, ctx: click.Context, formatter: click.HelpFormatter) -> None:
-        rows: list[tuple[str, click.Command]] = [
-            (name, click.Command(name, help=meta[2])) for name, meta in _LAZY.items()
-        ]
-        rows += list(self.commands.items())
-        rows.sort()
+        # Eagerly-registered commands win over the table: if a name exists in
+        # both, the real Command is the truth and the placeholder is stale.
+        # Keyed by name rather than sorting tuples, because click.Command has
+        # no ordering and `rows.sort()` on ties raises TypeError.
+        by_name: dict[str, click.Command] = {
+            name: click.Command(name, help=meta[2]) for name, meta in _LAZY.items()
+        }
+        by_name.update(self.commands)
+
+        # Click's own format_commands hides `hidden` commands; a placeholder
+        # can never be hidden, but a real one can.
+        rows = [(name, cmd) for name, cmd in sorted(by_name.items()) if not cmd.hidden]
+        if not rows:
+            return
+
         limit = formatter.width - 6 - max(len(name) for name, _ in rows)
         with formatter.section("Commands"):
             formatter.write_dl([(name, cmd.get_short_help_str(limit)) for name, cmd in rows])

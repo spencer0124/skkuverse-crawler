@@ -18,7 +18,7 @@ import click
 import pytest
 from click.testing import CliRunner
 
-from skkuverse_crawler.cli import _LAZY, main
+from skkuverse_crawler.cli import _LAZY, _LazyGroup, main
 
 
 def _eager_equivalent() -> click.Group:
@@ -57,11 +57,13 @@ def test_every_table_entry_resolves_and_still_matches():
 
 
 def test_list_commands_covers_the_table_and_the_inline_commands():
+    """`set(_LAZY) <= set(listed)` and sortedness are true by construction,
+    so neither is asserted here. What can actually break is the super()
+    half — an override that forgets it drops every inline command."""
     ctx = click.Context(main)
     listed = main.list_commands(ctx)
-    assert set(_LAZY) <= set(listed)
     assert "start" in listed, "inline @main.command()s must still be listed"
-    assert listed == sorted(listed)
+    assert set(listed) == set(_LAZY) | set(main.commands)
 
 
 def test_get_command_returns_the_real_command():
@@ -86,7 +88,9 @@ def test_missing_extra_gives_an_install_hint(monkeypatch):
     result = CliRunner().invoke(main, ["update-check"])
     assert result.exit_code != 0
     assert "skkuverse-crawler[mongo]" in result.output
-    assert "motor" in result.output
+    # NB: not asserting "motor" appears — this test's own fake ImportError
+    # message contains it, so that would be circular. The live detection
+    # path (find_spec) is covered by test_missing_extra_detected_by_probe.
 
 
 def test_a_command_with_no_extras_reraises_the_original_error(monkeypatch):
@@ -129,3 +133,67 @@ def test_help_leaves_every_subcommand_module_unimported():
         timeout=120,
     )
     assert result.returncode == 0, f"--help imported subcommand modules: {result.stdout.strip()}"
+
+
+def test_missing_extra_detected_by_probe_not_by_import_failure(monkeypatch):
+    """The live path. The CLI leaves import fine without their driver — that
+    is what makes --help cheap — so ImportError never fires in a real
+    core-only install and the hint has to come from find_spec."""
+    import importlib.util
+
+    real = importlib.util.find_spec
+
+    def _no_motor(name, package=None):
+        return None if name == "motor" else real(name, package)
+
+    monkeypatch.setattr("skkuverse_crawler.cli.importlib.util.find_spec", _no_motor)
+
+    result = CliRunner().invoke(main, ["update-check"])
+    assert result.exit_code != 0
+    assert "skkuverse-crawler[mongo]" in result.output
+
+
+def test_completion_does_not_raise_when_an_extra_is_missing(monkeypatch):
+    """Click calls get_command for every name while completing, and treats
+    it as a lookup that returns None. Raising there puts a traceback in the
+    user's terminal on every TAB press."""
+    import importlib.util
+
+    real = importlib.util.find_spec
+    monkeypatch.setattr(
+        "skkuverse_crawler.cli.importlib.util.find_spec",
+        lambda name, package=None: None if name in {"motor", "tenacity"} else real(name, package),
+    )
+
+    ctx = click.Context(main, resilient_parsing=True)
+    for name in _LAZY:
+        # Must not raise; None (module genuinely absent) is an acceptable answer.
+        main.get_command(ctx, name)
+
+
+def test_a_duplicate_registration_does_not_break_help():
+    """A name in both _LAZY and self.commands must render once, not crash.
+    Sorting (name, Command) tuples raises TypeError on a tie because
+    click.Command has no ordering."""
+    from skkuverse_crawler.modules.notices.cli import notices_cli
+
+    group = _LazyGroup("main", help=main.help)
+    group.add_command(notices_cli)
+
+    result = CliRunner().invoke(group, ["--help"])
+    assert result.exit_code == 0, result.output
+    assert result.output.count("\n  notices ") == 1, "duplicate row rendered"
+
+
+def test_hidden_commands_are_not_listed_in_help():
+    """Stock click omits hidden commands; an override that forgets to would
+    expose a debug command in the public help."""
+    group = _LazyGroup("main", help=main.help)
+
+    @group.command(hidden=True)
+    def secret():
+        """Should not appear."""
+
+    result = CliRunner().invoke(group, ["--help"])
+    assert result.exit_code == 0
+    assert "secret" not in result.output

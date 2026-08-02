@@ -157,7 +157,7 @@ class TestProductionProfileGate:
         message = str(exc.value)
         assert "mongo" in message
         assert "--extra mongo" in message, "the message must say how to fix it"
-        assert "store nothing" in message or "stores nothing" in message or "store" in message
+        assert "store nothing" in message, "the message must say what going ahead would do"
 
     async def test_production_refuses_when_a_required_plugin_is_unconfigured(self):
         with pytest.raises(wiring.ProfileError, match="not configured"):
@@ -195,3 +195,33 @@ class TestActivePlugins:
         real = wiring._installed
         with patch.object(wiring, "_installed", lambda d: False if d == "motor" else real(d)):
             assert "mongo" not in wiring.active_plugins(settings)
+
+
+class TestRequiredSetsAreDistinct:
+    """Installed-vs-configured is the distinction that keeps the gate from
+    taking production down over an optional feature."""
+
+    async def test_production_boots_without_a_discord_webhook(self):
+        """Alerts unconfigured is a documented, supported state — the boot
+        log announces it. Refusing to start would trade a nice-to-have for
+        the whole crawler."""
+        settings = TestProductionProfileGate._settings(discord_webhook_url=None)
+        with patch("skkuverse_crawler.core.registry.register"):
+            modules = wiring.build_runtime(settings)
+        assert modules
+
+    async def test_production_refuses_when_discord_is_not_installed(self):
+        """But build_runtime imports plugins.discord unconditionally, so the
+        code being absent must fail at the gate with a message, not three
+        lines later on an ImportError."""
+        real = wiring._installed
+        with patch.object(
+            wiring, "_installed", lambda d: False if d == "tenacity" else real(d)
+        ):
+            with pytest.raises(wiring.ProfileError) as exc:
+                wiring.build_runtime(TestProductionProfileGate._settings())
+        assert "--extra discord" in str(exc.value) or "--extra ai" in str(exc.value)
+
+    def test_only_mongo_must_be_configured(self):
+        assert wiring.REQUIRED_CONFIGURED == ("mongo",)
+        assert set(wiring.REQUIRED_CONFIGURED) <= set(wiring.REQUIRED_INSTALLED)

@@ -3,7 +3,7 @@
 `os.environ`, `os.getenv` and `load_dotenv` live here and nowhere else, so
 that "where does this value come from" has exactly one answer and a
 library caller can construct a `Config` without an environment at all.
-The invariant is enforced by tests/structure test_env_is_the_only_env_reader.
+The invariant is enforced by tests/structure test_env_is_the_only_environment_reader.
 
 The value type lives in `core/settings.py`; this module only fills it in.
 The singleton accessors stay here too — full dependency injection of

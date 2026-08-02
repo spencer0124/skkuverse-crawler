@@ -143,19 +143,44 @@ def test_env_is_the_only_environment_reader():
     PR 3). Routing it through env.py would mean initializing config to
     find the config file. Two readers, both named, is the real invariant.
     """
-    allowed = {"env.py", "config/loader.py"}
+    # Exact paths, not a suffix match: `endswith("env.py")` would also
+    # exempt dotenv.py, myenv.py, or plugins/anything/env.py.
+    allowed = {"env.py", "modules/notices/config/loader.py"}
+    readers = {"environ", "getenv"}
     violations = []
+
     for py_file in SRC_PKG.rglob("*.py"):
-        rel = py_file.relative_to(SRC_PKG)
-        if rel.as_posix().endswith(tuple(allowed)):
+        rel = py_file.relative_to(SRC_PKG).as_posix()
+        if rel in allowed:
             continue
         tree = ast.parse(py_file.read_text(), filename=str(py_file))
+
+        # Track every name `os` is reachable under: `import os`, `import os
+        # as _os`, and names bound by `from os import environ/getenv`.
+        os_aliases = {"os"}
+        direct_readers = set()
         for node in ast.walk(tree):
-            if not isinstance(node, ast.Attribute):
-                continue
-            value = node.value
-            if isinstance(value, ast.Name) and value.id == "os" and node.attr in {"environ", "getenv"}:
-                violations.append(f"{rel}:{node.lineno}: os.{node.attr}")
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    if alias.name == "os":
+                        os_aliases.add(alias.asname or "os")
+            elif isinstance(node, ast.ImportFrom) and node.module == "os":
+                for alias in node.names:
+                    if alias.name in readers:
+                        direct_readers.add(alias.asname or alias.name)
+
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Attribute):
+                value = node.value
+                if (
+                    isinstance(value, ast.Name)
+                    and value.id in os_aliases
+                    and node.attr in readers
+                ):
+                    violations.append(f"{rel}:{node.lineno}: {value.id}.{node.attr}")
+            elif isinstance(node, ast.Name) and node.id in direct_readers:
+                violations.append(f"{rel}:{node.lineno}: bare {node.id} imported from os")
+
     assert not violations, (
         "only env.py may read the environment (adr-006 결정 ①):\n" + "\n".join(violations)
     )

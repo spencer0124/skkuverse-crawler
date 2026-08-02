@@ -63,13 +63,22 @@ def test_dockerfile_installs_every_runtime_extra():
         )
 
 
-def test_every_uv_sync_is_frozen():
-    """A build that re-resolves is a build whose image does not match the
-    lock anyone reviewed."""
+def test_every_uv_sync_asserts_the_lock_is_current():
+    """`--locked`, not `--frozen`.
+
+    They sound interchangeable and are not: `--frozen` skips re-resolution
+    and installs happily from a lock that no longer matches pyproject, so a
+    dependency added to an extra without re-locking is installed as the OLD
+    set — silently, and only noticed in production if something imports it.
+    `--locked` asserts the two agree and fails the build otherwise.
+    """
     text = re.sub(r"\\\s*\n\s*", " ", DOCKERFILE.read_text())
     for line in text.splitlines():
         if "uv sync" in line:
-            assert "--frozen" in line, f"uv sync without --frozen: {line.strip()}"
+            assert "--locked" in line, f"uv sync without --locked: {line.strip()}"
+            assert "--frozen" not in line, (
+                f"--frozen does not detect a stale lock; use --locked: {line.strip()}"
+            )
 
 
 def test_all_extra_is_the_union_of_the_runtime_extras():
