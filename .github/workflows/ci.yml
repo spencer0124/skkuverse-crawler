@@ -96,6 +96,24 @@ jobs:
           print(f"{len(docs)} notices, stdout clean")
           PY
 
+      # The half that makes the README's promise checkable. A test asserts
+      # the README shows these files byte for byte; this asserts the files
+      # still work — and on a core-only install, so an example that quietly
+      # grew a dependency on an extra fails here rather than for a reader.
+      #
+      # $GITHUB_WORKSPACE is expanded by the outer shell, before env -i
+      # wipes it. cd /tmp for the usual reason: load_dotenv() searches cwd.
+      - name: README examples run on a core-only install
+        run: |
+          cd /tmp
+          for ex in "$GITHUB_WORKSPACE"/py/examples/*.py; do
+            name=$(basename "$ex")
+            echo "--- $name ---"
+            env -i PATH=/usr/bin:/bin /tmp/core/bin/python "$ex" > "/tmp/$name.out"
+            head -3 "/tmp/$name.out"
+            test -s "/tmp/$name.out" || { echo "$name printed nothing"; exit 1; }
+          done
+
   docker:
     # The direct evidence that the Dockerfile's --extra flags took effect.
     # test_packaging.py asserts the flags statically; this asserts the image.
