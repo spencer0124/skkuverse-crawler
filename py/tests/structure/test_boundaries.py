@@ -58,8 +58,8 @@ def test_help_does_not_import_optional_deps(tmp_path):
 def test_core_import_is_infra_free(tmp_path):
     # Since PR 9 the bare package import carries most of this: core/__init__
     # re-exports every public submodule eagerly, so `import
-    # skkuverse_crawler.core` executes them all. The ones it deliberately
-    # does NOT re-export (settings, registry — see core/__init__'s
+    # skkuverse_crawler.core` executes them all. The three it deliberately
+    # does NOT re-export (settings, registry, testing — see core/__init__'s
     # docstring) are still named explicitly, because nothing else would
     # reach them.
     code = (
@@ -67,6 +67,7 @@ def test_core_import_is_infra_free(tmp_path):
         "import skkuverse_crawler.core\n"
         "import skkuverse_crawler.core.registry\n"
         "import skkuverse_crawler.core.settings\n"
+        "import skkuverse_crawler.core.testing\n"
         "sys.exit(1 if 'motor' in sys.modules or 'pymongo' in sys.modules else 0)\n"
     )
     result = _run_python(code, empty_env=False, cwd=tmp_path)
