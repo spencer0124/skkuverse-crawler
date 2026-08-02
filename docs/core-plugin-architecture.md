@@ -2,7 +2,9 @@
 
 크롤러를 **인프라 없이 도는 코어**와 **인프라를 붙이는 플러그인**으로 가르는 설계. 결정 배경은 [decisions/adr-006](decisions/adr-006-core-plugin-split.md), 작업 순서는 [core-plugin-plan.md](core-plugin-plan.md) 참조.
 
-> **상태**: 설계 v2. PR 0~7 구현 완료 (2026-08-01) — Stage/Pipeline은 `core/pipeline.py`(모양) + `modules/notices/stages.py`(구체 스테이지, 설계 스케치의 `core/content/`와 다름: 사유는 plan.md PR 7 확정 사항), 조립 시점 검증은 `wiring.py`의 `_require`, flush 계약은 `core/runner.py`. PR 8(extras) 완료 — optional-dependencies + 지연 click group + `env.py`/`core/settings.py` 분리 + production 부팅 거부(`wiring.ProfileError`) + `core/sinks.JsonLinesSink`. PR 9(공개 문서)는 미착수. 무엇이 왜 바뀌었는지는 adr-006 근거 ⑦~⑬에 초기안과 함께 보존.
+> **상태**: 설계 v2. **PR 0~9 구현 완료 (2026-08-02) — 로드맵 종료.** Stage/Pipeline은 `core/pipeline.py`(모양) + `modules/notices/stages.py`(구체 스테이지, 설계 스케치의 `core/content/`와 다름: 사유는 plan.md PR 7 확정 사항), 조립 시점 검증은 `wiring.py`의 `_require`, flush 계약은 `core/runner.py`. PR 8(extras) — optional-dependencies + 지연 click group + `env.py`/`core/settings.py` 분리 + production 부팅 거부(`wiring.ProfileError`) + `core/sinks.JsonLinesSink`. PR 9(공개 문서) — `core/__init__` 재수출 + `core/testing.assert_sink_contract` 출하 + 버전 0.1.0 + 레포 루트 README(CI가 실행하는 예제) + [sink 작성자 가이드](sink-authors-guide.md).
+>
+> **⚠️ §facade 스케치와 실제가 다르다**: `iter_notices()`는 `core/simple.py`가 아니라 **`modules/notices/simple.py`**에 있고, `skkuverse_crawler/__init__.py`가 PEP 562로 지연 재수출한다 (README 첫 줄 = `from skkuverse_crawler import iter_notices`). 사유: PR 6이 `iter_source`를 modules 소유로 확정했으므로 core의 facade는 자기가 감쌀 대상을 부를 수 없다 — 아래 §레이아웃의 `core/simple.py` 표기는 **초기안의 기록**으로 남긴다. 무엇이 왜 바뀌었는지는 adr-006 근거 ⑦~⑬ + plan.md PR 9 §구현 시 확정 사항.
 >
 > **불변식**: `core/`는 `modules/`·`plugins/`를 import하지 않는다. `modules/`는 `plugins/`를 import하지 않는다. `plugins/`를 import하는 파일은 **조립 리프뿐** — `wiring.py`, 루트 `cli.py`, 각 플러그인의 `cli.py` *(PR 7 개정, adr-006 §발동 기록)*. `os.environ`을 읽는 파일은 `env.py` 하나 — *(PR 8 정정)* 실제로는 **둘**: `env.py`와 `modules/notices/config/loader.py`(SOURCES_JSON_PATH). 경로 해석이 Config 생성보다 먼저라 구조적으로 불가피하며, `test_env_is_the_only_environment_reader`의 허용목록이 두 항목을 명시한다. — AST 테스트로 강제. *(v2)* 증분/전량 같은 실행 모드는 bool 플래그가 아니라 **합 타입**으로 — 불법 조합은 런타임 검증이 아니라 타입 구조로 차단한다.
 

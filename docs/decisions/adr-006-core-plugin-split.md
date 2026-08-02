@@ -221,6 +221,18 @@ extras가 "mongo 없음"을 정당한 상태로 만드는 순간 위험 ⑤가 �
 
 **한계 기록**: discord·ai·dispatch는 모두 tenacity를 마커로 쓰므로 설치 여부만으로 구분 불가 — config 술어가 그 몫을 진다. 운영상 중요한 mongo는 마커·설정 양쪽 모두 정확.
 
+### PR 9 (2026-08-02) — facade의 거처, 그리고 0.x 게이트의 기계화
+
+**① facade는 `core/simple.py`에 살 수 없다** (설계 스케치 기각). 스케치는 `iter_notices()`를 core에 뒀으나, PR 6이 `iter_source`를 `modules/notices` 소유로 확정한 순간(policy·`build_notice`·이미지 검증 의존) core의 facade는 **자기가 감쌀 대상을 부를 수 없는** 상태가 됐다. plan.md:162가 "PR 9 facade가 재수출 검토"로 남긴 문제다.
+
+**판정: `modules/notices/simple.py` 구현 + 패키지 최상위 PEP 562 지연 재수출.** 최상위 `__init__.py`는 `cli.py`·`wiring.py`와 같은 조립 리프이므로 계층을 가로지를 수 있고(불변식 개정과 같은 논리), 지연이라 `import skkuverse_crawler.core.ports`는 여전히 modules를 건드리지 않는다. **다시 열 조건**: `iter_source`의 generic화(정책·emitter 주입)가 실제로 이뤄지면 core 이동과 함께 재수출을 철회할 수 있다.
+
+**② 위험 ⑨(Hyrum's Law) 완화가 문서 주장에서 실물이 됐다.** 계획은 "contract test **사용법**"만 문서화하는 것이었는데, 실행할 수 없는 계약은 완화책이 아니라 주장이다. `core/testing.assert_sink_contract`를 base 패키지로 출하한다(stdlib만, pytest 비의존) — 서드파티가 자기 설치본에 딸려온 스위트를 돌리므로 이 문서가 쓰인 시점이 아니라 **자기가 쓰는 버전**의 계약을 검증한다.
+
+작성 중 규칙 2개를 스스로 기각했다: `prepare`/`flush` 반환값 검사. mypy가 도달 불가를 증명했고 실제로 `run_events`가 둘 다 읽지 않는다 — 러너에 없는 규칙을 계약에 심으면 서드파티가 허구를 만족시키는 코드를 쓴다. 부재를 테스트로 고정.
+
+**③ "1.0 태깅" 재검토 조건이 기계화됐다** (§⑬). `version = "1.0.0"`은 최초 커밋의 기본값이었을 뿐 아무도 한 주장이 아니었으므로 **0.1.0으로 강등**. 발행 워크플로가 없어 지금은 공짜, 첫 릴리스 후엔 불가능하다. `test_the_version_is_still_0_x`가 major 승격을 차단하므로, 트리거가 문장이 아니라 **빨간 테스트**로 발동한다.
+
 ### 하드 엣지 인벤토리 (PR 7 시점)
 
 - **로직 엣지 1개**: `plugins/ai_summary/processor.py` → `plugins/dispatch/client.py` (사이클 종료 FCM ping). import 지점에 주석으로 표시. "2개 이상" 미발동.

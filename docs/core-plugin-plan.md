@@ -4,7 +4,7 @@
 
 **진행 원칙**: PR 순서대로, `dev`에서 딴 feature 브랜치 → 검증 게이트 통과 → dev PR. main은 merge-only. 매 PR은 **테스트 green + 프로덕션 동작 바이트 동일**을 유지한다. 싼 순수 이동으로 import 그래프를 먼저 무해화하고, 가장 위험한 orchestrator 해체를 맨 뒤로 민다.
 
-**베이스라인**: `python -m pytest --collect-only -q` → **432 tests** (2026-07-30 실측). PR 8 시점 **657 passed / 18 mongo-deselected** (2026-08-02).
+**베이스라인**: `python -m pytest --collect-only -q` → **432 tests** (2026-07-30 실측). PR 8 시점 **657 passed / 18 mongo-deselected**, PR 9 완료 시점 **755 passed / 18 mongo-deselected** (2026-08-02).
 
 **설계 버전**: v2 (2026-07-30 설계 리뷰 라운드 개정 — `CrawlMode` 합 타입·이벤트 2계층 등, [adr-006 근거 ⑦~⑬](decisions/adr-006-core-plugin-split.md)). **구현 착수는 설계 동결 후.**
 
@@ -23,7 +23,7 @@
 | 6 | **orchestrator 해체** — `iter_source`+`run_source` | semantic | **HIGH** | `refactor/crawl-loop` |
 | 7 | `Stage`/`Pipeline`, 나머지 플러그인 이관, health 훅화 | 이동+semantic | MED | `refactor/plugins` |
 | 8 | pyproject extras + 지연 click + Dockerfile **동일 커밋** | packaging | MED | `feat/extras` |
-| 9 | 공개 API re-export, README, 무env 예제 | docs | LOW | `docs/oss-readme` |
+| 9 | 공개 API re-export, facade, README+CI 실행 예제, 0.x, sink 가이드 | docs | LOW | `docs/oss-readme` |
 
 의존 순서: 0 → 1 → 2 → **3 → 4** → 5 → 6 → 7 → 8 → 9. **3이 4보다 먼저인 것은 양식이 아니라 필수** (위험 ①).
 
@@ -135,7 +135,7 @@
 3. 테스트의 `mock.patch(...)` 대상 문자열 — `characterization/harness.py`, `test_attachment_validator.py`, `test_orchestrator.py`, `test_update_checker.py`
 4. `scripts/generate_artifacts.py`의 `SOURCE_IDS_PY`·`PACKAGE_SOURCES_JSON` 경로 상수 + `tests/scripts/test_generate_artifacts.py`의 Path 표현식
 
-참고 문서 내 구경로(`docs/api-design-reference.md`, `docs/strategies/*.md`, `docs/known-issues.md`의 `py/src/skkuverse_crawler/modules/notices/...` ~20줄, `docs/architecture.md`의 dedup.py 트리 표기)는 PR 9 공개 문서 정비로 연기.
+참고 문서 내 구경로(`docs/api-design-reference.md`, `docs/strategies/*.md`, `docs/known-issues.md`의 `notices/...` ~20줄, `docs/architecture.md`의 dedup.py 트리 표기)는 PR 9 공개 문서 정비로 연기. → **PR 9에서 해소** (+ `test_doc_paths_exist` 래칫으로 재발 차단).
 
 ## PR 5 — 포트 도입
 
@@ -228,11 +228,24 @@
 
 ## PR 9 — 공개 문서
 
-- [ ] `core/__init__.py` 공개 API re-export, README, env 없는 예제
-- [ ] `core/simple.py` — `iter_notices()` facade가 README 첫 예제 (기본 `max_pages` 작게 — FullSweep 2500페이지로부터 캐주얼 사용자 보호)
-- [ ] 버전 **0.x** + README에 "1.0 전 이벤트 스키마는 minor에서 변경 가능" 명시. **1.0은 schedule 모듈 탑재 후** (adr-006 §⑬ 게이트)
-- [ ] sink 작성자 가이드 — contract test 사용법 + "이벤트 자체를 버퍼링하지 말 것"(5MB `cleanHtml` GC 경고, 설계 §알려진 한계)
-- [ ] **검증 게이트**: README 예제가 CI에서 실제로 실행된다
+- [x] `core/__init__.py` 공개 API re-export (35개 `__all__`), 레포 루트 README, env 없는 예제 2종
+- [x] `iter_notices()` facade — 구현 시 확정: **`core/simple.py`가 아니라 `modules/notices/simple.py`** + 패키지 최상위 PEP 562 lazy 재수출. README 첫 줄은 `from skkuverse_crawler import iter_notices` (기본 `max_pages=1`, CLI의 `STORE_LESS_DEFAULT_PAGES`와 한 상수)
+- [x] 버전 **0.1.0** + README·`core/__init__`에 "1.0 전 이벤트 스키마는 minor에서 변경 가능" 명시. 래칫 테스트가 1.0 승격을 차단. **1.0은 schedule 모듈 탑재 후** (adr-006 §⑬ 게이트)
+- [x] sink 작성자 가이드 (`docs/sink-authors-guide.md`) — `assert_sink_contract` 사용법 + 테스트가 못 잡는 3규칙(이벤트 자체 버퍼링 금지 / flush 예외 삼키지 말 것 / run당 새 인스턴스)
+- [x] contract test를 **출하** (`core/testing.py`) — 계획엔 "사용법" 문서화만 있었으나, 실행 불가능한 계약은 위험 ⑨ 완화가 아니라 주장이라 판단
+- [x] PR 4가 이연한 문서 구경로 정리(:138) + `architecture.md` 트리 재작성 + `test_doc_paths_exist` 래칫
+- [x] **검증 게이트**: README 예제가 CI에서 실제로 실행된다 — `core-only` 잡에서, extras 없는 설치로. 로컬 실측 완료
+
+### 구현 시 확정 사항
+
+- **facade는 `core/simple.py`에 살 수 없다** (설계 §레이아웃 :40의 스케치 기각). PR 6이 `iter_source`를 modules 소유로 확정했고(:162) core→modules import 금지 불변식이 있으므로, core의 facade는 자기가 감쌀 대상을 부를 수 없다. 최상위 `__init__.py`가 조립 리프(cli.py·wiring.py와 동렬)로서 재수출 — :162의 "PR 9 facade가 재수출 검토" 해소.
+- **최상위 재수출은 lazy가 필수**: eager면 `import skkuverse_crawler.core.ports`가 부모 `__init__`을 실행해 strategies→bs4·lxml·httpx를 끌어온다. 기존 infra-free 테스트는 motor/pymongo만 봐서 **초록인 채로** 코어 경량성이 사라진다. `test_the_top_level_import_itself_pulls_in_nothing`이 그 알람. mypy용 `TYPE_CHECKING` 동반 import도 필수(없으면 facade가 `Any`가 되어 호출자 검사 중단 — 프로브로 실증).
+- **`_SilentLogger` 기각**: facade 기본 로거를 침묵 스텁으로 두는 안을 구현했다가 실사이트 스모크에서 철회. 스텁은 크롤 루프에만 닿고 config loader·strategy는 각자 모듈 레벨 structlog 로거를 가져서, **부분 침묵**(strategy fetch 로그는 보이는데 루프의 stopping reason은 안 보임)이 됐다. 라이브러리가 전역 structlog를 재설정하는 건 더 나쁜 놀람이므로, 기본값을 일반 모듈 로거로 되돌리고 예제가 애플리케이션 레벨 2줄로 침묵시키는 방식을 택함.
+- **contract suite에서 `prepare`/`flush` 반환값 검사 제거**: 작성 후 mypy가 도달 불가를 증명했고 실제로 `run_events`가 두 반환값을 읽지 않는다 — 러너에 없는 규칙을 계약에 심고 있었다. 부재를 테스트로 고정(`test_prepare_return_values_are_deliberately_not_policed`).
+- **`assert_sink_contract(sink, *, sample)`**: `sample`이 이중 역할 — core가 `NoticeCrawled`(Notice 보유 → modules 소유)를 만들 수 없다는 계층 사실이 곧 "쓰기 동의" 노브가 됐다. sample 없으면 항목을 저장하지 않음(MongoSink op 로그로 고정). 단 `prepare`는 호출하므로 "아무것도 안 건드림"이 아니라 "항목을 저장하지 않음"이 정확한 주장.
+- **PyPI `readme` 필드 미설정**: README는 레포 루트, 빌드 루트는 `py/`라 PEP 621이 `../README.md`를 거부. 발행 워크플로 자체가 없어 지금 풀 문제가 아님 — pyproject에 사유 주석. 발행 결정 시 재론.
+- **문서 줄번호는 복원하지 않고 제거**: `file::symbol` 표기로 대체. 전부 이미 틀려 있었고, 되살리면 더 알아채기 어려운 형태로 같은 부패를 심는다.
+- **User-Agent `SKKUverseCrawler/1.0`은 미변경**: 패키지 버전과 무관하며 ~140개 대학 서버가 크롤러 수명 내내 봐온 신원. 변경은 서드파티 호스트 대상 실동작 변경이라 패키징 PR 범위 밖 — 그 줄에 사유 주석만 추가.
 
 ---
 
