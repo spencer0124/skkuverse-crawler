@@ -57,13 +57,13 @@ adr-007 이후 크롤러가 저장하는 것은 **텍스트 한 필드뿐**이�
 
 > 캡 16,000자의 근거: `voyage-4-large` 요청당 120K 토큰 한도에서 도출. 참고로 **모델 비교 실측은 8,000자로 잘라서 쟀다** — OpenAI 가 입력당 8,191 토큰 한도라 공정 비교를 위해 맞춘 것이고(영향 0.9%), Voyage 확정으로 그 제약은 사라졌다.
 
-**재조합 판정** — 세 경로 (`notices_summary` predicate 관용구 미러):
+**재조합 판정** — 세 경로 (`plugins/ai_summary` predicate 관용구 미러):
 
 1. 본문 수정: `embeddingInputHash != contentHash`
 2. 요약이 나중에 붙음: `summaryAt > embeddingInputAt` (크롤 `*/30`, 요약 `:20` — 크롤 직후엔 요약 없이 조합될 수 있다)
 3. 조합 규칙 변경: `embeddingInputVersion != 현재 inputVersion`
 
-⚠️ **`aiSummaryAt` 을 절대 기록하지 않는다** — 서버 FCM 디스패치 게이트라 기록 시 스퓨리어스 푸시 발생. (`notices_summary/processor.py:119-136` 의 주석과 동일한 규칙)
+⚠️ **`aiSummaryAt` 을 절대 기록하지 않는다** — 서버 FCM 디스패치 게이트라 기록 시 스퓨리어스 푸시 발생. (`plugins/ai_summary/processor.py` 의 주석과 동일한 규칙)
 
 > 실패 가드(`embeddingFailures {"$not": {"$gte": 3}}`)는 불필요하다 — 호출이 없어 실패 카운터가 의미를 잃는다.
 

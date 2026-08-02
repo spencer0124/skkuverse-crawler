@@ -241,7 +241,7 @@ URL 패턴: `https://cheme.skku.edu/{YYYY}/{MM}/{DD}/{slug}/`
 
 ### REST API 기반 (`wordpress-api` 전략)
 
-구현 파일: `py/src/skkuverse_crawler/notices/strategies/wordpress_api.py`
+구현 파일: `py/src/skkuverse_crawler/modules/notices/strategies/wordpress_api.py`
 
 REST API에서 `_fields`에 `content`를 포함하여 목록 API 호출 1번에 모든 데이터를 가져온다.
 `crawl_detail()`에서는 캐시된 content를 반환하므로 HTTP 요청 수가 **N+1 → 1**로 최적화되어 있다.
@@ -323,7 +323,7 @@ REST API가 비활성화된 WordPress 사이트를 위한 fallback.
 
 ## 타입 정의
 
-타입 정의: `py/src/skkuverse_crawler/notices/types.py`
+타입 정의: `py/src/skkuverse_crawler/modules/notices/types.py`
 
 `WordpressApiConfig` TypedDict로 정의되어 있으며, `category_id`(선택), `pagination` 등 포함.
 
@@ -415,6 +415,6 @@ Notice 스키마의 `date`는 `YYYY-MM-DD`이므로 `post.date.split('T')[0]`으
 
 ## 구현 상태
 
-- `wordpress-api` 전략: 구현 완료 (`py/src/skkuverse_crawler/notices/strategies/wordpress_api.py`)
+- `wordpress-api` 전략: 구현 완료 (`py/src/skkuverse_crawler/modules/notices/strategies/wordpress_api.py`)
 - `cheme` 설정: sources.json에 등록 완료
 - `wordpress-html` 전략: 미구현 (REST API 비활성 사이트용 fallback, 필요시 추가)

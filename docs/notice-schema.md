@@ -2,7 +2,7 @@
 
 ## MongoDB Document
 
-실제 dataclass 정의는 `py/src/skkuverse_crawler/notices/models.py:28-50`. 필드 이름은 camelCase로 저장된다.
+실제 dataclass 정의는 `py/src/skkuverse_crawler/modules/notices/models.py`의 `Notice`. 필드 이름은 camelCase로 저장된다.
 
 ```python
 @dataclass

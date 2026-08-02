@@ -135,7 +135,7 @@
 3. 테스트의 `mock.patch(...)` 대상 문자열 — `characterization/harness.py`, `test_attachment_validator.py`, `test_orchestrator.py`, `test_update_checker.py`
 4. `scripts/generate_artifacts.py`의 `SOURCE_IDS_PY`·`PACKAGE_SOURCES_JSON` 경로 상수 + `tests/scripts/test_generate_artifacts.py`의 Path 표현식
 
-참고 문서 내 구경로(`docs/api-design-reference.md`, `docs/strategies/*.md`, `docs/known-issues.md`의 `py/src/skkuverse_crawler/notices/...` ~20줄, `docs/architecture.md`의 dedup.py 트리 표기)는 PR 9 공개 문서 정비로 연기.
+참고 문서 내 구경로(`docs/api-design-reference.md`, `docs/strategies/*.md`, `docs/known-issues.md`의 `py/src/skkuverse_crawler/modules/notices/...` ~20줄, `docs/architecture.md`의 dedup.py 트리 표기)는 PR 9 공개 문서 정비로 연기.
 
 ## PR 5 — 포트 도입
 

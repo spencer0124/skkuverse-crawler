@@ -322,11 +322,11 @@ class SkkuStandardConfig(TypedDict, total=False):
 
 ### 관련 파일
 
-1. **`py/src/skkuverse_crawler/notices/types.py`** — `SkkuStandardConfig`에 옵션 필드 추가
-2. **`py/src/skkuverse_crawler/notices/strategies/skku_standard.py`** — 두 곳에 분기 추가:
+1. **`py/src/skkuverse_crawler/modules/notices/types.py`** — `SkkuStandardConfig`에 옵션 필드 추가
+2. **`py/src/skkuverse_crawler/modules/notices/strategies/skku_standard.py`** — 두 곳에 분기 추가:
    - `crawl_list()` — labeled infoParser 분기
    - `crawl_detail()` — onclick attachmentParser 분기
-3. **`py/src/skkuverse_crawler/notices/config/sources.json`** — 화학과 엔트리
+3. **`py/src/skkuverse_crawler/modules/notices/config/sources.json`** — 화학과 엔트리
 
 ### sources.json 최종 엔트리
 
