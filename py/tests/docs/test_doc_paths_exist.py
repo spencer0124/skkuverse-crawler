@@ -27,12 +27,16 @@ SOURCE_PATH = re.compile(r"py/src/skkuverse_crawler/[\w./*-]+")
 # Paths that are allowed not to exist, with the reason. History is the
 # only sanctioned category: an incident write-up saying which file the fix
 # landed in is a statement about the past, and rewriting it to today's
-# layout would make it false. Those lines name the current home alongside.
-HISTORICAL = {
-    # docs/core-plugin-plan.md records what each PR moved, in the words of
-    # the plan at the time it was written.
-    "py/src/skkuverse_crawler/notices/...",
-}
+# layout would make it false. Those lines should name the current home
+# alongside the old one.
+#
+# Empty today, and that is the honest state — every historical reference in
+# the docs currently uses a bare filename (`dedup.py`) rather than a full
+# `py/src/...` path, so none of them reach this scan. Entries go here only
+# when a real one shows up. Note that `_referenced_paths` strips trailing
+# punctuation, so an entry must be written in its POST-strip form:
+# `.../notices/...` normalizes to `.../notices/` before the lookup.
+HISTORICAL: set[str] = set()
 
 
 def _doc_files() -> list[Path]:

@@ -40,7 +40,11 @@ def test_every_exported_name_resolves():
     assert not missing, f"__all__ names that do not exist: {missing}"
 
 
-def test_all_is_sorted_within_no_duplicates():
+def test_all_has_no_duplicates():
+    """Named for what it checks. It used to be called
+    `test_all_is_sorted_within_no_duplicates` and never checked sortedness
+    — __all__ is grouped by tier and role, not sorted, and a name promising
+    an assertion nobody wrote is worse than no test."""
     assert len(core.__all__) == len(set(core.__all__)), "duplicate names in __all__"
 
 

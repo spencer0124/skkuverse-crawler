@@ -17,9 +17,16 @@ import pytest
 
 from skkuverse_crawler.core.events import (
     ChangeInfo,
+    ContentRefreshed,
     CrawlEvent,
+    ItemFailed,
+    ItemSkipped,
+    ListFetchFailed,
     NoticeCrawled,
+    NoticeUnchanged,
     PageCompleted,
+    SourceFinished,
+    SourceStarted,
 )
 from skkuverse_crawler.core.ports import NullSink, Outcome, SourceSpec
 from skkuverse_crawler.core.sinks import JsonLinesSink
@@ -139,16 +146,56 @@ async def test_a_sink_that_reports_an_outcome_for_progress_is_rejected():
         await assert_sink_contract(_ChattyAboutProgress())
 
 
-async def test_an_intolerant_sink_is_rejected():
-    """The rule that lets the progress tier grow in a minor release: a
-    sink must ignore what it has never heard of, not answer it."""
+# Every event type this codebase currently defines. A sink that handles
+# all of these and mishandles nothing else is correct *today* and breaks on
+# the next minor release — which is the case the tolerant-reader rule
+# exists for, and the only way to test it from the present.
+_ALL_KNOWN_EVENTS = (
+    SourceStarted,
+    PageCompleted,
+    ListFetchFailed,
+    SourceFinished,
+    ItemFailed,
+    ItemSkipped,
+    NoticeCrawled,
+    NoticeUnchanged,
+    ContentRefreshed,
+)
 
-    class _Intolerant(NullSink):
+
+async def test_a_sink_that_answers_an_unknown_event_is_rejected():
+    """The rule that lets the progress tier grow in a minor release.
+
+    The sink below is correct for every event that exists today; it fails
+    only on the one from the future. An earlier version of this test used a
+    sink that answered *everything*, so it tripped on SourceStarted and the
+    unknown-event rule was never actually exercised — deleting that rule
+    from the shipped suite left the suite green.
+    """
+
+    class _GuessesAtTheUnknown(NullSink):
         async def accept(self, event: CrawlEvent) -> Outcome | None:
-            return Outcome.INSERTED
+            if isinstance(event, _ALL_KNOWN_EVENTS):
+                return None
+            return Outcome.INSERTED  # "never heard of it, must be new"
 
-    with pytest.raises(AssertionError, match="_UnknownFutureEvent|SourceStarted"):
-        await assert_sink_contract(_Intolerant())
+    with pytest.raises(AssertionError, match="_UnknownFutureEvent"):
+        await assert_sink_contract(_GuessesAtTheUnknown())
+
+
+async def test_a_sink_that_raises_on_an_unknown_event_is_not_swallowed():
+    """The commoner shape of the same mistake — `case _: raise`. The suite
+    lets it propagate rather than converting it, because the traceback
+    naming the sink's own line is the more useful report."""
+
+    class _RaisesOnTheUnknown(NullSink):
+        async def accept(self, event: CrawlEvent) -> Outcome | None:
+            if isinstance(event, _ALL_KNOWN_EVENTS):
+                return None
+            raise TypeError(f"unhandled event: {type(event).__name__}")
+
+    with pytest.raises(TypeError, match="_UnknownFutureEvent"):
+        await assert_sink_contract(_RaisesOnTheUnknown())
 
 
 async def test_a_sink_that_cannot_flush_an_empty_buffer_is_rejected():

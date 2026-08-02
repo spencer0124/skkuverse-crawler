@@ -109,14 +109,35 @@ async def iter_notices(
         async for notice in iter_notices("skku-main"):
             print(notice.date, notice.title)
 
-    The HTTP client is closed when iteration ends, including on an early
-    ``break`` — as long as the loop is left normally or the generator is
-    closed (``contextlib.aclosing``), which ``async for`` does for you.
+    The HTTP client is closed when the stream is exhausted or closed.
+    **Breaking out of the loop is not enough** — ``async for`` does not close
+    the generator it was iterating, so the ``finally`` below runs only when
+    the event loop finalizes it, at an unpredictable later moment. If you
+    stop early, say so::
+
+        from contextlib import aclosing
+
+        async with aclosing(iter_notices("skku-main")) as notices:
+            async for notice in notices:
+                if notice.date < cutoff:
+                    break
     """
     dept = _resolve(source)
     strategy_cls = STRATEGY_MAP.get(dept["strategy"])
     if strategy_cls is None:
         raise ValueError(f"unknown strategy: {dept['strategy']!r}")
+
+    # Not `if not max_pages`: 0 must be rejected, not defaulted. The
+    # orchestrator resolves a falsy max_pages to 2500 for a full sweep, so
+    # `max_pages=0` — a perfectly reasonable way to write "nothing yet" —
+    # would sweep a university server's entire history instead of doing
+    # nothing. Guarding here rather than there keeps the golden-pinned
+    # orchestrator untouched.
+    if max_pages < 1:
+        raise ValueError(
+            f"max_pages must be at least 1, got {max_pages} "
+            f"(0 would be read downstream as 'no limit')"
+        )
 
     fetcher = Fetcher(delay_ms=delay_ms)
     options = CrawlOptions(max_pages=max_pages, delay_ms=delay_ms, since_date=since_date)

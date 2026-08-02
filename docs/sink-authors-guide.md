@@ -31,11 +31,32 @@ sink. `wiring.py` does check `isinstance` at assembly time, which is why they ar
 |--------|--------|-----|
 | `prepare` | once per source, before its first event | Setup that depends on the source. Must be idempotent — the Mongo sink creates its indexes here and guards against repeats. |
 | `accept` | once per event, in emission order | Your storage. The return value matters for exactly one event type; see below. |
-| `flush` | at the end of every page, and once at the end | Where a batching sink writes. Called on pages where nothing was buffered too. |
+| `flush` | on every `PageCompleted`, and nowhere else | Where a batching sink writes. Called on pages where nothing was buffered too. |
 
 Return values from `prepare` and `flush` are never read. The suite does not check them, on
 purpose: enforcing a rule the runner does not have would have third parties writing code to
 satisfy a fiction.
+
+> ⚠️ **`flush` is not called at the end of a run.** `run_events` flushes on `PageCompleted`
+> and nothing else, so a source that emits write-bearing events without ever completing a page
+> leaves them in your buffer. That is not hypothetical: the null-content backfill emits
+> `ContentRefreshed` *before* the page loop, and a source whose page 0 fetch fails breaks out
+> before the first `PageCompleted`. The runner still counts those events as written.
+>
+> Until this is fixed in the runner, **call `flush()` yourself after `run_crawl` returns**.
+> `modules/notices/cli.py` does exactly that for the `--json` path.
+
+### One sink, several sources at once
+
+`run_crawl` builds one sink and hands the same instance to every source, which crawl
+concurrently under a `Semaphore(5)`. So `accept` and `flush` interleave across sources: your
+`flush` may drain work another source buffered mid-page.
+
+Make every write carry its own identity — the Mongo sink puts `articleNo` + `sourceId` in each
+op's filter and uses an unordered bulk write, so ops always land correctly no matter who
+drains them. What that costs is failure *attribution*: a failing flush can lose a sibling
+source's drained work while that source still reports success. That is a known pre-1.0 defect
+(adr-006 §⑪), not a design you should copy.
 
 ## What `accept` returns
 
@@ -56,8 +77,10 @@ returning `None` is honest and costs one wrong counter, not correctness.
 Do not return the strings `"inserted"`/`"updated"`. The old code did, and the runner's
 `is Outcome.UPDATED` check would silently count every one of them as inserted.
 
-For every other event the return is ignored, and the contract suite requires `None` — nothing
-was stored, so there is nothing to report.
+`ContentRefreshed` is the other event that carries a write, and the suite accepts an `Outcome`
+or `None` from it — but the runner counts it as `updated` either way, so the value is
+informational. For everything else the return is ignored and the suite requires `None`:
+nothing was stored, so there is nothing to report.
 
 ## Tolerant reader
 
@@ -111,11 +134,11 @@ Publishing the event is free — it is a reference — but a sink that appends e
 keeps every one of those payloads alive until the crawl ends.
 
 ```python
-# no
+# no — keeps the whole Notice, cleanHtml and all, until the crawl ends
 self._pending.append(event)
 
-# yes — the two fields you actually need
-self._pending.append({"articleNo": event.article_no, "views": event.views})
+# yes — only the fields you will actually write
+self._pending.append({"articleNo": event.notice.articleNo, "title": event.notice.title})
 ```
 
 `MongoSink._touches` is the reference implementation. Only a memory profile would catch the
@@ -123,8 +146,11 @@ first version, which is why it is written here instead.
 
 ### Let `flush` fail
 
-A failing flush must propagate. It aborts the source, and `run_crawl` records that source as
-failed — that is the contract (adr-006 §⑪), not an accident of the current code.
+A failing flush must propagate. It aborts that source's crawl and `run_crawl` logs
+`department_crawl_failed`; the source is then **absent from the returned results** rather than
+present with an error count. That is the contract (adr-006 §⑪), not an accident of the current
+code — but note what it means for you: a caller reading the results cannot tell a dropped
+source from one that was never asked for.
 
 ```python
 # no — the crawl now reports success for a source whose writes vanished

@@ -8,6 +8,7 @@ crawl work" to the golden suite and the live CI examples.
 
 from __future__ import annotations
 
+from contextlib import aclosing
 from unittest.mock import patch
 
 import pytest
@@ -132,18 +133,49 @@ async def test_the_fetcher_is_closed_when_iteration_finishes():
     assert _SpyFetcher.instances[0].closed
 
 
-async def test_the_fetcher_is_closed_when_the_consumer_breaks_early():
-    """The case a plain try/finally in a coroutine would not cover: an
-    async generator abandoned mid-iteration only runs its finally on
-    close(), which `async for` + `break` triggers via the loop's cleanup."""
+async def test_closing_the_stream_early_closes_the_fetcher():
+    """aclosing() is what the docstring tells early-stoppers to use, so it
+    is what gets pinned."""
+    fake, _ = _event_stream()
+    with patch("skkuverse_crawler.modules.notices.simple.iter_source", fake):
+        async with aclosing(iter_notices(SOURCE)) as stream:
+            async for _notice_ in stream:
+                break
+
+    assert _SpyFetcher.instances[0].closed
+
+
+async def test_a_bare_break_does_NOT_close_the_fetcher():
+    """The docstring's warning, pinned as behaviour.
+
+    `async for` does not close the generator it iterates, so the facade's
+    finally does not run at `break` — it runs whenever the event loop
+    finalizes the abandoned generator. An earlier version of the docstring
+    claimed the opposite and an earlier version of this test hid it by
+    calling aclose() while describing a bare break.
+
+    If Python ever changes this, this test goes red and the docstring's
+    aclosing() advice becomes merely unnecessary rather than required.
+    """
     fake, _ = _event_stream()
     with patch("skkuverse_crawler.modules.notices.simple.iter_source", fake):
         stream = iter_notices(SOURCE)
         async for _notice_ in stream:
             break
+
+        assert not _SpyFetcher.instances[0].closed
         await stream.aclose()
 
     assert _SpyFetcher.instances[0].closed
+
+
+@pytest.mark.parametrize("bad", [0, -1])
+async def test_max_pages_below_one_is_rejected(bad):
+    """0 is the trap: the orchestrator resolves a falsy max_pages to 2500,
+    so `max_pages=0` would sweep a university server's entire history
+    instead of fetching nothing."""
+    with pytest.raises(ValueError, match="max_pages must be at least 1"):
+        [n async for n in iter_notices(SOURCE, max_pages=bad)]
 
 
 async def test_delay_reaches_the_fetcher():

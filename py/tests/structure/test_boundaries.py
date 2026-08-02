@@ -80,12 +80,18 @@ def test_core_import_stays_stdlib_only(tmp_path):
     motor/pymongo check yet would make `import skkuverse_crawler.core`
     quietly expensive — which is the property the re-export is trading on.
     """
+    # core.testing is named explicitly: `import skkuverse_crawler.core` does
+    # not reach it (deliberately not re-exported), and "stdlib only, and
+    # pytest-free" is its own headline claim — a conformance suite that
+    # needed pytest installed would be useless to the third parties it is
+    # shipped for. pytest is in the leak set for exactly that reason.
     code = (
         "import sys\n"
         "import skkuverse_crawler.core\n"
+        "import skkuverse_crawler.core.testing\n"
         "leaked = sorted(m for m in sys.modules if m.split('.')[0] in "
         "{'httpx', 'bs4', 'lxml', 'nh3', 'markdownify', 'imagesize', 'structlog', "
-        "'click', 'dotenv'})\n"
+        "'click', 'dotenv', 'pytest'})\n"
         "print(','.join(leaked))\n"
         "sys.exit(1 if leaked else 0)\n"
     )
