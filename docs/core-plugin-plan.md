@@ -4,7 +4,7 @@
 
 **진행 원칙**: PR 순서대로, `dev`에서 딴 feature 브랜치 → 검증 게이트 통과 → dev PR. main은 merge-only. 매 PR은 **테스트 green + 프로덕션 동작 바이트 동일**을 유지한다. 싼 순수 이동으로 import 그래프를 먼저 무해화하고, 가장 위험한 orchestrator 해체를 맨 뒤로 민다.
 
-**베이스라인**: `python -m pytest --collect-only -q` → **432 tests** (2026-07-30 실측). PR 8 시점 **657 passed / 18 mongo-deselected**, PR 9 완료 시점 **758 passed / 18 mongo-deselected** (2026-08-02).
+**베이스라인**: `python -m pytest --collect-only -q` → **432 tests** (2026-07-30 실측). PR 8 시점 **657 passed / 18 mongo-deselected**, PR 9 완료 시점 **759 passed / 18 mongo-deselected** (2026-08-02).
 
 **설계 버전**: v2 (2026-07-30 설계 리뷰 라운드 개정 — `CrawlMode` 합 타입·이벤트 2계층 등, [adr-006 근거 ⑦~⑬](decisions/adr-006-core-plugin-split.md)). **구현 착수는 설계 동결 후.**
 
