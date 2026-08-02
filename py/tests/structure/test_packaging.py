@@ -171,18 +171,16 @@ def test_the_version_is_still_0_x():
     )
 
 
-def test_the_installed_distribution_matches_pyproject():
-    """__version__ reads importlib.metadata rather than a second literal.
-    That is only true while the installed metadata agrees with the file —
-    an editable install whose metadata went stale would make the top-level
-    __version__ report something no file in the repo contains.
-    """
-    from importlib.metadata import version
-
-    installed, declared = version("skkuverse-crawler"), _pyproject()["project"]["version"]
-    assert installed == declared, (
-        f"the environment reports {installed!r} but pyproject declares {declared!r} — "
-        f"skkuverse_crawler.__version__ is currently lying. Re-sync the venv "
-        f"(`uv sync --extra dev`); CI does this on every run, which is why only "
-        f"a local stale install sees this."
-    )
+# A test comparing importlib.metadata.version() against pyproject was
+# written here and removed. It asserts a property of the ENVIRONMENT — that
+# the installed metadata was re-synced after the version changed — not of
+# the code, and nothing in the repo can make it pass. Any interpreter with
+# its own editable install of this package (a system python alongside
+# py/.venv, say) fails it while running the very same source, so the suite
+# goes red for a reason unrelated to the change under test.
+#
+# What it was reaching for is covered where it belongs: the ratchet above
+# reads pyproject directly, and test_top_level_api asserts that
+# skkuverse_crawler.__version__ agrees with importlib.metadata — which is
+# the code claim (that __getattr__ delegates instead of hardcoding) and is
+# true in every environment.
