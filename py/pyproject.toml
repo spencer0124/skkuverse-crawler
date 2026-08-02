@@ -1,7 +1,18 @@
 [project]
 name = "skkuverse-crawler"
-version = "1.0.0"
+# 0.x, and deliberately a step DOWN from the 1.0.0 that sat here since the
+# initial commit and was never a claim anyone made. adr-006 §⑬ gates 1.0
+# on a second module actually running on this framework — an abstraction
+# with one consumer is an untested guess. Until then the event vocabulary
+# is only provisionally frozen, which is a promise 1.0 would forbid.
+# Nothing is published yet, so this correction is free today and
+# impossible after the first release. Pinned by test_packaging.
+version = "0.1.0"
 description = "SKKU 관련 데이터 크롤링 + 콘텐츠 정제 서비스"
+# `readme` is deliberately unset: README.md lives at the repo root and the
+# build root is py/, which PEP 621 will not let a readme path escape. No
+# publish workflow exists to serve it either, so this waits for the
+# release decision that would need it.
 requires-python = ">=3.12"
 # Base = what a crawl needs with no infrastructure: fetch, parse, clean,
 # and a CLI to drive it. Everything an adapter needs is an extra below.

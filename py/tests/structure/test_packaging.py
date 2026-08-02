@@ -148,3 +148,41 @@ def test_py_typed_marker_ships():
     """Hatch packages the whole src/skkuverse_crawler tree, so the marker
     needs no pyproject entry — but it does need to exist."""
     assert (PY_ROOT / "src" / "skkuverse_crawler" / "py.typed").is_file()
+
+
+def test_the_version_is_still_0_x():
+    """1.0 is gated on a second module, not on the code feeling finished.
+
+    adr-006 §⑬: an abstraction with one consumer is an untested guess, so
+    1.0 waits until `schedule` (or anything else) actually runs on this
+    framework. That gate lives in a document, and documents do not fail
+    builds — this does. Bumping the major here means deciding to answer
+    the gate, which is the whole point.
+
+    It also carries a promise: below 1.0 the event vocabulary is only
+    provisionally frozen (core/__init__'s stability note). Shipping 1.0
+    turns every subsequent event change into a major release.
+    """
+    version = _pyproject()["project"]["version"]
+    assert version.startswith("0."), (
+        f"version is {version!r} — 1.0 requires a second module on the "
+        f"framework first (adr-006 §⑬). If that has happened, delete this "
+        f"test in the same commit and say so in the message."
+    )
+
+
+def test_the_installed_distribution_matches_pyproject():
+    """__version__ reads importlib.metadata rather than a second literal.
+    That is only true while the installed metadata agrees with the file —
+    an editable install whose metadata went stale would make the top-level
+    __version__ report something no file in the repo contains.
+    """
+    from importlib.metadata import version
+
+    installed, declared = version("skkuverse-crawler"), _pyproject()["project"]["version"]
+    assert installed == declared, (
+        f"the environment reports {installed!r} but pyproject declares {declared!r} — "
+        f"skkuverse_crawler.__version__ is currently lying. Re-sync the venv "
+        f"(`uv sync --extra dev`); CI does this on every run, which is why only "
+        f"a local stale install sees this."
+    )
