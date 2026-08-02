@@ -339,9 +339,9 @@ JSP 기숙사 게시판은 `article_no`(snake_case)를 사용한다.
 
 ### 관련 파일
 
-- `py/src/skkuverse_crawler/notices/strategies/jsp_dorm.py` — `crawl_list()` + `crawl_detail()` 구현
-- `py/src/skkuverse_crawler/notices/types.py` — `JspDormConfig` TypedDict
-- `py/src/skkuverse_crawler/notices/config/sources.json` — dorm-hssc, dorm-nsc 설정
+- `py/src/skkuverse_crawler/modules/notices/strategies/jsp_dorm.py` — `crawl_list()` + `crawl_detail()` 구현
+- `py/src/skkuverse_crawler/modules/notices/types.py` — `JspDormConfig` TypedDict
+- `py/src/skkuverse_crawler/modules/notices/config/sources.json` — dorm-hssc, dorm-nsc 설정
 
 ## 두 캠퍼스의 구조적 동일성
 

@@ -148,3 +148,39 @@ def test_py_typed_marker_ships():
     """Hatch packages the whole src/skkuverse_crawler tree, so the marker
     needs no pyproject entry — but it does need to exist."""
     assert (PY_ROOT / "src" / "skkuverse_crawler" / "py.typed").is_file()
+
+
+def test_the_version_is_still_0_x():
+    """1.0 is gated on a second module, not on the code feeling finished.
+
+    adr-006 §⑬: an abstraction with one consumer is an untested guess, so
+    1.0 waits until `schedule` (or anything else) actually runs on this
+    framework. That gate lives in a document, and documents do not fail
+    builds — this does. Bumping the major here means deciding to answer
+    the gate, which is the whole point.
+
+    It also carries a promise: below 1.0 the event vocabulary is only
+    provisionally frozen (core/__init__'s stability note). Shipping 1.0
+    turns every subsequent event change into a major release.
+    """
+    version = _pyproject()["project"]["version"]
+    assert version.startswith("0."), (
+        f"version is {version!r} — 1.0 requires a second module on the "
+        f"framework first (adr-006 §⑬). If that has happened, delete this "
+        f"test in the same commit and say so in the message."
+    )
+
+
+# A test comparing importlib.metadata.version() against pyproject was
+# written here and removed. It asserts a property of the ENVIRONMENT — that
+# the installed metadata was re-synced after the version changed — not of
+# the code, and nothing in the repo can make it pass. Any interpreter with
+# its own editable install of this package (a system python alongside
+# py/.venv, say) fails it while running the very same source, so the suite
+# goes red for a reason unrelated to the change under test.
+#
+# What it was reaching for is covered where it belongs: the ratchet above
+# reads pyproject directly, and test_top_level_api asserts that
+# skkuverse_crawler.__version__ agrees with importlib.metadata — which is
+# the code claim (that __getattr__ delegates instead of hardcoding) and is
+# true in every environment.

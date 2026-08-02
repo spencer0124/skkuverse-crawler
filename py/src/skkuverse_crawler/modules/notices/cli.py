@@ -8,6 +8,7 @@ from ...core.crawl import FullSweep, Incremental
 from ...shared.logger import configure_logging
 from .config.loader import load_and_validate
 from .orchestrator import CrawlOptions, run_crawl
+from .simple import DEFAULT_MAX_PAGES
 
 @click.command("notices")
 @click.option("--once", is_flag=True, help="Run once and exit")
@@ -91,7 +92,11 @@ async def _run(
 # enabled source. The orchestrator's own default for FullSweep is 2500,
 # which across 140 university servers is not something a first-run command
 # should do by accident.
-STORE_LESS_DEFAULT_PAGES = 1
+#
+# Imported rather than redeclared: iter_notices() is the other casual
+# entry point and needs the same guard, and two copies of "1" with two
+# copies of this reasoning is how they end up disagreeing.
+STORE_LESS_DEFAULT_PAGES = DEFAULT_MAX_PAGES
 
 
 async def _run_store_less(departments: list, options: CrawlOptions) -> None:

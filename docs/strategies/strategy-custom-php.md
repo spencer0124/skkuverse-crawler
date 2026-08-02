@@ -50,7 +50,7 @@ href 경로는 `./NFUpload/...` 상대 경로인데, `baseUrl`이 `.../index.php
 
 ### 구현 (최종 반영)
 
-`py/src/skkuverse_crawler/notices/strategies/custom_php.py`, `crawl_detail()` 내부:
+`py/src/skkuverse_crawler/modules/notices/strategies/custom_php.py`, `crawl_detail()` 내부:
 
 ```python
 from urllib.parse import parse_qs, quote, unquote, urlparse
@@ -137,7 +137,7 @@ for a in soup.select(attachment_selector):
 
 ### 변경
 
-`py/src/skkuverse_crawler/notices/strategies/wordpress_api.py`:
+`py/src/skkuverse_crawler/modules/notices/strategies/wordpress_api.py`:
 
 ```python
 FILE_EXTENSIONS = re.compile(
@@ -185,9 +185,9 @@ if href and (FILE_EXTENSIONS.search(href) or UPLOADS_PATH.search(href)):
 
 | 파일 | 변경 |
 |------|------|
-| `py/src/skkuverse_crawler/notices/strategies/custom_php.py` | `urlparse/parse_qs/unquote` import, `crawl_detail` 내 첨부 추출 로직 구현 |
-| `py/src/skkuverse_crawler/notices/strategies/wordpress_api.py` | `FILE_EXTENSIONS` 확장 + `UPLOADS_PATH` 보강 |
-| `py/src/skkuverse_crawler/notices/config/sources.json` | `cal-undergrad`, `cal-grad` 엔트리에 `detailAttachment` 셀렉터 추가 |
+| `py/src/skkuverse_crawler/modules/notices/strategies/custom_php.py` | `urlparse/parse_qs/unquote` import, `crawl_detail` 내 첨부 추출 로직 구현 |
+| `py/src/skkuverse_crawler/modules/notices/strategies/wordpress_api.py` | `FILE_EXTENSIONS` 확장 + `UPLOADS_PATH` 보강 |
+| `py/src/skkuverse_crawler/modules/notices/config/sources.json` | `cal-undergrad`, `cal-grad` 엔트리에 `detailAttachment` 셀렉터 추가 |
 | `py/tests/notices/strategies/test_custom_php.py` | 신규, 4 케이스 |
 | `py/tests/notices/strategies/test_wordpress_api.py` | 신규, 4 케이스 |
 

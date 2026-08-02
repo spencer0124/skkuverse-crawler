@@ -35,7 +35,7 @@
 - **문제**: `cal.skku.edu` 등 일부 소스가 list page의 title을 byte 경계로 잘라서, UTF-8 다바이트 문자(예: `공`, 3-byte) 중간이 끊겨 trailing U+FFFD(`�`) replacement character가 `...` 직전에 들어감. `dedup.has_changed()`의 ellipsis-prefix 방어 로직이 `�`를 prefix 끝에 포함시켜 DB에 저장된 정상 title과 startswith 매칭 실패 → 변경됨으로 오판.
 - **증상**: `cal-undergrad`의 고정 공지(articleNo 1317)가 매 cycle마다 list의 모든 페이지에서 `change_detected`로 반복 감지 → detail 재fetch + editHistory push. cycle당 `cal-undergrad` 혼자 약 100초 소요, editHistory `$slice: -20` 덕분에 무한 증가는 방지됐으나 매 cycle 20건씩 가짜 entry 누적.
 - **해결**: `dedup.has_changed()`에서 prefix를 `rstrip("�")` 후 비교. post-strip prefix가 비어있을 때는 과매칭 방지 guard 추가. 테스트 7건 추가(`tests/notices/test_dedup.py::TestHasChanged`).
-- **상세**: `py/src/skkuverse_crawler/notices/dedup.py`, PR #19
+- **상세**: PR #19. 당시 파일은 `notices/dedup.py`, 현재는 `modules/notices/policy.py::has_changed` (adr-006 PR 5에서 순수 술어와 저장 로직이 갈렸다)
 
 ### ~~7. CRAWL_SOURCE_FILTER가 프로덕션에 상주하여 132개 학과 침묵 차단~~ (2026-04-21 해결)
 - **문제**: dev/debug용 오버라이드인 `CRAWL_SOURCE_FILTER` env var가 프로덕션 `py/docker-compose.yml`에 하드코딩되어 있어, `sources.json`의 147개 `crawlEnabled: true` 항목 중 **15개만 크롤링**됨. 컨테이너는 `Up 2 days`로 healthy하게 보였으나 실제 coverage는 10.2%.

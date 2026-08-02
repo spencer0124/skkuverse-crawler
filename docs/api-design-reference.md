@@ -25,7 +25,7 @@
 
 ## 2. 필드 전체 목록 (Notice 문서)
 
-`py/src/skkuverse_crawler/notices/models.py:26-48` + 요약 프로세서가 `$set`으로 덧붙이는 필드.
+`py/src/skkuverse_crawler/modules/notices/models.py`의 `Notice` + 요약 프로세서가 `$set`으로 덧붙이는 필드.
 
 ### 2.1 크롤러가 쓰는 필드 (모든 문서에 존재)
 
@@ -71,7 +71,7 @@
 
 ### 2.2 요약 프로세서가 덧붙이는 필드 (있을 수도/없을 수도)
 
-`notices_summary/processor.py:83-101` 기준. 요약이 완료된 문서에만 존재.
+`plugins/ai_summary/processor.py` 기준. 요약이 완료된 문서에만 존재.
 
 | 필드 | 타입 | 설명 |
 |---|---|---|
@@ -365,19 +365,22 @@ summaryContentHash != contentHash
 
 ## 8. 핵심 파일 포인터
 
+> 경로는 `py/src/skkuverse_crawler/` 기준. **줄번호는 의도적으로 적지 않는다** — 이 표의 줄번호는 전부 썩어 있었고, 되살리면 같은 종류의 부패를 다시 심는 것이다. 심볼명으로 찾을 것.
+
 | 목적 | 경로 |
 |---|---|
-| Notice 스키마 (dataclass) | `py/src/skkuverse_crawler/notices/models.py:26-49` |
-| DB 인덱스 정의 | `py/src/skkuverse_crawler/notices/dedup.py:12-19` |
-| 변경 감지 로직 | `py/src/skkuverse_crawler/notices/dedup.py:42-50`, `orchestrator.py` |
-| HTML 정제 파이프라인 (6단계) | `py/src/skkuverse_crawler/shared/html_cleaner.py` |
-| HTML → Markdown 변환 | `py/src/skkuverse_crawler/shared/html_to_markdown.py` |
-| contentText 추출(블록 개행) | `py/src/skkuverse_crawler/notices/normalizer.py:_text_from_clean_html` |
-| Backfill 로직 | `py/src/skkuverse_crawler/notices/backfill.py` |
-| 요약 프로세서 | `py/src/skkuverse_crawler/notices_summary/processor.py:69-115` |
-| 요약 쿼리(pending/stale) | `py/src/skkuverse_crawler/notices_summary/query.py` |
+| Notice 스키마 (dataclass) | `modules/notices/models.py::Notice` |
+| DB 인덱스 정의 | `plugins/mongo/sink.py::ensure_indexes` |
+| 변경 감지 술어 | `modules/notices/policy.py::has_changed` (구 `notices/dedup.py`) |
+| 변경 감지 배선 | `modules/notices/orchestrator.py::_emit_page` → `ChangeInfo` 이벤트 |
+| HTML 정제 파이프라인 (6단계) | `shared/html_cleaner.py` |
+| HTML → Markdown 변환 | `shared/html_to_markdown.py` |
+| contentText 추출(블록 개행) | `modules/notices/normalizer.py::_text_from_clean_html` |
+| Backfill(null content 재크롤) | `plugins/mongo/work_seed.py` + `ContentRefreshed` 이벤트 (구 `notices/backfill.py`) |
+| 요약 프로세서 | `plugins/ai_summary/processor.py` |
+| 요약 쿼리(pending/stale) | `plugins/ai_summary/query.py` |
 | 학과 config | `sources.json` (레포 루트 SSOT) |
-| 전략 구현 | `py/src/skkuverse_crawler/notices/strategies/*.py` |
+| 전략 구현 | `modules/notices/strategies/*.py` |
 
 ---
 
@@ -387,7 +390,7 @@ summaryContentHash != contentHash
 
 ```bash
 # (1) 스키마 정의 재확인
-cat py/src/skkuverse_crawler/notices/models.py
+cat py/src/skkuverse_crawler/modules/notices/models.py
 
 # (2) 실제 DB에서 각 전략별 샘플 1건씩 조회
 # MCP mongodb find로 skku_notices.notices에 대해 sourceId별로 limit=1

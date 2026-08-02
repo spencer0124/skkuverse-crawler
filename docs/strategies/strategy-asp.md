@@ -367,9 +367,9 @@ else:
 
 모두 구현 완료. 관련 파일:
 
-- `py/src/skkuverse_crawler/notices/strategies/skkumed_asp.py` — `crawl_list()` + `crawl_detail()` 구현
-- `py/src/skkuverse_crawler/notices/types.py` — `SkkumedAspConfig` TypedDict
-- `py/src/skkuverse_crawler/notices/config/sources.json` — medicine 학과 설정
+- `py/src/skkuverse_crawler/modules/notices/strategies/skkumed_asp.py` — `crawl_list()` + `crawl_detail()` 구현
+- `py/src/skkuverse_crawler/modules/notices/types.py` — `SkkumedAspConfig` TypedDict
+- `py/src/skkuverse_crawler/modules/notices/config/sources.json` — medicine 학과 설정
 - `py/src/skkuverse_crawler/shared/fetcher.py` — encoding 옵션 지원
 
 ## 참고: 같은 ASP 사이트의 다른 게시판
