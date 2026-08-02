@@ -1,0 +1,13 @@
+[
+  {
+    "dept_id": "golden-std",
+    "dept_name": "골든 표준 게시판",
+    "duration_ms": 0,
+    "errors": 1,
+    "inserted": 0,
+    "last_error": "connection refused",
+    "skipped": 0,
+    "source_down": true,
+    "updated": 0
+  }
+]

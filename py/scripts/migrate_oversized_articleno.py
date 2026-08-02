@@ -33,8 +33,8 @@ import hashlib
 import os
 import sys
 
-from skkuverse_crawler.notices.strategies.webflow_skku import slug_to_article_no
-from skkuverse_crawler.shared.config import init_config
+from skkuverse_crawler.modules.notices.strategies.webflow_skku import slug_to_article_no
+from skkuverse_crawler.env import init_config
 from skkuverse_crawler.shared.db import close_client, get_db
 from skkuverse_crawler.shared.logger import configure_logging, get_logger
 
@@ -54,7 +54,7 @@ def _slug_of(detail_path: str) -> str:
 
 async def run(source: str, apply: bool) -> int:
     cfg = init_config(force=True)
-    configure_logging()
+    configure_logging(cfg)
     logger = get_logger("migrate_oversized_articleno")
 
     db = await get_db()

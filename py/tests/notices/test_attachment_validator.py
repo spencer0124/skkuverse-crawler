@@ -4,12 +4,12 @@ import asyncio
 from unittest.mock import AsyncMock, patch
 
 import httpx
+import pytest
 import respx
 
-from skkuverse_crawler.notices.attachment_validator import (
+from skkuverse_crawler.modules.notices.validation import (
     ValidationReport,
     check_reachability,
-    validate_attachments,
     validate_duplicates,
     validate_host_allowed,
     validate_name,
@@ -18,6 +18,11 @@ from skkuverse_crawler.notices.attachment_validator import (
     validate_referer,
     validate_url_scheme,
 )
+from skkuverse_crawler.plugins.mongo.audit import validate_attachments
+
+# validate_attachments() resolves its collection via a lazy `get_db()` import —
+# mock_db_patch is the only way a test reaches it with a mock.
+pytestmark = pytest.mark.usefixtures("mock_db_patch")
 
 # ---------------------------------------------------------------------------
 # Sync: validate_url_scheme
@@ -301,7 +306,7 @@ class TestValidateAttachmentsPipeline:
         ]
 
         with patch(
-            "skkuverse_crawler.notices.config.loader.load_and_validate",
+            "skkuverse_crawler.modules.notices.config.loader.load_and_validate",
             return_value=dept_data,
         ):
             report = await validate_attachments(check_http=False)
@@ -347,7 +352,7 @@ class TestValidateAttachmentsPipeline:
         ]
 
         with patch(
-            "skkuverse_crawler.notices.config.loader.load_and_validate",
+            "skkuverse_crawler.modules.notices.config.loader.load_and_validate",
             return_value=dept_data,
         ):
             report = await validate_attachments(check_http=True)
@@ -381,7 +386,7 @@ class TestValidateAttachmentsPipeline:
         mock_collection.find = lambda *a, **kw: cursor_mock
 
         with patch(
-            "skkuverse_crawler.notices.config.loader.load_and_validate",
+            "skkuverse_crawler.modules.notices.config.loader.load_and_validate",
             return_value=[],  # empty — dept not found
         ):
             report = await validate_attachments(check_http=False)

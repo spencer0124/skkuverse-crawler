@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from unittest.mock import AsyncMock
 
-from skkuverse_crawler.notices.strategies.pyxis_api import PyxisApiStrategy
+from skkuverse_crawler.modules.notices.strategies.pyxis_api import PyxisApiStrategy
 
 
 BASE_CONFIG = {

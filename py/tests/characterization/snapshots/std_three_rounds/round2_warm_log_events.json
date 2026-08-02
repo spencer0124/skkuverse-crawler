@@ -1,0 +1,9 @@
+[
+  "crawl_coverage",
+  "starting_department_crawl",
+  "fetching_list_page",
+  "parsed_list_page",
+  "all_known_first_page_early_stop",
+  "department_crawl_finished",
+  "crawl_completed"
+]

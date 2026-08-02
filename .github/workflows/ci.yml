@@ -2,7 +2,10 @@ name: CI
 
 on:
   pull_request:
-    branches: [main]
+    # dev included since PR 8: the pyproject/uv.lock/Dockerfile triple is
+    # invisible to unit tests, so merging it into dev unchecked is exactly
+    # the case where a green local run proves the least.
+    branches: [main, dev]
 
 jobs:
   test:
@@ -13,7 +16,125 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v4
-      - run: uv sync --extra dev
+      # --locked, not --frozen: --frozen only skips re-resolution, it does
+      # NOT notice a lock that no longer matches pyproject. --locked asserts
+      # they agree, which is the failure we actually want to catch.
+      - run: uv sync --locked --extra dev
       - run: uv run pytest tests/ -v
+      - run: uv run pytest -m mongo -q
       - run: uv run ruff check src/
       - run: uv run mypy src/
+
+  core-only:
+    # Installs the wheel with no extras at all. This is the only job that can
+    # catch a wrong extras TABLE — the in-suite poison test cannot, because it
+    # runs in an environment where every extra is installed.
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: py
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+      - run: uv venv /tmp/core --python 3.12
+      - run: VIRTUAL_ENV=/tmp/core uv pip install .
+      - name: Optional dependencies must be absent
+        run: |
+          /tmp/core/bin/python - <<'PY'
+          import importlib.util as u
+          leaked = [m for m in ("motor", "pymongo", "bson", "apscheduler", "tenacity")
+                    if u.find_spec(m)]
+          assert not leaked, f"optional deps leaked into base: {leaked}"
+          PY
+      - name: Base dependencies must be present
+        # lxml is here deliberately: nothing imports it (it is only a parser
+        # NAME string), so only an explicit presence check can catch it being
+        # demoted to an extra — every other test would stay green.
+        run: |
+          /tmp/core/bin/python - <<'PY'
+          import importlib.util as u
+          missing = [m for m in ("lxml", "click", "dotenv", "bs4", "httpx", "nh3")
+                     if not u.find_spec(m)]
+          assert not missing, f"base deps missing: {missing}"
+          PY
+      - name: Importing the CLI must not need a driver
+        run: |
+          /tmp/core/bin/python - <<'PY'
+          import sys
+          import skkuverse_crawler.cli  # noqa: F401
+          assert "motor" not in sys.modules
+          PY
+      # cd /tmp: load_dotenv() searches cwd, so running from the repo would let
+      # a stray .env mask the empty-environment condition.
+      - name: CLI works with no environment at all
+        run: cd /tmp && env -i /tmp/core/bin/skkuverse-crawler --help
+      - name: Commands needing an extra explain how to install it
+        run: |
+          cd /tmp
+          for cmd in update-check summarize health-summary validate-markdown; do
+            set +e
+            out=$(env -i /tmp/core/bin/skkuverse-crawler "$cmd" 2>&1)
+            code=$?
+            set -e
+            echo "--- $cmd (exit $code) ---"
+            echo "$out"
+            test $code -ne 0
+            echo "$out" | grep -q "skkuverse-crawler\[" \
+              || { echo "no install hint for $cmd"; exit 1; }
+          done
+      - name: A store-less crawl produces JSON on stdout
+        run: |
+          cd /tmp
+          env -i PATH=/usr/bin:/bin /tmp/core/bin/skkuverse-crawler \
+            notices --source skku-main --pages 1 --json > /tmp/out.jsonl 2>/tmp/err.log
+          /tmp/core/bin/python - <<'PY'
+          import json
+          lines = open("/tmp/out.jsonl").read().splitlines()
+          assert lines, "core-only crawl printed nothing"
+          docs = [json.loads(line) for line in lines]
+          assert all("articleNo" in d for d in docs), "a non-notice line reached stdout"
+          print(f"{len(docs)} notices, stdout clean")
+          PY
+
+      # The half that makes the README's promise checkable. A test asserts
+      # the README shows these files byte for byte; this asserts the files
+      # still work — and on a core-only install, so an example that quietly
+      # grew a dependency on an extra fails here rather than for a reader.
+      #
+      # $GITHUB_WORKSPACE is expanded by the outer shell, before env -i
+      # wipes it. cd /tmp for the usual reason: load_dotenv() searches cwd.
+      - name: README examples run on a core-only install
+        run: |
+          cd /tmp
+          for ex in "$GITHUB_WORKSPACE"/py/examples/*.py; do
+            name=$(basename "$ex")
+            echo "--- $name ---"
+            env -i PATH=/usr/bin:/bin /tmp/core/bin/python "$ex" > "/tmp/$name.out"
+            head -3 "/tmp/$name.out"
+            test -s "/tmp/$name.out" || { echo "$name printed nothing"; exit 1; }
+          done
+
+  docker:
+    # The direct evidence that the Dockerfile's --extra flags took effect.
+    # test_packaging.py asserts the flags statically; this asserts the image.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Bare docker build, not `docker compose build`: compose resolves
+      # `env_file: .env`, which does not exist in a fresh checkout.
+      - run: docker build --build-context repo-root=. -f py/Dockerfile -t crawler:pr py
+      - name: Every runtime extra is installed in the image
+        run: |
+          docker run --rm crawler:pr python -c \
+            "import motor, pymongo, bson, apscheduler, tenacity; print('extras ok')"
+      - run: docker run --rm crawler:pr python -m skkuverse_crawler --help
+      - name: Production refuses to boot without a store
+        run: |
+          set +e
+          docker run --rm -e CRAWLER_ENV=production crawler:pr \
+            python -m skkuverse_crawler start > /tmp/boot.log 2>&1
+          code=$?
+          set -e
+          cat /tmp/boot.log
+          test $code -ne 0 || { echo "production booted without MONGO_URL"; exit 1; }
+          grep -q "ProfileError" /tmp/boot.log

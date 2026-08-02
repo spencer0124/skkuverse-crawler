@@ -35,6 +35,11 @@ class Fetcher:
         self._last_request_time: float = 0.0
         self._client = httpx.AsyncClient(
             timeout=timeout,
+            # The 1.0 here is NOT the package version and is not kept in
+            # step with it. It is the identity ~140 university servers
+            # have seen for the crawler's whole life; changing it is a
+            # live-behaviour change against third-party hosts, not a
+            # packaging detail, so the 0.x correction left it alone.
             headers={"User-Agent": "Mozilla/5.0 (compatible; SKKUverseCrawler/1.0)"},
             follow_redirects=True,
         )

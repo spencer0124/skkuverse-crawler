@@ -1,16 +1,22 @@
 from __future__ import annotations
 
 import logging
+import sys
+from typing import TextIO
 from urllib.parse import urlparse
 
 import structlog
 
-from .config import get_config
+from ..core.settings import Config
 
 
-def configure_logging() -> None:
-    cfg = get_config()
+def configure_logging(cfg: Config, *, stream: TextIO | None = None) -> None:
+    """Configure structlog. Logs go to stdout unless ``stream`` says otherwise.
 
+    ``stream`` exists for commands whose stdout IS their output: mixing
+    diagnostics into a JSON Lines stream makes it unparseable, so those
+    commands pass ``sys.stderr`` and keep stdout for data.
+    """
     level = logging.CRITICAL if cfg.is_test else logging.INFO
 
     structlog.reset_defaults()
@@ -32,7 +38,7 @@ def configure_logging() -> None:
         ],
         wrapper_class=structlog.make_filtering_bound_logger(level),
         context_class=dict,
-        logger_factory=structlog.PrintLoggerFactory(),
+        logger_factory=structlog.PrintLoggerFactory(file=stream or sys.stdout),
         cache_logger_on_first_use=True,
     )
 

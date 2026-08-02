@@ -1,0 +1,79 @@
+[
+  [
+    "create_index",
+    {
+      "keys": [
+        [
+          "articleNo",
+          1
+        ],
+        [
+          "sourceId",
+          1
+        ]
+      ],
+      "name": null,
+      "partialFilterExpression": null,
+      "unique": true
+    }
+  ],
+  [
+    "create_index",
+    {
+      "keys": [
+        [
+          "sourceId",
+          1
+        ],
+        [
+          "date",
+          -1
+        ]
+      ],
+      "name": null,
+      "partialFilterExpression": null,
+      "unique": false
+    }
+  ],
+  [
+    "find",
+    {
+      "filter": {
+        "$or": [
+          {
+            "content": null
+          },
+          {
+            "content": ""
+          }
+        ],
+        "sourceId": "golden-std"
+      },
+      "projection": {
+        "articleNo": 1,
+        "detailPath": 1
+      }
+    }
+  ],
+  [
+    "update_one",
+    {
+      "filter": {
+        "articleNo": 106,
+        "sourceId": "golden-std"
+      },
+      "update": {
+        "$set": {
+          "attachments": [],
+          "cleanHtml": "<p>휴학·복학 신청 절차 안내입니다.</p>\n<p><strong>신청 기한:</strong> 매 학기 개시 30일 전까지</p>\n<p><a href=\"https://skku-std.test/files/leave_form.hwp\">신청서 양식</a></p>",
+          "cleanMarkdown": "휴학·복학 신청 절차 안내입니다.\n\n**신청 기한:** 매 학기 개시 30일 전까지\n\n[신청서 양식](https://skku-std.test/files/leave_form.hwp)",
+          "content": "<p>휴학·복학 신청 절차 안내입니다.</p>\n<p><span style=\"font-weight: bold\">신청 기한:</span> 매 학기 개시 30일 전까지</p>\n<p><a href=\"https://skku-std.test/files/leave_form.hwp\">신청서 양식</a></p>",
+          "contentHash": "d3c2f4a8e43f7dedb9da6ca2ede2a4ff4f87d4665e4757ac7adf4a65464e6c70",
+          "contentText": "휴학·복학 신청 절차 안내입니다.신청 기한:매 학기 개시 30일 전까지신청서 양식",
+          "crawledAt": "<UTC_DATETIME>"
+        }
+      },
+      "upsert": false
+    }
+  ]
+]

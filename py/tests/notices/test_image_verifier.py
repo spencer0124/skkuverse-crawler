@@ -10,7 +10,7 @@ import zlib
 import httpx
 import respx
 
-from skkuverse_crawler.notices.image_verifier import (
+from skkuverse_crawler.modules.notices.image_verifier import (
     _parse_dimensions,
     verify_notice_images,
 )

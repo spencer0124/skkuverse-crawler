@@ -179,7 +179,7 @@ _crawl_department()
         └── upsert/update → MongoDB 저장
     │
     ▼ (전 학과 완료 후, 스케줄러 경로만)
-record_and_alert(results)          ← crawl_health/store.py
+record_and_alert(results)          ← plugins/health/store.py (wiring이 설치한 훅)
     │
     ├── 소스별 연속 실패 카운트 갱신 (crawl_health 컬렉션)
     └── 연속 3틱 page-0 실패 → Discord 알림 1건 (배치) / 회복 시 recovered

@@ -1,0 +1,13 @@
+[
+  "crawl_coverage",
+  "starting_department_crawl",
+  "fetching_list_page",
+  "parsed_list_page",
+  "fetching_list_page",
+  "parsed_list_page",
+  "fetching_list_page",
+  "parsed_list_page",
+  "empty_list_page",
+  "department_crawl_finished",
+  "crawl_completed"
+]

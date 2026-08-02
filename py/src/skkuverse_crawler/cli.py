@@ -1,14 +1,151 @@
 from __future__ import annotations
 
 import asyncio
-import signal
+import importlib
+import importlib.util
 
 import click
 
 from .shared.logger import configure_logging
 
+# extra name -> a distribution that extra installs, used only to detect
+# absence. Names differ (`mongo` installs `motor`), so the mapping is
+# explicit; test_packaging.py checks it against pyproject.
+_EXTRA_MARKER = {
+    "mongo": "motor",
+    "sched": "apscheduler",
+    "discord": "tenacity",
+    "ai": "tenacity",
+}
 
-@click.group()
+# name -> (module, attribute, help text, extras needed to import it)
+#
+# The help text is duplicated from each command's docstring so that
+# `--help` can be rendered without importing anything. Duplication is
+# guarded, not trusted: tests/cli/test_lazy_group.py imports every entry
+# and asserts the text still matches.
+_LAZY: dict[str, tuple[str, str, str, str | None]] = {
+    # Extras must list everything the command's import chain needs, not just
+    # the one it is named after: health reads crawl_health state out of Mongo
+    # (bson + shared.db) and summarize writes summaries back to it.
+    "health-summary": (
+        ".plugins.health.cli", "health_summary_cli",
+        "Send the daily crawl-health summary to Discord once.", "mongo,discord",
+    ),
+    "notices": (
+        ".modules.notices.cli", "notices_cli",
+        "Run the notices crawler.", None,
+    ),
+    "summarize": (
+        ".plugins.ai_summary.cli", "summarize_cli",
+        "Run AI summarization on unsummarized notices.", "mongo,ai",
+    ),
+    "update-check": (
+        ".plugins.mongo.cli", "update_check_cli",
+        "Run Tier 2 update detection on recent notices.", "mongo",
+    ),
+    "validate-attachments": (
+        ".plugins.mongo.cli", "validate_attachments_cli",
+        "Validate attachment metadata in the notices collection.", "mongo",
+    ),
+    "validate-markdown": (
+        ".plugins.mongo.cli", "validate_markdown_cli",
+        "Validate markdown rendering in stored cleanMarkdown fields.", "mongo",
+    ),
+}
+
+
+def _missing_extras_message(cmd_name: str, extras: str, detail: str) -> str:
+    return (
+        f"`{cmd_name}` needs the optional `{extras}` dependencies — install with:\n"
+        f"    pip install 'skkuverse-crawler[{extras}]'\n"
+        f"({detail})"
+    )
+
+
+class _LazyGroup(click.Group):
+    """Subcommands are imported when invoked, not when the group is built.
+
+    ``format_commands`` is overridden as well, not just ``get_command``:
+    click's Group.format_commands calls get_command() for EVERY name in
+    list_commands() to render short help, so ``--help`` is precisely the
+    path that would materialize every subcommand. Placeholder Commands
+    carry the table's help text through click's own get_short_help_str(),
+    which keeps the rendering byte-identical to an eager group instead of
+    re-implementing its truncation.
+
+    ``importlib`` is the one module-level import that breaks the codebase's
+    "plain from x import y" idiom, and it has to be: a lazy *group* cannot
+    be written with static imports.
+    """
+
+    def list_commands(self, ctx: click.Context) -> list[str]:
+        return sorted({*super().list_commands(ctx), *_LAZY})
+
+    def get_command(self, ctx: click.Context, cmd_name: str) -> click.Command | None:
+        meta = _LAZY.get(cmd_name)
+        if meta is None:
+            return super().get_command(ctx, cmd_name)
+        module, attr, _help, extras = meta
+        # Shell completion calls get_command for every name and click treats
+        # it as a lookup that returns None, not one that raises — a missing
+        # extra there must not put a traceback in the user's terminal.
+        if extras is not None and not ctx.resilient_parsing:
+            self._require_extras(cmd_name, extras)
+        try:
+            loaded = importlib.import_module(module, __package__)
+        except ImportError as exc:
+            if extras is None or ctx.resilient_parsing:
+                raise
+            raise click.ClickException(_missing_extras_message(cmd_name, extras, str(exc))) from exc
+        return getattr(loaded, attr)
+
+    @staticmethod
+    def _require_extras(cmd_name: str, extras: str) -> None:
+        """Fail with an install hint before the command can fail worse.
+
+        Checked with find_spec rather than by catching ImportError: the CLI
+        leaf modules import fine without their driver (that is what makes
+        `--help` cheap), so the failure would otherwise surface much later
+        as a missing MONGO_URL or a ModuleNotFoundError from deep inside a
+        plugin. find_spec does not execute the module, so this stays as
+        import-light as the rest of the group.
+        """
+        for extra in extras.split(","):
+            marker = _EXTRA_MARKER.get(extra.strip())
+            if marker is None:
+                continue
+            try:
+                found = importlib.util.find_spec(marker) is not None
+            except ModuleNotFoundError:
+                found = False
+            if not found:
+                raise click.ClickException(
+                    _missing_extras_message(cmd_name, extras, f"no module named {marker!r}")
+                )
+
+    def format_commands(self, ctx: click.Context, formatter: click.HelpFormatter) -> None:
+        # Eagerly-registered commands win over the table: if a name exists in
+        # both, the real Command is the truth and the placeholder is stale.
+        # Keyed by name rather than sorting tuples, because click.Command has
+        # no ordering and `rows.sort()` on ties raises TypeError.
+        by_name: dict[str, click.Command] = {
+            name: click.Command(name, help=meta[2]) for name, meta in _LAZY.items()
+        }
+        by_name.update(self.commands)
+
+        # Click's own format_commands hides `hidden` commands; a placeholder
+        # can never be hidden, but a real one can.
+        rows = [(name, cmd) for name, cmd in sorted(by_name.items()) if not cmd.hidden]
+        if not rows:
+            return
+
+        limit = formatter.width - 6 - max(len(name) for name, _ in rows)
+        with formatter.section("Commands"):
+            formatter.write_dl([(name, cmd.get_short_help_str(limit)) for name, cmd in rows])
+
+
+@click.group(cls=_LazyGroup)
 def main() -> None:
     """skkuverse-crawler: Multi-module SKKU data crawler."""
     pass
@@ -18,95 +155,17 @@ def main() -> None:
 @click.option("--module", "-m", default=None, help="Run specific module only")
 def start(module: str | None) -> None:
     """Start the cron scheduler for all (or one) module."""
-    from .shared.config import init_config
+    from .env import init_config
 
-    init_config()
-    configure_logging()
+    cfg = init_config()
+    configure_logging(cfg)
     asyncio.run(_start_scheduler(module))
 
 
 async def _start_scheduler(module_filter: str | None = None) -> None:
-    from apscheduler.schedulers.asyncio import AsyncIOScheduler
-    from apscheduler.triggers.cron import CronTrigger
-    from apscheduler.triggers.interval import IntervalTrigger
-
-    from .modules import registry
+    from .plugins.scheduler.runner import run_scheduler
     from .shared.db import close_client
+    from .wiring import build_runtime
 
-    # Register modules
-    from .crawl_health.module import CrawlHealthSummaryModule
-    from .notices.module import NoticesModule, NoticesUpdateCheckModule
-    from .notices_summary.module import NoticesSummaryModule
-
-    registry.register(NoticesModule())
-    registry.register(NoticesUpdateCheckModule())
-    registry.register(NoticesSummaryModule())
-    registry.register(CrawlHealthSummaryModule())
-
-    scheduler = AsyncIOScheduler()
-
-    for mod in registry.all_modules():
-        if module_filter and mod.config.name != module_filter:
-            continue
-        if mod.config.cron_schedule:
-            trigger = CronTrigger.from_crontab(mod.config.cron_schedule)
-        elif mod.config.interval_seconds:
-            trigger = IntervalTrigger(seconds=mod.config.interval_seconds)
-        else:
-            continue
-        scheduler.add_job(
-            mod.run, trigger,
-            kwargs={"incremental": True},
-            max_instances=1,
-            coalesce=True,
-            misfire_grace_time=10,
-        )
-
-    scheduler.start()
-
-    # Run modules marked with run_on_start
-    for mod in registry.all_modules():
-        if module_filter and mod.config.name != module_filter:
-            continue
-        if not mod.config.run_on_start:
-            continue
-        await mod.run(incremental=True)
-
-    # Wait for signal
-    stop_event = asyncio.Event()
-    loop = asyncio.get_event_loop()
-    for sig in (signal.SIGTERM, signal.SIGINT):
-        loop.add_signal_handler(sig, stop_event.set)
-    await stop_event.wait()
-
-    # Graceful shutdown with 5s timeout
-    from .shared.logger import get_logger
-    logger = get_logger("shutdown")
-
-    scheduler.shutdown(wait=False)
-    try:
-        await asyncio.wait_for(
-            _shutdown_modules(registry.all_modules()),
-            timeout=5.0,
-        )
-    except asyncio.TimeoutError:
-        logger.warning("force_exit_after_timeout")
-    finally:
-        await close_client()
-
-
-async def _shutdown_modules(modules: list) -> None:
-    for mod in modules:
-        await mod.shutdown()
-
-
-# Register CLI subcommands
-from .crawl_health.cli import health_summary_cli  # noqa: E402
-from .notices.cli import notices_cli, update_check_cli, validate_attachments_cli, validate_markdown_cli  # noqa: E402
-from .notices_summary.cli import summarize_cli  # noqa: E402
-main.add_command(notices_cli)
-main.add_command(update_check_cli)
-main.add_command(validate_attachments_cli)
-main.add_command(validate_markdown_cli)
-main.add_command(summarize_cli)
-main.add_command(health_summary_cli)
+    modules = build_runtime()
+    await run_scheduler(modules, module_filter=module_filter, on_shutdown=close_client)

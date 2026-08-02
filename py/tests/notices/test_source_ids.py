@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from skkuverse_crawler.notices.config.source_ids import SourceId
+from skkuverse_crawler.modules.notices.config.source_ids import SourceId
 
 # sources.json lives at the repo root (SSOT).
 # test file is at py/tests/notices/test_source_ids.py

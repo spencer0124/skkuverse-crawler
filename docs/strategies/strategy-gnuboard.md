@@ -532,7 +532,7 @@ https://nano.skku.edu/bbs/board.php?tbl=bbs42&mode=VIEW&num=416&...&page=1
 ### 전략 구조 (구현 완료)
 
 ```
-py/src/skkuverse_crawler/notices/strategies/
+py/src/skkuverse_crawler/modules/notices/strategies/
   gnuboard.py         # C2-gnuboard (bio, pharm 등)
   gnuboard_custom.py  # C2-custom (nano 등 GnCommon 기반)
   custom_php.py       # C1 (cal 등 자체 PHP)

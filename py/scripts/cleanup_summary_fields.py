@@ -21,7 +21,7 @@ import asyncio
 import os
 import sys
 
-from skkuverse_crawler.shared.config import init_config
+from skkuverse_crawler.env import init_config
 from skkuverse_crawler.shared.db import close_client, get_db
 from skkuverse_crawler.shared.logger import configure_logging, get_logger
 
@@ -45,7 +45,7 @@ SUMMARY_FIELDS: tuple[str, ...] = (
 
 async def run(apply: bool) -> int:
     cfg = init_config(force=True)
-    configure_logging()
+    configure_logging(cfg)
     logger = get_logger("cleanup_summary_fields")
 
     db = await get_db()

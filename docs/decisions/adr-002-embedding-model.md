@@ -1,7 +1,18 @@
-# ADR-002: 임베딩 모델 — Voyage 4 시리즈 (잠정)
+# ADR-002: 임베딩 모델 — Voyage 4 시리즈
 
-- **상태**: **잠정 채택** — Phase 3 자체 데이터 실측 후 확정 ([search-mcp-plan.md](../search-mcp-plan.md) Phase 3 게이트)
-- **관련**: [adr-001 (직접 임베딩)](adr-001-direct-embedding.md), [adr-003 (하이브리드 검색)](adr-003-hybrid-search-atlas.md)
+- **상태**: **채택됨 (2026-08-01)** — 게이트 A 실측 완료
+- **관련**: [adr-007 (auto-embed 채택)](adr-007-atlas-auto-embedding.md), [adr-003 (하이브리드 검색)](adr-003-hybrid-search-atlas.md), ~~[adr-001](adr-001-direct-embedding.md)~~(대체됨)
+- **실측 원본**: `skkuverse-ai/eval/results.md`
+
+> [!IMPORTANT]
+> **adr-007(auto-embed 채택)로 이 결정의 성격이 바뀌었다.** 모델은 이제 `search.json` 이 아니라
+> **autoEmbed 인덱스 정의**에 선언된다. 선택지도 Atlas 가 지원하는 4종(`voyage-4-lite` /
+> `voyage-4` / `voyage-4-large` / `voyage-code-3`)으로 제한된다 — 아래 후보 5종 비교에서
+> KURE-v1·BGE-M3 로 갈아탈 길은 닫혔다.
+>
+> 또한 **문서/질의 비대칭 조합(`voyage-4-large` + `voyage-4-lite`)을 우리가 지정할 수 없다.**
+> autoEmbed 인덱스는 모델을 하나만 받고, 질의 임베딩도 같은 모델로 생성된다.
+> **결정: `voyage-4-large` 단일.** 실측에서 앞선 모델을 쓰고 비대칭 이점은 포기한다.
 
 ## 맥락 — 이 선택의 경위를 정직하게 기록한다
 
@@ -9,11 +20,13 @@ Voyage는 원래 **선택이 아니었다.** Atlas auto-embed를 검토하던 �
 
 핵심 제약: 공지 코퍼스는 한국어 위주 + **소수의 영어·중국어 공지 포함**. Voyage 4의 한국어 단독 공개 벤치마크는 없다 (multilingual-2 시절 27개 언어 평가에 한국어 포함 이력만 있음). 따라서 벤치마크가 아니라 자체 30문항 평가 셋이 판정 기준이다.
 
-## 결정 (잠정)
+## 결정
 
-- **문서 임베딩**: `voyage-4-large` (품질 최우선, 1024차원)
-- **질의 임베딩**: `voyage-4-lite` (저지연·저가) — 4 시리즈 공유 임베딩 공간으로 비대칭 조합이 공식 지원됨
-- Phase 2 백필은 이 구성으로 진행한다. 롤백 비용이 낮기 때문 (6,500건 재임베딩 = 수 분, 무료 한도 내).
+**`voyage-4-large` 단일** (autoEmbed 인덱스 정의에 선언, 양자화 `scalar`/int8, 1024차원).
+
+원안은 문서 `voyage-4-large` + 질의 `voyage-4-lite` 비대칭 조합이었다. adr-007 로 auto-embed 를 채택하면서 **인덱스가 모델을 하나만 받으므로 비대칭이 불가능**해졌고, 실측에서 앞선 쪽인 `voyage-4-large` 로 단일화했다.
+
+> 비대칭을 포기한 대가는 질의 임베딩 단가다 — `voyage-4-lite` $0.02/M 대신 `voyage-4-large` $0.12/M. 질의 토큰량이 문서 대비 무시할 수준(질의 한 건 수십 토큰)이라 실질 영향은 없다.
 
 ## 잠정 채택 근거
 
@@ -38,38 +51,49 @@ Voyage는 원래 **선택이 아니었다.** Atlas auto-embed를 검토하던 �
 
 > 2026-07-29 후보 확장: 초기 후보군이 이전 논의(Voyage vs 한국어 특화 구도)에서 이월되어 빅랩 API 모델이 빠져 있었음 — 지적받아 OpenAI·Gemini 추가. 둘 다 API 기반이라 오프라인 실측에 몇 달러면 편입 가능. 인덱스 정합을 위해 전 후보 1024차원 통일 측정.
 
-## 확정 방법 — 인프라 투자 전에 오프라인으로 잰다
+## 실측 (게이트 A, 2026-08-01 완료)
 
-모델 비교에 Atlas·배포·컨테이너가 전혀 필요 없다:
+Atlas·배포·컨테이너 없이 오프라인으로 쟀다. 코퍼스 **2,007건**(최신순 + 평가 정답 강제 포함), 질의 **26문항**(6버킷), 로컬 numpy 내적. 하네스는 `skkuverse-ai/scripts/{embed_corpus,search_eval}.py`, 원본 수치는 `skkuverse-ai/eval/results.md`.
 
-1. 6,500건의 `embeddingInput`을 로컬에서 KURE-v1/BGE-M3로 임베딩 (sentence-transformers, CPU 수십 분, 무료)
-2. 평가 셋 30문항 질의도 같은 모델로 임베딩
-3. numpy 코사인 유사도 → hit@1/hit@5/MRR
-4. Voyage(ENN) 수치와 같은 표에 나란히 기록
+| 변형 | hit@1 | hit@5 | MRR@10 | recall@10 | 비고 |
+|------|-------|-------|--------|-----------|------|
+| regex-global (현행 검색) | 0.192 | 0.231 | 0.202 | 0.223 | 베이스라인 |
+| **vector-only (voyage-4-large)** | **0.654** | 0.808 | **0.724** | 0.744 | 문서 large / 질의 lite 비대칭 |
+| vector-only (text-embedding-3-large) | 0.577 | **0.885** | 0.718 | 0.816 | 1024 (matryoshka 절단) |
+| vector-only (text-embedding-3-large) | 0.577 | 0.846 | 0.717 | **0.847** | 3072 (네이티브) — 대조군 |
+| vector-only (KURE-v1) | 미측정 | | | | 아래 사유 |
+| vector-only (BGE-M3) | 미측정 | | | | 아래 사유 |
+| vector-only (gemini-embedding-001) | 미측정 | | | | API 키 미확보 |
 
-Solar는 API 키 확보 시 선택 측정 (차원 문제로 우선순위 낮음).
+> 원 계획의 `MRR` 열은 하네스가 내는 **`MRR@10`** 으로, `recall@10` 열은 신규로 잡았다. recall 은 Voyage 가 유일하게 지는 축이라 빼면 왜곡된다.
 
-### 실측 결과 (Phase 3에서 기입)
+**미측정 3종 사유**: 게이트의 목적은 "관성으로 이월된 Voyage 가 쓸 만한가"였고, 그 답은 2종 비교로 나왔다 — Voyage 는 regex 대비 3.4배이고 OpenAI 와 동률이다. 여기서 한국어 특화 모델이 더 나은 것으로 밝혀져도 **adr-007(auto-embed) 채택으로 갈아탈 수 없다**(Atlas 지원 4종에 없음). 즉 추가 측정이 결정을 바꾸지 못한다. 모델 자유가 다시 필요해지면 adr-007 재검토와 함께 측정한다.
 
-| 변형 | hit@1 | hit@5 | MRR | 비고 |
-|------|-------|-------|-----|------|
-| vector-only (voyage-4-large) | _TBD_ | _TBD_ | _TBD_ | |
-| vector-only (KURE-v1) | _TBD_ | _TBD_ | _TBD_ | 오프라인, 로컬 CPU |
-| vector-only (BGE-M3) | _TBD_ | _TBD_ | _TBD_ | 오프라인, 로컬 CPU |
-| vector-only (text-embedding-3-large) | _TBD_ | _TBD_ | _TBD_ | 오프라인, API (1024로 축소) |
-| vector-only (gemini-embedding-001) | _TBD_ | _TBD_ | _TBD_ | 오프라인, API (1024로 축소) |
+### 판정
 
-**판정 기준**: 차이가 미미하면 Voyage 확정(운영 부담 0이 결정타). KURE/BGE-M3가 유의미하게 우위면 자체 호스팅 비용(컨테이너·메모리·지연·모델 파일 관리)과 품질 이득을 비교해 판단.
+**두 모델은 동률이다.** MRR@10 0.724 vs 0.718 — 0.6% 차. 문항별 승패는 voyage 7 / openai 5 / 동률 14.
+
+> ⚠️ **26문항 표본이다.** hit@1 0.654 vs 0.577 은 **2문항** 차이고, 버킷 단위(3~5문항)에서 0.20 이동은 **질의 한 개**다. 경향은 읽되 소수점으로 우열을 가리지 말 것.
+
+성격 차이는 유효하다:
+
+- **Voyage 우세** — scoped(0.75 vs 0.25), typo(1.00 vs 0.67). 정확한 1위를 잘 집는다
+- **OpenAI 우세** — paraphrase·concept(각 0.60 vs 0.40), recall@10. 추상적 질의를 넓게 건진다
+- **keyword 버킷은 regex 0.80 ≥ voyage 0.80 > openai 0.60** — 제목에 그대로 있는 말은 문자열 매칭이 여전히 최강. adr-003 하이브리드 설계의 데이터 근거
+
+**부수 확인**: OpenAI 를 1024 로 절단한 것은 손해가 아니었다. 네이티브 3072 와 hit@1·MRR 이 소수점 셋째 자리까지 동일하고 순위가 바뀐 문항은 26개 중 2개(방향도 상쇄). matryoshka 절단이 사실상 무손실이므로 **1024 유지가 옳고**, 앞선 비교도 공정했다.
+
+**Voyage 채택 근거는 품질이 아니라 나머지 축**: 무료 200M 토큰, Atlas 네이티브 통합(adr-007), 입력 한도(OpenAI 는 입력당 8,191 토큰이라 조합 규격 16,000자를 못 받는다 — 실제로 이 비교도 8,000자로 맞춰 쟀다).
 
 ## 되돌리기 비용
 
-- 원본 텍스트 보존 → 재임베딩 수 분 (adr-001).
-- `embeddingModel` 필드를 문서마다 저장 → 모델 전환 시 미마이그레이션 문서 추적 가능.
-- 4 시리즈 내 교체(large↔lite 등)는 공유 임베딩 공간으로 **재색인 자체가 불필요**.
+- 원본 텍스트 보존 → 인덱스 정의의 `model` 만 바꾸고 재색인하면 된다 (adr-007 에서는 Atlas 가 자동 재임베딩)
+- ~~`embeddingModel` 필드를 문서마다 저장~~ → auto-embed 에서는 벡터·모델 기록이 내부 DB 에 있어 이 필드가 사라진다
+- 4 시리즈 내 교체는 공유 임베딩 공간이지만, **autoEmbed 인덱스는 모델이 정의에 박혀 있어 변경 시 재색인이 필요**하다
 
 ## 재검토 조건
 
-- Phase 3 실측에서 한국어 hit@5가 한국어 특화 모델 대비 유의미하게 열세일 때 (즉시 — 이 ADR의 예정된 확정 절차)
-- 운영 중 한국어 질의 hit@5가 합의 임계치 이하로 하락할 때
-- 다른 이유로 자체 GPU/추론 인프라가 생겼을 때 (자체 호스팅의 한계비용이 급감)
+- 운영 중 한국어 질의 hit@5 가 합의 임계치 이하로 하락할 때
+- 한국어 특화 모델(KURE-v1·BGE-M3)이 필요하다고 판단될 때 → **adr-007 재검토와 묶어서** (auto-embed 는 Atlas 지원 4종만 가능)
 - Voyage 가격·무료 한도 정책 변경 시
+- Atlas 가 autoEmbed 에 비대칭 모델 조합을 지원하게 될 때 → 질의를 `voyage-4-lite` 로 되돌려 단가 절감
