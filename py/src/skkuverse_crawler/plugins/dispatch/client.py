@@ -39,7 +39,7 @@ from tenacity import (
     wait_exponential,
 )
 
-from ...shared.config import get_config
+from ...env import get_config
 from ...shared.logger import get_logger
 
 logger = get_logger("dispatch_client")

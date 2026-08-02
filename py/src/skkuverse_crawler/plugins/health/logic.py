@@ -131,12 +131,18 @@ def format_daily_summary(
     enabled_count: int,
     failing: list[dict[str, Any]],
     inserted_24h: int,
+    plugins: tuple[str, ...] = (),
 ) -> str:
     lines = [
         f"📊 **크롤러 일일 요약** ({_fmt_kst(now)} KST)",
         f"소스: {enabled_count}개 활성 · 정상 {enabled_count - len(failing)} · 실패 중 {len(failing)}",
         f"최근 24시간 신규 공지: {inserted_24h}건",
     ]
+    # A deployment that quietly lost a plugin looks healthy in every other
+    # line of this message; naming them daily is what makes the loss
+    # visible without anyone going looking (architecture §프로파일).
+    if plugins:
+        lines.append(f"플러그인: {', '.join(plugins)}")
     if failing:
         lines.append("⚠️ 실패 중:")
         for doc in sorted(failing, key=lambda d: -int(d.get("consecutiveFailures", 0))):

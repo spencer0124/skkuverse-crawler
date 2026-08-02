@@ -19,7 +19,7 @@ import pytest
 import respx
 
 from skkuverse_crawler.plugins.dispatch.client import notify_cycle_complete
-from skkuverse_crawler.shared.config import init_config, reset_config
+from skkuverse_crawler.env import init_config, reset_config
 
 URL = "http://test-api/internal/notices/dispatch-pending"
 TOKEN = "test-token-64"  # noqa: S105 — fixture, not real

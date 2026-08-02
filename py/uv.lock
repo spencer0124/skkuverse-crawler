@@ -679,40 +679,57 @@ name = "skkuverse-crawler"
 version = "1.0.0"
 source = { editable = "." }
 dependencies = [
-    { name = "apscheduler" },
     { name = "beautifulsoup4" },
     { name = "click" },
     { name = "httpx" },
     { name = "imagesize" },
     { name = "lxml" },
     { name = "markdownify" },
-    { name = "motor" },
     { name = "nh3" },
     { name = "python-dotenv" },
     { name = "structlog" },
-    { name = "tenacity" },
 ]
 
 [package.optional-dependencies]
+ai = [
+    { name = "tenacity" },
+]
+all = [
+    { name = "apscheduler" },
+    { name = "motor" },
+    { name = "tenacity" },
+]
 dev = [
+    { name = "apscheduler" },
+    { name = "motor" },
     { name = "mypy" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "respx" },
     { name = "ruff" },
+    { name = "tenacity" },
     { name = "testcontainers", extra = ["mongodb"] },
+]
+discord = [
+    { name = "tenacity" },
+]
+mongo = [
+    { name = "motor" },
+]
+sched = [
+    { name = "apscheduler" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "apscheduler", specifier = ">=3.10,<4" },
+    { name = "apscheduler", marker = "extra == 'sched'", specifier = ">=3.10,<4" },
     { name = "beautifulsoup4", specifier = ">=4.12" },
     { name = "click", specifier = ">=8.1" },
     { name = "httpx", specifier = ">=0.27" },
     { name = "imagesize", specifier = ">=1.4" },
     { name = "lxml", specifier = ">=5.0" },
     { name = "markdownify", specifier = ">=1.2" },
-    { name = "motor", specifier = ">=3.6" },
+    { name = "motor", marker = "extra == 'mongo'", specifier = ">=3.6" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.13" },
     { name = "nh3", specifier = ">=0.2" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
@@ -720,11 +737,14 @@ requires-dist = [
     { name = "python-dotenv", specifier = ">=1.0" },
     { name = "respx", marker = "extra == 'dev'", specifier = ">=0.21" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.7" },
+    { name = "skkuverse-crawler", extras = ["all"], marker = "extra == 'dev'" },
+    { name = "skkuverse-crawler", extras = ["mongo", "sched", "discord", "ai"], marker = "extra == 'all'" },
     { name = "structlog", specifier = ">=24.0" },
-    { name = "tenacity", specifier = ">=9.0" },
+    { name = "tenacity", marker = "extra == 'ai'", specifier = ">=9.0" },
+    { name = "tenacity", marker = "extra == 'discord'", specifier = ">=9.0" },
     { name = "testcontainers", extras = ["mongodb"], marker = "extra == 'dev'", specifier = ">=4.0" },
 ]
-provides-extras = ["dev"]
+provides-extras = ["mongo", "sched", "discord", "ai", "all", "dev"]
 
 [[package]]
 name = "soupsieve"

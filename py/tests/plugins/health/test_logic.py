@@ -118,3 +118,31 @@ class TestFormatting:
         )
         assert "148개 활성" in msg and "정상 147" in msg
         assert "cheme" in msg and "52틱" in msg and "74건" in msg
+
+
+class TestDailySummaryPlugins:
+    """Plugins in the daily summary (architecture §프로파일).
+
+    A deployment that lost a plugin looks healthy in every other line of
+    this message — sources active, none failing, notices arriving from
+    whatever still works. Naming the plugins daily is what surfaces the
+    loss without anyone going looking.
+    """
+
+    def _summary(self, **kwargs) -> str:
+        return format_daily_summary(
+            now=datetime(2026, 8, 1, 9, 0, tzinfo=timezone.utc),
+            enabled_count=136,
+            failing=[],
+            inserted_24h=42,
+            **kwargs,
+        )
+
+    def test_plugins_are_listed_when_given(self):
+        assert "플러그인: mongo, sched" in self._summary(plugins=("mongo", "sched"))
+
+    def test_omitted_entirely_when_empty(self):
+        """Callers that have nothing to report must not produce a dangling
+        label — the parameter defaults to empty so the existing callers and
+        their tests are unaffected."""
+        assert "플러그인" not in self._summary()

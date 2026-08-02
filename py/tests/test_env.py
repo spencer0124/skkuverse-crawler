@@ -4,12 +4,12 @@ from unittest.mock import patch
 
 import pytest
 
-from skkuverse_crawler.shared.config import (
+from skkuverse_crawler.env import (
     ConfigNotInitialized,
     CrawlerEnv,
     get_config,
     init_config,
-    load_config,
+    settings_from_env,
     reset_config,
 )
 
@@ -103,25 +103,43 @@ class TestModeLabel:
 
 
 class TestValidation:
-    """Patch load_dotenv so .env file doesn't re-inject MONGO_URL."""
+    """Patch load_dotenv so .env file doesn't re-inject MONGO_URL.
 
-    @patch("skkuverse_crawler.shared.config.load_dotenv")
-    def test_missing_mongo_url_exits_in_production(self, _mock_ld, monkeypatch):
+    Since PR 8 config loading no longer enforces MONGO_URL in any
+    environment: "no store" is a legitimate configuration once mongo is an
+    optional dependency, and `notices --json` relies on it. The
+    requirement moved to the two places that actually need a store —
+    shared.db.get_client() and wiring's production profile gate — each
+    with its own test.
+    """
+
+    @pytest.mark.parametrize("env_name", ["production", "development", "test"])
+    @patch("skkuverse_crawler.env.load_dotenv")
+    def test_missing_mongo_url_is_loadable_in_every_environment(
+        self, _mock_ld, monkeypatch, env_name
+    ):
+        monkeypatch.setenv("CRAWLER_ENV", env_name)
+        monkeypatch.delenv("MONGO_URL", raising=False)
+        reset_config()
+        cfg = init_config(force=True)
+        assert cfg.mongo_url is None
+
+    @patch("skkuverse_crawler.env.load_dotenv")
+    def test_asking_for_a_client_without_mongo_url_raises(self, _mock_ld, monkeypatch):
+        """The requirement did not disappear, it moved. Motor does not
+        fail on a None URL — it quietly connects to localhost:27017."""
+        import asyncio
+
+        from skkuverse_crawler.shared.db import MongoUrlMissing, get_client
+
         monkeypatch.setenv("CRAWLER_ENV", "production")
         monkeypatch.delenv("MONGO_URL", raising=False)
         reset_config()
-        with pytest.raises(SystemExit):
-            init_config(force=True)
+        init_config(force=True)
+        with pytest.raises(MongoUrlMissing, match="MONGO_URL"):
+            asyncio.run(get_client())
 
-    @patch("skkuverse_crawler.shared.config.load_dotenv")
-    def test_missing_mongo_url_exits_in_development(self, _mock_ld, monkeypatch):
-        monkeypatch.setenv("CRAWLER_ENV", "development")
-        monkeypatch.delenv("MONGO_URL", raising=False)
-        reset_config()
-        with pytest.raises(SystemExit):
-            init_config(force=True)
-
-    @patch("skkuverse_crawler.shared.config.load_dotenv")
+    @patch("skkuverse_crawler.env.load_dotenv")
     def test_missing_mongo_url_ok_in_test(self, _mock_ld, monkeypatch):
         monkeypatch.setenv("CRAWLER_ENV", "test")
         monkeypatch.delenv("MONGO_URL", raising=False)
@@ -142,7 +160,7 @@ class TestDefaults:
         monkeypatch.delenv("LOG_FORMAT", raising=False)
         monkeypatch.setenv("MONGO_URL", "mongodb://x")
         reset_config()
-        cfg = load_config()
+        cfg = settings_from_env()
         assert cfg.env == CrawlerEnv.PRODUCTION
         assert cfg.mongo_db_name == "skku_notices"
         assert cfg.log_format == "json"

@@ -3,23 +3,43 @@ name = "skkuverse-crawler"
 version = "1.0.0"
 description = "SKKU 관련 데이터 크롤링 + 콘텐츠 정제 서비스"
 requires-python = ">=3.12"
+# Base = what a crawl needs with no infrastructure: fetch, parse, clean,
+# and a CLI to drive it. Everything an adapter needs is an extra below.
 dependencies = [
     "httpx>=0.27",
     "beautifulsoup4>=4.12",
+    # NEVER imported — used only as a parser NAME, BeautifulSoup(raw, "lxml").
+    # Moving it to an extra keeps every import/structure test green and fails
+    # at crawl time with FeatureNotFound. Pinned by test_packaging.py.
     "lxml>=5.0",
     "nh3>=0.2",
     "markdownify>=1.2",
-    "motor>=3.6",
-    "apscheduler>=3.10,<4",
+    "imagesize>=1.4",
     "structlog>=24.0",
+    # click backs [project.scripts]; python-dotenv backs env.py. A core-only
+    # install that cannot produce a working binary would make the acceptance
+    # gate unsatisfiable, so these stay base (architecture §56 argued the
+    # opposite — rejection recorded there).
     "click>=8.1",
     "python-dotenv>=1.0",
-    "tenacity>=9.0",
-    "imagesize>=1.4",
 ]
 
 [project.optional-dependencies]
+# pymongo/bson/dnspython arrive transitively under motor — naming them here
+# would let their floors drift out of motor's own pymongo pin.
+mongo = ["motor>=3.6"]
+sched = ["apscheduler>=3.10,<4"]
+discord = ["tenacity>=9.0"]
+# tenacity is duplicated, not hoisted to base: plugins/discord and
+# plugins/dispatch each need it independently. dispatch has no extra of its
+# own because it is reachable only through ai_summary (adr-006 hard-edge
+# inventory records that single logic edge), so it rides in `ai`.
+ai = ["tenacity>=9.0"]
+all = ["skkuverse-crawler[mongo,sched,discord,ai]"]
+# Must include `all`: both workflows run `uv sync --extra dev` and nothing
+# else, so without this the CI environment would have no motor.
 dev = [
+    "skkuverse-crawler[all]",
     "pytest>=8.0",
     "pytest-asyncio>=0.24",
     "respx>=0.21",

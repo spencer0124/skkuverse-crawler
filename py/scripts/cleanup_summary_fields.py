@@ -21,7 +21,7 @@ import asyncio
 import os
 import sys
 
-from skkuverse_crawler.shared.config import init_config
+from skkuverse_crawler.env import init_config
 from skkuverse_crawler.shared.db import close_client, get_db
 from skkuverse_crawler.shared.logger import configure_logging, get_logger
 

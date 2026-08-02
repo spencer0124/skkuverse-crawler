@@ -4,7 +4,7 @@
 
 **진행 원칙**: PR 순서대로, `dev`에서 딴 feature 브랜치 → 검증 게이트 통과 → dev PR. main은 merge-only. 매 PR은 **테스트 green + 프로덕션 동작 바이트 동일**을 유지한다. 싼 순수 이동으로 import 그래프를 먼저 무해화하고, 가장 위험한 orchestrator 해체를 맨 뒤로 민다.
 
-**베이스라인**: `python -m pytest --collect-only -q` → **432 tests** (2026-07-30 실측).
+**베이스라인**: `python -m pytest --collect-only -q` → **432 tests** (2026-07-30 실측). PR 8 시점 **657 passed / 18 mongo-deselected** (2026-08-02).
 
 **설계 버전**: v2 (2026-07-30 설계 리뷰 라운드 개정 — `CrawlMode` 합 타입·이벤트 2계층 등, [adr-006 근거 ⑦~⑬](decisions/adr-006-core-plugin-split.md)). **구현 착수는 설계 동결 후.**
 
@@ -202,11 +202,29 @@
 
 ## PR 8 — extras + 패키징
 
-- [ ] `[project.optional-dependencies]`: `mongo`(motor) / `discord`(tenacity) / `ai` / `sched`(apscheduler) / `all`
-- [ ] click 서브커맨드 지연 로딩, `py.typed`
-- [ ] ⚠️ **Dockerfile `uv sync --extra mongo --extra sched --extra discord --extra ai`를 같은 커밋에** — 현재 `uv sync --frozen --no-dev`는 motor가 extras로 빠지는 순간 **mongo 없이 설치**되어 이 PR이 위험 ⑤를 스스로 만든다
+- [x] `[project.optional-dependencies]`: `mongo`(motor) / `discord`(tenacity) / `ai`(tenacity) / `sched`(apscheduler) / `all` / `dev`(→`all` self-ref)
+- [x] click 서브커맨드 지연 로딩, `py.typed`
+- [x] ⚠️ **Dockerfile `uv sync --extra mongo --extra sched --extra discord --extra ai`를 같은 커밋에** — 테스트로 영구 고정(`test_dockerfile_installs_every_runtime_extra`: Dockerfile의 `--extra` 집합 == 선언된 런타임 extras)
+- [x] 위험 ⑤ 방어: `build_runtime(settings, profile)` 부팅 거부 + 도출된 `active_plugins` + `crawl_coverage`
+- [x] `shared/config.py` → `env.py` + `core/settings.py` (+ os.environ AST 가드)
+- [x] 코어 전용 stdout 크롤(`notices --json` + `core/sinks.JsonLinesSink`) — 게이트를 실행 가능하게 만드는 부분
 
-**검증 게이트**: 클린 venv에 코어만 설치 → 1페이지 stdout 크롤. `docker build`가 머지 게이트.
+**검증 게이트**: 클린 venv에 코어만 설치 → 1페이지 stdout 크롤 ✅ (실측: skku-main 11건, 순수 JSON Lines). `docker build` + 이미지 내 extras import ✅.
+
+### 구현 시 확정 사항
+
+- **래칫을 막고 있던 건 lazy click이 아니라 리프 5줄**이었다. 4개 CLI 리프가 `close_client`를 module-level로 import해 motor를 끌어왔고, 함수 본문으로 옮기는 것만으로 `--help`에서 motor·pymongo·bson이 전부 사라졌다(실측). **click 8.3의 `Group.format_commands`는 `--help` 렌더링 중 모든 서브커맨드에 `get_command()`를 호출하므로 표준 lazy-group 레시피만으로는 래칫이 안 뒤집힌다** — `format_commands`도 오버라이드해 정적 테이블의 help로 임시 `Command`를 만들어야 한다.
+- **extras 힌트는 `find_spec` 기반이어야 한다.** 리프 위생 성공의 부작용으로 CLI 모듈이 motor 없이도 import되므로 `ImportError` catch가 영영 발동하지 않는다(클린 venv 실측으로 발견 — 단위 테스트는 importlib를 monkeypatch해 초록이었다).
+- **`--json`은 로그를 stderr로 보내야 한다.** structlog가 stdout에 쓰므로 첫 구현은 로그와 공지가 섞여 파싱 불가였다. `io.StringIO` 기반 단위 테스트로는 잡히지 않고 실제 실행에서만 드러난다.
+- **`lxml`은 base 유지 필수** — `import lxml`이 없고 `BeautifulSoup(raw, "lxml")` 문자열로만 쓰여, extra로 빼면 모든 import/구조/격리 테스트가 초록인 채 크롤 시점 `FeatureNotFound`로 죽는다. 방어는 `test_import_invisible_base_dependencies_are_present` + 클린 venv 실크롤뿐.
+- **`click`·`python-dotenv`도 base 유지** — architecture §56의 반대 의견을 기각. `[project.scripts]`가 콘솔 스크립트를 선언하는데 코어 전용 설치가 동작하는 바이너리를 못 만들면 인수 게이트가 구조적으로 불가능.
+- **`tenacity`는 `discord`·`ai` 양쪽에 중복** — 두 플러그인이 독립적으로 필요. `dispatch`는 자체 extra 없음(ai_summary를 통해서만 도달 — adr 하드 엣지 인벤토리의 유일한 로직 엣지).
+- **`MONGO_URL` 요구는 사라진 게 아니라 이동**했다: config 로딩 → `shared.db.get_client()`(`MongoUrlMissing`) + `wiring` production 프로파일 게이트. 설정 로딩이 배포 정책을 강제하지 않게 된 것이 `notices --json`을 가능하게 한다.
+- **os.environ 리더는 1개가 아니라 2개** — `env.py`와 `modules/notices/config/loader.py`(SOURCES_JSON_PATH). 경로 해석이 Config보다 먼저 일어나므로 구조적으로 불가피. 불변식 문구가 이미 거짓이었다는 기록으로 허용목록에 남김.
+- **콘솔 스크립트는 `skkuverse-crawler` 유지**, 문서의 `skku-crawl`을 정정.
+- **부팅 거부는 "설치됨"과 "설정됨"을 나눈다** (`REQUIRED_INSTALLED` vs `REQUIRED_CONFIGURED`). build_runtime이 discord·ai를 무조건 import하므로 코드 부재는 게이트에서 잡아야 하지만, Discord 웹훅 미설정은 문서화된 정당한 프로덕션 상태라 거부 사유가 아니다. 둘을 뭉치면 nice-to-have 하나로 크롤러 전체가 죽는다.
+- **행동 델타 기록**: development 프로파일 + `MONGO_URL` 미설정 시 예전에는 `init_config`이 즉시 `SystemExit`했으나, 이제 부팅에 성공하고 매 틱 `MongoUrlMissing`이 APScheduler에 삼켜진다. production은 게이트가 막고 `CRAWLER_ENV` 기본값도 production이라 실 배포엔 영향 없음 — 로컬 개발자가 겪을 수 있는 변화로 기록.
+- **CI가 dev PR에도 트리거되도록 변경** + `core-only`·`docker` 잡 추가, `deploy.yml`에 `-m mongo`와 `active_plugins` 양성 로그 단언 추가.
 
 ## PR 9 — 공개 문서
 
@@ -240,7 +258,7 @@
 
 ```bash
 cd py
-.venv/bin/python -m pytest tests/ -q                     # 432 베이스라인, 줄면 안 됨
+.venv/bin/python -m pytest tests/ -q                     # 657 (PR 8 시점), 줄면 안 됨
 .venv/bin/ruff check src/ && .venv/bin/mypy src/
 .venv/bin/python -m pytest tests/characterization -q     # 골든 바이트 동일
 .venv/bin/python -m pytest -m mongo -q                   # 적합성 (PR 0·5·6 게이트)
@@ -251,13 +269,14 @@ cd py
 ```bash
 pip install ./py
 python -c "import skkuverse_crawler.core, sys; assert 'motor' not in sys.modules"
-env -i PATH=$PATH skku-crawl notices --source skku-main --pages 1 --json
+cd /tmp && env -i PATH=$PATH skkuverse-crawler notices --source skku-main --pages 1 --json
+# cd /tmp 필수: load_dotenv()가 cwd를 뒤지므로 레포에서 돌리면 .env가 빈 환경 조건을 가린다
 ```
 
 프로덕션 동등성 (PR 3·4·6·8 머지 게이트):
 
 ```bash
-docker build -f py/Dockerfile .
+docker build --build-context repo-root=. -f py/Dockerfile -t crawler:pr py
 docker run --rm <img> python -m skkuverse_crawler --help   # motor를 import하면 안 됨
 .venv/bin/python -m skkuverse_crawler notices --once --source skku-main --pages 2
 ```

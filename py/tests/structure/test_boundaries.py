@@ -1,11 +1,13 @@
 """Structural boundary tests for the core/plugin split (adr-006).
 
-Target-state tests that CANNOT pass yet are committed as
+Target-state tests that cannot pass yet are committed as
 ``xfail(strict=True)`` ratchets: the PR that enables one turns it into an
 XPASS *failure*, forcing the marker's removal in that same diff. Reviewers
 approve the target behavior here, in PR 0, not in the enabling PR.
 
-Unmarked tests pass today and are permanent regression guards.
+**No ratchets remain.** The last one, `--help` importing motor, was retired
+in PR 8; every test below is a permanent regression guard. Add a new ratchet
+the same way if a future PR needs one.
 """
 from __future__ import annotations
 
@@ -13,8 +15,6 @@ import ast
 import subprocess
 import sys
 from pathlib import Path
-
-import pytest
 
 PY_ROOT = Path(__file__).parents[2]
 SRC_PKG = PY_ROOT / "src" / "skkuverse_crawler"
@@ -31,21 +31,28 @@ def _run_python(code: str, *, empty_env: bool, cwd: Path | None = None) -> subpr
     )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="flips in PR 8 (lazy click subcommands) — cli.py's trailing import "
-    "block eagerly imports every subcommand module, dragging in motor via shared.db",
-)
-def test_help_does_not_import_motor(tmp_path):
+def test_help_does_not_import_optional_deps(tmp_path):
+    """`--help` must not pay for infrastructure it will not use.
+
+    Ratchet retired in PR 8: the CLI leaves now import shared.db inside
+    function bodies, so nothing on the help path reaches motor. Widened
+    beyond motor at the same time — pymongo/bson arrive independently
+    (plugins/mongo/update_checker imports pymongo directly), and
+    apscheduler/tenacity would regress the same way if a leaf grew an
+    eager import.
+    """
     code = (
         "import sys\n"
         "from click.testing import CliRunner\n"
         "from skkuverse_crawler.cli import main\n"
         "CliRunner().invoke(main, ['--help'])\n"
-        "sys.exit(1 if 'motor' in sys.modules else 0)\n"
+        "leaked = sorted(m for m in sys.modules if m.split('.')[0] in "
+        "{'motor', 'pymongo', 'bson', 'apscheduler', 'tenacity'})\n"
+        "print(','.join(leaked))\n"
+        "sys.exit(1 if leaked else 0)\n"
     )
     result = _run_python(code, empty_env=False, cwd=tmp_path)
-    assert result.returncode == 0, "importing the CLI for --help pulled in motor"
+    assert result.returncode == 0, f"--help imported optional deps: {result.stdout.strip()}"
 
 
 def test_core_import_is_infra_free(tmp_path):
@@ -62,6 +69,8 @@ def test_core_import_is_infra_free(tmp_path):
         "import skkuverse_crawler.core.registry\n"
         "import skkuverse_crawler.core.results\n"
         "import skkuverse_crawler.core.runner\n"
+        "import skkuverse_crawler.core.settings\n"
+        "import skkuverse_crawler.core.sinks\n"
         "import skkuverse_crawler.core.sources\n"
         "sys.exit(1 if 'motor' in sys.modules or 'pymongo' in sys.modules else 0)\n"
     )
@@ -72,7 +81,7 @@ def test_core_import_is_infra_free(tmp_path):
 def test_get_config_without_env_raises_typed_error(tmp_path):
     # cwd=tmp_path so load_dotenv() cannot find a real .env.
     code = (
-        "from skkuverse_crawler.shared.config import get_config\n"
+        "from skkuverse_crawler.env import get_config\n"
         "try:\n"
         "    get_config()\n"
         "except SystemExit:\n"
@@ -119,6 +128,62 @@ def test_whole_package_imports_with_empty_env(tmp_path):
     result = _run_python(code, empty_env=True, cwd=tmp_path)
     assert result.returncode == 0, result.stderr
     assert "ok" in result.stdout
+
+
+def test_env_is_the_only_environment_reader():
+    """adr-006 결정 ①: `env.py` is the only file that touches os.environ.
+
+    Stated in the architecture doc since v1 but never enforced — this is
+    the guard. `os.environ`, `os.getenv` and `os.environ.get` all count.
+
+    The allowlist has a second entry, and its presence is the honest
+    record that the invariant as written was already false: the sources
+    loader reads SOURCES_JSON_PATH directly, because path resolution runs
+    before any Config exists (the container passes it as an env var, see
+    PR 3). Routing it through env.py would mean initializing config to
+    find the config file. Two readers, both named, is the real invariant.
+    """
+    # Exact paths, not a suffix match: `endswith("env.py")` would also
+    # exempt dotenv.py, myenv.py, or plugins/anything/env.py.
+    allowed = {"env.py", "modules/notices/config/loader.py"}
+    readers = {"environ", "getenv"}
+    violations = []
+
+    for py_file in SRC_PKG.rglob("*.py"):
+        rel = py_file.relative_to(SRC_PKG).as_posix()
+        if rel in allowed:
+            continue
+        tree = ast.parse(py_file.read_text(), filename=str(py_file))
+
+        # Track every name `os` is reachable under: `import os`, `import os
+        # as _os`, and names bound by `from os import environ/getenv`.
+        os_aliases = {"os"}
+        direct_readers = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    if alias.name == "os":
+                        os_aliases.add(alias.asname or "os")
+            elif isinstance(node, ast.ImportFrom) and node.module == "os":
+                for alias in node.names:
+                    if alias.name in readers:
+                        direct_readers.add(alias.asname or alias.name)
+
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Attribute):
+                value = node.value
+                if (
+                    isinstance(value, ast.Name)
+                    and value.id in os_aliases
+                    and node.attr in readers
+                ):
+                    violations.append(f"{rel}:{node.lineno}: {value.id}.{node.attr}")
+            elif isinstance(node, ast.Name) and node.id in direct_readers:
+                violations.append(f"{rel}:{node.lineno}: bare {node.id} imported from os")
+
+    assert not violations, (
+        "only env.py may read the environment (adr-006 결정 ①):\n" + "\n".join(violations)
+    )
 
 
 def test_modules_do_not_import_plugins():

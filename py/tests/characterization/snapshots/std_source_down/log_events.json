@@ -1,4 +1,5 @@
 [
+  "crawl_coverage",
   "starting_department_crawl",
   "fetching_list_page",
   "non_retryable_error",

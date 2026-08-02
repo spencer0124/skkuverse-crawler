@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from skkuverse_crawler.shared.config import init_config, reset_config
+from skkuverse_crawler.env import init_config, reset_config
 
 
 @pytest.fixture(autouse=True)

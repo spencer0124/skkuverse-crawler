@@ -195,6 +195,32 @@ ABC 상속안(인스턴스 생성 즉시 실패)도 검토했으나 기각 — P
 
 **판정: 단일 배포물 + extras 유지 (재개봉하지 않음).** 트리거가 걱정하는 것은 의존성 격리이고, 그건 PR 8의 optional-dependencies가 제공한다. 트리거의 비용 동인(배포물 N개의 릴리스 기계 — 버전 동기화, 교차 호환 매트릭스)은 플러그인 수가 늘어도 변하지 않았다. **다시 열 조건**: extras로 부족하다는 증거 — 예컨대 `modules/` 트리 없이 `plugins/mongo`만 쓰려는 소비자가 나타나는 경우.
 
+### PR 8 (2026-08-02) — PR 7 판정의 근거가 실제로 제공됨
+
+PR 7이 "plugins/ > 5" 트리거에 대해 **단일 배포물 유지**로 판정한 근거는 "PR 8의 optional-dependencies가 의존성 격리를 제공한다"였다. 그 약속이 이행됐는지를 여기 기록한다.
+
+**이행됨, 측정으로 확인.** 클린 venv에 `pip install .`(extras 없음) 후:
+- `motor`·`pymongo`·`bson`·`apscheduler`·`tenacity` **전부 부재**
+- `lxml`·`click`·`python-dotenv`·`bs4`·`httpx`·`nh3` 존재
+- `skkuverse_crawler.cli` import 시 motor 미로드, `--help`가 서브커맨드 모듈을 하나도 import하지 않음
+- 실제 SKKU 사이트 1페이지 크롤이 순수 JSON Lines로 성공(11건)
+- `update-check` 등 플러그인 명령은 `pip install 'skkuverse-crawler[mongo]'` 힌트와 함께 exit 1
+
+**격리를 증명하는 장치** (한 개가 아니라 세 층위인 이유: 각각이 못 보는 게 있다):
+1. `tests/structure/test_extras_isolation.py` — optional 배포판을 `sys.meta_path`에서 독살하고 전 모듈 재import. 개발 환경(모든 extra 설치됨)에서 위반을 관측할 수 있는 유일한 방법. **import 그래프만** 증명한다.
+2. `tests/structure/test_packaging.py` — Dockerfile의 `--extra` 집합 == 선언된 런타임 extras, base에 optional 없음, **base에 lxml 있음**. lxml은 import되지 않으므로 그래프 도구로는 영원히 안 보인다.
+3. CI `core-only` 잡 — 진짜 wheel을 extras 없이 설치. extras **표** 자체가 틀린 경우를 잡는 유일한 층위.
+
+**재개봉 조건은 그대로**: extras로 부족하다는 증거 — `modules/` 없이 `plugins/mongo`만 쓰려는 소비자.
+
+### 위험 ⑤ 방어 (PR 8)
+
+extras가 "mongo 없음"을 정당한 상태로 만드는 순간 위험 ⑤가 실재화되므로 같은 PR에서 방어를 넣었다: `wiring.build_runtime(profile=production)`이 필수 플러그인(mongo, sched) 부재·미설정 시 `ProfileError`로 기동 거부, `active_plugins`를 `find_spec`+config 술어에서 **도출**(하드코딩 목록은 이미 3개가 낡아 있었다), 실행당 `crawl_coverage attempted/enabled/total` 로그, 09:00 Discord 요약에 플러그인 목록.
+
+자동 배포의 헬스 게이트가 "10초 후 컨테이너 running"뿐이라 sink 없는 크롤러가 통과하던 문제도 함께 닫았다 — `deploy.yml`이 로그에서 `active_plugins`와 `mongo`를 확인한 뒤에만 성공 처리한다. 실측: 이미지에서 `MONGO_URL` 없이 `start` → exit 1, 있으면 `plugins: ["mongo","sched","ai"]`.
+
+**한계 기록**: discord·ai·dispatch는 모두 tenacity를 마커로 쓰므로 설치 여부만으로 구분 불가 — config 술어가 그 몫을 진다. 운영상 중요한 mongo는 마커·설정 양쪽 모두 정확.
+
 ### 하드 엣지 인벤토리 (PR 7 시점)
 
 - **로직 엣지 1개**: `plugins/ai_summary/processor.py` → `plugins/dispatch/client.py` (사이클 종료 FCM ping). import 지점에 주석으로 표시. "2개 이상" 미발동.

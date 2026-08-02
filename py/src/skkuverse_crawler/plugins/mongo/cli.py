@@ -10,14 +10,13 @@ from __future__ import annotations
 
 import asyncio
 import json as _json
+import sys
 from dataclasses import asdict
 from typing import TYPE_CHECKING
 
 import click
 
-from ...shared.db import close_client
 from ...shared.logger import configure_logging
-from .update_checker import run_update_check
 
 if TYPE_CHECKING:
     from ...modules.notices.validation import (
@@ -31,7 +30,7 @@ if TYPE_CHECKING:
 @click.option("--source", "dept", multiple=True, help="Department ID(s) to check")
 def update_check_cli(days: int, dept: tuple[str, ...]) -> None:
     """Run Tier 2 update detection on recent notices."""
-    from ...shared.config import init_config
+    from ...env import init_config
 
     cfg = init_config()
     configure_logging(cfg)
@@ -43,6 +42,8 @@ async def _run_update_check(
     dept_filter: tuple[str, ...],
 ) -> None:
     from ...modules.notices.config.loader import load_and_validate
+    from ...shared.db import close_client
+    from .update_checker import run_update_check
 
     departments = load_and_validate()
 
@@ -70,10 +71,12 @@ def validate_attachments_cli(
     concurrency: int,
 ) -> None:
     """Validate attachment metadata in the notices collection."""
-    from ...shared.config import init_config
+    from ...env import init_config
 
     cfg = init_config()
-    configure_logging(cfg)
+    # Same rule as `notices --json`: when stdout carries the report, logs go
+    # to stderr or the output is not parseable.
+    configure_logging(cfg, stream=sys.stderr if json_output else None)
     asyncio.run(_run_validate_attachments(dept, limit, no_http, json_output, concurrency))
 
 
@@ -84,6 +87,8 @@ async def _run_validate_attachments(
     json_output: bool,
     concurrency: int,
 ) -> None:
+    from ...shared.db import close_client
+
     try:
         from .audit import validate_attachments
 
@@ -151,10 +156,10 @@ def validate_markdown_cli(
     severity: str,
 ) -> None:
     """Validate markdown rendering in stored cleanMarkdown fields."""
-    from ...shared.config import init_config
+    from ...env import init_config
 
     cfg = init_config()
-    configure_logging(cfg)
+    configure_logging(cfg, stream=sys.stderr if json_output else None)
     asyncio.run(_run_validate_markdown(dept, limit, json_output, severity))
 
 
@@ -164,6 +169,8 @@ async def _run_validate_markdown(
     json_output: bool,
     severity: str,
 ) -> None:
+    from ...shared.db import close_client
+
     try:
         from .audit import validate_markdown
 

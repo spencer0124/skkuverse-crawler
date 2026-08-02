@@ -133,3 +133,27 @@ async def test_injected_ports_without_mode_defaults_to_full_sweep():
     finished = sink.events[-1]
     assert isinstance(finished, SourceFinished)
     assert finished.stopped_by == "max_pages"
+
+
+async def test_core_only_crawl_writes_json_lines_to_stdout():
+    """The acceptance case for `pip install skkuverse-crawler`, run against
+    the same fixtures as the sweep above: a real crawl, a core-only sink,
+    and output a consumer can actually parse."""
+    import io
+    import json
+
+    from skkuverse_crawler.core.sinks import JsonLinesSink
+
+    stream = io.StringIO()
+    results = await _run_sweep(JsonLinesSink(stream), mode=FullSweep())
+
+    assert results[0].errors == 0
+    lines = stream.getvalue().splitlines()
+    assert lines, "a core-only crawl that prints nothing is not a crawl"
+    assert len(lines) == results[0].inserted
+
+    payloads = [json.loads(line) for line in lines]
+    assert all(p["sourceId"] == "golden-std" for p in payloads)
+    assert all(p["title"] for p in payloads)
+    # Progress events must not have leaked into the stream.
+    assert all("articleNo" in p for p in payloads)

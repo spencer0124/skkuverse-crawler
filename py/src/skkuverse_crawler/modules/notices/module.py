@@ -7,7 +7,7 @@ from ...core.crawl import FullSweep, Incremental
 from ...core.module import ModuleConfig
 from ...core.ports import Ports, SeenIndex
 from ...core.results import SourceResult
-from ...shared.config import get_config
+from ...env import get_config
 from .config.loader import load_and_validate
 from .orchestrator import CrawlOptions, run_crawl
 

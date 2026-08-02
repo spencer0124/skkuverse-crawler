@@ -26,7 +26,7 @@ from ...core.module import ModuleConfig
 from ...modules.notices.constants import SERVICE_START_DATE
 from ...modules.notices.hashing import compute_content_hash
 from ...modules.notices.strategies import STRATEGY_MAP
-from ...shared.config import get_config
+from ...env import get_config
 from ...shared.db import get_db
 from ...shared.fetcher import Fetcher
 from ...shared.html_cleaner import clean_html, normalize_content_urls
