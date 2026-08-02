@@ -56,26 +56,43 @@ def test_help_does_not_import_optional_deps(tmp_path):
 
 
 def test_core_import_is_infra_free(tmp_path):
-    # Submodules imported explicitly — core/__init__.py is empty, so the
-    # bare package import alone would prove nothing about ports/events.
+    # Since PR 9 the bare package import carries most of this: core/__init__
+    # re-exports every public submodule eagerly, so `import
+    # skkuverse_crawler.core` executes them all. The ones it deliberately
+    # does NOT re-export (settings, registry — see core/__init__'s
+    # docstring) are still named explicitly, because nothing else would
+    # reach them.
     code = (
         "import sys\n"
         "import skkuverse_crawler.core\n"
-        "import skkuverse_crawler.core.crawl\n"
-        "import skkuverse_crawler.core.events\n"
-        "import skkuverse_crawler.core.module\n"
-        "import skkuverse_crawler.core.pipeline\n"
-        "import skkuverse_crawler.core.ports\n"
         "import skkuverse_crawler.core.registry\n"
-        "import skkuverse_crawler.core.results\n"
-        "import skkuverse_crawler.core.runner\n"
         "import skkuverse_crawler.core.settings\n"
-        "import skkuverse_crawler.core.sinks\n"
-        "import skkuverse_crawler.core.sources\n"
         "sys.exit(1 if 'motor' in sys.modules or 'pymongo' in sys.modules else 0)\n"
     )
     result = _run_python(code, empty_env=False, cwd=tmp_path)
     assert result.returncode == 0, result.stderr
+
+
+def test_core_import_stays_stdlib_only(tmp_path):
+    """The eager re-export above is only safe while core has no third-party
+    imports at all. httpx/bs4/lxml arriving here would be invisible to the
+    motor/pymongo check yet would make `import skkuverse_crawler.core`
+    quietly expensive — which is the property the re-export is trading on.
+    """
+    code = (
+        "import sys\n"
+        "import skkuverse_crawler.core\n"
+        "leaked = sorted(m for m in sys.modules if m.split('.')[0] in "
+        "{'httpx', 'bs4', 'lxml', 'nh3', 'markdownify', 'imagesize', 'structlog', "
+        "'click', 'dotenv'})\n"
+        "print(','.join(leaked))\n"
+        "sys.exit(1 if leaked else 0)\n"
+    )
+    result = _run_python(code, empty_env=False, cwd=tmp_path)
+    assert result.returncode == 0, (
+        f"importing skkuverse_crawler.core pulled in third-party packages: "
+        f"{result.stdout.strip()}"
+    )
 
 
 def test_get_config_without_env_raises_typed_error(tmp_path):
