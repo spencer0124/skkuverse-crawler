@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 
 from skkuverse_crawler.modules.notices.models import NoticeDetail
+from skkuverse_crawler.modules.notices.normalizer import ContentFields, derive_content_fields
 from tests.support.fake_mongo import FakeCollection
 from skkuverse_crawler.plugins.mongo.update_checker import _check_department
 
@@ -15,6 +16,45 @@ MOCK_DEPT = {
     "baseUrl": "https://example.com",
     "strategy": "skku-standard",
 }
+
+
+# Tests below fall into two groups, and the split is deliberate.
+#
+# Tests about *control flow* — change rate, 404 counters, whether an update
+# fires at all — only need to steer hash equality, so they stub the
+# derivation with these helpers. Tests about *what gets stored* run the real
+# derive_content_fields, because stubbing it would mock away the thing they
+# exist to prove.
+
+
+def _fields_with_hash(hash_value: str, html: str):
+    """Stub derivation with a fixed hash, for tests that only need equality."""
+
+    def _derive(*args, **kwargs) -> ContentFields:
+        return ContentFields(
+            content=html,
+            contentText="본문",
+            cleanHtml=html,
+            cleanMarkdown="본문",
+            contentHash=hash_value,
+        )
+
+    return _derive
+
+
+def _fields_from(hash_fn, html: str):
+    """Same, for tests that vary the hash per call (rate anomalies)."""
+
+    def _derive(*args, **kwargs) -> ContentFields:
+        return ContentFields(
+            content=html,
+            contentText="본문",
+            cleanHtml=html,
+            cleanMarkdown="본문",
+            contentHash=hash_fn(html),
+        )
+
+    return _derive
 
 
 class TestCheckDepartmentHashComparison:
@@ -33,11 +73,8 @@ class TestCheckDepartmentHashComparison:
         logger = MagicMock()
 
         with patch(
-            "skkuverse_crawler.plugins.mongo.update_checker.compute_content_hash",
-            return_value="existing_hash",
-        ), patch(
-            "skkuverse_crawler.plugins.mongo.update_checker.clean_html",
-            return_value="<p>본문</p>",
+            "skkuverse_crawler.plugins.mongo.update_checker.derive_content_fields",
+            _fields_with_hash("existing_hash", "<p>본문</p>"),
         ), patch(
             "skkuverse_crawler.plugins.mongo.update_checker.STRATEGY_MAP",
             {"skku-standard": MagicMock(return_value=strategy)},
@@ -60,11 +97,8 @@ class TestCheckDepartmentHashComparison:
         logger = MagicMock()
 
         with patch(
-            "skkuverse_crawler.plugins.mongo.update_checker.compute_content_hash",
-            return_value="new_hash",
-        ), patch(
-            "skkuverse_crawler.plugins.mongo.update_checker.clean_html",
-            return_value="<p>새 본문</p>",
+            "skkuverse_crawler.plugins.mongo.update_checker.derive_content_fields",
+            _fields_with_hash("new_hash", "<p>새 본문</p>"),
         ), patch(
             "skkuverse_crawler.plugins.mongo.update_checker.STRATEGY_MAP",
             {"skku-standard": MagicMock(return_value=strategy)},
@@ -96,11 +130,8 @@ class TestCheckDepartmentHashComparison:
         logger = MagicMock()
 
         with patch(
-            "skkuverse_crawler.plugins.mongo.update_checker.compute_content_hash",
-            return_value="new_hash",
-        ), patch(
-            "skkuverse_crawler.plugins.mongo.update_checker.clean_html",
-            return_value="<p>본문</p>",
+            "skkuverse_crawler.plugins.mongo.update_checker.derive_content_fields",
+            _fields_with_hash("new_hash", "<p>본문</p>"),
         ), patch(
             "skkuverse_crawler.plugins.mongo.update_checker.STRATEGY_MAP",
             {"skku-standard": MagicMock(return_value=strategy)},
@@ -151,11 +182,8 @@ class TestCheckDepartmentEdgeCases:
         logger = MagicMock()
 
         with patch(
-            "skkuverse_crawler.plugins.mongo.update_checker.compute_content_hash",
-            return_value="h2",  # same hash → no update
-        ), patch(
-            "skkuverse_crawler.plugins.mongo.update_checker.clean_html",
-            return_value="<p>ok</p>",
+            "skkuverse_crawler.plugins.mongo.update_checker.derive_content_fields",
+            _fields_with_hash("h2", "<p>ok</p>"),
         ), patch(
             "skkuverse_crawler.plugins.mongo.update_checker.STRATEGY_MAP",
             {"skku-standard": MagicMock(return_value=strategy)},
@@ -193,11 +221,8 @@ class TestChangeRateAnomaly:
             return f"new_{call_count}"
 
         with patch(
-            "skkuverse_crawler.plugins.mongo.update_checker.compute_content_hash",
-            side_effect=varying_hash,
-        ), patch(
-            "skkuverse_crawler.plugins.mongo.update_checker.clean_html",
-            return_value="<p>새 본문</p>",
+            "skkuverse_crawler.plugins.mongo.update_checker.derive_content_fields",
+            _fields_from(varying_hash, "<p>새 본문</p>"),
         ), patch(
             "skkuverse_crawler.plugins.mongo.update_checker.STRATEGY_MAP",
             {"skku-standard": MagicMock(return_value=strategy)},
@@ -236,11 +261,8 @@ class TestChangeRateAnomaly:
             return f"old_{call_count - 1}"  # 동일
 
         with patch(
-            "skkuverse_crawler.plugins.mongo.update_checker.compute_content_hash",
-            side_effect=half_changed_hash,
-        ), patch(
-            "skkuverse_crawler.plugins.mongo.update_checker.clean_html",
-            return_value="<p>본문</p>",
+            "skkuverse_crawler.plugins.mongo.update_checker.derive_content_fields",
+            _fields_from(half_changed_hash, "<p>본문</p>"),
         ), patch(
             "skkuverse_crawler.plugins.mongo.update_checker.STRATEGY_MAP",
             {"skku-standard": MagicMock(return_value=strategy)},
@@ -270,11 +292,8 @@ class TestChangeRateAnomaly:
         logger = MagicMock()
 
         with patch(
-            "skkuverse_crawler.plugins.mongo.update_checker.compute_content_hash",
-            return_value="same",
-        ), patch(
-            "skkuverse_crawler.plugins.mongo.update_checker.clean_html",
-            return_value="<p>본문</p>",
+            "skkuverse_crawler.plugins.mongo.update_checker.derive_content_fields",
+            _fields_with_hash("same", "<p>본문</p>"),
         ), patch(
             "skkuverse_crawler.plugins.mongo.update_checker.STRATEGY_MAP",
             {"skku-standard": MagicMock(return_value=strategy)},
@@ -361,11 +380,8 @@ class TestSoftDelete:
         logger = MagicMock()
 
         with patch(
-            "skkuverse_crawler.plugins.mongo.update_checker.compute_content_hash",
-            return_value="same",
-        ), patch(
-            "skkuverse_crawler.plugins.mongo.update_checker.clean_html",
-            return_value="<p>본문</p>",
+            "skkuverse_crawler.plugins.mongo.update_checker.derive_content_fields",
+            _fields_with_hash("same", "<p>본문</p>"),
         ), patch(
             "skkuverse_crawler.plugins.mongo.update_checker.STRATEGY_MAP",
             {"skku-standard": MagicMock(return_value=strategy)},
@@ -404,11 +420,8 @@ class TestSoftDelete:
             return f"h{call_count + 3}"  # h4, h5 → match
 
         with patch(
-            "skkuverse_crawler.plugins.mongo.update_checker.compute_content_hash",
-            side_effect=match_hash,
-        ), patch(
-            "skkuverse_crawler.plugins.mongo.update_checker.clean_html",
-            return_value="<p>ok</p>",
+            "skkuverse_crawler.plugins.mongo.update_checker.derive_content_fields",
+            _fields_from(match_hash, "<p>ok</p>"),
         ), patch(
             "skkuverse_crawler.plugins.mongo.update_checker.STRATEGY_MAP",
             {"skku-standard": MagicMock(return_value=strategy)},
@@ -501,3 +514,94 @@ class TestSoftDeleteAgainstTheFakeStore:
         _, stored = await self._run_404(collection, {})
         assert stored["consecutiveFailures"] == 1
         assert stored["isDeleted"] is False
+
+
+class TestTier2StoresTheSameFieldsAsACrawl:
+    """The real derivation, not a stub — these tests exist to catch the
+    Tier-2 path drifting from the crawl path again.
+
+    It had drifted three ways, all silent: no cleanMarkdown at all (the
+    app's first-choice render source, so an edited notice kept showing its
+    old body), a contentText taken straight from the strategy instead of
+    extracted from the sanitized HTML, and no size guard.
+    """
+
+    OLD_HTML = "<p>옛 본문</p>"
+    NEW_HTML = "<div><p>새 본문</p><p>둘째 문단</p></div>"
+
+    async def _run_change(self, collection: FakeCollection, new_html: str = NEW_HTML):
+        """Store a notice, then let Tier-2 see different content for it."""
+        old = derive_content_fields(self.OLD_HTML, MOCK_DEPT["baseUrl"])
+        await collection.update_one(
+            {"articleNo": 1, "sourceId": "test-dept"},
+            {"$set": {
+                "articleNo": 1, "sourceId": "test-dept", "detailPath": "?articleNo=1",
+                "title": "제목", **old.as_set(),
+            }},
+            upsert=True,
+        )
+        notices = [{
+            "articleNo": 1, "sourceId": "test-dept", "detailPath": "?articleNo=1",
+            "contentHash": old.contentHash, "title": "제목",
+        }]
+        strategy = AsyncMock()
+        strategy.crawl_detail.return_value = NoticeDetail(
+            content=new_html, contentText="strategy가 준 텍스트", attachments=[],
+        )
+        with patch(
+            "skkuverse_crawler.plugins.mongo.update_checker.STRATEGY_MAP",
+            {"skku-standard": MagicMock(return_value=strategy)},
+        ):
+            result = await _check_department(
+                MOCK_DEPT, notices, collection, AsyncMock(), MagicMock()
+            )
+        stored = collection.docs[0]
+        return result, stored
+
+    async def test_cleanMarkdown_is_recomputed(self):
+        """The bug this class is named for. The app renders cleanMarkdown
+        first, so leaving it stale shows the old body with no error
+        anywhere."""
+        collection = FakeCollection()
+        result, stored = await self._run_change(collection)
+
+        assert result.content_changed == 1
+        assert "새 본문" in stored["cleanMarkdown"]
+        assert "옛 본문" not in stored["cleanMarkdown"]
+
+    async def test_every_content_field_moves_together(self):
+        """Not just markdown: a stored field left behind by an edit is the
+        general shape of this bug, so all five are checked at once."""
+        collection = FakeCollection()
+        _, stored = await self._run_change(collection)
+
+        expected = derive_content_fields(self.NEW_HTML, MOCK_DEPT["baseUrl"])
+        for field, value in expected.as_set().items():
+            assert stored[field] == value, f"{field} did not follow the edit"
+
+    async def test_contentText_comes_from_the_sanitized_html(self):
+        """Tier-2 used to store the strategy's own text. The crawl path
+        extracts from cleanHtml instead, which is what preserves the block
+        newlines added in 2026-04 — so the two produced different text for
+        the same notice."""
+        collection = FakeCollection()
+        _, stored = await self._run_change(collection)
+
+        assert stored["contentText"] != "strategy가 준 텍스트"
+        assert "새 본문" in stored["contentText"]
+        assert "둘째 문단" in stored["contentText"]
+        # Two <p> blocks → a newline between them, not a run-on.
+        assert "\n" in stored["contentText"]
+
+    async def test_oversized_content_is_dropped_not_stored(self):
+        """The crawl path nulls content past 5MB. Tier-2 had no guard, so a
+        large edited notice was written straight through — and content,
+        cleanHtml and contentText share one 16MB document limit."""
+        collection = FakeCollection()
+        huge = "<p>" + ("가" * 2_000_000) + "</p>"  # ~6MB as UTF-8
+        _, stored = await self._run_change(collection, new_html=huge)
+
+        assert stored["cleanHtml"] is None
+        assert stored["content"] is None
+        assert stored["cleanMarkdown"] is None
+        assert stored["contentHash"] is None

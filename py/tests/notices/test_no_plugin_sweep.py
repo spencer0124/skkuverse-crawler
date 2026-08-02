@@ -113,7 +113,10 @@ async def test_sweep_with_injected_ports_never_touches_db():
     assert crawled
     assert all(e.change is None for e in crawled)
     assert result.inserted == len(crawled)
-    assert sink.flushes == 1  # PageCompleted → flush, once for the one page
+    # Two: one on the page's PageCompleted, one when the source's stream
+    # ends. The second exists because not every source reaches a
+    # PageCompleted — see test_a_source_is_flushed_when_its_stream_ends.
+    assert sink.flushes == 2
 
     # prepare received this source's spec; the sink satisfies the protocol.
     assert sink.prepared == [SourceSpec(source_id="golden-std", name="골든 표준 게시판")]
@@ -157,3 +160,38 @@ async def test_core_only_crawl_writes_json_lines_to_stdout():
     assert all(p["title"] for p in payloads)
     # Progress events must not have leaked into the stream.
     assert all("articleNo" in p for p in payloads)
+
+
+async def test_a_source_is_flushed_when_its_stream_ends():
+    """A batching sink must not be left holding writes.
+
+    run_events flushes on PageCompleted, and not every source reaches one:
+    the null-content backfill emits write-bearing events before the page
+    loop, and a page-0 failure breaks out before the first page completes.
+    Those writes used to sit in the buffer while the runner counted them as
+    stored — so the end-of-source flush is the fix, and this pins it.
+    """
+
+    class _TimelineSink(RecordingSink):
+        """Records how many events had arrived at each flush, which is what
+        distinguishes the end-of-source flush from the per-page one."""
+
+        def __init__(self) -> None:
+            super().__init__()
+            self.event_counts_at_flush: list[int] = []
+
+        async def flush(self) -> None:
+            self.event_counts_at_flush.append(len(self.events))
+            await super().flush()
+
+    sink = _TimelineSink()
+    await _run_sweep(sink, mode=FullSweep())
+
+    pages = sum(1 for e in sink.events if isinstance(e, PageCompleted))
+    assert sink.flushes == pages + 1, (
+        f"expected one flush per page ({pages}) plus one at the end, got {sink.flushes}"
+    )
+    # The last flush saw every event, including SourceFinished — i.e. it ran
+    # after the stream was exhausted, not during it.
+    assert sink.event_counts_at_flush[-1] == len(sink.events)
+    assert isinstance(sink.events[-1], SourceFinished)

@@ -24,12 +24,11 @@ from pymongo import ReturnDocument
 
 from ...core.module import ModuleConfig
 from ...modules.notices.constants import SERVICE_START_DATE
-from ...modules.notices.hashing import compute_content_hash
+from ...modules.notices.normalizer import derive_content_fields
 from ...modules.notices.strategies import STRATEGY_MAP
 from ...env import get_config
 from ...shared.db import get_db
 from ...shared.fetcher import Fetcher
-from ...shared.html_cleaner import clean_html, normalize_content_urls
 from ...shared.logger import get_logger
 from .sink import ensure_indexes
 
@@ -190,8 +189,18 @@ async def _check_department(
         result.total_checked += 1
         doc_filter = {"articleNo": doc["articleNo"], "sourceId": dept["id"]}
 
-        new_clean_html = clean_html(detail.content, dept["baseUrl"])
-        new_hash = compute_content_hash(new_clean_html)
+        # The same derivation the crawl path uses, not a parallel one. Three
+        # fields used to be rebuilt by hand here and had drifted: no
+        # cleanMarkdown at all, contentText taken from the strategy instead
+        # of the sanitized HTML, and no size guard.
+        fields = derive_content_fields(
+            detail.content,
+            dept["baseUrl"],
+            fallback_text=detail.contentText,
+            article_no=doc["articleNo"],
+            source_id=dept["id"],
+        )
+        new_hash = fields.contentHash
         old_hash = doc.get("contentHash")
 
         # Backfill: old hash is None, just set it
@@ -225,15 +234,11 @@ async def _check_department(
             "contentChanged": True,
             "source": "tier2",
         }
-        normalized_content = normalize_content_urls(detail.content, dept["baseUrl"])
         await collection.update_one(
             doc_filter,
             {
                 "$set": {
-                    "content": normalized_content,
-                    "contentText": detail.contentText,
-                    "cleanHtml": new_clean_html,
-                    "contentHash": new_hash,
+                    **fields.as_set(),
                     "consecutiveFailures": 0,
                     "crawledAt": now,
                 },

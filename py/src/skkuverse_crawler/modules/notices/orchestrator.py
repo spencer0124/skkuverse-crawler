@@ -69,7 +69,25 @@ async def run_crawl(
         mode = FullSweep()
 
     fetcher = Fetcher(delay_ms=options.delay_ms or 500)
+    try:
+        return await _run_crawl(departments, options, ports, mode, pipeline, logger, fetcher)
+    finally:
+        # One close for every exit, including the no_matching_departments
+        # early return and any raise. It used to be a single call at the
+        # happy-path end, so a filter that matched nothing leaked the
+        # httpx client.
+        await fetcher.close()
 
+
+async def _run_crawl(
+    departments: list[dict[str, Any]],
+    options: CrawlOptions,
+    ports: Ports,
+    mode: CrawlMode,
+    pipeline: Pipeline,
+    logger: Any,
+    fetcher: Fetcher,
+) -> list[SourceResult]:
     if options.dept_filter:
         valid_ids = {d["id"] for d in departments}
         unknown = [did for did in options.dept_filter if did not in valid_ids]
@@ -142,7 +160,7 @@ async def run_crawl(
         total_errors=total_errors,
     )
 
-    await fetcher.close()
+    # No close here — the caller's finally owns it, for every exit path.
     return results
 
 
@@ -172,6 +190,16 @@ async def _crawl_department(
         )
     ) as events:
         await run_events(events, ports.sink, result=result)
+
+    # run_events flushes on PageCompleted only, and not every source reaches
+    # one: the null-content backfill emits write-bearing events BEFORE the
+    # page loop, and a page-0 fetch failure or an empty first page breaks out
+    # before the first PageCompleted. Without this, a batching sink kept
+    # those writes in its buffer forever while the runner counted them as
+    # done. Safe to add unconditionally — flush must tolerate an empty
+    # buffer (the runner already calls it on pages that buffered nothing,
+    # and assert_sink_contract enforces it).
+    await ports.sink.flush()
 
     logger.info(
         "department_crawl_finished",

@@ -115,12 +115,12 @@ async def _run_store_less(departments: list, options: CrawlOptions) -> None:
     if options.max_pages is None:
         options = dataclasses.replace(options, max_pages=STORE_LESS_DEFAULT_PAGES)
 
-    sink = JsonLinesSink()
-    await run_crawl(departments, options, ports=Ports(sink=sink), mode=FullSweep())
-    # run_events flushes on PageCompleted, but a source that dies at page 0
-    # emits backfill events before the first one. stdout flushes at exit;
-    # an injected file handle would not.
-    await sink.flush()
+    # No manual flush after this: run_crawl flushes each source when its
+    # event stream ends, which is where the workaround that used to live
+    # here belonged all along.
+    await run_crawl(
+        departments, options, ports=Ports(sink=JsonLinesSink()), mode=FullSweep()
+    )
 
 
 def _require_store() -> None:

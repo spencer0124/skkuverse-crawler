@@ -9,37 +9,27 @@ adr-006 core/plugin 로드맵(PR 0~9)이 끝난 시점(2026-08-02)에 **알면�
 
 ---
 
-## P1 — 지금 프로덕션에서 틀린 것
+## ~~P1 — 지금 프로덕션에서 틀린 것~~ (2026-08-03 해결)
 
-### 1. `update_checker`가 `cleanMarkdown`을 갱신하지 않는다 (실버그)
+두 건 모두 `fix/tier2-content-divergence`에서 수정. 아래는 무엇이 실제로 발견됐는지의 기록 — 둘 다 문서에 적었던 것보다 컸다.
 
-**증상**: Tier-2 변경 감지가 공지 본문 변경을 잡으면 `content`·`cleanHtml`·`contentHash`는 재작성하는데 **`cleanMarkdown`은 재계산하지 않는다.** 앱은 `cleanMarkdown`을 1순위 렌더 소스로 쓰므로(`docs/api-design-reference.md` §본문 필드 선택 가이드), **Tier-2로 수정된 공지는 앱에서 옛 본문이 보인다.** 무증상 데이터 부패라 사용자 신고로만 발견된다.
+### ~~1. `update_checker`가 `cleanMarkdown`을 갱신하지 않는다~~ ✅
 
-**왜 지금 안 했나**: 리팩터 전 기간 내내 제1 원칙이 "골든 바이트 동일"이었다. 이 수정은 저장 필드를 바꾸므로 골든을 갱신해야 하고, 그러면 "리팩터가 동작을 안 바꿨다"는 증명이 오염된다. 로드맵이 끝난 지금은 그 제약이 사라졌다.
+**실제로는 세 갈래였다.** `cleanMarkdown` 누락은 셋 중 하나였고 나머지 둘도 전부 조용한 부패였다:
 
-**제안**:
-1. `plugins/mongo/update_checker.py`의 `$set` 필드 목록에 `cleanMarkdown: html_to_markdown(cleaned)` 추가 — 크롤 경로(`normalizer.build_notice`)가 이미 하는 것과 동일한 호출.
-2. 두 경로가 다시 갈라지지 않게, 필드 조립을 한 함수로 뽑아 양쪽이 부르게 할 것. **이게 근본 수정이고 1번은 증상 수정이다.**
-3. 기존 부패 문서 백필: `contentHash`는 최신인데 `cleanMarkdown`이 옛 해시 기준인 문서를 찾을 방법이 없다(마크다운에 해시가 없음). 실용적 대안 — `editHistory`에 tier2 항목이 있는 문서 전량 재생성.
+| 필드 | 크롤 경로 | 수정 전 tier-2 |
+|------|----------|---------------|
+| `cleanMarkdown` | `html_to_markdown(cleaned)` | **없음** — 앱 1순위 렌더 소스라 수정된 공지가 옛 본문으로 보임 |
+| `contentText` | `_text_from_clean_html(cleaned)` | `detail.contentText` — 2026-04에 넣은 **블록 개행 보존이 사라짐** |
+| 5MB 가드 | 초과 시 `cleanHtml`/`content` = None | **없음** — 16MB 문서 한도를 `content`+`cleanHtml`+`contentText`가 공유하므로 큰 공지 수정 시 업데이트 실패 가능 |
 
-**검증**: `tests/plugins/mongo/test_update_checker.py`에 "본문 변경 시 cleanMarkdown이 새 내용을 반영한다" 테스트 추가. 골든 갱신은 이 PR에서 정당하다.
+**해법은 제안 2번(근본 수정)을 택했다.** `normalizer.derive_content_fields()` + `ContentFields` 추출 — 다섯 필드가 무엇인지의 **단일 정의**이고, 크롤 경로의 인라인 분기와 tier-2가 둘 다 이걸 부른다. `ContentFields`의 필드명이 snake_case가 아니라 저장 필드명(camelCase)인 것은 의도: 양쪽이 이걸 `$set`으로 바꾸므로, 손으로 쓴 매핑이 두 벌 생기면 그게 바로 이 타입이 없애려는 그 드리프트다.
 
----
+### ~~2. `run_events`가 런 종료 시 `flush`하지 않는다~~ ✅
 
-### 2. `run_events`가 런 종료 시 `flush`하지 않는다 — 서드파티 sink 데이터 유실
+`_crawl_department`의 `aclosing` 블록 종료 직후 `await ports.sink.flush()`. `cli.py`의 수동 우회와 가이드의 ⚠️도 함께 제거 — 근본이 고쳐졌는데 우회가 남으면 그게 거짓말이 된다.
 
-**증상**: `core/runner.py::run_events`는 `PageCompleted`에서만 `flush()`한다. 그런데
-- null-content 백필이 `ContentRefreshed`(쓰기 동반 결과 계층)를 **페이지 루프 이전**에 방출하고,
-- 페이지 0 fetch 실패 / 빈 페이지 0은 `PageCompleted` **없이** 루프를 빠져나간다.
-
-따라서 배칭 sink의 버퍼에 남은 쓰기가 영영 안 나가는데, **러너는 `result.updated`를 올려 "썼다"고 보고한다**. 실측: `flushes: 0`, `updated: 1`.
-
-**왜 지금 안 했나**: 러너 동작 변경 = 골든 갱신. PR 9은 문서 PR이고 크롤 경로 무변경이 증거였다.
-
-**현재 완화**: `modules/notices/cli.py`가 `run_crawl` 이후 수동 `await sink.flush()`를 호출한다(주석에 이유 명시). **자체 코드는 안전하고, `run_crawl`을 직접 부르는 서드파티만 노출된다.** `docs/sink-authors-guide.md`에 ⚠️로 명시해 뒀다.
-
-**제안**: `_crawl_department`의 `aclosing` 블록 종료 직후 `await ports.sink.flush()` 1줄. 멱등이어야 하는 `flush` 계약상 안전(빈 버퍼 = no-op, 적합성 스위트가 강제). 이후 cli.py의 수동 호출과 가이드의 ⚠️를 함께 제거.
-**주의**: MongoSink에 마지막 페이지 이후 빈 `flush`가 1회 늘어 골든의 op 순서가 바뀐다 — 스냅샷 갱신이 이 변경의 정당한 산출물이다.
+**문서의 예측이 틀렸다**: "빈 flush가 1회 늘어 골든 op 순서가 바뀐다"고 적었는데, `MongoSink.flush()`는 버퍼가 비면 `if not items: return`이라 컬렉션 연산을 일으키지 않는다. **골든 8건 바이트 동일 유지** — 이 수정은 버그가 있던 경로에서만 동작을 바꾼다.
 
 ---
 
@@ -54,13 +44,9 @@ adr-006 core/plugin 로드맵(PR 0~9)이 끝난 시점(2026-08-02)에 **알면�
 **제안**: sink 인스턴스를 소스당 하나로. `run_crawl`이 `Ports` 번들을 소스마다 만들거나, `Sink`에 `for_source(spec) -> Sink` 팩토리 훅을 추가. 후자가 계약 확장이라 **1.0 전에 결정해야 한다**(추가는 breaking).
 **대안(싼 쪽)**: 버퍼를 `dict[source_id, list]`로 쪼개고 `flush`가 호출자 소스만 배출 — 계약 무변경. 다만 `flush(source_id)` 시그니처가 필요해져 결국 계약을 건드린다.
 
-### 4. `run_crawl`의 조기 return이 `fetcher.close()`를 건너뛴다
+### ~~4. `run_crawl`의 조기 return이 `fetcher.close()`를 건너뛴다~~ ✅ (2026-08-03)
 
-**증상**: `orchestrator.py`의 `no_matching_departments` 분기가 `Fetcher` 생성 후 `close()` 없이 return. httpx 클라이언트 누수.
-
-**왜 지금 안 했나**: PR 6에서 발견했으나 "몰래 고치지 않는다" 원칙(리팩터 커밋에 무관한 수정 금지)에 따라 별건 등록.
-
-**제안**: `try/finally`로 `run_crawl` 본문 전체를 감싸 `await fetcher.close()`를 단일 지점에. 현재 성공 경로 끝의 `close()`도 흡수. 오탐 없음 — 이 분기는 필터가 아무것도 안 걸렀을 때만 도달.
+본문을 `_run_crawl`로 분리하고 `run_crawl`이 `try/finally`로 감싸 close를 단일 지점에. 성공 경로 말미의 close도 흡수 — 모든 이탈 경로(조기 return, raise 포함)가 같은 곳을 지난다.
 
 ### 5. `SeenIndex.lookup`이 비스트리밍 (adr-006 1.0 전 판단)
 
@@ -92,6 +78,15 @@ adr-006 core/plugin 로드맵(PR 0~9)이 끝난 시점(2026-08-02)에 **알면�
 **왜 중요한가**: adr-006 §⑬이 1.0을 여기 걸었다. 소비자가 하나뿐인 추상화는 검증 안 된 추측이므로, `CrawlModule`·`Sink`·`CrawlMode`가 두 번째 모듈을 실제로 견디는지 봐야 한다. `test_the_version_is_still_0_x`가 이 게이트를 강제한다.
 **제안**: 포팅하며 코어가 강요한 어색함을 전부 기록할 것 — 그 목록이 1.0 API의 마지막 수정 기회다.
 
+### 8-b. tier-2 부패 문서 백필 *(신규, 2026-08-03)*
+
+P1-1은 **앞으로**를 고쳤다. 이미 tier-2로 수정된 문서의 `cleanMarkdown`·`contentText`는 여전히 낡았다.
+
+**왜 어려운가**: `contentHash`는 최신인데 `cleanMarkdown`이 옛 해시 기준인 문서를 특정할 방법이 없다 — 마크다운에 해시가 없기 때문이다. 부패 여부를 질의로 판별할 수 없다.
+
+**제안**: `editHistory`에 `source: "tier2"` 항목이 있는 문서를 전부 골라 `cleanHtml`에서 `cleanMarkdown`·`contentText`를 재생성. `cleanHtml`은 tier-2가 정확히 써 왔으므로 재크롤 없이 로컬 재계산으로 충분하다.
+**규모 확인 먼저**: `db.notices.count({"editHistory.source": "tier2"})`.
+
 ### 9. PyPI 발행 워크플로 + `readme` 필드
 
 README는 레포 루트, 빌드 루트는 `py/`. PEP 621이 `../README.md`를 거부하므로 `readme` 미설정 상태.
@@ -111,8 +106,8 @@ PR 9의 Actions 감사 결과: **회귀 없음**(`deploy.yml`·`claude.yml` 무�
 | # | 리스크 | 완화 |
 |---|--------|------|
 | 11 | **라이브 네트워크 의존 증폭.** `core-only` 잡은 이미 skku.edu를 실크롤했고(9초), 예제 2개가 더 붙어 PR당 `skku-main` 페이지 1을 3회 친다. skku.edu 장애·레이트리밋이 문서만 고친 PR을 빨갛게 만든다 | 실제로 플래키해지면 이 스텝에 `continue-on-error: true`, 또는 매 PR이 아니라 스케줄/경로 필터 트리거로 이동 |
-| 12 | **`quickstart.py` 실패 메시지가 오해를 부른다.** `iter_source`가 fetch 예외를 삼키고 계속하므로, 일시적 네트워크 실패는 exit 0 + 빈 stdout → 스텝이 `quickstart.py printed nothing`이라고만 말한다. 코드 버그처럼 읽힌다 | 메시지를 `printed nothing (source unreachable?)`로 넓히기 |
-| 13 | **`py/examples/*.py` 글롭이 무필터.** 공용 헬퍼·`__init__.py`·`conftest.py`를 넣으면 그것도 실행되고 `test -s`에서 실패 | `_` 접두 파일 스킵, 또는 헬퍼는 하위 디렉토리에 |
+| ~~12~~ ✅ | **`quickstart.py` 실패 메시지가 오해를 부른다** | 해결 (2026-08-03) — `code broken, or skku.edu unreachable from CI?`로 확장 |
+| ~~13~~ ✅ | **`py/examples/*.py` 글롭이 무필터** | 해결 (2026-08-03) — `_` 접두 파일 스킵 |
 | 14 | **월클럭 +20~30초.** `core-only`가 19초 → 약 3배. 1분 미만이라 현재는 무해 | `DEFAULT_MAX_PAGES=1`이 상한을 묶고 있으므로 추가 조치 불필요 |
 
 ---

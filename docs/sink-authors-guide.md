@@ -31,20 +31,20 @@ sink. `wiring.py` does check `isinstance` at assembly time, which is why they ar
 |--------|--------|-----|
 | `prepare` | once per source, before its first event | Setup that depends on the source. Must be idempotent — the Mongo sink creates its indexes here and guards against repeats. |
 | `accept` | once per event, in emission order | Your storage. The return value matters for exactly one event type; see below. |
-| `flush` | on every `PageCompleted`, and nowhere else | Where a batching sink writes. Called on pages where nothing was buffered too. |
+| `flush` | on every `PageCompleted`, and once when a source's stream ends | Where a batching sink writes. Called on pages where nothing was buffered too. |
 
 Return values from `prepare` and `flush` are never read. The suite does not check them, on
 purpose: enforcing a rule the runner does not have would have third parties writing code to
 satisfy a fiction.
 
-> ⚠️ **`flush` is not called at the end of a run.** `run_events` flushes on `PageCompleted`
-> and nothing else, so a source that emits write-bearing events without ever completing a page
-> leaves them in your buffer. That is not hypothetical: the null-content backfill emits
-> `ContentRefreshed` *before* the page loop, and a source whose page 0 fetch fails breaks out
-> before the first `PageCompleted`. The runner still counts those events as written.
->
-> Until this is fixed in the runner, **call `flush()` yourself after `run_crawl` returns**.
-> `modules/notices/cli.py` does exactly that for the `--json` path.
+The end-of-source flush is not redundant with the per-page one, and the reason is worth
+knowing if you buffer: not every source reaches a `PageCompleted`. The null-content backfill
+emits write-bearing events *before* the page loop, and a source whose page 0 fetch fails
+breaks out before the first page completes. Those writes used to sit in the buffer forever
+while the runner counted them as done.
+
+So `flush` must tolerate an empty buffer — it will be called on pages that buffered nothing,
+and again at the end.
 
 ### One sink, several sources at once
 
