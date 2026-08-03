@@ -38,10 +38,12 @@ PROJECTION = {
     "content": 1, "contentText": 1, "cleanHtml": 1, "cleanMarkdown": 1, "contentHash": 1,
 }
 
-# Repaired here, and the only fields that may be. `content` is passed
-# through the pipeline so the size guard can null it in step with
-# cleanHtml, but it is never rewritten from anything.
-REPAIRED_FIELDS = ("contentText", "cleanHtml", "cleanMarkdown", "contentHash")
+# Compared and, on a difference, written. `content` is in the list because
+# SizeGuard nulls it in step with cleanHtml, and writing one without the
+# other would leave a document in a state the crawl never produces. It is
+# not otherwise touched: the pipeline passes it straight through, so on
+# every normal document it compares equal and is not written.
+REPAIRED_FIELDS = ("content", "contentText", "cleanHtml", "cleanMarkdown", "contentHash")
 
 
 @dataclass

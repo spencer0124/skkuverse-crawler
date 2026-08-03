@@ -213,3 +213,98 @@ async def test_the_source_filter_narrows_the_scan(dept_filter, expected):
     report = await _run(collection, dept_filter=dept_filter)
 
     assert report.scanned == expected
+
+
+class TestDimensionsFromMarkdown:
+    """The parser the whole repair rests on.
+
+    A hint it fails to read is not merely skipped: the repair injects
+    nothing, regenerates the markdown from HTML that has no dimensions,
+    and the measurement is gone for good. So a parse failure here makes a
+    document strictly worse than not repairing it at all.
+    """
+
+    URL = "https://e.test/a.png"
+
+    def test_reads_a_plain_hint(self):
+        md = f"![{{800x600}} 포스터]({self.URL})"
+        assert dimensions_from_markdown(md) == {self.URL: (800, 600)}
+
+    def test_reads_a_hint_whose_alt_text_has_escaped_brackets(self):
+        """The case that made this a data-loss bug rather than a gap.
+        SKKU titles are overwhelmingly "[학사팀] 제목", and the markdown
+        writer escapes them — 49 production documents would have lost
+        their last surviving measurement to a regex that stops at `\\]`."""
+        md = f"![{{800x600}} \\[학사팀\\] 수강신청 안내]({self.URL})"
+        assert dimensions_from_markdown(md) == {self.URL: (800, 600)}
+
+    def test_reads_every_image_in_a_document(self):
+        b = "https://e.test/b.png"
+        md = f"본문\n\n![{{10x20}} 하나]({self.URL})\n\n![{{30x40}} 둘]({b})"
+        assert dimensions_from_markdown(md) == {self.URL: (10, 20), b: (30, 40)}
+
+    @pytest.mark.parametrize(
+        "md",
+        [
+            None,
+            "",
+            "본문만 있고 이미지 없음",
+            "![포스터](https://e.test/a.png)",          # no hint at all
+            "![{w800} 반쪽](https://e.test/a.png)",     # width only
+            "![{h600} 반쪽](https://e.test/a.png)",     # height only
+            "![{800} 잘못된 형식](https://e.test/a.png)",
+            "![{800xABC} 숫자 아님](https://e.test/a.png)",
+        ],
+    )
+    def test_anything_that_is_not_a_complete_pair_yields_nothing(self, md):
+        """`{w800}`/`{h600}` are deliberate omissions, not oversights: half
+        a dimension cannot be injected back, and the app's regex needs
+        both."""
+        assert dimensions_from_markdown(md) == {}
+
+    def test_an_alt_text_that_looks_like_a_hint_is_not_mistaken_for_one(self):
+        """The hint is anchored to the start of the alt text; a stray
+        `{123x456}` further in is prose."""
+        md = f"![해상도 {{123x456}} 안내]({self.URL})"
+        assert dimensions_from_markdown(md) == {}
+
+
+async def test_content_is_written_when_the_size_guard_nulls_it():
+    """`content` is in the repaired set for exactly one reason: SizeGuard
+    nulls it together with cleanHtml, and writing one without the other
+    leaves a document in a state the crawl never produces."""
+    from skkuverse_crawler.modules.notices.normalizer import MAX_CONTENT_BYTES
+
+    huge = "<p>" + ("가" * (MAX_CONTENT_BYTES // 2)) + "</p>"
+    collection = await _store(_damaged_doc(cleanHtml=huge, content=huge, cleanMarkdown="본문"))
+    report = await _run(collection, apply=True)
+
+    stored = collection.docs[0]
+    assert report.repaired == 1
+    assert stored["cleanHtml"] is None
+    assert stored["content"] is None, "cleanHtml was nulled but content was left behind"
+
+
+async def test_content_is_left_alone_on_an_ordinary_document():
+    """The other half: it must not be rewritten just for being in the
+    list. The pipeline passes it through, so it compares equal."""
+    collection = await _store(_damaged_doc())
+    report = await _run(collection, apply=True)
+
+    assert "content" not in report.changed_fields
+    assert collection.docs[0]["content"] == DAMAGED_HTML
+
+
+async def test_the_stored_text_is_the_fallback_when_the_body_is_dropped():
+    """fallback_text exists for the oversized case, where the pipeline
+    extracts nothing. Without it a repaired oversized notice would lose
+    the only text it has left."""
+    from skkuverse_crawler.modules.notices.normalizer import MAX_CONTENT_BYTES
+
+    huge = "<p>" + ("가" * (MAX_CONTENT_BYTES // 2)) + "</p>"
+    collection = await _store(_damaged_doc(
+        cleanHtml=huge, content=huge, cleanMarkdown="본문", contentText="지켜야 할 텍스트",
+    ))
+    await _run(collection, apply=True)
+
+    assert collection.docs[0]["contentText"] == "지켜야 할 텍스트"

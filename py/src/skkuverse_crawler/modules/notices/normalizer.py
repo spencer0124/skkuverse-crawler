@@ -94,7 +94,13 @@ def source_url_for(base_url: str, detail_path: str) -> str:
     return urljoin(base_url, detail_path)
 
 
-_MD_DIMENSION_HINT = re.compile(r"!\[\{(\d+)x(\d+)\}[^\]]*\]\(([^)]+)\)")
+# `(?:\\.|[^\]\\])*` and not `[^\]]*`: the alt text is markdown-escaped, and
+# SKKU titles are overwhelmingly of the form "[학사팀] 제목", which becomes
+# `\[학사팀\]`. A class that cannot cross an escaped bracket stops at the
+# first `\]`, and a hint that is not read cannot be re-injected — so the
+# regenerated markdown loses it for good. Measured on production: 49
+# documents whose last surviving measurement this would have destroyed.
+_MD_DIMENSION_HINT = re.compile(r"!\[\{(\d+)x(\d+)\}(?:\\.|[^\]\\])*\]\(([^)]+)\)")
 
 
 def dimensions_from_markdown(markdown: str | None) -> dict[str, tuple[int, int]]:

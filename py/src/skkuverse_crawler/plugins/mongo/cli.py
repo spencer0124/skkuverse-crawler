@@ -280,8 +280,11 @@ def _print_repair_report(report, apply: bool) -> None:
     print(f"  Scanned            : {report.scanned}")
     print(f"  {verb:<19}: {report.repaired}")
     print(f"  Already consistent : {report.already_consistent}")
-    print(f"    of which unmeasurable: {report.unmeasurable}")
     print(f"  No stored body     : {report.skipped_no_content}")
+    # Counted across all of the above, not inside any of them: a document
+    # with no stored measurement may still have had its text or hash
+    # repaired. Indenting it under one line said otherwise.
+    print(f"  Images with no stored measurement (any outcome): {report.unmeasurable}")
     if report.changed_fields:
         print("  Fields:")
         for name, count in sorted(report.changed_fields.items()):

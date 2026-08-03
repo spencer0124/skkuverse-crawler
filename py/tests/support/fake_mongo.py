@@ -107,6 +107,12 @@ def _match_condition(actual: Any, cond: dict[str, Any]) -> bool:
     return True
 
 
+# Operators whose meaning depends on a value being ABSENT rather than
+# present-and-unequal. Over a dotted path the fake cannot tell the two
+# apart, so it refuses them instead of guessing.
+_NEGATING_QUERY_OPS = {"$ne", "$nin", "$exists", "$not"}
+
+
 def _resolve_path(doc: Any, path: str) -> list[Any]:
     """Values at a dotted path, Mongo-style.
 
@@ -118,6 +124,10 @@ def _resolve_path(doc: Any, path: str) -> list[Any]:
     Returns a list because the caller must distinguish "no such path"
     (empty) from "the value is None" (``[None]``).
     """
+    if any(part.isdigit() for part in path.split(".")):
+        raise NotImplementedError(
+            "FakeCollection: positional dotted paths (a.0.b) not implemented"
+        )
     current: list[Any] = [doc]
     for part in path.split("."):
         nxt: list[Any] = []
@@ -152,6 +162,22 @@ def _validate_filter(filter_: dict[str, Any]) -> None:
             )
         elif field.startswith("$"):
             raise NotImplementedError(f"FakeCollection: query operator {field!r} not implemented")
+        elif "." in field and _is_operator_doc(expected):
+            # Dotted paths fan out over arrays, so a candidate list can be
+            # empty — and "no candidate matched" is not the same answer as
+            # "the absent value matched". Negation and existence need that
+            # distinction and would come back confidently wrong, so they
+            # keep raising rather than joining the supported set.
+            for op in expected:
+                if op in _NEGATING_QUERY_OPS:
+                    raise NotImplementedError(
+                        f"FakeCollection: {op!r} on a dotted path not implemented "
+                        f"(array fan-out makes absence ambiguous)"
+                    )
+                if op not in _SUPPORTED_QUERY_OPS:
+                    raise NotImplementedError(
+                        f"FakeCollection: query operator {op!r} not implemented"
+                    )
         elif _is_operator_doc(expected):
             for op, operand in expected.items():
                 if op not in _SUPPORTED_QUERY_OPS:
