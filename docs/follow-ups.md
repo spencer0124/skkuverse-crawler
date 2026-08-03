@@ -15,15 +15,33 @@ adr-006 core/plugin 로드맵(PR 0~9)이 끝난 시점(2026-08-02)에 **알면�
 
 ### ~~1. `update_checker`가 `cleanMarkdown`을 갱신하지 않는다~~ ✅
 
-**실제로는 세 갈래였다.** `cleanMarkdown` 누락은 셋 중 하나였고 나머지 둘도 전부 조용한 부패였다:
+**문서가 증상만 적고 있었다.** 코드를 열어 보니 네 갈래였고, 네 번째가 나머지 셋을 영구화하고 있었다.
 
-| 필드 | 크롤 경로 | 수정 전 tier-2 |
-|------|----------|---------------|
-| `cleanMarkdown` | `html_to_markdown(cleaned)` | **없음** — 앱 1순위 렌더 소스라 수정된 공지가 옛 본문으로 보임 |
-| `contentText` | `_text_from_clean_html(cleaned)` | `detail.contentText` — 2026-04에 넣은 **블록 개행 보존이 사라짐** |
-| 5MB 가드 | 초과 시 `cleanHtml`/`content` = None | **없음** — 16MB 문서 한도를 `content`+`cleanHtml`+`contentText`가 공유하므로 큰 공지 수정 시 업데이트 실패 가능 |
+| # | 필드 | 크롤 경로 | 수정 전 tier-2 |
+|---|------|----------|---------------|
+| 1 | `cleanMarkdown` | `html_to_markdown(cleaned)` | **없음** — 앱 1순위 렌더 소스라 수정된 공지가 옛 본문으로 보임 |
+| 2 | `contentText` | `_text_from_clean_html(cleaned)` | `detail.contentText` — 2026-04에 넣은 블록 개행 보존이 사라짐 |
+| 3 | 5MB 가드 | 초과 시 `cleanHtml`/`content` = None | **없음** — 16MB 문서 한도를 세 필드가 공유 |
+| 4 | **이미지 측정** | `VerifyImages` → `InjectImageDimensions` | **없음** ← **근본 원인** |
 
-**해법은 제안 2번(근본 수정)을 택했다.** `normalizer.derive_content_fields()` + `ContentFields` 추출 — 다섯 필드가 무엇인지의 **단일 정의**이고, 크롤 경로의 인라인 분기와 tier-2가 둘 다 이걸 부른다. `ContentFields`의 필드명이 snake_case가 아니라 저장 필드명(camelCase)인 것은 의도: 양쪽이 이걸 `$set`으로 바꾸므로, 손으로 쓴 매핑이 두 벌 생기면 그게 바로 이 타입이 없애려는 그 드리프트다.
+**④가 왜 근본인가.** 크롤은 `<img>`마다 HTTP Range로 앞 32KB를 받아 크기를 재고 `width`/`height`를 주입한 뒤, **그 HTML에서** 해시를 뜨고 마크다운을 만든다(앱이 파싱하는 `{WxH}` 힌트). tier-2는 측정을 안 하므로 **같은 본문에서 다른 해시가 나온다.** 두 주체가 서로를 "변경됨"으로 판정하고 영원히 덮어쓴다.
+
+프로덕션 실측 (2026-08-03):
+
+```
+articleNo 137297 (skku-main):  editCount 30, distinct 해시 2개
+  06-13 06:00  tier1  72bdec → e4463d
+  06-13 11:10  tier2  e4463d → 72bdec
+  06-15 01:00  tier1  72bdec → e4463d      ... 30회 왕복
+```
+
+`cleanMarkdown`에 `{WxH}`가 있는데 `cleanHtml`엔 `width=`가 없는 문서 **2,115건** — tier-2가 HTML을 마지막에 썼다는 지문이다. 14일 창을 벗어나면 멈추므로 공지당 약 28회로 유계.
+
+**해법**: `stages.derive_content_fields()`가 `DEFAULT_PIPELINE`을 **실제로 돌린다**. 손으로 만든 사본은 파이프라인과 같을 수 없으므로, 유일한 재발 방지는 같은 파이프라인을 쓰는 것뿐이다. tier-2 해시 == 크롤 해시가 되어 왕복이 영구 종료된다.
+
+**비용**: 이미지 프로브. 14일 창 735건 중 274건이 이미지 보유(총 305개), 하루 3회 → 일 약 915 Range 요청 증가. 이미지 없는 461건은 `verify_notice_images`가 즉시 반환해 비용 0. 크롤 경로는 이미 신규 공지마다 같은 비용을 낸다.
+
+**기각한 대안**: `derive_content_fields`를 `normalizer.py`에 두고 `build_notice`의 인라인 분기를 재현하는 안. 첫 시도가 이것이었고 **리뷰에서 잡혔다** — 인라인 분기는 docstring 스스로 "픽스처·품질 테스트용"이라 적어둔 경로이고 파이프라인이 아니다. 그래서 정의가 셋이 되고, 프로덕션이 그중 틀린 것을 가리켰다. `normalizer.py`는 원복했고 인라인↔파이프라인 동치는 기존 parity 테스트가 계속 지킨다.
 
 ### ~~2. `run_events`가 런 종료 시 `flush`하지 않는다~~ ✅
 
@@ -78,14 +96,20 @@ adr-006 core/plugin 로드맵(PR 0~9)이 끝난 시점(2026-08-02)에 **알면�
 **왜 중요한가**: adr-006 §⑬이 1.0을 여기 걸었다. 소비자가 하나뿐인 추상화는 검증 안 된 추측이므로, `CrawlModule`·`Sink`·`CrawlMode`가 두 번째 모듈을 실제로 견디는지 봐야 한다. `test_the_version_is_still_0_x`가 이 게이트를 강제한다.
 **제안**: 포팅하며 코어가 강요한 어색함을 전부 기록할 것 — 그 목록이 1.0 API의 마지막 수정 기회다.
 
-### 8-b. tier-2 부패 문서 백필 *(신규, 2026-08-03)*
+### 8-b. tier-2가 손상시킨 문서 백필 *(신규, 2026-08-03)* — **P1 대기**
 
-P1-1은 **앞으로**를 고쳤다. 이미 tier-2로 수정된 문서의 `cleanMarkdown`·`contentText`는 여전히 낡았다.
+P1-1은 **앞으로**를 고쳤다. 이미 손상된 문서는 그대로다.
 
-**왜 어려운가**: `contentHash`는 최신인데 `cleanMarkdown`이 옛 해시 기준인 문서를 특정할 방법이 없다 — 마크다운에 해시가 없기 때문이다. 부패 여부를 질의로 판별할 수 없다.
+**규모** (2026-08-03 실측): `cleanMarkdown`에 `{WxH}`가 있는데 `cleanHtml`엔 `width=`가 없는 문서 **2,115건**. 이들은 `cleanHtml`에서 이미지 크기를 잃었고, `contentText`도 tier-2가 쓴 구포맷(개행 뭉개짐)일 가능성이 높다.
 
-**제안**: `editHistory`에 `source: "tier2"` 항목이 있는 문서를 전부 골라 `cleanHtml`에서 `cleanMarkdown`·`contentText`를 재생성. `cleanHtml`은 tier-2가 정확히 써 왔으므로 재크롤 없이 로컬 재계산으로 충분하다.
-**규모 확인 먼저**: `db.notices.count({"editHistory.source": "tier2"})`.
+**왜 질의로 특정이 어려운가**: `cleanMarkdown`이 낡았는지는 마크다운만 보고 알 수 없다(해시가 없음). 다만 위 조합(`md`에 힌트 O + `html`에 width X)이 **tier-2가 마지막에 썼다는 신뢰할 만한 지문**이라 이걸 선별 기준으로 쓸 수 있다.
+
+**제안**:
+1. 규모 재확인 — 위 조합 + `editHistory.source == "tier2"` 보유 문서 수.
+2. **재크롤이 필요하다** (로컬 재계산 불가): 이미지 크기는 원본 이미지를 다시 받아야 나온다. `update-check --days N`을 넓은 창으로 한 번 돌리면 수정된 코드가 자연히 복구한다 — 별도 스크립트 불필요.
+3. 창을 넓히면 프로브 비용이 그만큼 늘어나므로 1회성으로, 트래픽 적은 시간대에.
+
+**검증**: 실행 후 위 조합 문서 수가 0으로 수렴하는지, `content_changed`가 1회성 급증 후 정상화되는지.
 
 ### 9. PyPI 발행 워크플로 + `readme` 필드
 

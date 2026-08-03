@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
 from datetime import datetime, timezone
 from urllib.parse import urljoin
 
@@ -78,92 +77,6 @@ def _inject_image_dimensions(
     return str(soup) if changed else html
 
 
-@dataclass(frozen=True)
-class ContentFields:
-    """The five stored fields derived from one detail page's raw HTML.
-
-    Field names are the STORED (camelCase) ones on purpose: both callers
-    turn this into a Mongo ``$set``, and a snake_case dataclass here would
-    mean two hand-written mappings that can drift apart — which is the
-    exact failure this type exists to end.
-    """
-
-    content: str | None
-    contentText: str | None
-    cleanHtml: str | None
-    cleanMarkdown: str | None
-    contentHash: str | None
-
-    def as_set(self) -> dict[str, str | None]:
-        """The `$set` payload for a store that keeps these five together."""
-        return {
-            "content": self.content,
-            "contentText": self.contentText,
-            "cleanHtml": self.cleanHtml,
-            "cleanMarkdown": self.cleanMarkdown,
-            "contentHash": self.contentHash,
-        }
-
-
-def derive_content_fields(
-    raw_html: str | None,
-    base_url: str,
-    *,
-    fallback_text: str | None = None,
-    image_dimensions: dict[str, tuple[int, int]] | None = None,
-    article_no: int | None = None,
-    source_id: str = "",
-) -> ContentFields:
-    """Derive every stored content field from one detail page's raw HTML.
-
-    The single definition of what a notice's content fields mean. It exists
-    because there was more than one: the Tier-2 update checker rebuilt
-    ``content``/``cleanHtml``/``contentHash`` by hand and, over time, drifted
-    from the crawl path three ways — no ``cleanMarkdown`` at all (the app's
-    first-choice render source, so an edited notice showed its old body), a
-    ``contentText`` taken straight from the strategy instead of extracted
-    from the sanitized HTML (losing the block newlines added in 2026-04),
-    and no size guard (so an oversized document was written where the crawl
-    path stores nulls). Every one of those was silent.
-
-    ``fallback_text`` is the strategy's own text, used only when nothing can
-    be extracted from the sanitized HTML — the crawl path's precedence,
-    preserved.
-    """
-    if not raw_html:
-        return ContentFields(None, fallback_text or None, None, None, None)
-
-    cleaned = clean_html(raw_html, base_url)
-    # Resolve relative <img src> / <a href> in the raw content so the
-    # mobile renderer doesn't have to.
-    raw_content: str | None = normalize_content_urls(raw_html, base_url)
-
-    if cleaned and image_dimensions:
-        cleaned = _inject_image_dimensions(cleaned, image_dimensions)
-
-    if cleaned and len(cleaned.encode()) > MAX_CONTENT_BYTES:
-        logger.warning(
-            "oversized_content_dropped",
-            articleNo=article_no,
-            dept=source_id,
-            size=len(cleaned.encode()),
-        )
-        cleaned = None
-        raw_content = None
-
-    content_text = _text_from_clean_html(cleaned) if cleaned else None
-    if content_text is None and fallback_text:
-        content_text = fallback_text
-
-    return ContentFields(
-        content=raw_content,
-        contentText=content_text,
-        cleanHtml=cleaned,
-        cleanMarkdown=html_to_markdown(cleaned),
-        contentHash=compute_content_hash(cleaned),
-    )
-
-
 def build_notice(
     list_item: NoticeListItem,
     detail: NoticeDetail | None,
@@ -209,22 +122,30 @@ def build_notice(
         clean_markdown = content.markdown
         content_hash = content.content_hash
     else:
-        fields = derive_content_fields(
-            detail.content if detail else None,
-            base_url,
-            fallback_text=detail.contentText if detail else None,
-            image_dimensions=image_dimensions,
-            article_no=list_item.articleNo,
-            source_id=source_id,
+        cleaned = clean_html(detail.content, base_url) if detail and detail.content else None
+        # Resolve relative <img src> / <a href> in the raw content so the
+        # mobile renderer doesn't have to.
+        raw_content = (
+            normalize_content_urls(detail.content, base_url) if detail and detail.content else None
         )
-        cleaned = fields.cleanHtml
-        raw_content = fields.content
-        content_text = fields.contentText
-        clean_markdown = fields.cleanMarkdown
-        content_hash = fields.contentHash
 
-    # The pipeline path derives content_text from its own stage, which does
-    # not know the strategy's text; the fallback belongs to both paths.
+        if cleaned and image_dimensions:
+            cleaned = _inject_image_dimensions(cleaned, image_dimensions)
+
+        if cleaned and len(cleaned.encode()) > MAX_CONTENT_BYTES:
+            logger.warning(
+                "oversized_content_dropped",
+                articleNo=list_item.articleNo,
+                dept=source_id,
+                size=len(cleaned.encode()),
+            )
+            cleaned = None
+            raw_content = None
+
+        content_text = _text_from_clean_html(cleaned) if cleaned else None
+        clean_markdown = html_to_markdown(cleaned)
+        content_hash = compute_content_hash(cleaned)
+
     if content_text is None and detail and detail.contentText:
         content_text = detail.contentText
 

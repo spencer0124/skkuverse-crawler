@@ -24,7 +24,8 @@ from pymongo import ReturnDocument
 
 from ...core.module import ModuleConfig
 from ...modules.notices.constants import SERVICE_START_DATE
-from ...modules.notices.normalizer import derive_content_fields
+from ...modules.notices.normalizer import MAX_CONTENT_BYTES
+from ...modules.notices.stages import derive_content_fields
 from ...modules.notices.strategies import STRATEGY_MAP
 from ...env import get_config
 from ...shared.db import get_db
@@ -40,6 +41,9 @@ class UpdateCheckResult:
     content_changed: int = 0
     hash_backfilled: int = 0
     fetch_errors: int = 0
+    # Fetched fine, but sanitising left nothing — treated as an anomaly
+    # rather than an edit, so it never blanks a stored body.
+    content_vanished: int = 0
     skipped_no_detail: int = 0
     not_found: int = 0
     soft_deleted: int = 0
@@ -65,7 +69,9 @@ async def run_update_check(
 
     cursor = collection.find(
         {"date": {"$gte": cutoff_date_str}, "isDeleted": {"$ne": True}},
-        {"articleNo": 1, "sourceId": 1, "detailPath": 1,
+        # sourceUrl is here for the image probe's Referer — several sources
+        # serve images only to a request that came from the notice page.
+        {"articleNo": 1, "sourceId": 1, "detailPath": 1, "sourceUrl": 1,
          "contentHash": 1, "title": 1, "consecutiveFailures": 1},
     )
 
@@ -189,19 +195,44 @@ async def _check_department(
         result.total_checked += 1
         doc_filter = {"articleNo": doc["articleNo"], "sourceId": dept["id"]}
 
-        # The same derivation the crawl path uses, not a parallel one. Three
-        # fields used to be rebuilt by hand here and had drifted: no
-        # cleanMarkdown at all, contentText taken from the strategy instead
-        # of the sanitized HTML, and no size guard.
-        fields = derive_content_fields(
+        # The crawl's own pipeline, not a parallel derivation. Rebuilding
+        # these by hand is what let Tier-2 drift from the crawl — most
+        # damagingly by skipping the image probe, which made its hash differ
+        # from the crawl's for identical content and set the two writers
+        # overwriting each other forever.
+        fields = await derive_content_fields(
             detail.content,
-            dept["baseUrl"],
-            fallback_text=detail.contentText,
-            article_no=doc["articleNo"],
+            base_url=dept["baseUrl"],
+            source_url=doc.get("sourceUrl", ""),
             source_id=dept["id"],
+            article_no=doc["articleNo"],
+            fallback_text=detail.contentText,
         )
         new_hash = fields.contentHash
         old_hash = doc.get("contentHash")
+
+        # An empty derivation has two causes and they need opposite
+        # handling, so the raw size tells them apart rather than the empty
+        # result they share:
+        #
+        # - Oversized (past MAX_CONTENT_BYTES): the crawl stores nulls here,
+        #   so Tier-2 must too. Guarding it would put the two writers back
+        #   into disagreement, which is the thing this path exists to end.
+        # - Sanitised to nothing (an empty <div>, a stray &nbsp;, a WPDM
+        #   block with no body): far likelier a soft error page than a real
+        #   edit, and the crawl never sees it — it only refetches when a
+        #   title or date changes. Writing it through would blank every
+        #   content field, including the last renderable copy.
+        raw_bytes = len((detail.content or "").encode())
+        if new_hash is None and old_hash is not None and raw_bytes <= MAX_CONTENT_BYTES:
+            logger.warning(
+                "content_vanished",
+                dept_id=dept["id"],
+                articleNo=doc["articleNo"],
+                raw_bytes=raw_bytes,
+            )
+            result.content_vanished += 1
+            continue
 
         # Backfill: old hash is None, just set it
         if old_hash is None:
@@ -298,6 +329,7 @@ async def _check_department(
         content_changed=result.content_changed,
         hash_backfilled=result.hash_backfilled,
         fetch_errors=result.fetch_errors,
+        content_vanished=result.content_vanished,
         skipped_no_detail=result.skipped_no_detail,
         not_found=result.not_found,
         soft_deleted=result.soft_deleted,

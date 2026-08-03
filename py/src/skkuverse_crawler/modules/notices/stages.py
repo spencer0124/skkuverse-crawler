@@ -35,6 +35,7 @@ so an empty-string body still yields None rather than "".
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any
 
 from ...core.pipeline import ContentDoc, Pipeline, StageContext
@@ -187,3 +188,90 @@ DEFAULT_PIPELINE = Pipeline(
         ContentHash(),
     )
 )
+
+
+@dataclass(frozen=True)
+class ContentFields:
+    """The five stored content fields, named as they are stored.
+
+    camelCase on purpose: every consumer turns this into a Mongo ``$set``,
+    and a snake_case type here would mean a hand-written mapping per caller
+    — which is the drift this exists to end.
+    """
+
+    content: str | None
+    contentText: str | None
+    cleanHtml: str | None
+    cleanMarkdown: str | None
+    contentHash: str | None
+
+    @classmethod
+    def from_doc(cls, doc: ContentDoc, *, fallback_text: str | None = None) -> ContentFields:
+        # `text if clean_html else None` mirrors build_notice: a doc whose
+        # HTML was dropped must not keep text extracted before the drop.
+        text = doc.text if doc.clean_html else None
+        return cls(
+            content=doc.content,
+            contentText=text if text is not None else (fallback_text or None),
+            cleanHtml=doc.clean_html,
+            cleanMarkdown=doc.markdown,
+            contentHash=doc.content_hash,
+        )
+
+    def as_set(self) -> dict[str, str | None]:
+        return {
+            "content": self.content,
+            "contentText": self.contentText,
+            "cleanHtml": self.cleanHtml,
+            "cleanMarkdown": self.cleanMarkdown,
+            "contentHash": self.contentHash,
+        }
+
+
+async def derive_content_fields(
+    raw_html: str | None,
+    *,
+    base_url: str,
+    source_url: str = "",
+    source_id: str = "",
+    article_no: int | None = None,
+    fallback_text: str | None = None,
+    pipeline: Pipeline = DEFAULT_PIPELINE,
+    log: Any = None,
+) -> ContentFields:
+    """Derive the stored content fields the way a crawl does — same pipeline.
+
+    This exists because the Tier-2 update checker used to rebuild them by
+    hand, and a hand-built copy cannot stay equal to a pipeline. It had
+    drifted four ways, all silent:
+
+    - no ``cleanMarkdown`` at all, so an edited notice kept rendering its
+      old body in the app;
+    - ``contentText`` taken from the strategy instead of extracted from the
+      sanitized HTML, losing the block newlines added in 2026-04;
+    - no size guard, so an oversized body was written where a crawl stores
+      nulls;
+    - and the one that made the others permanent: **no image measurement**.
+      ``InjectImageDimensions`` puts width/height on every ``<img>``, the
+      hash is taken from that HTML, and the markdown carries the ``{WxH}``
+      hint the app parses. Deriving without it produced a *different hash
+      for identical content*, so Tier-2 and the crawl overwrote each other
+      forever — one notice reached editCount 30 across exactly two hashes.
+
+    Running the real pipeline is what makes those unrepeatable. The cost is
+    the image probe (``verify-images``), which is a no-op for a body with
+    no images; drop it with ``pipeline=DEFAULT_PIPELINE.without("verify-images")``
+    if a caller genuinely cannot spend it — and accept a hash that will not
+    match a crawl's.
+    """
+    doc = await pipeline.run(
+        ContentDoc(raw=raw_html or None),
+        StageContext(
+            source_id=source_id,
+            base_url=base_url,
+            source_url=source_url,
+            article_no=article_no,
+            logger=log or logger,
+        ),
+    )
+    return ContentFields.from_doc(doc, fallback_text=fallback_text)
