@@ -107,6 +107,44 @@ def _match_condition(actual: Any, cond: dict[str, Any]) -> bool:
     return True
 
 
+# Operators whose meaning depends on a value being ABSENT rather than
+# present-and-unequal. Over a dotted path the fake cannot tell the two
+# apart, so it refuses them instead of guessing.
+_NEGATING_QUERY_OPS = {"$ne", "$nin", "$exists", "$not"}
+
+
+def _resolve_path(doc: Any, path: str) -> list[Any]:
+    """Values at a dotted path, Mongo-style.
+
+    Traversing an array fans out rather than indexing: ``editHistory.source``
+    yields the ``source`` of every element, and the query matches when ANY
+    of them matches. That is what makes ``{"editHistory.source": "tier2"}``
+    mean "has a tier2 entry" rather than "the array has a source field".
+
+    Returns a list because the caller must distinguish "no such path"
+    (empty) from "the value is None" (``[None]``).
+    """
+    if any(part.isdigit() for part in path.split(".")):
+        raise NotImplementedError(
+            "FakeCollection: positional dotted paths (a.0.b) not implemented"
+        )
+    current: list[Any] = [doc]
+    for part in path.split("."):
+        nxt: list[Any] = []
+        for value in current:
+            if isinstance(value, list):
+                nxt.extend(
+                    item[part] for item in value
+                    if isinstance(item, dict) and part in item
+                )
+            elif isinstance(value, dict) and part in value:
+                nxt.append(value[part])
+        current = nxt
+        if not current:
+            return []
+    return current
+
+
 def _validate_filter(filter_: dict[str, Any]) -> None:
     """Reject unsupported query shapes eagerly.
 
@@ -124,8 +162,22 @@ def _validate_filter(filter_: dict[str, Any]) -> None:
             )
         elif field.startswith("$"):
             raise NotImplementedError(f"FakeCollection: query operator {field!r} not implemented")
-        elif "." in field:
-            raise NotImplementedError("FakeCollection: dotted field paths not implemented")
+        elif "." in field and _is_operator_doc(expected):
+            # Dotted paths fan out over arrays, so a candidate list can be
+            # empty — and "no candidate matched" is not the same answer as
+            # "the absent value matched". Negation and existence need that
+            # distinction and would come back confidently wrong, so they
+            # keep raising rather than joining the supported set.
+            for op in expected:
+                if op in _NEGATING_QUERY_OPS:
+                    raise NotImplementedError(
+                        f"FakeCollection: {op!r} on a dotted path not implemented "
+                        f"(array fan-out makes absence ambiguous)"
+                    )
+                if op not in _SUPPORTED_QUERY_OPS:
+                    raise NotImplementedError(
+                        f"FakeCollection: query operator {op!r} not implemented"
+                    )
         elif _is_operator_doc(expected):
             for op, operand in expected.items():
                 if op not in _SUPPORTED_QUERY_OPS:
@@ -153,7 +205,18 @@ def _matches(doc: dict[str, Any], filter_: dict[str, Any]) -> bool:
         if field.startswith("$"):
             raise NotImplementedError(f"FakeCollection: query operator {field!r} not implemented")
         if "." in field:
-            raise NotImplementedError("FakeCollection: dotted field paths not implemented")
+            # Any value along the path may satisfy the condition — Mongo's
+            # array semantics, and the reason this is not a simple lookup.
+            candidates = _resolve_path(doc, field)
+            if _is_operator_doc(expected):
+                if not any(_match_condition(v, expected) for v in candidates):
+                    return False
+            elif expected is None:
+                if candidates and not any(v is None for v in candidates):
+                    return False
+            elif not any(v == expected for v in candidates):
+                return False
+            continue
         actual = doc.get(field, _MISSING)
         if _is_operator_doc(expected):
             if not _match_condition(actual, expected):

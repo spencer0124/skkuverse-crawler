@@ -219,3 +219,85 @@ def _print_md_human(report: "MarkdownValidationReport") -> None:
                     visible = issue.snippet.replace("\n", "\\n")
                     print(f"      | {visible}")
         print()
+
+
+# ── repair-dimensions ─────────────────────────────────
+
+
+@click.command("repair-dimensions")
+@click.option("--source", "dept", multiple=True, help="Department ID(s) to repair")
+@click.option("--limit", type=int, default=None, help="Max notices to scan")
+@click.option("--json", "json_output", is_flag=True, help="Output as JSON")
+@click.option(
+    "--apply",
+    is_flag=True,
+    help="Write the repairs. Without it this only reports what it would change.",
+)
+def repair_dimensions_cli(
+    dept: tuple[str, ...],
+    limit: int | None,
+    json_output: bool,
+    apply: bool,
+) -> None:
+    """Repair notices Tier-2 wrote before it ran the content pipeline."""
+    from ...env import init_config
+
+    cfg = init_config()
+    configure_logging(cfg, stream=sys.stderr if json_output else None)
+    asyncio.run(_run_repair_dimensions(dept, limit, json_output, apply))
+
+
+async def _run_repair_dimensions(
+    dept_filter: tuple[str, ...],
+    limit: int | None,
+    json_output: bool,
+    apply: bool,
+) -> None:
+    from ...shared.db import close_client
+
+    try:
+        from .repair import repair_lost_dimensions
+
+        report = await repair_lost_dimensions(
+            dept_filter=dept_filter if dept_filter else None,
+            limit=limit,
+            apply=apply,
+        )
+        if json_output:
+            print(_json.dumps(asdict(report), ensure_ascii=False, indent=2))
+        else:
+            _print_repair_report(report, apply)
+    finally:
+        await close_client()
+
+
+def _print_repair_report(report, apply: bool) -> None:
+    verb = "Repaired" if apply else "Would repair"
+    print()
+    print("=" * 60)
+    print(f"  Dimension repair — {'APPLIED' if apply else 'DRY RUN'}")
+    print("=" * 60)
+    print(f"  Scanned            : {report.scanned}")
+    print(f"  {verb:<19}: {report.repaired}")
+    print(f"  Already consistent : {report.already_consistent}")
+    print(f"  No stored body     : {report.skipped_no_content}")
+    # Counted across all of the above, not inside any of them: a document
+    # with no stored measurement may still have had its text or hash
+    # repaired. Indenting it under one line said otherwise.
+    print(f"  Images with no stored measurement (any outcome): {report.unmeasurable}")
+    if report.changed_fields:
+        print("  Fields:")
+        for name, count in sorted(report.changed_fields.items()):
+            print(f"    {name:<16} {count}")
+    if report.samples:
+        print("  Samples:")
+        for s in report.samples:
+            fields = ", ".join(s["fields"])
+            print(
+                f"    [{s['sourceId']}] articleNo={s['articleNo']} "
+                f"dims={s['restored_dimensions']} → {fields}"
+            )
+    if not apply and report.repaired:
+        print()
+        print("  Re-run with --apply to write these.")
+    print()
