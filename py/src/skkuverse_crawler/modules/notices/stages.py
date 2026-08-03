@@ -302,3 +302,50 @@ async def derive_content_fields(
         ),
     )
     return ContentFields.from_doc(doc, fallback_text=fallback_text)
+
+
+# The tail of DEFAULT_PIPELINE — every stage that works from an already
+# sanitized body. The three it drops are exactly the ones that need the raw
+# detail HTML, which a stored document does not keep.
+#
+# Named by omission rather than by listing five stages, so that reordering
+# or inserting a stage upstream cannot silently leave this behind.
+REPAIR_PIPELINE = DEFAULT_PIPELINE.without("normalize-urls", "clean-html", "verify-images")
+
+
+async def rederive_from_clean_html(
+    clean_html: str | None,
+    *,
+    content: str | None = None,
+    dimensions: dict[str, tuple[int, int]] | None = None,
+    fallback_text: str | None = None,
+    source_id: str = "",
+    article_no: int | None = None,
+    log: Any = None,
+) -> ContentFields:
+    """Rebuild the derived fields of a stored notice, without re-crawling.
+
+    For repairing documents whose ``cleanHtml`` is current but whose
+    downstream fields are not — the state Tier-2 left behind when it wrote
+    sanitized HTML with no image dimensions and text taken from the
+    strategy.
+
+    It starts from ``cleanHtml`` on purpose and must: re-deriving it from
+    the stored ``content`` would feed already-normalized HTML back through
+    ``clean_html`` and silently rewrite every notice's body (adr-006 §④).
+    The stored sanitized HTML *is* the body; only what hangs off it is
+    stale.
+
+    Idempotent — a document already consistent comes back with identical
+    fields, which is what lets a caller write only on a real difference.
+    """
+    doc = await REPAIR_PIPELINE.run(
+        ContentDoc(
+            raw=None,
+            content=content,
+            clean_html=clean_html,
+            meta={_IMAGE_DIMENSIONS: dict(dimensions)} if dimensions else {},
+        ),
+        StageContext(source_id=source_id, article_no=article_no, logger=log or logger),
+    )
+    return ContentFields.from_doc(doc, fallback_text=fallback_text)

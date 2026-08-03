@@ -210,6 +210,44 @@ def _soft_delete_counter(seed: dict[str, Any]) -> Callable:
     return run
 
 
+async def _dotted_path_into_array(coll: Any) -> Any:
+    """`editHistory.source` — the repair scan's query.
+
+    Mongo fans a dotted path out over array elements and matches when ANY
+    of them matches, which is what makes this mean "has a tier2 entry".
+    The fake had to grow that; getting it subtly wrong would make the
+    repair walk the wrong population, so it is checked against the real
+    thing rather than reasoned about.
+    """
+    await coll.update_one(
+        {"articleNo": 1, "sourceId": "d"},
+        {"$set": {"articleNo": 1, "sourceId": "d",
+                  "editHistory": [{"source": "tier1"}, {"source": "tier2"}]}},
+        upsert=True,
+    )
+    await coll.update_one(
+        {"articleNo": 2, "sourceId": "d"},
+        {"$set": {"articleNo": 2, "sourceId": "d",
+                  "editHistory": [{"source": "tier1"}]}},
+        upsert=True,
+    )
+    await coll.update_one(
+        {"articleNo": 3, "sourceId": "d"},
+        {"$set": {"articleNo": 3, "sourceId": "d", "editHistory": []}},
+        upsert=True,
+    )
+    # No editHistory field at all — the case a naive implementation
+    # crashes on rather than skipping.
+    await coll.update_one(
+        {"articleNo": 4, "sourceId": "d"},
+        {"$set": {"articleNo": 4, "sourceId": "d"}},
+        upsert=True,
+    )
+    found = [doc async for doc in coll.find({"editHistory.source": "tier2"}, {"articleNo": 1})]
+    absent = [doc async for doc in coll.find({"editHistory.source": "nope"}, {"articleNo": 1})]
+    return sort_docs(normalize_bson(found)), sort_docs(normalize_bson(absent))
+
+
 @dataclass(frozen=True)
 class Case:
     name: str
@@ -228,6 +266,7 @@ CASES = [
     Case("upsert_semantics", _upsert_semantics),
     Case("unique_violation", _unique_violation, "DuplicateKeyError"),
     Case("find_filters", _find_filters),
+    Case("dotted_path_into_array", _dotted_path_into_array),
     Case("datetime_ms_truncation", _datetime_ms_truncation),
     # Pipeline updates: the counter matrix, including the missing-field
     # cases $ifNull exists for.

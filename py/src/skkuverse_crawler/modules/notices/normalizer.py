@@ -94,6 +94,31 @@ def source_url_for(base_url: str, detail_path: str) -> str:
     return urljoin(base_url, detail_path)
 
 
+_MD_DIMENSION_HINT = re.compile(r"!\[\{(\d+)x(\d+)\}[^\]]*\]\(([^)]+)\)")
+
+
+def dimensions_from_markdown(markdown: str | None) -> dict[str, tuple[int, int]]:
+    """Read image dimensions back out of a stored ``cleanMarkdown``.
+
+    The app's ``{WxH}`` hint is the only place the measurements survived a
+    Tier-2 write: that path rewrote ``cleanHtml`` without them but never
+    touched the markdown. So for repairing documents damaged before the
+    Tier-2 fix, this is the measurement — already in the database, no
+    re-crawl and no image fetch needed.
+
+    Only the ``{WxH}`` form is read. ``{w800}``/``{h600}`` mean the source
+    HTML carried one dimension and not the other, and half a dimension
+    cannot be injected back (``_inject_image_dimensions`` writes both or
+    neither, and the app's regex needs both).
+    """
+    if not markdown:
+        return {}
+    return {
+        url: (int(width), int(height))
+        for width, height, url in _MD_DIMENSION_HINT.findall(markdown)
+    }
+
+
 def dimensions_from_html(html: str | None) -> dict[str, tuple[int, int]]:
     """Read back the width/height already injected into an ``<img>``.
 
