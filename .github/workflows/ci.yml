@@ -108,10 +108,23 @@ jobs:
           cd /tmp
           for ex in "$GITHUB_WORKSPACE"/py/examples/*.py; do
             name=$(basename "$ex")
+            # Helpers, not examples. Without this the glob would execute a
+            # future __init__.py or conftest.py and fail the empty-output
+            # check below — so both the underscore convention and the two
+            # names pytest itself would put here are skipped.
+            case "$name" in
+              _*|conftest.py) echo "--- $name (helper, skipped) ---"; continue ;;
+            esac
             echo "--- $name ---"
             env -i PATH=/usr/bin:/bin /tmp/core/bin/python "$ex" > "/tmp/$name.out"
             head -3 "/tmp/$name.out"
-            test -s "/tmp/$name.out" || { echo "$name printed nothing"; exit 1; }
+            # An example that exits 0 with no output almost always means the
+            # source was unreachable, not that the code broke: iter_source
+            # records a fetch failure and carries on rather than raising.
+            test -s "/tmp/$name.out" || {
+              echo "$name printed nothing — code broken, or skku.edu unreachable from CI?"
+              exit 1
+            }
           done
 
   docker:

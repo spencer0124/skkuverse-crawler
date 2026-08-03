@@ -26,15 +26,12 @@ from ...core.ports import Ports, SeenRecord, SourceSpec, WorkSeed
 from ...core.runner import run_events
 from ...core.results import SourceResult
 from ...shared.fetcher import Fetcher
-from ...shared.html_cleaner import clean_html, normalize_content_urls
-from ...shared.html_to_markdown import html_to_markdown
 from ...shared.logger import get_logger
 from .constants import SERVICE_START_DATE
 from .policy import has_changed, page_below_floor, should_continue
-from .hashing import compute_content_hash
 from .models import NoticeListItem
-from .normalizer import MAX_CONTENT_BYTES, build_notice
-from .stages import DEFAULT_PIPELINE
+from .normalizer import build_notice, source_url_for
+from .stages import DEFAULT_PIPELINE, derive_content_fields
 from .strategies import STRATEGY_MAP
 
 
@@ -69,7 +66,25 @@ async def run_crawl(
         mode = FullSweep()
 
     fetcher = Fetcher(delay_ms=options.delay_ms or 500)
+    try:
+        return await _run_crawl(departments, options, ports, mode, pipeline, logger, fetcher)
+    finally:
+        # One close for every exit, including the no_matching_departments
+        # early return and any raise. It used to be a single call at the
+        # happy-path end, so a filter that matched nothing leaked the
+        # httpx client.
+        await fetcher.close()
 
+
+async def _run_crawl(
+    departments: list[dict[str, Any]],
+    options: CrawlOptions,
+    ports: Ports,
+    mode: CrawlMode,
+    pipeline: Pipeline,
+    logger: Any,
+    fetcher: Fetcher,
+) -> list[SourceResult]:
     if options.dept_filter:
         valid_ids = {d["id"] for d in departments}
         unknown = [did for did in options.dept_filter if did not in valid_ids]
@@ -142,7 +157,7 @@ async def run_crawl(
         total_errors=total_errors,
     )
 
-    await fetcher.close()
+    # No close here — the caller's finally owns it, for every exit path.
     return results
 
 
@@ -172,6 +187,16 @@ async def _crawl_department(
         )
     ) as events:
         await run_events(events, ports.sink, result=result)
+
+    # run_events flushes on PageCompleted only, and not every source reaches
+    # one: the null-content backfill emits write-bearing events BEFORE the
+    # page loop, and a page-0 fetch failure or an empty first page breaks out
+    # before the first PageCompleted. Without this, a batching sink kept
+    # those writes in its buffer forever while the runner counted them as
+    # done. Safe to add unconditionally — flush must tolerate an empty
+    # buffer (the runner already calls it on pages that buffered nothing,
+    # and assert_sink_contract enforces it).
+    await ports.sink.flush()
 
     logger.info(
         "department_crawl_finished",
@@ -216,29 +241,31 @@ async def iter_source(
                 {"articleNo": ref.article_no, "detailPath": ref.detail_path}, dept
             )
             if detail:
-                cleaned = clean_html(detail.content, dept["baseUrl"])
-                raw_content = normalize_content_urls(detail.content, dept["baseUrl"])
-                if cleaned and len(cleaned.encode()) > MAX_CONTENT_BYTES:
-                    logger.warning(
-                        "oversized_content_dropped",
-                        articleNo=ref.article_no,
-                        dept=dept["id"],
-                        size=len(cleaned.encode()),
-                    )
-                    cleaned = None
-                    raw_content = None
-                clean_markdown = html_to_markdown(cleaned)
+                # The same pipeline the emit path runs, not a hand-rolled
+                # copy. This branch used to derive its own fields — no image
+                # probe, contentText straight from the strategy — so a
+                # backfilled notice disagreed with a crawled one and was
+                # guaranteed to trip the Tier-2 checker on its next pass.
+                #
+                # 위험 ④ warned against routing backfill through the emit
+                # path, and that still holds: the field list stays explicit
+                # here, with no build_notice and no editHistory. Only the
+                # derivation is shared, because divergence — not
+                # duplication — was the actual danger.
+                fields = await derive_content_fields(
+                    detail.content,
+                    base_url=dept["baseUrl"],
+                    source_url=source_url_for(dept["baseUrl"], ref.detail_path),
+                    source_id=dept["id"],
+                    article_no=ref.article_no,
+                    fallback_text=detail.contentText,
+                    pipeline=pipeline,
+                    log=logger,
+                )
                 yield ContentRefreshed(
                     source_id=dept["id"],
                     ref=ref,
-                    fields={
-                        "content": raw_content,
-                        "contentText": detail.contentText,
-                        "cleanHtml": cleaned,
-                        "cleanMarkdown": clean_markdown,
-                        "contentHash": compute_content_hash(cleaned),
-                        "attachments": detail.attachments,
-                    },
+                    fields={**fields.as_set(), "attachments": detail.attachments},
                 )
 
     # Crawl list pages
@@ -374,11 +401,13 @@ async def _emit_page(
             # The content pipeline owns every derived slot (stages.py);
             # image verification runs inside it, before build_notice, so
             # dimensions land in cleanHtml/cleanMarkdown.
-            source_url = (
-                item.detailPath
-                if item.detailPath.startswith("http")
-                else f"{dept['baseUrl']}{item.detailPath}"
-            )
+            # One construction for both writers. The probe used to
+            # concatenate here where build_notice joins, which produced
+            # `…/community_notice.aspcommunity_notice_w.asp?…` for the one
+            # source whose detailPath is a sibling filename — a different
+            # Referer, and therefore potentially a different measurement,
+            # than the same notice gets from Tier-2.
+            source_url = source_url_for(dept["baseUrl"], item.detailPath)
             doc = await pipeline.run(
                 ContentDoc(raw=detail.content if detail else None),
                 StageContext(

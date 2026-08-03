@@ -79,9 +79,15 @@ class NoticeUnchanged(CrawlEvent):
 
 @dataclass(frozen=True)
 class ContentRefreshed(CrawlEvent):
-    """Null-content backfill result. fields is the explicit content
-    payload — deliberately NOT the upsert path (plan 위험 ④: routing
-    backfill through the pipeline would rewrite cleanHtml everywhere)."""
+    """Null-content backfill result. ``fields`` is an explicit payload,
+    deliberately NOT the upsert path (plan 위험 ④).
+
+    What ④ warns against is routing backfill through *build_notice* — that
+    would rewrite editHistory and every unrelated field on documents whose
+    only problem was a missing body. It does share the content **pipeline**
+    with the crawl, and must: deriving these fields separately is what let
+    a backfilled notice disagree with a crawled one and made the Tier-2
+    checker "detect" an edit on it every pass."""
 
     ref: DetailRef
     fields: Mapping[str, Any]
