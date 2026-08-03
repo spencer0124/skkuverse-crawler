@@ -108,10 +108,13 @@ jobs:
           cd /tmp
           for ex in "$GITHUB_WORKSPACE"/py/examples/*.py; do
             name=$(basename "$ex")
-            # Underscore-prefixed files are helpers, not examples. Without
-            # this the glob would execute a future conftest.py or __init__.py
-            # and fail on the empty-output check.
-            case "$name" in _*) echo "--- $name (helper, skipped) ---"; continue ;; esac
+            # Helpers, not examples. Without this the glob would execute a
+            # future __init__.py or conftest.py and fail the empty-output
+            # check below — so both the underscore convention and the two
+            # names pytest itself would put here are skipped.
+            case "$name" in
+              _*|conftest.py) echo "--- $name (helper, skipped) ---"; continue ;;
+            esac
             echo "--- $name ---"
             env -i PATH=/usr/bin:/bin /tmp/core/bin/python "$ex" > "/tmp/$name.out"
             head -3 "/tmp/$name.out"

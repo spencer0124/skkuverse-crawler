@@ -53,6 +53,10 @@ from .normalizer import (
 logger = get_logger("notices.stages")
 
 _IMAGE_DIMENSIONS = "image_dimensions"
+# Recorded by SizeGuard so a consumer can tell "the body was too big to
+# store" from "the body sanitised to nothing" — both leave every content
+# slot None, and they call for opposite handling.
+OVERSIZED = "oversized"
 
 
 async def verify_and_measure_images(
@@ -120,7 +124,13 @@ class VerifyImages:
         result = await verify_and_measure_images(
             doc.content, ctx.source_url, ctx.source_id, ctx.article_no, ctx.logger or logger
         )
-        doc.meta[_IMAGE_DIMENSIONS] = result.dimensions
+        # Merged, not assigned: a caller may seed doc.meta with dimensions it
+        # already knows (see derive_content_fields' known_dimensions). A live
+        # measurement wins where there is one, but a host that was slow this
+        # minute must not erase what was measured last time — the hash comes
+        # from this HTML, so losing a dimension invents a content change.
+        known = doc.meta.get(_IMAGE_DIMENSIONS) or {}
+        doc.meta[_IMAGE_DIMENSIONS] = {**known, **result.dimensions}
         return doc
 
 
@@ -149,6 +159,7 @@ class SizeGuard:
             )
             doc.clean_html = None
             doc.content = None
+            doc.meta[OVERSIZED] = True
         return doc
 
 
@@ -204,6 +215,14 @@ class ContentFields:
     cleanHtml: str | None
     cleanMarkdown: str | None
     contentHash: str | None
+    # Not stored. It answers "why is everything None", which a caller cannot
+    # work out from the fields alone: an oversized body and a body that
+    # sanitised to nothing look identical here, and only one of them should
+    # be written through. Re-measuring the raw input is NOT a substitute —
+    # clean_html can more than double the byte count by absolutising URLs,
+    # so the raw size and the stored size fall on opposite sides of the
+    # limit in both directions.
+    oversized: bool = False
 
     @classmethod
     def from_doc(cls, doc: ContentDoc, *, fallback_text: str | None = None) -> ContentFields:
@@ -216,6 +235,7 @@ class ContentFields:
             cleanHtml=doc.clean_html,
             cleanMarkdown=doc.markdown,
             contentHash=doc.content_hash,
+            oversized=bool(doc.meta.get(OVERSIZED)),
         )
 
     def as_set(self) -> dict[str, str | None]:
@@ -236,6 +256,7 @@ async def derive_content_fields(
     source_id: str = "",
     article_no: int | None = None,
     fallback_text: str | None = None,
+    known_dimensions: dict[str, tuple[int, int]] | None = None,
     pipeline: Pipeline = DEFAULT_PIPELINE,
     log: Any = None,
 ) -> ContentFields:
@@ -265,7 +286,13 @@ async def derive_content_fields(
     match a crawl's.
     """
     doc = await pipeline.run(
-        ContentDoc(raw=raw_html or None),
+        # Seeding meta rather than passing an argument: dimensions are a
+        # stage's product, and meta is the surface stages already use for
+        # products that are not content slots.
+        ContentDoc(
+            raw=raw_html or None,
+            meta={_IMAGE_DIMENSIONS: dict(known_dimensions)} if known_dimensions else {},
+        ),
         StageContext(
             source_id=source_id,
             base_url=base_url,

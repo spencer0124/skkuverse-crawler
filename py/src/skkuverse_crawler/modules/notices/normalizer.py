@@ -77,6 +77,50 @@ def _inject_image_dimensions(
     return str(soup) if changed else html
 
 
+def source_url_for(base_url: str, detail_path: str) -> str:
+    """The notice's own URL, from the list row's detailPath.
+
+    Three shapes because the sources use three: an absolute URL, a bare
+    query string to append, or a relative path to resolve. Shared rather
+    than inlined because it is also the Referer the image probe sends, and
+    the two used to be built differently — the probe concatenated where
+    this joins, producing `…/community_notice.aspcommunity_notice_w.asp?…`
+    for the one source whose detailPath is a sibling filename.
+    """
+    if detail_path.startswith("http"):
+        return detail_path
+    if detail_path.startswith("?"):
+        return f"{base_url}{detail_path}"
+    return urljoin(base_url, detail_path)
+
+
+def dimensions_from_html(html: str | None) -> dict[str, tuple[int, int]]:
+    """Read back the width/height already injected into an ``<img>``.
+
+    The inverse of ``_inject_image_dimensions``, and it exists for one
+    reason: the image probe is a live third-party request, so "no
+    dimensions" can mean "this image has none" or "that host was slow just
+    now". Seeding a derivation with what is already stored keeps a
+    transient failure from silently dropping the app's size hint — and,
+    because the hash is taken from this HTML, from inventing a content
+    change out of someone else's downtime.
+    """
+    if not html:
+        return {}
+    dimensions: dict[str, tuple[int, int]] = {}
+    for img in BeautifulSoup(html, "html.parser").find_all("img"):
+        if not isinstance(img, Tag):
+            continue
+        src, width, height = img.get("src"), img.get("width"), img.get("height")
+        if not isinstance(src, str) or not isinstance(width, str) or not isinstance(height, str):
+            continue
+        try:
+            dimensions[src] = (int(width), int(height))
+        except ValueError:
+            continue
+    return dimensions
+
+
 def build_notice(
     list_item: NoticeListItem,
     detail: NoticeDetail | None,
@@ -107,13 +151,7 @@ def build_notice(
             "a ContentDoc already carries injected dimensions"
         )
 
-    # Build sourceUrl from detailPath
-    if list_item.detailPath.startswith("http"):
-        source_url = list_item.detailPath
-    elif list_item.detailPath.startswith("?"):
-        source_url = f"{base_url}{list_item.detailPath}"
-    else:
-        source_url = urljoin(base_url, list_item.detailPath)
+    source_url = source_url_for(base_url, list_item.detailPath)
 
     if content is not None:
         cleaned = content.clean_html

@@ -31,7 +31,7 @@ sink. `wiring.py` does check `isinstance` at assembly time, which is why they ar
 |--------|--------|-----|
 | `prepare` | once per source, before its first event | Setup that depends on the source. Must be idempotent — the Mongo sink creates its indexes here and guards against repeats. |
 | `accept` | once per event, in emission order | Your storage. The return value matters for exactly one event type; see below. |
-| `flush` | on every `PageCompleted`, and once when a source's stream ends | Where a batching sink writes. Called on pages where nothing was buffered too. |
+| `flush` | on every `PageCompleted`; `run_crawl` adds one more when a source's stream ends | Where a batching sink writes. Called on pages where nothing was buffered too. |
 
 Return values from `prepare` and `flush` are never read. The suite does not check them, on
 purpose: enforcing a rule the runner does not have would have third parties writing code to
@@ -45,6 +45,11 @@ while the runner counted them as done.
 
 So `flush` must tolerate an empty buffer — it will be called on pages that buffered nothing,
 and again at the end.
+
+> **If you drive `run_events` yourself**, the end-of-source flush is not yours. It lives in
+> `run_crawl`, not in the runner — `core.runner.run_events` still flushes on `PageCompleted`
+> and nothing else. Call `flush()` after the stream ends, and note that neither call is in a
+> `finally`: an `accept` that raises still leaves your buffer un-drained.
 
 ### One sink, several sources at once
 

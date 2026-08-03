@@ -760,8 +760,57 @@ class TestContentVanished:
         assert stored["cleanHtml"] == "<p>본문이 있었다</p>"
         assert "본문이 있었다" in stored["cleanMarkdown"]
 
-    async def test_it_is_counted_so_a_mass_emptying_is_visible(self):
-        """Silently skipping would hide a source that started serving error
-        pages to every request."""
-        result, _ = await self._run("<div></div>")
-        assert result.content_vanished == 1
+    async def test_the_count_reaches_the_run_level_summary(self):
+        """Per-source is not enough. A source that starts serving empty
+        bodies to every request is exactly what a per-department line
+        buries, and the anomaly is excluded from change_rate — so without a
+        run-level number nothing surfaces it at all."""
+        from skkuverse_crawler.plugins.mongo.update_checker import UpdateCheckResult
+
+        results = [UpdateCheckResult(source_id="a", content_vanished=3)]
+        assert sum(r.content_vanished for r in results) == 3
+
+    async def test_an_oversized_body_is_written_through_not_guarded(self):
+        """The guard must NOT fire here. The crawl stores nulls for a body
+        past the size limit, so guarding it would put the two writers back
+        into disagreement — the thing this whole path exists to end.
+
+        Note it cannot be told from a vanished body by measuring the raw
+        input: clean_html can more than double the byte count by
+        absolutising URLs, so raw and stored sizes fall on opposite sides
+        of the limit in both directions. The pipeline's own verdict is what
+        decides."""
+        collection = FakeCollection()
+        async def _verify(content_html, source_url):
+            return ImageCheckResult()
+        with patch("skkuverse_crawler.modules.notices.stages.verify_notice_images", _verify):
+            old = await derive_content_fields(
+                self.STORED_HTML, base_url=MOCK_DEPT["baseUrl"]
+            )
+            await collection.update_one(
+                {"articleNo": 1, "sourceId": "test-dept"},
+                {"$set": {
+                    "articleNo": 1, "sourceId": "test-dept", "detailPath": "?articleNo=1",
+                    "title": "제목", **old.as_set(),
+                }},
+                upsert=True,
+            )
+            notices = [{
+                "articleNo": 1, "sourceId": "test-dept", "detailPath": "?articleNo=1",
+                "contentHash": old.contentHash, "title": "제목",
+            }]
+            strategy = AsyncMock()
+            strategy.crawl_detail.return_value = NoticeDetail(
+                content="<p>" + ("가" * 2_000_000) + "</p>", contentText="", attachments=[],
+            )
+            with patch(
+                "skkuverse_crawler.plugins.mongo.update_checker.STRATEGY_MAP",
+                {"skku-standard": MagicMock(return_value=strategy)},
+            ):
+                result = await _check_department(
+                    MOCK_DEPT, notices, collection, AsyncMock(), MagicMock()
+                )
+
+        assert result.content_vanished == 0
+        assert result.content_changed == 1
+        assert collection.docs[0]["cleanHtml"] is None

@@ -62,6 +62,10 @@ articleNo 137297 (skku-main):  editCount 30, distinct 해시 2개
 **제안**: sink 인스턴스를 소스당 하나로. `run_crawl`이 `Ports` 번들을 소스마다 만들거나, `Sink`에 `for_source(spec) -> Sink` 팩토리 훅을 추가. 후자가 계약 확장이라 **1.0 전에 결정해야 한다**(추가는 breaking).
 **대안(싼 쪽)**: 버퍼를 `dict[source_id, list]`로 쪼개고 `flush`가 호출자 소스만 배출 — 계약 무변경. 다만 `flush(source_id)` 시그니처가 필요해져 결국 계약을 건드린다.
 
+### ~~4-b. 크롤과 tier-2가 이미지 프로브에 다른 Referer를 넘긴다~~ ✅ (2026-08-03)
+
+emit 경로는 `f"{baseUrl}{detailPath}"`로 이어 붙이고 `build_notice`는 `urljoin`을 썼다. `detailPath`가 형제 파일명인 소스(`medicine`) 하나에서 `…/community_notice.aspcommunity_notice_w.asp?…`라는 깨진 URL이 나갔다. 같은 호스트라 hotlink 검사는 통과했지만, **해시를 결정하는 입력이 두 주체 간에 달랐다** — 이 브랜치의 전제와 정면 충돌. `normalizer.source_url_for()`로 통합.
+
 ### ~~4. `run_crawl`의 조기 return이 `fetcher.close()`를 건너뛴다~~ ✅ (2026-08-03)
 
 본문을 `_run_crawl`로 분리하고 `run_crawl`이 `try/finally`로 감싸 close를 단일 지점에. 성공 경로 말미의 close도 흡수 — 모든 이탈 경로(조기 return, raise 포함)가 같은 곳을 지난다.
@@ -106,8 +110,10 @@ P1-1은 **앞으로**를 고쳤다. 이미 손상된 문서는 그대로다.
 
 **제안**:
 1. 규모 재확인 — 위 조합 + `editHistory.source == "tier2"` 보유 문서 수.
-2. **재크롤이 필요하다** (로컬 재계산 불가): 이미지 크기는 원본 이미지를 다시 받아야 나온다. `update-check --days N`을 넓은 창으로 한 번 돌리면 수정된 코드가 자연히 복구한다 — 별도 스크립트 불필요.
-3. 창을 넓히면 프로브 비용이 그만큼 늘어나므로 1회성으로, 트래픽 적은 시간대에.
+2. **재크롤이 필요하다** (로컬 재계산 불가): 이미지 크기는 원본 이미지를 다시 받아야 나온다. `update-check --days N`을 넓은 창으로 돌리면 상당수가 자연 복구된다 — 별도 스크립트 불필요.
+3. ⚠️ **다만 전부는 아니다.** 복구는 `old_hash != new_hash`일 때만 쓰기가 일어나는 부수 효과다. 이미지가 **더 이상 측정되지 않는** 문서(첨부 삭제, 죽은 CDN, 파싱 불가 포맷)는 수정된 코드도 tier-2가 이미 저장한 것과 같은 차원 없는 해시를 재현하므로 **쓰기가 일어나지 않고 낡은 `cleanMarkdown`이 살아남는다.** 실측 기준선: 이미지 보유 문서 중 약 17%가 측정 불가 상태 → 2,115건 중 대략 300~400건.
+4. 그 잔여분은 해시 비교를 우회하는 강제 재작성이 필요하다 — 별도 1회성 스크립트, 또는 대상 문서의 `contentHash`를 `null`로 만들어 backfill 분기를 타게 하는 방법.
+5. 창을 넓히면 프로브 비용이 그만큼 늘어나므로 1회성으로, 트래픽 적은 시간대에.
 
 **검증**: 실행 후 위 조합 문서 수가 0으로 수렴하는지, `content_changed`가 1회성 급증 후 정상화되는지.
 
@@ -131,7 +137,7 @@ PR 9의 Actions 감사 결과: **회귀 없음**(`deploy.yml`·`claude.yml` 무�
 |---|--------|------|
 | 11 | **라이브 네트워크 의존 증폭.** `core-only` 잡은 이미 skku.edu를 실크롤했고(9초), 예제 2개가 더 붙어 PR당 `skku-main` 페이지 1을 3회 친다. skku.edu 장애·레이트리밋이 문서만 고친 PR을 빨갛게 만든다 | 실제로 플래키해지면 이 스텝에 `continue-on-error: true`, 또는 매 PR이 아니라 스케줄/경로 필터 트리거로 이동 |
 | ~~12~~ ✅ | **`quickstart.py` 실패 메시지가 오해를 부른다** | 해결 (2026-08-03) — `code broken, or skku.edu unreachable from CI?`로 확장 |
-| ~~13~~ ✅ | **`py/examples/*.py` 글롭이 무필터** | 해결 (2026-08-03) — `_` 접두 파일 스킵 |
+| ~~13~~ ✅ | **`py/examples/*.py` 글롭이 무필터** | 해결 (2026-08-03) — `_` 접두 + `conftest.py` 스킵 |
 | 14 | **월클럭 +20~30초.** `core-only`가 19초 → 약 3배. 1분 미만이라 현재는 무해 | `DEFAULT_MAX_PAGES=1`이 상한을 묶고 있으므로 추가 조치 불필요 |
 
 ---

@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
+import httpx
 import respx
 
 from skkuverse_crawler.core.crawl import FullSweep
@@ -195,3 +196,41 @@ async def test_a_source_is_flushed_when_its_stream_ends():
     # after the stream was exhausted, not during it.
     assert sink.event_counts_at_flush[-1] == len(sink.events)
     assert isinstance(sink.events[-1], SourceFinished)
+
+
+async def test_a_source_that_never_completes_a_page_is_still_flushed():
+    """The case the end-of-source flush was actually written for.
+
+    A page-0 fetch failure breaks out of the loop before any
+    PageCompleted, so the per-page flush never runs. Before the fix a
+    batching sink kept whatever it had buffered — and the runner had
+    already counted it. The healthy-path test above cannot see this,
+    because there the per-page flush covers it anyway.
+    """
+
+    class _CountingSink(RecordingSink):
+        pass
+
+    sink = _CountingSink()
+
+    async def noop_rate_limit(self: Fetcher) -> None:
+        return None
+
+    with (
+        patch.object(Fetcher, "_rate_limit", noop_rate_limit),
+        respx.mock(assert_all_called=False) as respx_router,
+    ):
+        # Every request fails, so page 0's list fetch dies immediately.
+        respx_router.route().mock(side_effect=httpx.ConnectError("down"))
+        results = await run_crawl(
+            [depts.SKKU_STD_DEPT],
+            CrawlOptions(max_pages=1),
+            ports=Ports(sink=sink),
+            mode=FullSweep(),
+        )
+
+    assert results[0].source_down is True
+    assert not any(isinstance(e, PageCompleted) for e in sink.events), (
+        "this test is only meaningful if no page completes"
+    )
+    assert sink.flushes == 1, "a source that never completed a page was never flushed"

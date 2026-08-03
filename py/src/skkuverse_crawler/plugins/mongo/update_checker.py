@@ -24,7 +24,7 @@ from pymongo import ReturnDocument
 
 from ...core.module import ModuleConfig
 from ...modules.notices.constants import SERVICE_START_DATE
-from ...modules.notices.normalizer import MAX_CONTENT_BYTES
+from ...modules.notices.normalizer import dimensions_from_html
 from ...modules.notices.stages import derive_content_fields
 from ...modules.notices.strategies import STRATEGY_MAP
 from ...env import get_config
@@ -71,8 +71,11 @@ async def run_update_check(
         {"date": {"$gte": cutoff_date_str}, "isDeleted": {"$ne": True}},
         # sourceUrl is here for the image probe's Referer — several sources
         # serve images only to a request that came from the notice page.
+        # cleanHtml is here to read back image dimensions already measured,
+        # so a slow image host cannot silently drop them (and invent a
+        # content change with them).
         {"articleNo": 1, "sourceId": 1, "detailPath": 1, "sourceUrl": 1,
-         "contentHash": 1, "title": 1, "consecutiveFailures": 1},
+         "cleanHtml": 1, "contentHash": 1, "title": 1, "consecutiveFailures": 1},
     )
 
     # Group by sourceId
@@ -130,6 +133,10 @@ async def run_update_check(
         total_content_changed=sum(r.content_changed for r in results),
         total_backfilled=sum(r.hash_backfilled for r in results),
         total_errors=sum(r.fetch_errors for r in results),
+        # Run-level, not just per-source: a source that starts serving
+        # empty bodies to every request is exactly the thing a per-source
+        # line buries.
+        total_content_vanished=sum(r.content_vanished for r in results),
         total_not_found=sum(r.not_found for r in results),
         total_soft_deleted=sum(r.soft_deleted for r in results),
     )
@@ -207,29 +214,34 @@ async def _check_department(
             source_id=dept["id"],
             article_no=doc["articleNo"],
             fallback_text=detail.contentText,
+            known_dimensions=dimensions_from_html(doc.get("cleanHtml")),
         )
         new_hash = fields.contentHash
         old_hash = doc.get("contentHash")
 
         # An empty derivation has two causes and they need opposite
-        # handling, so the raw size tells them apart rather than the empty
-        # result they share:
+        # handling, so the pipeline's own verdict tells them apart rather
+        # than the empty result they share:
         #
-        # - Oversized (past MAX_CONTENT_BYTES): the crawl stores nulls here,
-        #   so Tier-2 must too. Guarding it would put the two writers back
-        #   into disagreement, which is the thing this path exists to end.
+        # - Oversized: the crawl stores nulls here, so Tier-2 must too.
+        #   Guarding it would put the two writers back into disagreement,
+        #   which is the thing this path exists to end.
         # - Sanitised to nothing (an empty <div>, a stray &nbsp;, a WPDM
         #   block with no body): far likelier a soft error page than a real
         #   edit, and the crawl never sees it — it only refetches when a
         #   title or date changes. Writing it through would blank every
         #   content field, including the last renderable copy.
-        raw_bytes = len((detail.content or "").encode())
-        if new_hash is None and old_hash is not None and raw_bytes <= MAX_CONTENT_BYTES:
+        #
+        # Measuring the RAW body cannot make this call: clean_html can more
+        # than double the byte count by absolutising URLs, so raw size and
+        # stored size land on opposite sides of the limit in both
+        # directions. `oversized` is what SizeGuard actually did.
+        if new_hash is None and old_hash is not None and not fields.oversized:
             logger.warning(
                 "content_vanished",
                 dept_id=dept["id"],
                 articleNo=doc["articleNo"],
-                raw_bytes=raw_bytes,
+                raw_bytes=len((detail.content or "").encode()),
             )
             result.content_vanished += 1
             continue
@@ -385,6 +397,7 @@ class NoticesUpdateCheckModule:
             "changed": sum(r.content_changed for r in results),
             "backfilled": sum(r.hash_backfilled for r in results),
             "errors": sum(r.fetch_errors for r in results),
+            "contentVanished": sum(r.content_vanished for r in results),
         }
 
     async def shutdown(self) -> None:
