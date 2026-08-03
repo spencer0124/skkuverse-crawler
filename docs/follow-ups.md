@@ -9,37 +9,65 @@ adr-006 core/plugin 로드맵(PR 0~9)이 끝난 시점(2026-08-02)에 **알면�
 
 ---
 
-## P1 — 지금 프로덕션에서 틀린 것
+## ~~P1 — 지금 프로덕션에서 틀린 것~~ (2026-08-03 해결)
 
-### 1. `update_checker`가 `cleanMarkdown`을 갱신하지 않는다 (실버그)
+두 건 모두 `fix/tier2-content-divergence`에서 수정. 아래는 무엇이 실제로 발견됐는지의 기록 — 둘 다 문서에 적었던 것보다 컸다.
 
-**증상**: Tier-2 변경 감지가 공지 본문 변경을 잡으면 `content`·`cleanHtml`·`contentHash`는 재작성하는데 **`cleanMarkdown`은 재계산하지 않는다.** 앱은 `cleanMarkdown`을 1순위 렌더 소스로 쓰므로(`docs/api-design-reference.md` §본문 필드 선택 가이드), **Tier-2로 수정된 공지는 앱에서 옛 본문이 보인다.** 무증상 데이터 부패라 사용자 신고로만 발견된다.
+### ~~1. `update_checker`가 `cleanMarkdown`을 갱신하지 않는다~~ ✅
 
-**왜 지금 안 했나**: 리팩터 전 기간 내내 제1 원칙이 "골든 바이트 동일"이었다. 이 수정은 저장 필드를 바꾸므로 골든을 갱신해야 하고, 그러면 "리팩터가 동작을 안 바꿨다"는 증명이 오염된다. 로드맵이 끝난 지금은 그 제약이 사라졌다.
+**문서가 증상만 적고 있었다.** 코드를 열어 보니 네 갈래였고, 네 번째가 나머지 셋을 영구화하고 있었다.
 
-**제안**:
-1. `plugins/mongo/update_checker.py`의 `$set` 필드 목록에 `cleanMarkdown: html_to_markdown(cleaned)` 추가 — 크롤 경로(`normalizer.build_notice`)가 이미 하는 것과 동일한 호출.
-2. 두 경로가 다시 갈라지지 않게, 필드 조립을 한 함수로 뽑아 양쪽이 부르게 할 것. **이게 근본 수정이고 1번은 증상 수정이다.**
-3. 기존 부패 문서 백필: `contentHash`는 최신인데 `cleanMarkdown`이 옛 해시 기준인 문서를 찾을 방법이 없다(마크다운에 해시가 없음). 실용적 대안 — `editHistory`에 tier2 항목이 있는 문서 전량 재생성.
+| # | 필드 | 크롤 경로 | 수정 전 tier-2 |
+|---|------|----------|---------------|
+| 1 | `cleanMarkdown` | `html_to_markdown(cleaned)` | **없음** — 앱 1순위 렌더 소스라 수정된 공지가 옛 본문으로 보임 |
+| 2 | `contentText` | `_text_from_clean_html(cleaned)` | `detail.contentText` — 2026-04에 넣은 블록 개행 보존이 사라짐 |
+| 3 | 5MB 가드 | 초과 시 `cleanHtml`/`content` = None | **없음** — 16MB 문서 한도를 세 필드가 공유 |
+| 4 | **이미지 측정** | `VerifyImages` → `InjectImageDimensions` | **없음** ← **근본 원인** |
 
-**검증**: `tests/plugins/mongo/test_update_checker.py`에 "본문 변경 시 cleanMarkdown이 새 내용을 반영한다" 테스트 추가. 골든 갱신은 이 PR에서 정당하다.
+**④가 왜 근본인가.** 크롤은 `<img>`마다 HTTP Range로 앞 32KB를 받아 크기를 재고 `width`/`height`를 주입한 뒤, **그 HTML에서** 해시를 뜨고 마크다운을 만든다(앱이 파싱하는 `{WxH}` 힌트). tier-2는 측정을 안 하므로 **같은 본문에서 다른 해시가 나온다.** 두 주체가 서로를 "변경됨"으로 판정하고 영원히 덮어쓴다.
 
----
+프로덕션 실측 (2026-08-03):
 
-### 2. `run_events`가 런 종료 시 `flush`하지 않는다 — 서드파티 sink 데이터 유실
+```
+articleNo 137297 (skku-main):  editCount 30, distinct 해시 2개
+  06-13 06:00  tier1  72bdec → e4463d
+  06-13 11:10  tier2  e4463d → 72bdec
+  06-15 01:00  tier1  72bdec → e4463d      ... 30회 왕복
+```
 
-**증상**: `core/runner.py::run_events`는 `PageCompleted`에서만 `flush()`한다. 그런데
-- null-content 백필이 `ContentRefreshed`(쓰기 동반 결과 계층)를 **페이지 루프 이전**에 방출하고,
-- 페이지 0 fetch 실패 / 빈 페이지 0은 `PageCompleted` **없이** 루프를 빠져나간다.
+`cleanMarkdown`에 `{WxH}`가 있는데 `cleanHtml`엔 `width=`가 없는 문서 **2,115건** — tier-2가 HTML을 마지막에 썼다는 지문이다. 14일 창을 벗어나면 멈추므로 공지당 약 28회로 유계.
 
-따라서 배칭 sink의 버퍼에 남은 쓰기가 영영 안 나가는데, **러너는 `result.updated`를 올려 "썼다"고 보고한다**. 실측: `flushes: 0`, `updated: 1`.
+**해법**: `stages.derive_content_fields()`가 `DEFAULT_PIPELINE`을 **실제로 돌린다**. 손으로 만든 사본은 파이프라인과 같을 수 없으므로, 유일한 재발 방지는 같은 파이프라인을 쓰는 것뿐이다. tier-2 해시 == 크롤 해시가 되어 왕복이 영구 종료된다.
 
-**왜 지금 안 했나**: 러너 동작 변경 = 골든 갱신. PR 9은 문서 PR이고 크롤 경로 무변경이 증거였다.
+**비용**: 이미지 프로브. 14일 창 735건 중 274건이 이미지 보유(총 305개), 하루 3회 → 일 약 915 Range 요청 증가. 이미지 없는 461건은 `verify_notice_images`가 즉시 반환해 비용 0. 크롤 경로는 이미 신규 공지마다 같은 비용을 낸다.
 
-**현재 완화**: `modules/notices/cli.py`가 `run_crawl` 이후 수동 `await sink.flush()`를 호출한다(주석에 이유 명시). **자체 코드는 안전하고, `run_crawl`을 직접 부르는 서드파티만 노출된다.** `docs/sink-authors-guide.md`에 ⚠️로 명시해 뒀다.
+#### ⚠️ 배포 직후 1~2회는 경보가 자기 자신을 향해 울린다
 
-**제안**: `_crawl_department`의 `aclosing` 블록 종료 직후 `await ports.sink.flush()` 1줄. 멱등이어야 하는 `flush` 계약상 안전(빈 버퍼 = no-op, 적합성 스위트가 강제). 이후 cli.py의 수동 호출과 가이드의 ⚠️를 함께 제거.
-**주의**: MongoSink에 마지막 페이지 이후 빈 `flush`가 1회 늘어 골든의 op 순서가 바뀐다 — 스냅샷 갱신이 이 변경의 정당한 산출물이다.
+수정된 코드는 기존 문서들을 **처음으로 올바르게** 재측정하므로, 저장된(잘못된) 해시와 다르다. 즉 첫 tier-2 실행들이 정상적으로 `content_changed`를 대량 기록한다.
+
+문제는 이 브랜치가 지키려는 그 경보가 함께 울린다는 것이다 (2026-08-03 프로덕션 실측, 14일 창 773건 기준):
+
+| 신호 | 예상 |
+|------|------|
+| tier-2 지문 보유 문서 | **231건** — 전부 1회씩 `content_changed` |
+| `high_change_rate` WARNING (>0.30) | **47개 소스** |
+| `likely_determinism_bug` ERROR (=1.00) | **16개 소스** (대부분 창 문서 1~3건인 소형) |
+
+`skku-main` 0.35, `scos-grad` 0.75, `art-undergrad` 0.67, `biz-undergrad` 0.61.
+
+**대응**: 배포 후 첫 2~3회 실행의 이 경보는 **예상된 것**이다. 2~3회 지나 `content_changed`가 평상 수준으로 돌아오지 않으면 그때가 진짜 신호다. 창 밖으로 나가는 문서는 복구되지 않으므로 8-b 참조.
+
+#### 골든 1건이 바뀐다
+
+`std_null_backfill`의 `contentText` 한 필드. 백필 경로가 strategy 텍스트 대신 정제 HTML에서 추출하게 되면서 블록 개행이 복원된 것 — 리팩터의 부작용이 아니라 수정의 증거다. `cleanHtml`·`cleanMarkdown`·`contentHash`는 불변(픽스처에 이미지 없음). 나머지 7건은 바이트 동일.
+
+**기각한 대안**: `derive_content_fields`를 `normalizer.py`에 두고 `build_notice`의 인라인 분기를 재현하는 안. 첫 시도가 이것이었고 **리뷰에서 잡혔다** — 인라인 분기는 docstring 스스로 "픽스처·품질 테스트용"이라 적어둔 경로이고 파이프라인이 아니다. 그래서 정의가 셋이 되고, 프로덕션이 그중 틀린 것을 가리켰다. `normalizer.py`는 원복했고 인라인↔파이프라인 동치는 기존 parity 테스트가 계속 지킨다.
+
+### ~~2. `run_events`가 런 종료 시 `flush`하지 않는다~~ ✅
+
+`_crawl_department`의 `aclosing` 블록 종료 직후 `await ports.sink.flush()`. `cli.py`의 수동 우회와 가이드의 ⚠️도 함께 제거 — 근본이 고쳐졌는데 우회가 남으면 그게 거짓말이 된다.
+
+**문서의 예측이 틀렸다**: "빈 flush가 1회 늘어 골든 op 순서가 바뀐다"고 적었는데, `MongoSink.flush()`는 버퍼가 비면 `if not items: return`이라 컬렉션 연산을 일으키지 않는다. **이 flush 변경에 한해 골든 8건 바이트 동일** — 버그가 있던 경로에서만 동작을 바꾼다. (브랜치 전체로는 골든 1건이 바뀐다 — §1의 백필 통합 때문이며 거기 기록.)
 
 ---
 
@@ -54,13 +82,31 @@ adr-006 core/plugin 로드맵(PR 0~9)이 끝난 시점(2026-08-02)에 **알면�
 **제안**: sink 인스턴스를 소스당 하나로. `run_crawl`이 `Ports` 번들을 소스마다 만들거나, `Sink`에 `for_source(spec) -> Sink` 팩토리 훅을 추가. 후자가 계약 확장이라 **1.0 전에 결정해야 한다**(추가는 breaking).
 **대안(싼 쪽)**: 버퍼를 `dict[source_id, list]`로 쪼개고 `flush`가 호출자 소스만 배출 — 계약 무변경. 다만 `flush(source_id)` 시그니처가 필요해져 결국 계약을 건드린다.
 
-### 4. `run_crawl`의 조기 return이 `fetcher.close()`를 건너뛴다
+### ~~4-b. 크롤과 tier-2가 이미지 프로브에 다른 Referer를 넘긴다~~ ✅ (2026-08-03)
 
-**증상**: `orchestrator.py`의 `no_matching_departments` 분기가 `Fetcher` 생성 후 `close()` 없이 return. httpx 클라이언트 누수.
+emit 경로는 `f"{baseUrl}{detailPath}"`로 이어 붙이고 `build_notice`는 `urljoin`을 썼다. `detailPath`가 형제 파일명인 소스(`medicine`) 하나에서 `…/community_notice.aspcommunity_notice_w.asp?…`라는 깨진 URL이 나갔다. 같은 호스트라 hotlink 검사는 통과했지만, **해시를 결정하는 입력이 두 주체 간에 달랐다** — 이 브랜치의 전제와 정면 충돌. `normalizer.source_url_for()`로 통합.
 
-**왜 지금 안 했나**: PR 6에서 발견했으나 "몰래 고치지 않는다" 원칙(리팩터 커밋에 무관한 수정 금지)에 따라 별건 등록.
+### ~~4. `run_crawl`의 조기 return이 `fetcher.close()`를 건너뛴다~~ ✅ (2026-08-03)
 
-**제안**: `try/finally`로 `run_crawl` 본문 전체를 감싸 `await fetcher.close()`를 단일 지점에. 현재 성공 경로 끝의 `close()`도 흡수. 오탐 없음 — 이 분기는 필터가 아무것도 안 걸렀을 때만 도달.
+본문을 `_run_crawl`로 분리하고 `run_crawl`이 `try/finally`로 감싸 close를 단일 지점에. 성공 경로 말미의 close도 흡수 — 모든 이탈 경로(조기 return, raise 포함)가 같은 곳을 지난다.
+
+### 5-b. tier-2만 저장된 차원을 승계할 수 있다 — 비대칭 잔여분 *(신규, 2026-08-03)*
+
+**증상**: 프로브가 일시 실패했을 때 tier-2는 저장된 `cleanHtml`에서 차원을 읽어 복원하지만, **크롤은 읽을 저장본이 없다**(신규 항목이거나 재크롤 중). 그래서 재크롤 중 프로브가 실패하면 차원 없는 해시가 저장되고, 다음 tier-2가 정상 프로브로 이를 "변경됨"으로 기록한다 — 1회성 `editCount` 증가.
+
+**왜 핑퐁이 아닌가**: 크롤은 제목·날짜가 바뀔 때만 재수집하고, tier-2는 크롤이 마지막에 쓴 것에서 다시 시드하므로 **수렴한다.** 왕복이 아니라 잔여분이다.
+
+**왜 지금 안 고쳤나**: 크롤 쪽도 저장본을 읽으려면 emit 경로가 SeenIndex를 넘어 문서 본문까지 조회해야 한다 — 증분 크롤의 조회 비용 구조를 바꾸는 일이고, 얻는 것(드문 1회성 오탐 제거)에 비해 크다.
+
+**재개봉 조건**: `editHistory`에 tier2 단독 항목이 반복적으로 쌓이는 문서가 관측되면.
+
+### 5-c. tier-2는 `attachments`를 갱신하지 않는다 *(기존, 기록만)*
+
+`fields.as_set()`은 5개 콘텐츠 필드뿐이다. 크롤과 백필은 `attachments`를 쓰지만 tier-2는 안 쓴다 — 공지가 첨부만 교체되면 제목·날짜가 바뀌어 재크롤될 때까지 낡은 URL이 남는다. 해시와 무관하고 이 브랜치 이전부터 그랬으므로 범위 밖으로 뒀다. 다만 `TestTier2StoresTheSameFieldsAsACrawl`이라는 이름은 **콘텐츠 5필드에 한한 주장**이다.
+
+### 5-d. tier-2에는 `pipeline` 파라미터가 없다 *(잠재)*
+
+`run_crawl(pipeline=)`은 emit·백필 양쪽에 전달되지만 tier-2는 `DEFAULT_PIPELINE`을 하드코딩한다. `derive_content_fields` docstring이 `DEFAULT_PIPELINE.without("verify-images")`를 탈출구로 안내하는데, **크롤 쪽에서 그걸 쓰면 이 브랜치가 없앤 해시 불일치가 정확히 되살아난다.** 현재 커스텀 파이프라인을 넘기는 프로덕션 호출자는 없어 잠재 상태.
 
 ### 5. `SeenIndex.lookup`이 비스트리밍 (adr-006 1.0 전 판단)
 
@@ -92,6 +138,23 @@ adr-006 core/plugin 로드맵(PR 0~9)이 끝난 시점(2026-08-02)에 **알면�
 **왜 중요한가**: adr-006 §⑬이 1.0을 여기 걸었다. 소비자가 하나뿐인 추상화는 검증 안 된 추측이므로, `CrawlModule`·`Sink`·`CrawlMode`가 두 번째 모듈을 실제로 견디는지 봐야 한다. `test_the_version_is_still_0_x`가 이 게이트를 강제한다.
 **제안**: 포팅하며 코어가 강요한 어색함을 전부 기록할 것 — 그 목록이 1.0 API의 마지막 수정 기회다.
 
+### 8-b. tier-2가 손상시킨 문서 백필 *(신규, 2026-08-03)* — **P1 대기**
+
+P1-1은 **앞으로**를 고쳤다. 이미 손상된 문서는 그대로다.
+
+**규모** (2026-08-03 실측): `cleanMarkdown`에 `{WxH}`가 있는데 `cleanHtml`엔 `width=`가 없는 문서 **2,115건**. 이들은 `cleanHtml`에서 이미지 크기를 잃었고, `contentText`도 tier-2가 쓴 구포맷(개행 뭉개짐)일 가능성이 높다.
+
+**왜 질의로 특정이 어려운가**: `cleanMarkdown`이 낡았는지는 마크다운만 보고 알 수 없다(해시가 없음). 다만 위 조합(`md`에 힌트 O + `html`에 width X)이 **tier-2가 마지막에 썼다는 신뢰할 만한 지문**이라 이걸 선별 기준으로 쓸 수 있다.
+
+**제안**:
+1. 규모 재확인 — 위 조합 + `editHistory.source == "tier2"` 보유 문서 수.
+2. **재크롤이 필요하다** (로컬 재계산 불가): 이미지 크기는 원본 이미지를 다시 받아야 나온다. `update-check --days N`을 넓은 창으로 돌리면 상당수가 자연 복구된다 — 별도 스크립트 불필요.
+3. ⚠️ **다만 전부는 아니다.** 복구는 `old_hash != new_hash`일 때만 쓰기가 일어나는 부수 효과다. 이미지가 **더 이상 측정되지 않는** 문서(첨부 삭제, 죽은 CDN, 파싱 불가 포맷)는 수정된 코드도 tier-2가 이미 저장한 것과 같은 차원 없는 해시를 재현하므로 **쓰기가 일어나지 않고 낡은 `cleanMarkdown`이 살아남는다.** 실측 기준선: 이미지 보유 문서 중 약 17%가 측정 불가 상태 → 2,115건 중 대략 300~400건.
+4. 그 잔여분은 해시 비교를 우회하는 강제 재작성이 필요하다 — 별도 1회성 스크립트, 또는 대상 문서의 `contentHash`를 `null`로 만들어 backfill 분기를 타게 하는 방법.
+5. 창을 넓히면 프로브 비용이 그만큼 늘어나므로 1회성으로, 트래픽 적은 시간대에.
+
+**검증**: 실행 후 위 조합 문서 수가 0으로 수렴하는지, `content_changed`가 1회성 급증 후 정상화되는지.
+
 ### 9. PyPI 발행 워크플로 + `readme` 필드
 
 README는 레포 루트, 빌드 루트는 `py/`. PEP 621이 `../README.md`를 거부하므로 `readme` 미설정 상태.
@@ -111,8 +174,8 @@ PR 9의 Actions 감사 결과: **회귀 없음**(`deploy.yml`·`claude.yml` 무�
 | # | 리스크 | 완화 |
 |---|--------|------|
 | 11 | **라이브 네트워크 의존 증폭.** `core-only` 잡은 이미 skku.edu를 실크롤했고(9초), 예제 2개가 더 붙어 PR당 `skku-main` 페이지 1을 3회 친다. skku.edu 장애·레이트리밋이 문서만 고친 PR을 빨갛게 만든다 | 실제로 플래키해지면 이 스텝에 `continue-on-error: true`, 또는 매 PR이 아니라 스케줄/경로 필터 트리거로 이동 |
-| 12 | **`quickstart.py` 실패 메시지가 오해를 부른다.** `iter_source`가 fetch 예외를 삼키고 계속하므로, 일시적 네트워크 실패는 exit 0 + 빈 stdout → 스텝이 `quickstart.py printed nothing`이라고만 말한다. 코드 버그처럼 읽힌다 | 메시지를 `printed nothing (source unreachable?)`로 넓히기 |
-| 13 | **`py/examples/*.py` 글롭이 무필터.** 공용 헬퍼·`__init__.py`·`conftest.py`를 넣으면 그것도 실행되고 `test -s`에서 실패 | `_` 접두 파일 스킵, 또는 헬퍼는 하위 디렉토리에 |
+| ~~12~~ ✅ | **`quickstart.py` 실패 메시지가 오해를 부른다** | 해결 (2026-08-03) — `code broken, or skku.edu unreachable from CI?`로 확장 |
+| ~~13~~ ✅ | **`py/examples/*.py` 글롭이 무필터** | 해결 (2026-08-03) — `_` 접두 + `conftest.py` 스킵 |
 | 14 | **월클럭 +20~30초.** `core-only`가 19초 → 약 3배. 1분 미만이라 현재는 무해 | `DEFAULT_MAX_PAGES=1`이 상한을 묶고 있으므로 추가 조치 불필요 |
 
 ---

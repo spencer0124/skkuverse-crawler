@@ -24,12 +24,12 @@ from pymongo import ReturnDocument
 
 from ...core.module import ModuleConfig
 from ...modules.notices.constants import SERVICE_START_DATE
-from ...modules.notices.hashing import compute_content_hash
+from ...modules.notices.normalizer import dimensions_from_html
+from ...modules.notices.stages import derive_content_fields
 from ...modules.notices.strategies import STRATEGY_MAP
 from ...env import get_config
 from ...shared.db import get_db
 from ...shared.fetcher import Fetcher
-from ...shared.html_cleaner import clean_html, normalize_content_urls
 from ...shared.logger import get_logger
 from .sink import ensure_indexes
 
@@ -41,6 +41,9 @@ class UpdateCheckResult:
     content_changed: int = 0
     hash_backfilled: int = 0
     fetch_errors: int = 0
+    # Fetched fine, but sanitising left nothing — treated as an anomaly
+    # rather than an edit, so it never blanks a stored body.
+    content_vanished: int = 0
     skipped_no_detail: int = 0
     not_found: int = 0
     soft_deleted: int = 0
@@ -59,15 +62,37 @@ async def run_update_check(
     await ensure_indexes(collection)
 
     fetcher = Fetcher(delay_ms=500)
+    try:
+        return await _run_update_check(
+            collection, fetcher, departments, window_days, dept_filter, logger
+        )
+    finally:
+        # Same leak run_crawl had, in its sibling: the unknown-dept ValueError
+        # below and any cursor failure used to exit without closing the client.
+        await fetcher.close()
 
+
+async def _run_update_check(
+    collection: Any,
+    fetcher: Fetcher,
+    departments: list[dict[str, Any]],
+    window_days: int,
+    dept_filter: tuple[str, ...] | None,
+    logger: Any,
+) -> list[UpdateCheckResult]:
     # Query DB for notices within the time window (floored by SERVICE_START_DATE)
     window_cutoff = (datetime.now(timezone.utc) - timedelta(days=window_days)).strftime("%Y-%m-%d")
     cutoff_date_str = max(SERVICE_START_DATE, window_cutoff)
 
     cursor = collection.find(
         {"date": {"$gte": cutoff_date_str}, "isDeleted": {"$ne": True}},
-        {"articleNo": 1, "sourceId": 1, "detailPath": 1,
-         "contentHash": 1, "title": 1, "consecutiveFailures": 1},
+        # sourceUrl is here for the image probe's Referer — several sources
+        # serve images only to a request that came from the notice page.
+        # cleanHtml is here to read back image dimensions already measured,
+        # so a slow image host cannot silently drop them (and invent a
+        # content change with them).
+        {"articleNo": 1, "sourceId": 1, "detailPath": 1, "sourceUrl": 1,
+         "cleanHtml": 1, "contentHash": 1, "title": 1, "consecutiveFailures": 1},
     )
 
     # Group by sourceId
@@ -125,11 +150,15 @@ async def run_update_check(
         total_content_changed=sum(r.content_changed for r in results),
         total_backfilled=sum(r.hash_backfilled for r in results),
         total_errors=sum(r.fetch_errors for r in results),
+        # Run-level, not just per-source: a source that starts serving
+        # empty bodies to every request is exactly the thing a per-source
+        # line buries.
+        total_content_vanished=sum(r.content_vanished for r in results),
         total_not_found=sum(r.not_found for r in results),
         total_soft_deleted=sum(r.soft_deleted for r in results),
     )
 
-    await fetcher.close()
+    # No close here — the caller's finally owns it, for every exit path.
     return results
 
 
@@ -190,9 +219,49 @@ async def _check_department(
         result.total_checked += 1
         doc_filter = {"articleNo": doc["articleNo"], "sourceId": dept["id"]}
 
-        new_clean_html = clean_html(detail.content, dept["baseUrl"])
-        new_hash = compute_content_hash(new_clean_html)
+        # The crawl's own pipeline, not a parallel derivation. Rebuilding
+        # these by hand is what let Tier-2 drift from the crawl — most
+        # damagingly by skipping the image probe, which made its hash differ
+        # from the crawl's for identical content and set the two writers
+        # overwriting each other forever.
+        fields = await derive_content_fields(
+            detail.content,
+            base_url=dept["baseUrl"],
+            source_url=doc.get("sourceUrl", ""),
+            source_id=dept["id"],
+            article_no=doc["articleNo"],
+            fallback_text=detail.contentText,
+            known_dimensions=dimensions_from_html(doc.get("cleanHtml")),
+        )
+        new_hash = fields.contentHash
         old_hash = doc.get("contentHash")
+
+        # An empty derivation has two causes and they need opposite
+        # handling, so the pipeline's own verdict tells them apart rather
+        # than the empty result they share:
+        #
+        # - Oversized: the crawl stores nulls here, so Tier-2 must too.
+        #   Guarding it would put the two writers back into disagreement,
+        #   which is the thing this path exists to end.
+        # - Sanitised to nothing (an empty <div>, a stray &nbsp;, a WPDM
+        #   block with no body): far likelier a soft error page than a real
+        #   edit, and the crawl never sees it — it only refetches when a
+        #   title or date changes. Writing it through would blank every
+        #   content field, including the last renderable copy.
+        #
+        # Measuring the RAW body cannot make this call: clean_html can more
+        # than double the byte count by absolutising URLs, so raw size and
+        # stored size land on opposite sides of the limit in both
+        # directions. `oversized` is what SizeGuard actually did.
+        if new_hash is None and old_hash is not None and not fields.oversized:
+            logger.warning(
+                "content_vanished",
+                dept_id=dept["id"],
+                articleNo=doc["articleNo"],
+                raw_bytes=len((detail.content or "").encode()),
+            )
+            result.content_vanished += 1
+            continue
 
         # Backfill: old hash is None, just set it
         if old_hash is None:
@@ -225,15 +294,11 @@ async def _check_department(
             "contentChanged": True,
             "source": "tier2",
         }
-        normalized_content = normalize_content_urls(detail.content, dept["baseUrl"])
         await collection.update_one(
             doc_filter,
             {
                 "$set": {
-                    "content": normalized_content,
-                    "contentText": detail.contentText,
-                    "cleanHtml": new_clean_html,
-                    "contentHash": new_hash,
+                    **fields.as_set(),
                     "consecutiveFailures": 0,
                     "crawledAt": now,
                 },
@@ -293,6 +358,7 @@ async def _check_department(
         content_changed=result.content_changed,
         hash_backfilled=result.hash_backfilled,
         fetch_errors=result.fetch_errors,
+        content_vanished=result.content_vanished,
         skipped_no_detail=result.skipped_no_detail,
         not_found=result.not_found,
         soft_deleted=result.soft_deleted,
@@ -348,6 +414,7 @@ class NoticesUpdateCheckModule:
             "changed": sum(r.content_changed for r in results),
             "backfilled": sum(r.hash_backfilled for r in results),
             "errors": sum(r.fetch_errors for r in results),
+            "contentVanished": sum(r.content_vanished for r in results),
         }
 
     async def shutdown(self) -> None:
