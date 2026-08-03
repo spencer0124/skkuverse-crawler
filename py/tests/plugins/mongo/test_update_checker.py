@@ -9,7 +9,7 @@ import pytest
 from skkuverse_crawler.modules.notices.image_verifier import ImageCheckResult
 from skkuverse_crawler.core.pipeline import ContentDoc, StageContext
 from skkuverse_crawler.modules.notices.models import NoticeDetail, NoticeListItem
-from skkuverse_crawler.modules.notices.normalizer import build_notice
+from skkuverse_crawler.modules.notices.normalizer import build_notice, dimensions_from_html
 from skkuverse_crawler.modules.notices.stages import (
     DEFAULT_PIPELINE,
     ContentFields,
@@ -699,6 +699,11 @@ class TestTier2StoresTheSameFieldsAsACrawl:
         assert stored["content"] is None
         assert stored["cleanMarkdown"] is None
         assert stored["contentHash"] is None
+        # contentText is the one field with a value here, and the only one
+        # whose rule is written twice (ContentFields.from_doc and
+        # build_notice). Dropping it from the assertions is how the two
+        # copies would be allowed to drift apart.
+        assert stored["contentText"] == "strategy가 준 텍스트"
 
 
 class TestContentVanished:
@@ -760,16 +765,6 @@ class TestContentVanished:
         assert stored["cleanHtml"] == "<p>본문이 있었다</p>"
         assert "본문이 있었다" in stored["cleanMarkdown"]
 
-    async def test_the_count_reaches_the_run_level_summary(self):
-        """Per-source is not enough. A source that starts serving empty
-        bodies to every request is exactly what a per-department line
-        buries, and the anomaly is excluded from change_rate — so without a
-        run-level number nothing surfaces it at all."""
-        from skkuverse_crawler.plugins.mongo.update_checker import UpdateCheckResult
-
-        results = [UpdateCheckResult(source_id="a", content_vanished=3)]
-        assert sum(r.content_vanished for r in results) == 3
-
     async def test_an_oversized_body_is_written_through_not_guarded(self):
         """The guard must NOT fire here. The crawl stores nulls for a body
         past the size limit, so guarding it would put the two writers back
@@ -814,3 +809,115 @@ class TestContentVanished:
         assert result.content_vanished == 0
         assert result.content_changed == 1
         assert collection.docs[0]["cleanHtml"] is None
+
+
+class TestDimensionsSurviveAFailingProbe:
+    """The image probe is a live third-party request, so "no dimensions"
+    means either "this image has none" or "that host was slow just now".
+
+    The hash comes from the HTML the dimensions are injected into, so
+    losing them to someone else's downtime invents a content change — and
+    Tier-2 runs 3×/day, so it would keep inventing one. Stored dimensions
+    are read back and seeded; a live measurement wins where there is one.
+    """
+
+    IMG = "https://example.com/poster.png"
+    BODY = f'<div><p>본문</p><img src="{IMG}"></div>'
+
+    def _probe(self, dimensions: dict | None):
+        async def _verify(content_html, source_url):
+            return ImageCheckResult(
+                checked=1, dimensions=dict(dimensions or {})
+            )
+
+        return patch("skkuverse_crawler.modules.notices.stages.verify_notice_images", _verify)
+
+    async def _tier2_pass(self, collection: FakeCollection, probe_dimensions: dict | None):
+        """One Tier-2 pass over a stored, already-measured notice."""
+        with self._probe({self.IMG: (891, 1260)}):
+            measured = await derive_content_fields(self.BODY, base_url=MOCK_DEPT["baseUrl"])
+        await collection.update_one(
+            {"articleNo": 1, "sourceId": "test-dept"},
+            {"$set": {
+                "articleNo": 1, "sourceId": "test-dept", "detailPath": "?articleNo=1",
+                "title": "제목", **measured.as_set(),
+            }},
+            upsert=True,
+        )
+        notices = [{
+            "articleNo": 1, "sourceId": "test-dept", "detailPath": "?articleNo=1",
+            # The stored HTML is what the seed is read out of — omit it and
+            # this test silently stops testing anything.
+            "cleanHtml": measured.cleanHtml,
+            "contentHash": measured.contentHash, "title": "제목",
+        }]
+        strategy = AsyncMock()
+        strategy.crawl_detail.return_value = NoticeDetail(
+            content=self.BODY, contentText="본문", attachments=[],
+        )
+        with self._probe(probe_dimensions), patch(
+            "skkuverse_crawler.plugins.mongo.update_checker.STRATEGY_MAP",
+            {"skku-standard": MagicMock(return_value=strategy)},
+        ):
+            result = await _check_department(
+                MOCK_DEPT, notices, collection, AsyncMock(), MagicMock()
+            )
+        return result, collection.docs[0], measured
+
+    async def test_a_failed_probe_does_not_drop_stored_dimensions(self):
+        """The whole point: an unreachable image host must not look like an
+        edit. Same body, probe returns nothing — the hash must not move."""
+        collection = FakeCollection()
+        result, stored, measured = await self._tier2_pass(collection, probe_dimensions={})
+
+        assert result.content_changed == 0, "a slow image host was read as a content edit"
+        assert stored["contentHash"] == measured.contentHash
+        assert "![{891x1260}" in stored["cleanMarkdown"]
+
+    async def test_a_live_measurement_wins_over_the_seed(self):
+        """The merge direction. If the image really was resized, the new
+        measurement must take effect — the seed is a fallback, not a pin."""
+        collection = FakeCollection()
+        result, stored, measured = await self._tier2_pass(
+            collection, probe_dimensions={self.IMG: (400, 600)}
+        )
+
+        assert result.content_changed == 1
+        assert "![{400x600}" in stored["cleanMarkdown"]
+        assert stored["contentHash"] != measured.contentHash
+
+
+class TestDimensionsFromHtml:
+    """The read-back half of the seed. Nothing else exercises these
+    branches, and a silent {} here turns the whole guard off."""
+
+    def test_reads_back_what_injection_wrote(self):
+        html = '<p><img src="https://e.test/a.png" width="800" height="600"></p>'
+        assert dimensions_from_html(html) == {"https://e.test/a.png": (800, 600)}
+
+    @pytest.mark.parametrize(
+        "html",
+        [
+            None,
+            "",
+            "<p>no images</p>",
+            '<img src="https://e.test/a.png">',                      # neither
+            '<img src="https://e.test/a.png" width="800">',          # width only
+            '<img src="https://e.test/a.png" height="600">',         # height only
+            '<img src="https://e.test/a.png" width="80%" height="60">',  # not an int
+            '<img width="800" height="600">',                        # no src
+        ],
+    )
+    def test_anything_incomplete_yields_nothing_for_that_image(self, html):
+        """Half a dimension is not a dimension: injecting width without
+        height would produce markdown the app's `{WxH}` regex cannot read."""
+        assert dimensions_from_html(html) == {}
+
+    def test_a_url_no_longer_in_the_body_is_harmless(self):
+        """The seed is keyed by URL, and injection only touches images
+        present in the new HTML — a stale entry is simply never used."""
+        from skkuverse_crawler.modules.notices.normalizer import _inject_image_dimensions
+
+        stale = {"https://e.test/gone.png": (10, 20)}
+        html = '<img src="https://e.test/here.png">'
+        assert _inject_image_dimensions(html, stale) == html

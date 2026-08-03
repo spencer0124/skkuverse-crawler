@@ -41,13 +41,33 @@ articleNo 137297 (skku-main):  editCount 30, distinct 해시 2개
 
 **비용**: 이미지 프로브. 14일 창 735건 중 274건이 이미지 보유(총 305개), 하루 3회 → 일 약 915 Range 요청 증가. 이미지 없는 461건은 `verify_notice_images`가 즉시 반환해 비용 0. 크롤 경로는 이미 신규 공지마다 같은 비용을 낸다.
 
+#### ⚠️ 배포 직후 1~2회는 경보가 자기 자신을 향해 울린다
+
+수정된 코드는 기존 문서들을 **처음으로 올바르게** 재측정하므로, 저장된(잘못된) 해시와 다르다. 즉 첫 tier-2 실행들이 정상적으로 `content_changed`를 대량 기록한다.
+
+문제는 이 브랜치가 지키려는 그 경보가 함께 울린다는 것이다 (2026-08-03 프로덕션 실측, 14일 창 773건 기준):
+
+| 신호 | 예상 |
+|------|------|
+| tier-2 지문 보유 문서 | **231건** — 전부 1회씩 `content_changed` |
+| `high_change_rate` WARNING (>0.30) | **47개 소스** |
+| `likely_determinism_bug` ERROR (=1.00) | **16개 소스** (대부분 창 문서 1~3건인 소형) |
+
+`skku-main` 0.35, `scos-grad` 0.75, `art-undergrad` 0.67, `biz-undergrad` 0.61.
+
+**대응**: 배포 후 첫 2~3회 실행의 이 경보는 **예상된 것**이다. 2~3회 지나 `content_changed`가 평상 수준으로 돌아오지 않으면 그때가 진짜 신호다. 창 밖으로 나가는 문서는 복구되지 않으므로 8-b 참조.
+
+#### 골든 1건이 바뀐다
+
+`std_null_backfill`의 `contentText` 한 필드. 백필 경로가 strategy 텍스트 대신 정제 HTML에서 추출하게 되면서 블록 개행이 복원된 것 — 리팩터의 부작용이 아니라 수정의 증거다. `cleanHtml`·`cleanMarkdown`·`contentHash`는 불변(픽스처에 이미지 없음). 나머지 7건은 바이트 동일.
+
 **기각한 대안**: `derive_content_fields`를 `normalizer.py`에 두고 `build_notice`의 인라인 분기를 재현하는 안. 첫 시도가 이것이었고 **리뷰에서 잡혔다** — 인라인 분기는 docstring 스스로 "픽스처·품질 테스트용"이라 적어둔 경로이고 파이프라인이 아니다. 그래서 정의가 셋이 되고, 프로덕션이 그중 틀린 것을 가리켰다. `normalizer.py`는 원복했고 인라인↔파이프라인 동치는 기존 parity 테스트가 계속 지킨다.
 
 ### ~~2. `run_events`가 런 종료 시 `flush`하지 않는다~~ ✅
 
 `_crawl_department`의 `aclosing` 블록 종료 직후 `await ports.sink.flush()`. `cli.py`의 수동 우회와 가이드의 ⚠️도 함께 제거 — 근본이 고쳐졌는데 우회가 남으면 그게 거짓말이 된다.
 
-**문서의 예측이 틀렸다**: "빈 flush가 1회 늘어 골든 op 순서가 바뀐다"고 적었는데, `MongoSink.flush()`는 버퍼가 비면 `if not items: return`이라 컬렉션 연산을 일으키지 않는다. **골든 8건 바이트 동일 유지** — 이 수정은 버그가 있던 경로에서만 동작을 바꾼다.
+**문서의 예측이 틀렸다**: "빈 flush가 1회 늘어 골든 op 순서가 바뀐다"고 적었는데, `MongoSink.flush()`는 버퍼가 비면 `if not items: return`이라 컬렉션 연산을 일으키지 않는다. **이 flush 변경에 한해 골든 8건 바이트 동일** — 버그가 있던 경로에서만 동작을 바꾼다. (브랜치 전체로는 골든 1건이 바뀐다 — §1의 백필 통합 때문이며 거기 기록.)
 
 ---
 
@@ -69,6 +89,24 @@ emit 경로는 `f"{baseUrl}{detailPath}"`로 이어 붙이고 `build_notice`는 
 ### ~~4. `run_crawl`의 조기 return이 `fetcher.close()`를 건너뛴다~~ ✅ (2026-08-03)
 
 본문을 `_run_crawl`로 분리하고 `run_crawl`이 `try/finally`로 감싸 close를 단일 지점에. 성공 경로 말미의 close도 흡수 — 모든 이탈 경로(조기 return, raise 포함)가 같은 곳을 지난다.
+
+### 5-b. tier-2만 저장된 차원을 승계할 수 있다 — 비대칭 잔여분 *(신규, 2026-08-03)*
+
+**증상**: 프로브가 일시 실패했을 때 tier-2는 저장된 `cleanHtml`에서 차원을 읽어 복원하지만, **크롤은 읽을 저장본이 없다**(신규 항목이거나 재크롤 중). 그래서 재크롤 중 프로브가 실패하면 차원 없는 해시가 저장되고, 다음 tier-2가 정상 프로브로 이를 "변경됨"으로 기록한다 — 1회성 `editCount` 증가.
+
+**왜 핑퐁이 아닌가**: 크롤은 제목·날짜가 바뀔 때만 재수집하고, tier-2는 크롤이 마지막에 쓴 것에서 다시 시드하므로 **수렴한다.** 왕복이 아니라 잔여분이다.
+
+**왜 지금 안 고쳤나**: 크롤 쪽도 저장본을 읽으려면 emit 경로가 SeenIndex를 넘어 문서 본문까지 조회해야 한다 — 증분 크롤의 조회 비용 구조를 바꾸는 일이고, 얻는 것(드문 1회성 오탐 제거)에 비해 크다.
+
+**재개봉 조건**: `editHistory`에 tier2 단독 항목이 반복적으로 쌓이는 문서가 관측되면.
+
+### 5-c. tier-2는 `attachments`를 갱신하지 않는다 *(기존, 기록만)*
+
+`fields.as_set()`은 5개 콘텐츠 필드뿐이다. 크롤과 백필은 `attachments`를 쓰지만 tier-2는 안 쓴다 — 공지가 첨부만 교체되면 제목·날짜가 바뀌어 재크롤될 때까지 낡은 URL이 남는다. 해시와 무관하고 이 브랜치 이전부터 그랬으므로 범위 밖으로 뒀다. 다만 `TestTier2StoresTheSameFieldsAsACrawl`이라는 이름은 **콘텐츠 5필드에 한한 주장**이다.
+
+### 5-d. tier-2에는 `pipeline` 파라미터가 없다 *(잠재)*
+
+`run_crawl(pipeline=)`은 emit·백필 양쪽에 전달되지만 tier-2는 `DEFAULT_PIPELINE`을 하드코딩한다. `derive_content_fields` docstring이 `DEFAULT_PIPELINE.without("verify-images")`를 탈출구로 안내하는데, **크롤 쪽에서 그걸 쓰면 이 브랜치가 없앤 해시 불일치가 정확히 되살아난다.** 현재 커스텀 파이프라인을 넘기는 프로덕션 호출자는 없어 잠재 상태.
 
 ### 5. `SeenIndex.lookup`이 비스트리밍 (adr-006 1.0 전 판단)
 

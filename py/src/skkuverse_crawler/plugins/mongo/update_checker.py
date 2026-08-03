@@ -62,7 +62,24 @@ async def run_update_check(
     await ensure_indexes(collection)
 
     fetcher = Fetcher(delay_ms=500)
+    try:
+        return await _run_update_check(
+            collection, fetcher, departments, window_days, dept_filter, logger
+        )
+    finally:
+        # Same leak run_crawl had, in its sibling: the unknown-dept ValueError
+        # below and any cursor failure used to exit without closing the client.
+        await fetcher.close()
 
+
+async def _run_update_check(
+    collection: Any,
+    fetcher: Fetcher,
+    departments: list[dict[str, Any]],
+    window_days: int,
+    dept_filter: tuple[str, ...] | None,
+    logger: Any,
+) -> list[UpdateCheckResult]:
     # Query DB for notices within the time window (floored by SERVICE_START_DATE)
     window_cutoff = (datetime.now(timezone.utc) - timedelta(days=window_days)).strftime("%Y-%m-%d")
     cutoff_date_str = max(SERVICE_START_DATE, window_cutoff)
@@ -141,7 +158,7 @@ async def run_update_check(
         total_soft_deleted=sum(r.soft_deleted for r in results),
     )
 
-    await fetcher.close()
+    # No close here — the caller's finally owns it, for every exit path.
     return results
 
 
