@@ -171,7 +171,11 @@ Python 테스트는 `py/tests/`에 위치. `respx`로 httpx 요청 목킹, `conf
 
 ## Adding New Modules
 
-1. `py/src/skkuverse_crawler/modules/<module>/` 생성 (module.py, fetcher.py 등)
-2. `CrawlModule` Protocol 구현 (run, shutdown, config)
-3. `cli.py`의 `_start_scheduler()`에 `registry.register()` 추가
-4. `shared/` 인프라 재사용 (config, db, logger, fetcher)
+전체 절차와 함정은 `docs/adding-a-module.md`. 요약:
+
+1. **아키타입을 고른다** — 항목 스트림(notices처럼 페이지네이션+dedup) vs 스냅샷(키당 문서 하나 통째 교체). 애매하면 스냅샷.
+2. `py/src/skkuverse_crawler/modules/<module>/` 생성 + `CrawlModule` Protocol 구현 (run, shutdown, config)
+3. `wiring.py`의 `_FAMILIES`에 `ModuleFamily` 항목 추가 (모듈 이름·필요 `Config` 속성·빌더). 선언한 이름과 실제 빌드 결과가 어긋나면 `WiringError`
+4. 저장은 **주입받는다** — `modules/`는 `plugins/`도 `shared.db`도 import할 수 없다 (AST 테스트가 강제)
+5. `ModuleConfig.misfire_grace_time`을 주기에 맞게 — misfire는 coalesce보다 먼저 판정되고 기본 10초는 빠른 폴러의 틱을 삼킨다
+6. `record_and_alert`의 `threshold`를 주기에 맞게 — `THRESHOLD=3`은 30분 크롤엔 90분, 10초 폴러엔 30초
