@@ -157,6 +157,25 @@ emit 경로는 `f"{baseUrl}{detailPath}"`로 이어 붙이고 `build_notice`는 
 
 codegen의 `STRATEGY_FEATURES`가 `hasCategory`를 **전략 단위**로 정한다. chem은 skku-standard지만 카테고리 컬럼이 없는 보드라 `hasCategory: true`로 광고하면서 빈 문자열을 낸다. 소스 단위 override로 바꾸려면 codegen 구조를 건드려야 해서 [known-issues §12](known-issues.md) 수정 범위 밖으로 뒀다. 같은 형태의 보드가 더 있을 수 있다 — `selectors`에 `category`가 없는 소스를 세면 나온다.
 
+### 5-g. 전 코퍼스에 죽은 첨부 링크 251건 — 탐지는 되고 수리는 안 했다 *(신규, 미착수)*
+
+[known-issues §12](known-issues.md)에서 `html_response` 체크를 넣은 직후 **전체 6,575건 첨부를 한 번 훑은 결과** (2026-08-04, 3,614 공지):
+
+| 분류 | 건수 | 성격 |
+|---|---|---|
+| redirect loop | 170 | 원본에서 **공지 자체가 삭제됨**. `Referer`를 실으면 www.skku.edu가 view 페이지로 303을 무한 반복한다 (Referer 없으면 그냥 404) |
+| `html_response` | 71 | 200 + `text/html` — 죽은 다운로드 |
+| 404 | 8 | |
+| cheme SSL | 54 | **이미 알려진 비활성 소스** (§11). 위 숫자에서 제외하면 실질 251건 |
+
+24개 소스에 걸쳐 있고 `biz-undergrad`(67), `skku-main`/`skku-notice0X`(~100)에 몰려 있다.
+
+**오탐 아님을 확인했다**: 정상 `skku-main` 첨부를 **바이트 단위로 동일한 헤더**(같은 UA·Referer·Range)로 요청하면 redirect 0회에 200이 온다. 죽은 쪽만 루프하거나 404한다.
+
+**안 한 이유 두 가지.** (1) 비용 — `repair-attachments --refetch`를 전 소스에 돌리면 공지당 요청 1회, 약 3,600회다. (2) **정책 미정** — 원본에서 사라진 공지의 첨부만 떨어낼 것인가, 공지 자체를 `isDeleted`로 볼 것인가. 후자라면 update-check의 soft-delete 경로와 겹치므로 거기서 다루는 게 맞다. 그 판단 전에 데이터를 지우면 되돌릴 수 없다.
+
+지금은 **탐지만 되는 상태**로 둔다 — `validate-attachments`가 매번 이 251건을 보고하므로 숫자가 늘어나면 새 파손이라는 뜻이다.
+
 ### 5-d. tier-2에는 `pipeline` 파라미터가 없다 *(잠재)*
 
 `run_crawl(pipeline=)`은 emit·백필 양쪽에 전달되지만 tier-2는 `DEFAULT_PIPELINE`을 하드코딩한다. `derive_content_fields` docstring이 `DEFAULT_PIPELINE.without("verify-images")`를 탈출구로 안내하는데, **크롤 쪽에서 그걸 쓰면 이 브랜치가 없앤 해시 불일치가 정확히 되살아난다.** 현재 커스텀 파이프라인을 넘기는 프로덕션 호출자는 없어 잠재 상태.
