@@ -10,6 +10,16 @@ class ModuleConfig:
     cron_schedule: str | None = None
     interval_seconds: int | None = None
     run_on_start: bool = False
+    # How late a tick may start before it is dropped instead of run. None
+    # means "whatever the scheduler plugin considers normal" — core does
+    # not pick a number, because the right one depends on the cadence, not
+    # on the module.
+    #
+    # It has to be per-module: the tolerance that suits a 30-minute cron
+    # silently swallows most of a 10-second poller's ticks, and misfire is
+    # evaluated BEFORE coalesce, so a late tick is dropped whole rather
+    # than merged into the next one.
+    misfire_grace_time: int | None = None
 
 
 @runtime_checkable

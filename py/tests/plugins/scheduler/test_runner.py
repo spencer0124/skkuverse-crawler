@@ -8,8 +8,15 @@ being scheduled is exactly the failure nobody notices.
 
 from __future__ import annotations
 
+from structlog.testing import capture_logs
+
 from skkuverse_crawler.core.module import ModuleConfig
-from skkuverse_crawler.plugins.scheduler.runner import build_trigger
+from skkuverse_crawler.plugins.scheduler.runner import (
+    DEFAULT_MISFIRE_GRACE_SECONDS,
+    _log_missed_ticks,
+    build_trigger,
+    grace_seconds,
+)
 
 
 class _Module:
@@ -66,3 +73,66 @@ def test_every_wired_module_gets_a_trigger():
 
     unscheduled = [m.config.name for m in modules if build_trigger(m) is None]
     assert not unscheduled, f"modules that would never run: {unscheduled}"
+
+
+class TestMisfireGrace:
+    """A dropped tick is silent, so the number that decides it is worth pinning.
+
+    Misfire is evaluated before coalesce: a tick later than the grace window
+    is skipped entirely, not merged into the next run. The tolerance that
+    suits a 30-minute cron would swallow most of a 10-second poller's ticks,
+    which is why it is per-module rather than one constant for every job.
+    """
+
+    def test_unset_falls_back_to_the_plugin_default(self):
+        assert grace_seconds(ModuleConfig(name="m")) == DEFAULT_MISFIRE_GRACE_SECONDS
+
+    def test_the_default_is_the_value_every_job_used_to_be_given(self):
+        """Pins the fallback against the hardcoded literal it replaced, so
+        making it configurable did not quietly retune the existing modules."""
+        assert DEFAULT_MISFIRE_GRACE_SECONDS == 10
+
+    def test_a_module_can_tighten_or_widen_it(self):
+        assert grace_seconds(ModuleConfig(name="fast", misfire_grace_time=2)) == 2
+        assert grace_seconds(ModuleConfig(name="slow", misfire_grace_time=600)) == 600
+
+    def test_zero_is_honoured_rather_than_treated_as_unset(self):
+        """`if not config.misfire_grace_time` would turn 0 into the default.
+        Zero means "run only if exactly on time" and is a real choice."""
+        assert grace_seconds(ModuleConfig(name="strict", misfire_grace_time=0)) == 0
+
+
+class TestMissedTickListener:
+    def test_it_registers_for_the_missed_event(self):
+        from apscheduler.events import EVENT_JOB_MISSED
+
+        registered: list[int] = []
+
+        class _FakeScheduler:
+            def add_listener(self, fn, mask):
+                registered.append(mask)
+
+        _log_missed_ticks(_FakeScheduler())
+        assert registered == [EVENT_JOB_MISSED]
+
+    def test_the_log_names_the_module_that_lost_the_tick(self):
+        from apscheduler.events import EVENT_JOB_MISSED
+
+        captured = {}
+
+        class _FakeScheduler:
+            def add_listener(self, fn, mask):
+                captured["fn"] = fn
+
+        _log_missed_ticks(_FakeScheduler())
+
+        class _Event:
+            job_id = "bus-hssc"
+            scheduled_run_time = "2026-08-04T09:00:00+09:00"
+
+        with capture_logs() as logs:
+            captured["fn"](_Event())
+        assert logs[0]["event"] == "job_tick_missed"
+        # The job id IS the module name — that is why run_scheduler sets it.
+        assert logs[0]["module"] == "bus-hssc"
+        assert EVENT_JOB_MISSED  # the mask exists in this apscheduler version
