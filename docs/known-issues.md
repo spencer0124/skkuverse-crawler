@@ -87,7 +87,7 @@
   - nano: certifi + 중간 CA 보충 컨텍스트로 핸드셰이크·크롤 엔드포인트 200 실증 — SSL만의 문제.
   - cheme: SSL 통과 후에도 **Cloudflare 봇 챌린지 403** ("Just a moment...") — wp-json·RSS(`/feed/` 등)·루트 전 경로, 로컬·oracle VM IP 모두 동일. 챌린지 우회는 만들지 않음(정책).
 - **결정 (2026-07-29, 운영자)**: 크롤러 측 인증서 보충/우회 없이 **소스 제외로 처리**. `sources.json`에서 두 소스 `crawlAvailable: false` + `excludeReason: "temporarilyUnavailable"`(앱 노출: "잠시 점검 중이에요" + 공과대학 우산 대안 제안) + 기술 사유는 내부 전용 `excludeNote` 필드(ssl / ssl+cloudflare)에 기록.
-- **재활성 조건**: nano — `openssl s_client`로 체인 정상 서빙 확인 시 플래그 원복만 하면 됨. cheme — 챌린지 해제 확인 시. 재활성 후 백필분은 푸시 억제 절차(§8 참조) 필요.
+- **재활성 조건**: nano — `openssl s_client`로 체인 정상 서빙 확인 시 플래그 원복만 하면 됨. cheme — 챌린지 해제 확인 시. 재활성 후 백필분은 푸시 억제 절차(**§13**) 필요.
 - **파생 수정**: 제외된 소스의 stale crawl_health 상태가 일일 요약을 영구 오염하는 문제 → 요약이 enabled 소스로 필터하도록 수정 (당시 `crawl_health/module.py`, 현재 `plugins/health/module.py`).
 
 ### ~~12. 첨부 4종 동시 파손 — 그리고 검증기가 넷 다 정상으로 보고하던 이유~~ (2026-08-04 해결)
@@ -113,6 +113,26 @@
 - **버그가 아니라고 확인한 것**: `ccrf`/`comedu-grad`/`sco-culture` 공지 0건은 최신글이 각각 2026-01-16 / 2026-03-06 / 2025-09-05로 전부 `SERVICE_START_DATE`(2026-03-09) 미만 — floor 로직 정상. `health`/`larc`/`gbme-grad` 첨부 0%는 실제로 첨부 없는 글. `pharm`/`bio`는 세션 수립 후 정상(166KB HWP, 299KB PDF) — 프록시가 이미 처리 중.
 
 - **파생 수정**: `ValidationReport.issue_counts`가 `Counter`라 `dataclasses.asdict`가 (key, value) 튜플을 Counter 생성자에 먹여 **`--json`이 이슈 발견 시 항상 TypeError로 죽던** 잠복 버그 — 평범한 dict로 교체 (attachment·markdown 리포트 둘 다).
+
+### 13. 신규·재활성 소스의 첫 크롤은 푸시 폭탄이 된다 — 억제 절차
+
+§11이 "재활성 후 백필분은 푸시 억제 절차(§8 참조) 필요"라고 가리키는데 **§8에는 그런 절차가 없었다.** 실제로 쓰이던 관행을 여기 적어 그 dangling reference를 끝낸다.
+
+**왜 생기나**: 서버의 dispatch 게이트는 `pushedAt: null` + `aiSummaryAt`이 date + `crawledAt > now - 24h`다 (`notices-dispatcher.service.ts:313-316`, `maxAgeMs = 24h`). `crawledAt`은 **크롤러가 문서를 넣은 시각**이지 공지 게시일이 아니다. 그래서 소스가 처음 살아나면 floor date까지의 백로그 전체가 같은 틱에 들어오면서 전부 "24시간 내 신규"로 보인다 → 요약이 붙는 순간 한꺼번에 푸시된다.
+
+**억제 방법**: 대상 문서의 `pushedAt`을 **epoch(1970-01-01)** 로 찍는다. 프로덕션에 이미 2,938건이 이 값을 들고 있다 — dispatcher docstring이 말하는 "Step 0 backfill"의 흔적이고, 이게 사실상의 관행이었다. `now()`가 아니라 epoch인 이유: 데이터만 보고 **"억제됨"과 "실제로 발송됨"이 구분돼야** 하기 때문 (실제 발송분 3,956건은 진짜 날짜를 갖는다).
+
+```python
+# pushedAt이 null/부재인 문서만 — 이미 발송된 것을 되돌리지 않고, 재실행은 no-op
+col.update_many(
+    {"sourceId": <id>, "pushedAt": {"$in": [None]}},
+    {"$set": {"pushedAt": datetime(1970, 1, 1, tzinfo=timezone.utc), "pushAttempts": 0}},
+)
+```
+
+**타이밍이 전부다.** 크롤(`*/30`)과 요약(`20 * * * *`) 사이에 넣어야 한다. 요약이 `aiSummaryAt`을 찍는 순간 게이트가 열린다. 크롤 직후 실행이 안전하다.
+
+**적용 사례**: chem (2026-08-04). §12로 크롤이 처음 살아나면서 2026-03-09(service floor) 이후 백로그가 한 틱에 들어왔다 — 억제 후 신규 공지만 정상 푸시. cheme·nano 재활성 시에도 같은 절차가 필요하다.
 
 ### 3. `lastModified` 필드 미구현
 - 상세 페이지 `<span class="date">최종 수정일 : 2026.03.27</span>` 에서 추출 가능
