@@ -40,7 +40,7 @@ bus는 notices와 모양이 다르다. 억지로 같은 틀에 넣는 게 adr-00
 
 ### ③ `article_no: int → key: str`은 1.0 이후로 미룬다
 
-스냅샷 모듈의 키는 문자열이니 일반화하고 싶어지지만, 이건 rename의 탈을 쓴 **타입 변경**이고 stringify 지점 3곳(`orchestrator.py:314,387`, `policy.py:54`)이 영원히 일치해야 한다. 하나만 놓치면 **예외가 안 난다** — 전 항목이 새 글로 보여 30분마다 13만 건이 재-upsert되고, `crawledAt`이 컬렉션 전체에서 요동치고, 일일 요약의 "24시간 신규" 수치가 무의미해진다. `py/scripts/migrate_oversized_articleno.py`가 있다는 건 이 도메인이 이미 숫자 사고를 한 번 겪었다는 뜻이다.
+스냅샷 모듈의 키는 문자열이니 일반화하고 싶어지지만, 이건 rename의 탈을 쓴 **타입 변경**이고 stringify 지점 3곳(`orchestrator.py`의 lookup 2곳과 `policy.py`의 `has_changed`)이 영원히 일치해야 한다. 하나만 놓치면 **예외가 안 난다** — 전 항목이 새 글로 보여 30분마다 13만 건이 재-upsert되고, `crawledAt`이 컬렉션 전체에서 요동치고, 일일 요약의 "24시간 신규" 수치가 무의미해진다. `py/scripts/migrate_oversized_articleno.py`가 있다는 건 이 도메인이 이미 숫자 사고를 한 번 겪었다는 뜻이다.
 
 그리고 **지금 이걸 원하는 소비자가 없다** — bus의 키는 상수다. 재검토 조건은 아래.
 
@@ -50,7 +50,8 @@ bus는 notices와 모양이 다르다. 억지로 같은 틀에 넣는 게 adr-00
 
 - 이름을 **선언**하는 이유: 게이트가 "이거 돌 수 있나"를 **아무것도 import하기 전에** 답해야 한다. 아니면 "플러그인이 없다"고 거절하려고 그 플러그인을 import해야 한다.
 - 선언은 두 번째 진실 원천이므로 `_assert_declaration_matches`가 매 조립마다 실제 빌드 결과와 대조한다. 드리프트는 조용히 안 도는 가족이 아니라 `WiringError`다.
-- `requires`가 비면 production은 **거절**, 그 외 환경은 로그 남기고 **스킵**. 남의 API 키가 없는 개발자도 나머지 크롤러는 돌려야 한다.
+- `requires`가 **가리키는 `Config` 속성**이 비면 production은 **거절**, 그 외 환경은 로그 남기고 **스킵**. 남의 API 키가 없는 개발자도 나머지 크롤러는 돌려야 한다. 단 선택된 가족이 **전부** 스킵되면 어느 환경이든 거절한다 — 그때는 "나머지"가 없고, 조용히 idle한 컨테이너가 `UnknownModuleError`로 막으려던 바로 그 상태다.
+- `requires`에 `Config`에 없는 이름을 적으면 오타이지 설정 누락이 아니므로 `WiringError`. `getattr(..., None)`이면 둘이 구분 안 된다.
 
 ### ⑤ 실행할 모듈 선택은 `build_runtime` 한 곳에서
 

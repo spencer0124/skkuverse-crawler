@@ -175,7 +175,14 @@ def start(module: str | None) -> None:
     # Split here, not in wiring: "a comma means several" is a CLI spelling
     # decision, and wiring takes a sequence so a library caller can pass a
     # list without stringifying it first.
-    selection = module.split(",") if module else None
+    #
+    # `is not None`, NOT truthiness: `--module ""` is a mistake, and under
+    # truthiness it would mean "run everything" — the exact opposite. That
+    # matters because the split-container deployment passes this through
+    # compose (`--module ${CRAWLER_MODULES}`), where an unset variable
+    # interpolates to an empty argument and would otherwise silently start
+    # a second full crawler.
+    selection = module.split(",") if module is not None else None
     asyncio.run(_start_scheduler(selection))
 
 

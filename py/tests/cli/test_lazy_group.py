@@ -12,6 +12,7 @@ from __future__ import annotations
 import importlib
 import subprocess
 import sys
+from unittest.mock import patch
 from pathlib import Path
 
 import click
@@ -197,3 +198,47 @@ def test_hidden_commands_are_not_listed_in_help():
     result = CliRunner().invoke(group, ["--help"])
     assert result.exit_code == 0
     assert "secret" not in result.output
+
+
+class TestStartModuleSelection:
+    """`--module` parsing, which had no CLI-level coverage at all.
+
+    The wiring tests exercise the selection; nothing exercised the split
+    that feeds it, which is where an empty string could turn "run these"
+    into "run everything".
+    """
+
+    @staticmethod
+    def _selection_for(arg):
+        seen = {}
+
+        async def fake_start(selection=None):
+            seen["selection"] = selection
+
+        # configure_logging must be patched too: letting it run reconfigures
+        # structlog process-wide, which silently stops structlog.testing's
+        # capture_logs from capturing anything in every test that follows.
+        with patch("skkuverse_crawler.cli._start_scheduler", fake_start), patch(
+            "skkuverse_crawler.cli.init_config", create=True
+        ), patch("skkuverse_crawler.cli.configure_logging", create=True):
+            args = ["start"] + ([] if arg is None else ["--module", arg])
+            result = CliRunner().invoke(main, args)
+        assert result.exit_code == 0, result.output
+        return seen["selection"]
+
+    def test_no_option_means_every_module(self):
+        assert self._selection_for(None) is None
+
+    def test_a_comma_list_becomes_a_list(self):
+        assert self._selection_for("notices,notices-summary") == [
+            "notices",
+            "notices-summary",
+        ]
+
+    def test_an_empty_string_does_not_silently_mean_everything(self):
+        """`--module ""` under truthiness would become None — "run all" —
+        the exact opposite of what was asked. The split-container
+        deployment passes this through compose as `--module ${VAR}`, where
+        an unset variable interpolates to an empty argument; the failure
+        mode would be a second full crawler nobody ordered."""
+        assert self._selection_for("") == [""]

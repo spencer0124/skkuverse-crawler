@@ -90,7 +90,7 @@ _FAMILIES = (
 
 이름을 여기 **선언**하는 이유: 부팅 게이트가 "이 가족이 돌 수 있나"를 아무것도 import하기 전에 답해야 한다. 선언과 실제 빌드 결과가 어긋나면 `_assert_declaration_matches`가 `WiringError`를 던진다 — 조용히 안 도는 가족보다 낫다.
 
-`requires`가 비어 있으면 production은 부팅을 거절하고, 다른 환경은 `module_family_skipped` 로그를 남기고 넘어간다.
+`requires`가 **가리키는 `Config` 속성**이 비어 있으면 production은 부팅을 거절하고, 다른 환경은 `module_family_skipped` 로그를 남기고 넘어간다. `requires=()`(요구사항 없음)는 항상 통과한다 — notices 가족이 그렇다. 그리고 선택된 가족이 **전부** 스킵돼 돌 게 하나도 안 남으면 환경과 무관하게 거절한다: 그때는 "나머지 크롤러"라는 게 없다.
 
 ## 5. 주기와 틱 관용 시간
 

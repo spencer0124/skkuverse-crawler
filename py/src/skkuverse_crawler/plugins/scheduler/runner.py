@@ -30,10 +30,29 @@ DEFAULT_MISFIRE_GRACE_SECONDS = 10
 def grace_seconds(config) -> int:
     """How late a tick may start, per module, falling back to this plugin's
     default. Separate function so a test can assert the fallback without
-    standing up a scheduler."""
-    if config.misfire_grace_time is None:
+    standing up a scheduler.
+
+    APScheduler accepts only None or a POSITIVE integer, and rejects the
+    rest with a TypeError raised from add_job — which happens before
+    scheduler.start(), so one module's bad value takes down every module
+    in the process, with a message naming neither. Catching it here costs
+    a branch and names the module.
+
+    "Run only if exactly on time" is therefore not expressible; the
+    nearest thing is 1. Unlimited grace (APScheduler's own None) is not
+    expressible either, because None is spoken for by the fallback — pass
+    a large number if a module ever genuinely wants it.
+    """
+    grace = config.misfire_grace_time
+    if grace is None:
         return DEFAULT_MISFIRE_GRACE_SECONDS
-    return config.misfire_grace_time
+    if not isinstance(grace, int) or isinstance(grace, bool) or grace < 1:
+        raise ValueError(
+            f"module {config.name!r} has misfire_grace_time={grace!r}; "
+            f"it must be a positive integer of seconds, or None to use "
+            f"the scheduler default ({DEFAULT_MISFIRE_GRACE_SECONDS}s)"
+        )
+    return grace
 
 
 def _log_missed_ticks(scheduler) -> None:

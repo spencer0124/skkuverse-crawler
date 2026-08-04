@@ -372,3 +372,89 @@ class _DemoModule:
 
     async def shutdown(self) -> None:
         return None
+
+
+class TestNothingToRunIsRefused:
+    """The healthy-and-idle container, reached through the config door.
+
+    UnknownModuleError closes the name door. This closes the other one: if
+    every selected family is skipped for missing config, run_scheduler
+    would add zero jobs and block on the signal forever. The skip's own
+    justification ("a developer still gets the rest of the crawler") does
+    not apply when the selection WAS that family — there is no rest.
+    """
+
+    async def test_refused_even_outside_production(self):
+        from skkuverse_crawler.core.settings import CrawlerEnv
+
+        family = TestFamilyConfigGate._family_needing("seoul_bus_service_key")
+        settings = TestProductionProfileGate._settings(
+            env=CrawlerEnv.DEVELOPMENT, seoul_bus_service_key=None
+        )
+        with patch.object(wiring, "_FAMILIES", (family,)):
+            with pytest.raises(wiring.ProfileError, match="nothing to run"):
+                wiring.build_runtime(settings, selection=["demo-module"])
+
+    async def test_a_partially_configured_selection_still_runs(self):
+        """Only the all-skipped case is fatal."""
+        from skkuverse_crawler.core.settings import CrawlerEnv
+
+        families = (
+            wiring._FAMILIES[0],
+            TestFamilyConfigGate._family_needing("seoul_bus_service_key"),
+        )
+        settings = TestProductionProfileGate._settings(
+            env=CrawlerEnv.DEVELOPMENT, seoul_bus_service_key=None
+        )
+        with patch.object(wiring, "_FAMILIES", families):
+            with patch("skkuverse_crawler.core.registry.register"):
+                modules = wiring.build_runtime(settings)
+        names = [m.config.name for m in modules]
+        assert "demo-module" not in names
+        assert names == list(wiring._FAMILIES[0].module_names)
+
+
+class TestFamilyTableIsChecked:
+    async def test_a_name_claimed_by_two_families_is_refused(self):
+        """registry keys on the name and would silently drop one; the
+        scheduler would then raise ConflictingIdError at start, after the
+        loss already happened."""
+        twin = wiring.ModuleFamily(
+            name="twin", module_names=("notices",), requires=(), build=lambda s, n: ()
+        )
+        with patch.object(wiring, "_FAMILIES", wiring._FAMILIES + (twin,)):
+            with pytest.raises(wiring.WiringError, match="more than one family"):
+                wiring.known_module_names()
+
+    async def test_requires_naming_a_nonexistent_setting_is_a_typo_not_a_gap(self):
+        """getattr(..., None) would make a typo in _FAMILIES look exactly
+        like a deployment that forgot a variable: production refuses citing
+        an attribute that does not exist, everywhere else silently skips."""
+        typo = wiring.ModuleFamily(
+            name="demo",
+            module_names=("demo-module",),
+            requires=("seoul_bus_servce_key",),  # missing 'i'
+            build=lambda s, n: (_DemoModule(),),
+        )
+        with patch.object(wiring, "_FAMILIES", (typo,)):
+            with pytest.raises(wiring.WiringError, match="does not define"):
+                wiring.build_runtime(TestProductionProfileGate._settings())
+
+    async def test_the_drift_check_tolerates_reordering(self):
+        """Order carries no meaning downstream, so a reshuffle must not
+        fail the boot with a message listing the same names twice."""
+        reordered = wiring.ModuleFamily(
+            name="notices",
+            module_names=(
+                "notices-summary",
+                "notices",
+                "crawl-health-summary",
+                "notices-update-check",
+            ),
+            requires=(),
+            build=wiring._build_notices,
+        )
+        with patch.object(wiring, "_FAMILIES", (reordered,)):
+            with patch("skkuverse_crawler.core.registry.register"):
+                modules = wiring.build_runtime()
+        assert len(modules) == 4

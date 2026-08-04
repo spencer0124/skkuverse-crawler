@@ -28,9 +28,13 @@ logger = get_logger("crawl_health_summary")
 class CoverageProbe:
     """What one module family contributes to the daily summary.
 
-    Both members do I/O, which is why this is a pair of callables rather
-    than data: the summary runs once a day and should read the live source
-    list, not one captured at assembly time.
+    Callables rather than data because the summary runs once a day and
+    should read the live source list, not one captured at assembly time.
+
+    The asymmetry is deliberate: ``enabled_ids`` is sync because a source
+    list is local (a parsed config file), while ``inserted_since`` queries
+    a database. A probe whose id lookup would go over a network should
+    cache it rather than block the loop here.
     """
 
     name: str

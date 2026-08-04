@@ -162,7 +162,21 @@ _FAMILIES: tuple[ModuleFamily, ...] = (
 
 
 def known_module_names() -> tuple[str, ...]:
-    return tuple(name for family in _FAMILIES for name in family.module_names)
+    """Every module name any family declares, in declaration order.
+
+    Duplicates are a build error rather than a curiosity: registry keys on
+    the name and would silently drop one of the two, and the scheduler
+    (which now sets job id = module name) would raise ConflictingIdError
+    at start — after the registry already lost a module. Cheaper to say so
+    here.
+    """
+    names = tuple(name for family in _FAMILIES for name in family.module_names)
+    duplicates = sorted({n for n in names if names.count(n) > 1})
+    if duplicates:
+        raise WiringError(
+            f"module name(s) declared by more than one family: {', '.join(duplicates)}"
+        )
+    return names
 
 
 def _resolve_selection(selection: Sequence[str] | None) -> set[str] | None:
@@ -186,7 +200,20 @@ def _resolve_selection(selection: Sequence[str] | None) -> set[str] | None:
 
 
 def _missing_config(settings: Config, family: ModuleFamily) -> tuple[str, ...]:
-    return tuple(name for name in family.requires if not getattr(settings, name, None))
+    """Which of the family's required Config attributes are absent.
+
+    A name that is not a Config field at all is a typo in _FAMILIES, not a
+    deployment that forgot a variable — and `getattr(..., None)` would make
+    the two indistinguishable, refusing production over an attribute that
+    does not exist and silently skipping the family everywhere else.
+    """
+    unknown = [name for name in family.requires if not hasattr(settings, name)]
+    if unknown:
+        raise WiringError(
+            f"module family {family.name!r} requires {unknown}, which "
+            f"{type(settings).__name__} does not define — fix _FAMILIES"
+        )
+    return tuple(name for name in family.requires if not getattr(settings, name))
 
 
 def _installed(distribution: str) -> bool:
@@ -367,6 +394,21 @@ def build_runtime(
         _assert_declaration_matches(family, built)
         modules.extend(m for m in built if wanted is None or m.config.name in wanted)
 
+    if not modules:
+        # Reached when every selected family was skipped for missing
+        # config. The skip's justification — "a developer without a third
+        # party's API key still gets the rest of the crawler" — does not
+        # hold when the selection WAS that family: there is no rest, and
+        # run_scheduler would add zero jobs and block on the signal
+        # forever. Same healthy-and-idle container UnknownModuleError
+        # exists to prevent, reached through the config door instead of
+        # the name door, so it is refused in every profile.
+        raise ProfileError(
+            "refusing to start: every selected module family is unconfigured, "
+            "so there is nothing to run. Configure one, or select a family "
+            f"that is. Known modules: {', '.join(sorted(known_module_names()))}"
+        )
+
     for module in modules:
         registry.register(module)
 
@@ -386,9 +428,17 @@ def _assert_declaration_matches(
     the gate reads it before anything is imported. Drift would mean either
     refusing to boot over a module that no longer exists, or booting a
     module whose config was never checked — so check it every assembly."""
+    # Compared as sets: the declaration exists so the gate can answer
+    # "can this family run" before importing anything, and nothing
+    # downstream cares what order a family builds in. Order-sensitivity
+    # here would fail the boot over a reshuffle, listing the same names on
+    # both sides of the message.
     actual = tuple(m.config.name for m in built)
-    if actual != family.module_names:
+    if set(actual) != set(family.module_names) or len(actual) != len(
+        family.module_names
+    ):
         raise WiringError(
-            f"module family {family.name!r} declares {list(family.module_names)} "
-            f"but built {list(actual)} — update _FAMILIES"
+            f"module family {family.name!r} declares "
+            f"{sorted(family.module_names)} but built {sorted(actual)} "
+            f"— update _FAMILIES"
         )

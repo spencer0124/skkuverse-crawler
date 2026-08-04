@@ -225,6 +225,16 @@ class TestImmutability:
 class TestBusDatabase:
     """Bus stores in its own database, so the suffixing has to work there too."""
 
+    def test_unset_is_none_rather_than_a_plausible_literal(self, monkeypatch):
+        """skkuverse-server requires the same variable with no default and
+        fails startup without it. A crawler that invented "bus_campus"
+        would write where the server is not reading — no error anywhere,
+        the app just serves nothing. So absent reads as absent and the
+        family gate refuses."""
+        monkeypatch.delenv("MONGO_DB_NAME_BUS_CAMPUS", raising=False)
+        cfg = _init_fresh(monkeypatch, CRAWLER_ENV="production")
+        assert cfg.mongo_bus_db_name is None
+
     @pytest.mark.parametrize(
         "crawler_env,expected",
         [
@@ -233,23 +243,23 @@ class TestBusDatabase:
             ("test", "bus_campus_test"),
         ],
     )
-    def test_default_base_gets_the_environment_suffix(
+    def test_a_set_name_gets_the_environment_suffix(
         self, monkeypatch, crawler_env, expected
     ):
-        monkeypatch.delenv("MONGO_DB_NAME_BUS_CAMPUS", raising=False)
-        cfg = _init_fresh(monkeypatch, CRAWLER_ENV=crawler_env)
-        assert cfg.mongo_bus_db_name == expected
-
-    def test_an_override_is_suffixed_too(self, monkeypatch):
+        """Matches skkuverse-server's devDbName exactly."""
         cfg = _init_fresh(
-            monkeypatch, CRAWLER_ENV="development", MONGO_DB_NAME_BUS_CAMPUS="buses"
+            monkeypatch,
+            CRAWLER_ENV=crawler_env,
+            MONGO_DB_NAME_BUS_CAMPUS="bus_campus",
         )
-        assert cfg.mongo_bus_db_name == "buses_dev"
+        assert cfg.mongo_bus_db_name == expected
 
     def test_it_is_not_the_notices_database(self, monkeypatch):
         """The whole reason get_db takes a name. Sharing one would put bus
         cache documents in the collection the server reads notices from."""
-        cfg = _init_fresh(monkeypatch, CRAWLER_ENV="production")
+        cfg = _init_fresh(
+            monkeypatch, CRAWLER_ENV="production", MONGO_DB_NAME_BUS_CAMPUS="bus_campus"
+        )
         assert cfg.mongo_bus_db_name != cfg.mongo_db_name
 
 

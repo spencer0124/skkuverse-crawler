@@ -45,10 +45,20 @@ from ...core.ports import Outcome, SourceSpec
 class SnapshotSink:
     """Upsert whole documents by natural key.
 
-    No indexes to ensure: the key IS `_id`, which Mongo indexes uniquely
-    on its own. `prepare` and `flush` are therefore genuinely empty rather
-    than accidentally so — every write lands immediately, so there is no
-    buffer that a missed flush could strand.
+    `prepare` and `flush` are empty, for two different reasons.
+
+    `flush` genuinely has nothing to do: every write lands immediately, so
+    there is no buffer a missed flush could strand.
+
+    `prepare` is empty because this sink needs no index of its own — the
+    key IS `_id`, which Mongo indexes uniquely already. That is NOT the
+    same as "this collection needs no indexes". A TTL index, for instance,
+    is a property of the collection rather than of the sink, and the
+    deployment owns it: skkuverse-server creates `bus_cache`'s at its own
+    boot today. If a snapshot collection ever needs one, decide
+    deliberately who creates it — a module cannot, since `modules/` may
+    import neither `plugins/` nor `shared.db`, and this hook is the only
+    setup point in the write path.
     """
 
     def __init__(self, collection: AsyncIOMotorCollection) -> None:
@@ -72,6 +82,10 @@ class SnapshotSink:
 
     async def _store(self, snapshot: Any) -> Outcome:
         key, fields = _unpack(snapshot)
+        # _updatedAt last: it is this sink's stamp and wins over a
+        # module-supplied one of the same name. A module that wants to
+        # publish its own notion of freshness should name it something
+        # else (bus uses fetchedAt).
         result = await self._collection.update_one(
             {"_id": key},
             {"$set": {**fields, "_updatedAt": datetime.now(timezone.utc)}},

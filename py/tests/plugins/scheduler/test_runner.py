@@ -8,6 +8,7 @@ being scheduled is exactly the failure nobody notices.
 
 from __future__ import annotations
 
+import pytest
 from structlog.testing import capture_logs
 
 from skkuverse_crawler.core.module import ModuleConfig
@@ -96,10 +97,35 @@ class TestMisfireGrace:
         assert grace_seconds(ModuleConfig(name="fast", misfire_grace_time=2)) == 2
         assert grace_seconds(ModuleConfig(name="slow", misfire_grace_time=600)) == 600
 
-    def test_zero_is_honoured_rather_than_treated_as_unset(self):
-        """`if not config.misfire_grace_time` would turn 0 into the default.
-        Zero means "run only if exactly on time" and is a real choice."""
-        assert grace_seconds(ModuleConfig(name="strict", misfire_grace_time=0)) == 0
+    @pytest.mark.parametrize("bad", [0, -1, -600])
+    def test_non_positive_is_refused_by_name(self, bad):
+        """APScheduler accepts only None or a positive integer and rejects
+        the rest from add_job — which runs before scheduler.start(), so one
+        module's bad value takes down EVERY module in the process, with a
+        TypeError naming neither the module nor the field. Catching it here
+        costs a branch and names the module."""
+        with pytest.raises(ValueError, match="strict"):
+            grace_seconds(ModuleConfig(name="strict", misfire_grace_time=bad))
+
+    def test_the_refusal_matches_what_apscheduler_would_have_done(self):
+        """Pins the rule against the library rather than against a guess:
+        if a future apscheduler starts accepting 0, this fails and we can
+        relax the branch instead of keeping a stale restriction."""
+        from apscheduler.schedulers.asyncio import AsyncIOScheduler
+        from apscheduler.triggers.interval import IntervalTrigger
+
+        async def _noop():
+            return None
+
+        with pytest.raises(TypeError, match="positive integer"):
+            AsyncIOScheduler().add_job(
+                _noop, IntervalTrigger(seconds=10), misfire_grace_time=0
+            )
+
+    def test_a_bool_is_not_a_grace_time(self):
+        """True is an int in Python and would sneak through as 1 second."""
+        with pytest.raises(ValueError):
+            grace_seconds(ModuleConfig(name="oops", misfire_grace_time=True))
 
 
 class TestMissedTickListener:

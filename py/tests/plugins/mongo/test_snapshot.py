@@ -177,10 +177,16 @@ class TestBadPayloadsFailLoudly:
 
 
 class TestFieldIsolation:
-    async def test_the_module_mapping_is_copied_not_aliased(self):
+    async def test_the_module_mapping_is_copied_at_the_top_level(self):
         """A snapshot module holds state across ticks; if the sink kept a
         reference, next tick's mutation would rewrite what was already
-        sent."""
+        sent.
+
+        The copy is shallow, so a mutable VALUE inside fields is still
+        shared. That is fine here only because the write is awaited before
+        accept returns — there is no window in which a module could mutate
+        it. A sink that buffered would need a deep copy.
+        """
         collection = FakeCollection()
         fields = {"data": "v1"}
         await SnapshotSink(collection).accept(
@@ -188,6 +194,20 @@ class TestFieldIsolation:
         )
         fields["data"] = "v2"
         assert collection.ops[0][1]["update"]["$set"]["data"] == "v1"
+
+    async def test_a_module_supplied_updatedAt_does_not_win(self):
+        """_updatedAt is the sink's stamp and is merged last. A module that
+        wants to publish its own freshness names it something else — bus
+        uses fetchedAt — rather than silently disagreeing with storage."""
+        collection = FakeCollection()
+        stale = datetime(2020, 1, 1, tzinfo=timezone.utc)
+        await SnapshotSink(collection).accept(
+            ItemCrawled(
+                source_id="s", item=_Snapshot(key="k", fields={"_updatedAt": stale})
+            )
+        )
+        assert collection.ops[0][1]["update"]["$set"]["_updatedAt"] != stale
+
 
 
 async def test_it_satisfies_the_shipped_sink_contract():

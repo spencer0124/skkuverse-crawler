@@ -39,11 +39,14 @@ async def test_an_explicit_name_wins(fake_client):
     assert await get_db("bus_campus_test") == "db:bus_campus_test"
 
 
-async def test_the_bus_database_is_reachable_from_config(fake_client):
+async def test_the_bus_database_is_reachable_from_config(fake_client, monkeypatch):
     """The path bus will actually take: read the name off Config rather
     than hardcoding it at the call site."""
-    from skkuverse_crawler.env import get_config
+    from skkuverse_crawler.env import get_config, init_config, reset_config
 
+    monkeypatch.setenv("MONGO_DB_NAME_BUS_CAMPUS", "bus_campus")
+    reset_config()
+    init_config(force=True)
     cfg = get_config()
     assert await get_db(cfg.mongo_bus_db_name) == f"db:{cfg.mongo_bus_db_name}"
     assert cfg.mongo_bus_db_name != cfg.mongo_db_name

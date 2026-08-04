@@ -47,7 +47,7 @@ class Config:
     # notices'; the two secrets are what decide whether the family is
     # configured at all. All three URLs/keys are secrets in their entirety
     # and must never be logged.
-    mongo_bus_db_name: str = ""
+    mongo_bus_db_name: str | None = None
     hssc_api_url: str | None = None
     seoul_bus_service_key: str | None = None
     naver_api_key_id: str | None = None
