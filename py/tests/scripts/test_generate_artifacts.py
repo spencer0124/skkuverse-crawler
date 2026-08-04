@@ -9,9 +9,10 @@ Tests are grouped by responsibility area:
                           three valid (avail, enabled, reason) combos pass
 * TestCategoryRules     — fixed/picker integrity vs. dept availability
 * TestPickerArtifact    — picker emits crawlable + intentionally-unsupported
-* TestCronFilterArtifact— docker env line includes only depts that crawl
 * TestServerSourcesArtifact — schema carries new fields, drops legacy
 * TestRealSourcesSmoke  — current SSOT file passes the full validator
+* TestArtifactInventory — py/generated/ contents match the artifact table,
+                          and the deleted sibling-push machinery stays deleted
 """
 
 from __future__ import annotations
@@ -36,7 +37,7 @@ _spec.loader.exec_module(ga)
 
 
 def test_package_sources_json_target():
-    """Step [9] writes the bundled runtime copy into the package."""
+    """Step [8] writes the bundled runtime copy into the package."""
     expected = (
         _REPO_PY_ROOT / "src" / "skkuverse_crawler" / "modules" / "notices" / "config" / "sources.json"
     )
@@ -240,32 +241,6 @@ class TestPickerArtifact:
 
 
 # ──────────────────────────────────────────────────────────────────────
-# Cron filter artifact — gen_docker_env
-# ──────────────────────────────────────────────────────────────────────
-class TestCronFilterArtifact:
-    @pytest.fixture
-    def env_line(self):
-        depts = [
-            _make_dept(id="cron-on"),
-            _make_dept(id="cron-paused", crawlEnabled=False),
-            _make_dept(
-                id="cron-unsupported", crawlAvailable=False, crawlEnabled=False,
-                excludeReason="loginRequired",
-            ),
-        ]
-        return ga.gen_docker_env(depts).strip()
-
-    def test_includes_crawlable(self, env_line):
-        assert "cron-on" in env_line
-
-    def test_excludes_paused(self, env_line):
-        assert "cron-paused" not in env_line
-
-    def test_excludes_unsupported(self, env_line):
-        assert "cron-unsupported" not in env_line
-
-
-# ──────────────────────────────────────────────────────────────────────
 # Server-sources.json artifact — schema migration
 # ──────────────────────────────────────────────────────────────────────
 class TestServerSourcesArtifact:
@@ -353,3 +328,58 @@ class TestExcludeReasons:
             (_REPO_ROOT / "exclude-reasons.json").read_text(encoding="utf-8")
         )
         assert ga.validate_exclude_reasons(reasons) == []
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Artifact inventory — py/generated/ is the producer side of the
+# cross-repo contracts (skkuverse/contracts/manifest.json)
+# ──────────────────────────────────────────────────────────────────────
+class TestArtifactInventory:
+    def test_generated_dir_matches_expected_set(self):
+        """The committed directory is exactly what the script declares.
+
+        assert_no_orphans() enforces this at generation time; asserting it
+        here too means a PR that adds an artifact without updating
+        EXPECTED_GENERATED fails in the test job, not only in the codegen job.
+        """
+        actual = {p.name for p in ga.GENERATED_DIR.iterdir() if p.is_file()}
+        assert actual == ga.EXPECTED_GENERATED
+
+    def test_generated_artifacts_are_tracked_by_git(self):
+        """They must be in git — consumers fetch them from the remote.
+
+        Re-ignoring py/generated/ would silently break every consumer's
+        freshness check while leaving the local working tree looking fine.
+        """
+        import subprocess
+
+        for name in sorted(ga.EXPECTED_GENERATED):
+            rel = f"py/generated/{name}"
+            out = subprocess.run(
+                ["git", "ls-files", "--error-unmatch", rel],
+                cwd=_REPO_ROOT, capture_output=True, text=True,
+            )
+            assert out.returncode == 0, f"{rel} is not tracked by git"
+
+    def test_sibling_push_stays_deleted(self):
+        """copy_to_sibling() wrote into ../skkuverse-server by positional
+        path guess and skipped silently when the directory was absent —
+        exit 0, one line of stdout, no return value. Propagation is now
+        pull-based (skkuverse_sync.py). Re-adding push here would also
+        bypass the consumer lock files and leave them red on a copy the
+        tooling itself had just made.
+        """
+        assert not hasattr(ga, "copy_to_sibling")
+        assert not hasattr(ga, "SERVER_SOURCES_JSON")
+        assert not hasattr(ga, "SERVER_CAT_JSON")
+        assert not hasattr(ga, "SERVER_EXCLUDE_JSON")
+
+    def test_docker_crawl_filter_stays_deleted(self):
+        """gen_docker_env() emitted a CRAWL_SOURCE_FILTER line with no
+        consumer. That variable in production compose silently cut 147
+        enabled sources to 15 on 2026-04-21 (docs/known-issues.md) with the
+        container reporting healthy — committing a ready-to-paste copy of it
+        is a footgun, and `--source a,b` covers the legitimate dev use.
+        """
+        assert not hasattr(ga, "gen_docker_env")
+        assert "docker-crawl-filter.env" not in ga.EXPECTED_GENERATED

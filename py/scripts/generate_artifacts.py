@@ -1,15 +1,24 @@
 """Generate all derived artifacts from the SSOT config files.
 
-Reads sources.json and categories.json from repo root,
-validates cross-references, and produces:
+Reads sources.json, categories.json and exclude-reasons.json from repo root,
+validates cross-references, and produces 8 artifacts:
 
   1. source_ids.py                  — Python SourceId enum
-  2. server-sources.json            — Server API format
-  3. docker-crawl-filter.env        — CRAWL_SOURCE_FILTER env line
-  4. coverage-table.md              → docs/department-coverage-analysis.md
-  5. departments-by-college.md      → docs/departments-by-college.md
-  6. departments-by-app-category.md → docs/departments-by-app-category.md
-  7. server-categories.json         — Server-driven tab config for app
+  2. server-sources.json            → py/generated/ (server API format)
+  3. coverage-table.md              → docs/department-coverage-analysis.md
+  4. departments-by-college.md      → docs/departments-by-college.md
+  5. departments-by-app-category.md → docs/departments-by-app-category.md
+  6. server-categories.json         → py/generated/ (server-driven tab config)
+  7. server-exclude-reasons.json    → py/generated/ (key → label map)
+  8. package sources.json copy      — bundled runtime copy, byte-identical
+
+Every artifact is committed. CI regenerates and runs `git diff --exit-code`,
+so an SSOT edit without a codegen run cannot merge.
+
+This script does NOT write into sibling repos. Consumers pull the artifacts
+under py/generated/ via the cross-repo contract tool:
+
+    python3 ../skkuverse/tools/skkuverse_sync.py pull --all
 
 Usage:
     cd py
@@ -19,7 +28,6 @@ Usage:
 from __future__ import annotations
 
 import json
-import shutil
 import sys
 from pathlib import Path
 
@@ -46,10 +54,15 @@ COVERAGE_MD = REPO_ROOT / "docs" / "department-coverage-analysis.md"
 BY_COLLEGE_MD = REPO_ROOT / "docs" / "departments-by-college.md"
 BY_APP_CATEGORY_MD = REPO_ROOT / "docs" / "departments-by-app-category.md"
 
-# Sibling repos
-SERVER_SOURCES_JSON = REPO_ROOT.parent / "skkuverse-server" / "src" / "notices" / "sources.json"
-SERVER_CAT_JSON = REPO_ROOT.parent / "skkuverse-server" / "src" / "notices" / "categories.json"
-SERVER_EXCLUDE_JSON = REPO_ROOT.parent / "skkuverse-server" / "src" / "notices" / "exclude-reasons.json"
+# Exact contents of py/generated/. Asserted after every run so a renamed or
+# retired artifact cannot leave a fossil behind — server-departments.json sat
+# there for four months after the dept→source rename because the directory was
+# gitignored and nothing could see it.
+EXPECTED_GENERATED = {
+    "server-sources.json",
+    "server-categories.json",
+    "server-exclude-reasons.json",
+}
 
 # ---------------------------------------------------------------------------
 # Strategy → hasCategory / hasAuthor mapping
@@ -361,16 +374,6 @@ def gen_exclude_reasons_map(reasons: list[dict]) -> str:
     return json.dumps(payload, ensure_ascii=False, indent=2) + "\n"
 
 
-def gen_docker_env(departments: list[dict]) -> str:
-    # Cron actually crawls only when BOTH structurally available AND
-    # operationally enabled. Either flag false → skip.
-    enabled = [
-        d["id"] for d in departments
-        if d["crawlAvailable"] and d["crawlEnabled"]
-    ]
-    return f"CRAWL_SOURCE_FILTER={','.join(enabled)}\n"
-
-
 def gen_server_categories(
     categories: list[dict],
     departments: list[dict],
@@ -597,14 +600,27 @@ def gen_by_app_category_md(
 
 
 # ---------------------------------------------------------------------------
-# Sibling repo copy
+# Post-run assertions
 # ---------------------------------------------------------------------------
-def copy_to_sibling(src: Path, dst: Path, label: str) -> None:
-    if dst.parent.exists():
-        shutil.copy2(src, dst)
-        print(f"  -> Copied to {label}: {dst}")
-    else:
-        print(f"  -- Skipped {label} (directory not found)")
+def assert_no_orphans() -> None:
+    """py/generated/ must contain exactly the artifacts this script writes.
+
+    Fails on extras (a retired artifact left behind) and on missing files (a
+    write that silently did nothing).
+    """
+    actual = {p.name for p in GENERATED_DIR.iterdir() if p.is_file()}
+    extra = actual - EXPECTED_GENERATED
+    missing = EXPECTED_GENERATED - actual
+    if extra or missing:
+        print(
+            "ERROR: py/generated/ does not match the artifact table",
+            file=sys.stderr,
+        )
+        for name in sorted(extra):
+            print(f"  - orphan (no producer): {name}", file=sys.stderr)
+        for name in sorted(missing):
+            print(f"  - missing: {name}", file=sys.stderr)
+        sys.exit(1)
 
 
 # ---------------------------------------------------------------------------
@@ -652,46 +668,45 @@ def main() -> None:
     server_path = GENERATED_DIR / "server-sources.json"
     server_path.write_text(gen_sources_json(sources), encoding="utf-8")
     print("  [2] server-sources.json")
-    copy_to_sibling(server_path, SERVER_SOURCES_JSON, "skkuverse-server")
 
-    # 3. docker-crawl-filter.env
-    env_path = GENERATED_DIR / "docker-crawl-filter.env"
-    env_path.write_text(gen_docker_env(sources), encoding="utf-8")
-    print("  [3] docker-crawl-filter.env")
-
-    # 4. coverage-table.md → docs/
+    # 3. coverage-table.md → docs/
     COVERAGE_MD.write_text(gen_coverage_md(sources), encoding="utf-8")
-    print("  [4] docs/department-coverage-analysis.md")
+    print("  [3] docs/department-coverage-analysis.md")
 
-    # 5. departments-by-college.md → docs/
+    # 4. departments-by-college.md → docs/
     BY_COLLEGE_MD.write_text(gen_by_college_md(sources), encoding="utf-8")
-    print("  [5] docs/departments-by-college.md")
+    print("  [4] docs/departments-by-college.md")
 
-    # 6. departments-by-app-category.md → docs/
+    # 5. departments-by-app-category.md → docs/
     BY_APP_CATEGORY_MD.write_text(
         gen_by_app_category_md(sources, categories), encoding="utf-8",
     )
-    print("  [6] docs/departments-by-app-category.md")
+    print("  [5] docs/departments-by-app-category.md")
 
-    # 7. server-categories.json
+    # 6. server-categories.json
     cat_path = GENERATED_DIR / "server-categories.json"
     cat_path.write_text(
         gen_server_categories(categories, sources), encoding="utf-8",
     )
-    print("  [7] server-categories.json")
-    copy_to_sibling(cat_path, SERVER_CAT_JSON, "skkuverse-server")
+    print("  [6] server-categories.json")
 
-    # 8. server-exclude-reasons.json
+    # 7. server-exclude-reasons.json
     excl_path = GENERATED_DIR / "server-exclude-reasons.json"
     excl_path.write_text(gen_exclude_reasons_map(EXCLUDE_REASONS), encoding="utf-8")
-    print("  [8] server-exclude-reasons.json")
-    copy_to_sibling(excl_path, SERVER_EXCLUDE_JSON, "skkuverse-server")
+    print("  [7] server-exclude-reasons.json")
 
-    # 9. bundled package copy of sources.json (byte-identical to the SSOT)
+    # 8. bundled package copy of sources.json (byte-identical to the SSOT)
     PACKAGE_SOURCES_JSON.write_bytes(SOURCES_JSON.read_bytes())
-    print("  [9] package sources.json copy")
+    print("  [8] package sources.json copy")
+
+    assert_no_orphans()
 
     print("Done.")
+    print()
+    print("Next:")
+    print("  1. commit the artifacts here (CI enforces codegen == committed)")
+    print("  2. propagate to consumers:")
+    print("       python3 ../skkuverse/tools/skkuverse_sync.py pull --all")
 
 
 if __name__ == "__main__":
