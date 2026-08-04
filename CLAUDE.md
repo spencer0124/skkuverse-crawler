@@ -23,6 +23,8 @@ python -m skkuverse_crawler validate-attachments --source cheme --no-http --json
 python -m skkuverse_crawler validate-markdown                        # cleanMarkdown 렌더링 품질 검증
 python -m skkuverse_crawler validate-markdown --source skku-main --severity error --json
 python -m skkuverse_crawler health-summary                           # 크롤 헬스 일일 요약 1회 발송
+python -m skkuverse_crawler repair-dimensions                        # tier-2가 지운 이미지 차원 복구 (dry-run)
+python -m skkuverse_crawler repair-dimensions --apply                # 실제 쓰기. 멱등 — 재실행 시 repaired: 0
 
 # 테스트 & 린트
 python -m pytest tests/ -v                  # 전체 테스트
