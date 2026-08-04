@@ -39,7 +39,7 @@
 | `author` | string | 작성자 (전략별로 있을 수도/빈 문자열일 수도) |
 | `date` | string | **`YYYY-MM-DD` 문자열** (Date 타입 아님 — 정렬·비교 주의) |
 | `views` | int | 조회수 (전략별로 0일 수도) |
-| `content` | string\|null | **원본 HTML + 절대 URL** (정제 전). 레거시 렌더 경로. backfill의 입력 소스 |
+| `content` | string\|null | **원본 HTML + 절대 URL** (정제 전). 레거시 렌더 경로 |
 | `cleanHtml` | string\|null | 6단계 파이프라인으로 정제된 HTML(nh3 화이트리스트). 5MB 초과 시 null. 해시 산출 기준 |
 | **`cleanMarkdown`** | string\|null | `cleanHtml` → GFM 변환 결과. **앱 마크다운 렌더 권장 소스**. cleanHtml이 null이면 null |
 | `contentText` | string\|null | `cleanHtml`에서 뽑은 plain text. **블록 경계 `\n` 보존** (검색/요약 입력/미리보기용) |
@@ -48,7 +48,7 @@
 | `detailPath` | string | 리스트에서 얻은 상대/쿼리. 내부 재크롤 용도. **앱에 노출 불필요** |
 | `contentHash` | string\|null | `cleanHtml`의 SHA256. null = 컨텐츠 미확보 |
 | `crawledAt` | datetime (UTC) | 마지막 크롤 시각 |
-| `backfilledAt` | datetime (UTC)\|absent | backfill로 소급 갱신된 문서에만 존재. 신규 크롤링 문서엔 없음 |
+| ~~`backfilledAt`~~ | — | **폐지.** `backfill-*` 커맨드와 함께 사라졌다. 쓰는 코드 0, 프로덕션 보유 문서 0건(2026-08-04). 이 필드로 분기하는 소비자 코드가 있으면 제거 대상 |
 | `lastModified` | null | 현재 미사용 (예약 필드) |
 | `isDeleted` | bool | 원본에서 사라지면 soft delete |
 | `consecutiveFailures` | int | 상세 fetch 실패 연속 횟수 (앱 노출 불필요) |

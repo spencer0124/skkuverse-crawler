@@ -63,7 +63,7 @@
 - [ ] `py/scripts/manage_search_indexes.py` — search.json 에서 인덱스 2종을 코드로 구성 (`notices_search` nori / `notices_vector` **autoEmbed** — 사양은 [search-architecture.md](search-architecture.md) §③). `create|update|status`, `--env`, `queryable` 폴링, 기본 dry-run + `--apply` (migrate 스크립트 패턴). `create_search_index()` 는 설치된 pymongo 4.16 에 이미 있음
 - [ ] `embeddingInput` 조합기 — `title + category + summaryOneLiner + summary + contentText`, 16,000자 캡. **한 곳에 두고 두 곳에서 호출**한다:
   - `modules/notices/normalizer.py` `to_notice()` — 크롤 시점 (title/category/contentText 확보 상태)
-  - `notices_summary/processor.py` 의 `$set` — 요약이 붙은 뒤 재조합 (요약은 크롤보다 늦게 온다)
+  - `plugins/ai_summary/processor.py` 의 `$set` — 요약이 붙은 뒤 재조합 (요약은 크롤보다 늦게 온다)
 - [ ] `$set` 필드는 §② — `embeddingInput` / `embeddingInputVersion` / `embeddingInputHash` / `embeddingInputAt`. ⚠️ **`aiSummaryAt` 절대 미기록** (서버 FCM 디스패치 게이트)
 - [ ] 백필 스크립트 (일회성) — 기존 문서에 `embeddingInput` 채우기. `ContentRefreshed` 우회 경로와 6,714건 기존 문서는 크롤에 편승할 수 없다. `cleanup_summary_fields.py` 의 dry-run + `--apply` 패턴
 - [ ] 테스트: 조합기 단위 테스트(캡·null 필드·순서), **`aiSummaryAt` 미기록 assert**, 재조합 predicate

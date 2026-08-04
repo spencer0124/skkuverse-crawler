@@ -77,7 +77,7 @@ py/src/skkuverse_crawler/
 
 ## Execution Modes
 
-`--help`가 뱉는 7개 서브커맨드가 전부다. 일회성 `backfill-*` 커맨드들은 소멸했다 — null content 재크롤은 `WorkSeed` 포트 + `ContentRefreshed` 이벤트로 크롤 경로에 흡수됐고, 나머지 첨부 백필은 일회성 마이그레이션이라 유지할 이유가 없었다.
+`--help`가 뱉는 8개 서브커맨드가 전부다. 일회성 `backfill-*` 커맨드들은 소멸했다 — null content 재크롤은 `WorkSeed` 포트 + `ContentRefreshed` 이벤트로 크롤 경로에 흡수됐고, 나머지 첨부 백필은 일회성 마이그레이션이라 유지할 이유가 없었다.
 
 | 명령 | 필요 extra | 설명 |
 |------|-----------|------|
@@ -160,14 +160,14 @@ skkuverse-server의 `lib/config.js` 패턴을 Python으로 포팅한 중앙집�
 | `test` | `skku_notices_test` | `TEST` |
 
 **설계 원칙:**
-- 모든 `os.getenv()` 호출을 config.py에 집중 — db.py, logger.py 등은 `get_config()`만 호출
+- 모든 `os.getenv()` 호출을 `env.py`에 집중 — `shared/db.py`, `shared/logger.py` 등은 `get_config()`만 호출 (유일한 예외는 §Environment의 `SOURCES_JSON_PATH`)
 - `CRAWLER_ENV` 값은 `.lower()` 정규화하여 case-insensitive (`TEST`, `Development` 등 모두 허용)
-- 비-test 모드에서 `MONGO_URL` 누락 시 `SystemExit`으로 즉시 종료 (fail-fast)
+- **설정 로딩은 `MONGO_URL`을 강제하지 않는다** — 위 문단대로 그 검증은 `shared.db.get_client()`(`MongoUrlMissing`)와 production 부팅 게이트(`wiring.ProfileError`)로 옮겨갔다. 라이브러리가 배포 정책을 강제하지 않게 하려는 것
 - `load_dotenv(override=False)` — 이미 설정된 시스템 환경변수를 덮어쓰지 않음. Docker 환경에서 `CRAWLER_ENV=production`을 ENV로 넘기면 `.env`의 `CRAWLER_ENV=development`보다 우선
 
 **초기화 흐름:**
 ```
-CLI entrypoint (cli.py / notices/cli.py)
+CLI entrypoint (cli.py / modules/notices/cli.py)
   → init_config()
     → load_dotenv(override=False)   # .env 로드 (시스템 ENV 우선)
     → settings_from_env()           # os.environ → Config dataclass (env.py)
@@ -177,10 +177,13 @@ CLI entrypoint (cli.py / notices/cli.py)
 ```
 
 ### Module Structure
-- `shared/` — config, DB, logger, fetcher 등 모든 모듈이 공유하는 인프라
-- `notices/` — 공지 크롤러 모듈. 자체 types, config, strategies 보유
-- 향후 모듈 추가 시 같은 패턴으로 독립 모듈 생성
-- 각 모듈은 `CrawlModule` Protocol 구현, `cli.py`에서 APScheduler로 스케줄링
+
+파일 배치는 §Directory Layout이 전부다. 여기서는 **새 모듈을 추가할 때 지켜야 하는 규칙**만 적는다:
+
+- 새 모듈은 `modules/<name>/`에 만들고 `core/module.py`의 `CrawlModule` Protocol을 구현한다 (`run`, `shutdown`, `config`)
+- **모듈은 `plugins/`를 import하지 않는다.** 저장·알림이 필요하면 `core/ports.py`의 Protocol을 받아 쓰고, 실제 구현 주입은 `wiring.py`가 한다 — 이 방향이 뒤집히면 `py/tests/structure/`의 AST 스캔이 실패한다
+- 인프라는 `core/ports.py`의 포트로만 만진다. DB를 직접 부르는 모듈은 저장소 없는 실행(`--json`, `iter_notices()`)을 깨뜨린다
+- 스케줄 등록은 `cli.py`의 `_start_scheduler()`에서 `registry.register()`로 (APScheduler 어댑터는 `plugins/scheduler/runner.py`)
 
 ### Strategy Pattern
 - `CrawlStrategy` 추상 베이스: `crawl_list()` + `crawl_detail(ref: DetailRef)`
@@ -210,7 +213,7 @@ CLI entrypoint (cli.py / notices/cli.py)
 - 신호: `DeptResult.source_down` — **page 0 list fetch 실패**만 다운으로 간주 (부분 에러 제외)
 - L1: `record_and_alert()` — `crawl_health` 컬렉션(sourceId당 1건)에 연속 실패 카운트 저장, 연속 3틱 도달 시 틱당 1개 배치 메시지로 알림, 회복 시 recovered 알림. `alerted` 래치로 중복 발화 방지. 순수 판정은 `plugins/health/logic.py::decide_transitions` (DB 无 유닛테스트 가능). `NoticesModule`이 이 함수를 직접 부르지 않고 **wiring이 설치하는 훅**으로 받는다 — modules가 plugins를 import하지 않는다는 불변식 때문
 - L2: `crawl-health-summary` 모듈 — 매일 09:00 KST 요약 (활성/실패 소스, 최근 24h 신규 건수는 `_id` ObjectId 타임스탬프 범위로 계산)
-- 알림 실패는 절대 크롤을 중단시키지 않음 (never-raise, `dispatch_client.py`와 동일 계약)
+- 알림 실패는 절대 크롤을 중단시키지 않음 (never-raise, `plugins/dispatch/client.py`와 동일 계약)
 
 ## MongoDB
 
