@@ -34,9 +34,19 @@ async def get_client() -> AsyncIOMotorClient:
     return _client
 
 
-async def get_db() -> AsyncIOMotorDatabase:
+async def get_db(name: str | None = None) -> AsyncIOMotorDatabase:
+    """The notices database by default; pass a name for any other.
+
+    One client, many databases: modules do not share a schema and need not
+    share a database. The default keeps every existing caller unchanged.
+    An empty name is refused rather than silently handed to the driver,
+    which would resolve it against the connection string's default and put
+    documents somewhere nobody asked for.
+    """
     client = await get_client()
-    return client[get_config().mongo_db_name]
+    if name is not None and not name:
+        raise ValueError("database name is empty — pass None for the default, not ''")
+    return client[name or get_config().mongo_db_name]
 
 
 async def close_client() -> None:

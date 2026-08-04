@@ -38,6 +38,20 @@ class Config:
     # Crawl-health Discord alerts (optional). Unset → alerts silently skipped;
     # boot log announces the state once.
     discord_webhook_url: str | None
+    # ── everything below has a default ────────────────────────────────────
+    # New fields MUST be appended with one. Config is frozen and has no
+    # defaults above this line, and tests/test_wiring.py builds it from an
+    # explicit full kwargs dict — a new required field breaks them all.
+    #
+    # Bus (module family added later). The database is separate from
+    # notices'; the two secrets are what decide whether the family is
+    # configured at all. All three URLs/keys are secrets in their entirety
+    # and must never be logged.
+    mongo_bus_db_name: str = ""
+    hssc_api_url: str | None = None
+    seoul_bus_service_key: str | None = None
+    naver_api_key_id: str | None = None
+    naver_api_key: str | None = None
 
     @property
     def is_production(self) -> bool:
@@ -95,3 +109,17 @@ def default_ai_service_url(env: CrawlerEnv) -> str:
     if env == CrawlerEnv.PRODUCTION:
         return "http://ai:4000"
     return "http://127.0.0.1:4000"
+
+
+def endpoint_for(env: CrawlerEnv, *, prod: str | None, dev: str | None) -> str | None:
+    """Pick between a prod and a non-prod endpoint. Pure — env.py reads the
+    two variables, this decides which one wins.
+
+    Production never falls back to the dev endpoint: pointing the live
+    crawler at a staging upstream is worse than not crawling. Everywhere
+    else prefers dev but falls back to prod, so a developer holding only
+    one URL can still run.
+    """
+    if env == CrawlerEnv.PRODUCTION:
+        return prod
+    return dev or prod

@@ -215,3 +215,106 @@ class TestImmutability:
         cfg = _init_fresh(monkeypatch, CRAWLER_ENV="test")
         with pytest.raises(AttributeError):
             cfg.env = CrawlerEnv.PRODUCTION  # type: ignore[misc]
+
+
+# ---------------------------------------------------------------------------
+# Bus family configuration (the module itself lands later)
+# ---------------------------------------------------------------------------
+
+
+class TestBusDatabase:
+    """Bus stores in its own database, so the suffixing has to work there too."""
+
+    @pytest.mark.parametrize(
+        "crawler_env,expected",
+        [
+            ("production", "bus_campus"),
+            ("development", "bus_campus_dev"),
+            ("test", "bus_campus_test"),
+        ],
+    )
+    def test_default_base_gets_the_environment_suffix(
+        self, monkeypatch, crawler_env, expected
+    ):
+        monkeypatch.delenv("MONGO_DB_NAME_BUS_CAMPUS", raising=False)
+        cfg = _init_fresh(monkeypatch, CRAWLER_ENV=crawler_env)
+        assert cfg.mongo_bus_db_name == expected
+
+    def test_an_override_is_suffixed_too(self, monkeypatch):
+        cfg = _init_fresh(
+            monkeypatch, CRAWLER_ENV="development", MONGO_DB_NAME_BUS_CAMPUS="buses"
+        )
+        assert cfg.mongo_bus_db_name == "buses_dev"
+
+    def test_it_is_not_the_notices_database(self, monkeypatch):
+        """The whole reason get_db takes a name. Sharing one would put bus
+        cache documents in the collection the server reads notices from."""
+        cfg = _init_fresh(monkeypatch, CRAWLER_ENV="production")
+        assert cfg.mongo_bus_db_name != cfg.mongo_db_name
+
+
+class TestBusSecrets:
+    """Absent means absent — the family gate reads these to decide whether
+    bus can run at all, so "" must not read as configured."""
+
+    def test_unset_secrets_are_none(self, monkeypatch):
+        for var in (
+            "SEOUL_BUS_SERVICE_KEY",
+            "NAVER_API_KEY_ID",
+            "NAVER_API_KEY",
+            "API_HSSC_NEW_PROD",
+            "API_HSSC_NEW_DEV",
+        ):
+            monkeypatch.delenv(var, raising=False)
+        cfg = _init_fresh(monkeypatch)
+        assert cfg.seoul_bus_service_key is None
+        assert cfg.naver_api_key_id is None
+        assert cfg.naver_api_key is None
+        assert cfg.hssc_api_url is None
+
+    def test_empty_string_is_treated_as_unset(self, monkeypatch):
+        cfg = _init_fresh(monkeypatch, SEOUL_BUS_SERVICE_KEY="")
+        assert cfg.seoul_bus_service_key is None
+
+    def test_a_set_key_survives_verbatim(self, monkeypatch):
+        cfg = _init_fresh(monkeypatch, SEOUL_BUS_SERVICE_KEY="abc%2Fdef")
+        assert cfg.seoul_bus_service_key == "abc%2Fdef"
+
+
+class TestHsscEndpointSelection:
+    """The whole URL is the credential, and there are two of them."""
+
+    def test_production_takes_prod(self, monkeypatch):
+        cfg = _init_fresh(
+            monkeypatch,
+            CRAWLER_ENV="production",
+            API_HSSC_NEW_PROD="https://prod.example/api",
+            API_HSSC_NEW_DEV="https://dev.example/api",
+        )
+        assert cfg.hssc_api_url == "https://prod.example/api"
+
+    def test_production_never_falls_back_to_dev(self, monkeypatch):
+        """Pointing the live crawler at a staging upstream is worse than not
+        crawling: it would publish staging data as real."""
+        monkeypatch.delenv("API_HSSC_NEW_PROD", raising=False)
+        cfg = _init_fresh(
+            monkeypatch, CRAWLER_ENV="production", API_HSSC_NEW_DEV="https://dev.example/api"
+        )
+        assert cfg.hssc_api_url is None
+
+    def test_development_prefers_dev(self, monkeypatch):
+        cfg = _init_fresh(
+            monkeypatch,
+            CRAWLER_ENV="development",
+            API_HSSC_NEW_PROD="https://prod.example/api",
+            API_HSSC_NEW_DEV="https://dev.example/api",
+        )
+        assert cfg.hssc_api_url == "https://dev.example/api"
+
+    def test_development_falls_back_to_prod(self, monkeypatch):
+        """A developer holding only one URL should still be able to run."""
+        monkeypatch.delenv("API_HSSC_NEW_DEV", raising=False)
+        cfg = _init_fresh(
+            monkeypatch, CRAWLER_ENV="development", API_HSSC_NEW_PROD="https://prod.example/api"
+        )
+        assert cfg.hssc_api_url == "https://prod.example/api"
