@@ -160,20 +160,29 @@ def main() -> None:
 
 
 @main.command()
-@click.option("--module", "-m", default=None, help="Run specific module only")
+@click.option(
+    "--module",
+    "-m",
+    default=None,
+    help="Comma-separated module names to run (default: all). Unknown names are an error.",
+)
 def start(module: str | None) -> None:
-    """Start the cron scheduler for all (or one) module."""
+    """Start the cron scheduler for all (or some) modules."""
     from .env import init_config
 
     cfg = init_config()
     configure_logging(cfg)
-    asyncio.run(_start_scheduler(module))
+    # Split here, not in wiring: "a comma means several" is a CLI spelling
+    # decision, and wiring takes a sequence so a library caller can pass a
+    # list without stringifying it first.
+    selection = module.split(",") if module else None
+    asyncio.run(_start_scheduler(selection))
 
 
-async def _start_scheduler(module_filter: str | None = None) -> None:
+async def _start_scheduler(selection: list[str] | None = None) -> None:
     from .plugins.scheduler.runner import run_scheduler
     from .shared.db import close_client
     from .wiring import build_runtime
 
-    modules = build_runtime()
-    await run_scheduler(modules, module_filter=module_filter, on_shutdown=close_client)
+    modules = build_runtime(selection=selection)
+    await run_scheduler(modules, on_shutdown=close_client)

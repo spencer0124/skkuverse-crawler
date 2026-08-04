@@ -101,14 +101,21 @@ class TestBuildRuntime:
         with patch("skkuverse_crawler.core.registry.register") as register:
             modules = wiring.build_runtime()
 
-        names = [m.config.name for m in modules]
-        assert names == [
+        # Derived from the family table, not restated: a hardcoded list here
+        # would have to be edited in lockstep with _FAMILIES, and the whole
+        # point of the table is that the names live in one place.
+        assert [m.config.name for m in modules] == list(wiring.known_module_names())
+        assert register.call_count == len(modules)
+
+    async def test_the_table_still_describes_the_notices_family(self):
+        """One literal assertion, so a table edit that drops a module is a
+        failing test rather than a quietly smaller runtime."""
+        assert wiring.known_module_names() == (
             "notices",
             "notices-update-check",
             "notices-summary",
             "crawl-health-summary",
-        ]
-        assert register.call_count == len(modules)
+        )
 
     async def test_notices_module_gets_ports_factory_and_health_hook(self):
         with patch("skkuverse_crawler.core.registry.register"):
@@ -225,3 +232,143 @@ class TestRequiredSetsAreDistinct:
     def test_only_mongo_must_be_configured(self):
         assert wiring.REQUIRED_CONFIGURED == ("mongo",)
         assert set(wiring.REQUIRED_CONFIGURED) <= set(wiring.REQUIRED_INSTALLED)
+
+
+class TestModuleSelection:
+    """Which modules this process runs.
+
+    Selection lives in build_runtime rather than the scheduler so that an
+    unselected family is never built — that is what lets a notices-only
+    container boot without the bus family's credentials, and it means a
+    typo cannot produce a healthy container running nothing.
+    """
+
+    async def test_no_selection_means_everything(self):
+        with patch("skkuverse_crawler.core.registry.register"):
+            modules = wiring.build_runtime()
+        assert len(modules) == len(wiring.known_module_names())
+
+    async def test_a_subset_returns_only_those_modules(self):
+        with patch("skkuverse_crawler.core.registry.register"):
+            modules = wiring.build_runtime(selection=["notices", "notices-summary"])
+        assert [m.config.name for m in modules] == ["notices", "notices-summary"]
+
+    async def test_whitespace_around_names_is_tolerated(self):
+        """`--module notices, notices-summary` is a reasonable thing to type."""
+        with patch("skkuverse_crawler.core.registry.register"):
+            modules = wiring.build_runtime(selection=[" notices ", " notices-summary"])
+        assert [m.config.name for m in modules] == ["notices", "notices-summary"]
+
+    async def test_an_unknown_name_raises_and_lists_the_valid_ones(self):
+        """The old filter matched silently: `--module notice` scheduled zero
+        jobs and the container sat there healthy and idle."""
+        with pytest.raises(wiring.UnknownModuleError) as exc:
+            wiring.build_runtime(selection=["notice"])
+        assert "notice" in str(exc.value)
+        assert "notices-update-check" in str(exc.value)
+
+    async def test_one_bad_name_among_good_ones_still_raises(self):
+        with pytest.raises(wiring.UnknownModuleError, match="typo"):
+            wiring.build_runtime(selection=["notices", "typo"])
+
+    async def test_an_empty_selection_raises_rather_than_running_nothing(self):
+        """`--module ""` and `--module ,,` both land here. Running zero
+        modules is never what someone meant by naming some."""
+        with pytest.raises(wiring.UnknownModuleError, match="no modules selected"):
+            wiring.build_runtime(selection=["", "  "])
+
+
+class TestFamilyConfigGate:
+    """A family this process was asked to run but cannot.
+
+    Distinct from the plugin gate: that one asks "is the code installed",
+    this one asks "was this family given what it needs". Keyed on the
+    SELECTION, not on which variables happen to be set — otherwise a
+    notices-only container would refuse to boot over absent bus keys.
+    """
+
+    @staticmethod
+    def _family_needing(attr: str):
+        return wiring.ModuleFamily(
+            name="demo",
+            module_names=("demo-module",),
+            requires=(attr,),
+            build=lambda settings, notifier: (_DemoModule(),),
+        )
+
+    async def test_production_refuses_when_a_selected_family_is_unconfigured(self):
+        family = self._family_needing("seoul_bus_service_key")
+        settings = TestProductionProfileGate._settings(seoul_bus_service_key=None)
+        with patch.object(wiring, "_FAMILIES", (family,)):
+            with pytest.raises(wiring.ProfileError) as exc:
+                wiring.build_runtime(settings, selection=["demo-module"])
+        assert "demo" in str(exc.value)
+        assert "seoul_bus_service_key" in str(exc.value)
+
+    async def test_production_boots_when_the_unconfigured_family_is_not_selected(self):
+        """The split-container case, and the reason the gate reads the
+        selection: the notices process has no bus credentials and must not
+        care that the bus family would fail."""
+        settings = TestProductionProfileGate._settings(seoul_bus_service_key=None)
+        families = (wiring._FAMILIES[0], self._family_needing("seoul_bus_service_key"))
+        with patch.object(wiring, "_FAMILIES", families):
+            with patch("skkuverse_crawler.core.registry.register"):
+                modules = wiring.build_runtime(settings, selection=["notices"])
+        assert [m.config.name for m in modules] == ["notices"]
+
+    async def test_outside_production_the_family_is_skipped_not_refused(self):
+        """A developer without a third party's API key still gets the rest
+        of the crawler."""
+        from skkuverse_crawler.core.settings import CrawlerEnv
+
+        settings = TestProductionProfileGate._settings(
+            env=CrawlerEnv.DEVELOPMENT, seoul_bus_service_key=None
+        )
+        families = (wiring._FAMILIES[0], self._family_needing("seoul_bus_service_key"))
+        with patch.object(wiring, "_FAMILIES", families):
+            with patch("skkuverse_crawler.core.registry.register"):
+                modules = wiring.build_runtime(settings)
+        names = [m.config.name for m in modules]
+        assert "demo-module" not in names
+        assert "notices" in names
+
+    async def test_a_configured_family_is_built(self):
+        settings = TestProductionProfileGate._settings(seoul_bus_service_key="k")
+        with patch.object(wiring, "_FAMILIES", (self._family_needing("seoul_bus_service_key"),)):
+            with patch("skkuverse_crawler.core.registry.register"):
+                modules = wiring.build_runtime(settings, selection=["demo-module"])
+        assert [m.config.name for m in modules] == ["demo-module"]
+
+
+class TestDeclarationDrift:
+    """The family table names modules before anything is imported, because
+    the gate has to answer "can this run" without importing the plugins it
+    is about to say are missing. That is a second source of truth, so it is
+    checked against reality on every assembly."""
+
+    async def test_a_builder_returning_the_wrong_modules_is_a_wiring_error(self):
+        lying = wiring.ModuleFamily(
+            name="demo",
+            module_names=("declared-name",),
+            requires=(),
+            build=lambda settings, notifier: (_DemoModule(),),  # returns "demo-module"
+        )
+        with patch.object(wiring, "_FAMILIES", (lying,)):
+            with pytest.raises(wiring.WiringError) as exc:
+                wiring.build_runtime(TestProductionProfileGate._settings())
+        assert "declared-name" in str(exc.value)
+        assert "demo-module" in str(exc.value)
+
+
+class _DemoModule:
+    @property
+    def config(self):
+        from skkuverse_crawler.core.module import ModuleConfig
+
+        return ModuleConfig(name="demo-module", cron_schedule="0 * * * *")
+
+    async def run(self, **kwargs):
+        return {}
+
+    async def shutdown(self) -> None:
+        return None

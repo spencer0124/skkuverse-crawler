@@ -76,15 +76,20 @@ def build_trigger(module: CrawlModule):
 async def run_scheduler(
     modules: Sequence[CrawlModule],
     *,
-    module_filter: str | None = None,
     on_shutdown: Callable[[], Awaitable[None]] | None = None,
 ) -> None:
-    """Schedule every module, run the run_on_start ones, wait for a signal."""
+    """Schedule every module handed over, run the run_on_start ones, wait
+    for a signal.
+
+    There is no filter here any more. Choosing which modules run is
+    ``wiring.build_runtime(selection=...)``'s job, so that unselected
+    families are never built — a second filter at this layer could only
+    disagree with the first, and would happily accept a name that matched
+    nothing.
+    """
     from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-    selected = [
-        m for m in modules if not module_filter or m.config.name == module_filter
-    ]
+    selected = list(modules)
 
     scheduler = AsyncIOScheduler()
     for module in selected:
