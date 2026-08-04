@@ -1,0 +1,4 @@
+# Codegen output of py/scripts/generate_artifacts.py. Committed on purpose
+# (consumers pull from it), but collapsed by default in GitHub review diffs —
+# server-sources.json alone is 36 KB. Expand when a review needs the payload.
+py/generated/** linguist-generated=true

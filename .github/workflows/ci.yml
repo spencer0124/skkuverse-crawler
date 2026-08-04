@@ -25,6 +25,38 @@ jobs:
       - run: uv run ruff check src/
       - run: uv run mypy src/
 
+  codegen:
+    # The SSOT files and every artifact derived from them must agree. Nothing
+    # checked this before: editing sources.json without running the generator
+    # was invisible here and surfaced months later as a consumer serving a
+    # stale department list. Regenerating and diffing is the whole check.
+    #
+    # No working-directory: py — the script derives REPO_ROOT from __file__,
+    # and no uv/venv either, since it imports only json/sys/pathlib.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 py/scripts/generate_artifacts.py
+      - name: Committed artifacts must match codegen output
+        run: |
+          git diff --exit-code -- \
+            py/generated \
+            py/src/skkuverse_crawler/modules/notices/config \
+            docs/department-coverage-analysis.md \
+            docs/departments-by-college.md \
+            docs/departments-by-app-category.md \
+          || { echo "::error::Artifacts differ from codegen output. Run: cd py && python scripts/generate_artifacts.py"; exit 1; }
+      # assert_no_orphans() catches a stray file that the script itself can
+      # see, but not one that is merely untracked — py/generated/ used to be
+      # gitignored, which is how server-departments.json survived four months.
+      # ls-files --others, not `git status`: the diff step above already covers
+      # tracked changes, so the only thing left to catch is a file that exists
+      # but was never added — the exact shape of the four-month orphan.
+      - name: No untracked files in py/generated
+        run: |
+          stray="$(git ls-files --others --exclude-standard -- py/generated)"
+          [ -z "$stray" ] || { echo "::error::untracked file in py/generated:"; echo "$stray"; exit 1; }
+
   core-only:
     # Installs the wheel with no extras at all. This is the only job that can
     # catch a wrong extras TABLE — the in-suite poison test cannot, because it

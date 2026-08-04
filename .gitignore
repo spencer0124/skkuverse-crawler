@@ -22,8 +22,11 @@ dist/
 .pytest_cache/
 htmlcov/
 
-# Generated artifacts (codegen output)
-py/generated/
+# py/generated/ is intentionally NOT ignored. Its artifacts are the producer
+# side of the cross-repo config contracts (skkuverse/contracts/manifest.json):
+# consumers compare their vendored copies against what is committed here, and
+# CI regenerates + `git diff --exit-code` to prove committed == SSOT-derived.
+# See .gitattributes for review-diff collapsing.
 
 # Logs
 *.log

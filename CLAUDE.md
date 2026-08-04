@@ -41,7 +41,7 @@ mypy src/                                   # 타입 체크
 
 ```bash
 cd py
-python scripts/generate_artifacts.py    # sources.json + categories.json → 7개 아티팩트 생성 + 형제 레포 복사
+python scripts/generate_artifacts.py    # 세 SSOT 파일 → 8개 아티팩트 (형제 레포에 쓰지 않음)
 ```
 
 **생성 아티팩트:**
@@ -49,23 +49,33 @@ python scripts/generate_artifacts.py    # sources.json + categories.json → 7�
 | 아티팩트 | 출력 위치 | 용도 |
 |---------|----------|------|
 | `source_ids.py` | `py/src/.../modules/notices/config/source_ids.py` | Python SourceId enum |
-| `server-sources.json` | `py/generated/` → `skkuverse-server` 복사 | 서버 API 응답용 (noticeAvailable, hasCategory, hasAuthor 포함) |
-| `docker-crawl-filter.env` | `py/generated/` | Docker 참고용 |
+| `server-sources.json` | `py/generated/` | 서버 API 응답용 (crawlAvailable, excludeReason, hasCategory, hasAuthor 포함) |
 | `coverage-table.md` | `docs/department-coverage-analysis.md` | 캠퍼스/단과대별 학과 테이블 |
 | `departments-by-college.md` | `docs/departments-by-college.md` | 단과대학별 학과 목록 |
 | `departments-by-app-category.md` | `docs/departments-by-app-category.md` | 앱 카테고리별 학과 목록 |
-| `server-categories.json` | `py/generated/` → `skkuverse-server` 복사 | Server-driven 탭 구성 (탭 순서, 라벨, picker/fixed 모드) |
-| `server-exclude-reasons.json` | `py/generated/` → `skkuverse-server` 복사 | excludeReason 키→문구(ko/en) 맵 — 앱 미지원 사유 문구를 server-driven으로 |
+| `server-categories.json` | `py/generated/` | Server-driven 탭 구성 (탭 순서, 라벨, picker/fixed 모드) |
+| `server-exclude-reasons.json` | `py/generated/` | excludeReason 키→문구(ko/en) 맵 — 앱 미지원 사유 문구를 server-driven으로 |
 | `sources.json` (패키지 사본) | `py/src/.../modules/notices/config/sources.json` | wheel/editable/컨테이너용 런타임 패키지 데이터. SSOT는 레포 루트 — codegen이 바이트 동일 복사, 테스트가 동기화 강제 |
 
-`py/generated/`는 `.gitignore`에 등록됨.
+**모든 아티팩트는 커밋된다.** `py/generated/`는 더 이상 gitignore 대상이 아니다 — 소비자 레포가
+원격에서 이 파일들을 받아 자기 사본과 해시 비교하기 때문이다. CI의 `codegen` 잡이 재생성 후
+`git diff --exit-code`를 돌리므로, SSOT만 고치고 codegen을 안 돌린 PR은 머지되지 않는다.
+`EXPECTED_GENERATED` + `assert_no_orphans()`가 폐기 아티팩트 잔존도 막는다
+(`server-departments.json`이 gitignore 뒤에서 4개월 살아남은 전례).
+
+`docker-crawl-filter.env`는 삭제됐다. 소비자가 없었고, 내용물인 `CRAWL_SOURCE_FILTER`는
+2026-04-21 인시던트의 그 변수다 (`docs/known-issues.md` §7) — 커밋하면 복붙 가능한 장애 페이로드가
+레포에 남는다. dev 용도는 `--source a,b`로 충분.
 
 ### 학과 추가/변경 절차
 
 1. `sources.json` (레포 루트) 수정 — campus, college, appCategory, crawlEnabled + 크롤링 설정
 2. 새 카테고리 추가 시 `categories.json`도 수정
 3. `cd py && python scripts/generate_artifacts.py` 실행
-4. 형제 레포(skkuverse-server)에 자동 복사됨 (존재 시)
+4. 생성된 아티팩트를 **이 레포에 커밋** (CI가 codegen == committed 강제)
+5. 소비자 레포로 전파: `python3 ../skkuverse/tools/skkuverse_sync.py pull --all`
+   — 어느 레포에 커밋이 필요한지 출력해준다. 계약 정의는
+   [skkuverse/contracts/manifest.json](https://github.com/spencer0124/skkuverse/blob/main/contracts/manifest.json)
 
 ## Architecture
 
