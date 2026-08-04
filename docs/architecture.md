@@ -88,6 +88,7 @@ py/src/skkuverse_crawler/
 | `update-check` | mongo | 최근 14일 공지 변경 감지 (Tier-2) |
 | `validate-attachments` | mongo | 첨부파일 메타데이터 검증 |
 | `validate-markdown` | mongo | cleanMarkdown 렌더링 품질 검증 |
+| `repair-dimensions` | mongo | tier-2가 지운 이미지 차원 복구. `--apply` 없이는 읽기만. 멱등 |
 | `summarize` | mongo, ai | AI 요약 1회 실행 |
 | `health-summary` | mongo, discord | 크롤 헬스 일일 요약 1회 발송 |
 | `start` | mongo, sched | 전체 스케줄러 (모든 모듈 cron) |
