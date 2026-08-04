@@ -105,13 +105,29 @@ def _fmt_kst(dt: datetime | None) -> str:
     return dt.astimezone(_KST).strftime("%m-%d %H:%M")
 
 
-def format_alert_message(tr: HealthTransition) -> str | None:
-    """One batched Discord message per tick; None when nothing to say."""
+def format_alert_message(
+    tr: HealthTransition,
+    *,
+    threshold: int = THRESHOLD,
+    label: str | None = None,
+) -> str | None:
+    """One batched Discord message per tick; None when nothing to say.
+
+    ``threshold`` is stated rather than read from the constant because it
+    is now per-caller: three ticks is ninety minutes for a half-hourly
+    crawl and thirty seconds for a ten-second poller, so the number in the
+    text has to be the number that actually fired.
+
+    ``label`` names the process the alert came from. Once modules are
+    split across containers, two of them post to the same webhook and
+    "which one is this" stops being obvious.
+    """
     if not tr.alerts and not tr.recoveries:
         return None
+    prefix = f"[{label}] " if label else ""
     lines: list[str] = []
     if tr.alerts:
-        lines.append(f"🚨 **크롤 소스 중단** (연속 {THRESHOLD}틱 실패)")
+        lines.append(f"🚨 **{prefix}크롤 소스 중단** (연속 {threshold}틱 실패)")
         for e in tr.alerts:
             err = e.last_error.splitlines()[0][:_ERROR_SNIPPET_LEN] if e.last_error else "unknown"
             lines.append(
@@ -119,7 +135,7 @@ def format_alert_message(tr: HealthTransition) -> str | None:
                 f" (마지막 성공: {_fmt_kst(e.last_success_at)})"
             )
     if tr.recoveries:
-        lines.append("✅ **회복**")
+        lines.append(f"✅ **{prefix}회복**")
         for e in tr.recoveries:
             lines.append(f"• {e.source_name} (`{e.source_id}`) — 이번 틱 {e.inserted}건 수집")
     return "\n".join(lines)
@@ -136,7 +152,7 @@ def format_daily_summary(
     lines = [
         f"📊 **크롤러 일일 요약** ({_fmt_kst(now)} KST)",
         f"소스: {enabled_count}개 활성 · 정상 {enabled_count - len(failing)} · 실패 중 {len(failing)}",
-        f"최근 24시간 신규 공지: {inserted_24h}건",
+        f"최근 24시간 신규 수집: {inserted_24h}건",
     ]
     # A deployment that quietly lost a plugin looks healthy in every other
     # line of this message; naming them daily is what makes the loss

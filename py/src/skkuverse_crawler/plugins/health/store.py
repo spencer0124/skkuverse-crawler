@@ -23,7 +23,7 @@ from ...core.ports import Notifier
 from ...core.results import SourceResult
 from ...shared.db import get_db
 from ...shared.logger import get_logger
-from .logic import decide_transitions, format_alert_message
+from .logic import THRESHOLD, decide_transitions, format_alert_message
 
 logger = get_logger("crawl_health")
 
@@ -35,10 +35,28 @@ async def load_states() -> dict[str, dict[str, Any]]:
     return {doc["sourceId"]: doc async for doc in db[COLLECTION].find({})}
 
 
-async def record_and_alert(results: list[SourceResult], *, notifier: Notifier) -> None:
+async def record_and_alert(
+    results: list[SourceResult],
+    *,
+    notifier: Notifier,
+    threshold: int = THRESHOLD,
+    label: str | None = None,
+) -> None:
+    """Record this tick's health and alert on transitions.
+
+    ``threshold`` is per-caller because ticks are not comparable across
+    modules: three consecutive failures is ninety minutes of a half-hourly
+    crawl and thirty seconds of a ten-second poller. Leaving one constant
+    for both would page on a poller's first flap.
+
+    ``label`` names the origin, for when more than one process alerts to
+    the same webhook.
+    """
     try:
         prev = await load_states()
-        tr = decide_transitions(prev, results, now=datetime.now(timezone.utc))
+        tr = decide_transitions(
+            prev, results, now=datetime.now(timezone.utc), threshold=threshold
+        )
 
         if tr.new_states:
             db = await get_db()
@@ -50,7 +68,7 @@ async def record_and_alert(results: list[SourceResult], *, notifier: Notifier) -
                 ordered=False,
             )
 
-        message = format_alert_message(tr)
+        message = format_alert_message(tr, threshold=threshold, label=label)
         if message:
             logger.info(
                 "crawl_health_transition",

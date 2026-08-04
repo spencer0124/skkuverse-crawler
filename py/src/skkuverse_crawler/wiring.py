@@ -125,19 +125,23 @@ def _build_notices(settings: Config, notifier: Notifier) -> tuple[CrawlModule, .
     from .modules.notices.module import NoticesModule
     from .plugins.ai_summary.module import NoticesSummaryModule
     from .plugins.health.module import CrawlHealthSummaryModule
+    from .plugins.health.probes import notices_probe
     from .plugins.health.store import record_and_alert
     from .plugins.mongo.update_checker import NoticesUpdateCheckModule
 
     return (
         NoticesModule(
             ports_factory=notices_ports,
-            on_results=functools.partial(record_and_alert, notifier=notifier),
+            on_results=functools.partial(
+                record_and_alert, notifier=notifier, label="notices"
+            ),
         ),
         NoticesUpdateCheckModule(),
         NoticesSummaryModule(),
-        # Counts db["notices"] and reads the notices source list, so it
-        # belongs to this family until it is given injected probes.
-        CrawlHealthSummaryModule(notifier),
+        # The summary itself is family-agnostic; what it reports on comes
+        # in as probes. A second family adds its own here rather than
+        # needing a second daily message.
+        CrawlHealthSummaryModule(notifier, probes=(notices_probe(),)),
     )
 
 

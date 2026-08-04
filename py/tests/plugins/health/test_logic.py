@@ -146,3 +146,48 @@ class TestDailySummaryPlugins:
         label — the parameter defaults to empty so the existing callers and
         their tests are unaffected."""
         assert "플러그인" not in self._summary()
+
+
+class TestPerCallerThreshold:
+    """Ticks are not comparable across modules. Three consecutive failures
+    is ninety minutes of a half-hourly crawl and thirty seconds of a
+    ten-second poller, so both the firing rule and the number printed in
+    the message have to come from the caller."""
+
+    def test_a_higher_threshold_delays_the_alert(self):
+        prev = {"sls-special": {"consecutiveFailures": 2, "alerted": False}}
+        tr = decide_transitions(prev, [_down()], NOW, threshold=18)
+        assert tr.alerts == []
+
+    def test_and_still_fires_once_reached(self):
+        prev = {"sls-special": {"consecutiveFailures": 17, "alerted": False}}
+        tr = decide_transitions(prev, [_down()], NOW, threshold=18)
+        assert len(tr.alerts) == 1
+
+    def test_the_message_states_the_threshold_that_actually_fired(self):
+        """Printing the module-level constant while a different number
+        decided would make the alert quietly untrue."""
+        prev = {"sls-special": {"consecutiveFailures": 17, "alerted": False}}
+        tr = decide_transitions(prev, [_down()], NOW, threshold=18)
+        assert "연속 18틱" in format_alert_message(tr, threshold=18)
+
+
+class TestOriginLabel:
+    """Once modules are split across containers, more than one process
+    posts to the same webhook."""
+
+    def _alerting(self):
+        prev = {"sls-special": {"consecutiveFailures": THRESHOLD - 1, "alerted": False}}
+        return decide_transitions(prev, [_down()], NOW)
+
+    def test_a_label_names_the_origin(self):
+        assert "[bus]" in format_alert_message(self._alerting(), label="bus")
+
+    def test_recoveries_are_labelled_too(self):
+        prev = {"sls-special": {"alerted": True}}
+        tr = decide_transitions(prev, [_ok()], NOW)
+        assert "[bus]" in format_alert_message(tr, label="bus")
+
+    def test_no_label_leaves_the_message_as_it_was(self):
+        message = format_alert_message(self._alerting())
+        assert "[" not in message.splitlines()[0]
