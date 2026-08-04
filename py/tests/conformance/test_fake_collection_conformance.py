@@ -121,6 +121,29 @@ async def _upsert_semantics(coll: Any) -> Any:
     }
 
 
+async def _upsert_by_explicit_id(coll: Any) -> Any:
+    """The snapshot archetype's addressing: the key IS _id.
+
+    Mongo generates an _id only when the filter did not pin one, so the
+    second call must MATCH rather than insert again. The fake used to
+    overwrite the filter's _id with a fresh ObjectId, which made every
+    write of the same key report inserted forever and left one orphan
+    document per tick — invisible in unit tests, ruinous for a 10-second
+    poller.
+    """
+    first = await coll.update_one(
+        {"_id": "hssc"}, {"$set": {"data": [1], "_updatedAt": _fixed_dt()}}, upsert=True
+    )
+    second = await coll.update_one(
+        {"_id": "hssc"}, {"$set": {"data": [1, 2], "_updatedAt": _fixed_dt()}}, upsert=True
+    )
+    return {
+        "first_upserted_id": first.upserted_id,
+        "second_has_upserted_id": second.upserted_id is not None,
+        "second_matched": second.matched_count,
+    }
+
+
 async def _unique_violation(coll: Any) -> Any:
     await coll.create_index(_UNIQUE_KEYS, unique=True)
     await coll.update_one(
@@ -264,6 +287,7 @@ CASES = [
     Case("bulk_unordered_continues_past_dup", _bulk_unordered_continues_past_dup, "BulkWriteError"),
     Case("find_one_and_update_returns", _find_one_and_update_returns),
     Case("upsert_semantics", _upsert_semantics),
+    Case("upsert_by_explicit_id", _upsert_by_explicit_id),
     Case("unique_violation", _unique_violation, "DuplicateKeyError"),
     Case("find_filters", _find_filters),
     Case("dotted_path_into_array", _dotted_path_into_array),

@@ -515,7 +515,14 @@ class FakeCollection:
             if not k.startswith("$") and not _is_operator_doc(v)
         }
         _apply_update(seeded, update, insert=True)
-        seeded["_id"] = ObjectId()
+        # Mongo generates an _id only when the filter did not pin one. An
+        # equality filter on _id (the snapshot archetype's whole addressing
+        # scheme) supplies it, and overwriting it here made every upsert
+        # look like a fresh insert forever: the document went in under a
+        # random ObjectId, the next lookup missed it, and upserted_id was
+        # never None. Level-1 conformance pins this against real Mongo.
+        if "_id" not in seeded:
+            seeded["_id"] = ObjectId()
         self._check_unique(seeded)
         self.docs.append(seeded)
         return seeded["_id"]
