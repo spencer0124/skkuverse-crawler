@@ -1,0 +1,721 @@
+{
+  "source": "2026-03-03T07:00:00+09:00",
+  "intervalMs": 10000,
+  "rows": [
+    {
+      "at": "2026-03-02T22:00:00.000Z",
+      "payload": [
+        {
+          "line_no": "32072",
+          "inout": "LEFT",
+          "stop_no": "284260",
+          "seq": "9",
+          "stop_name": "서울혜화동우체국",
+          "get_date": "2026-03-03 오전 6:56:02",
+          "sequence": "5",
+          "stationName": "혜화동우체국 [하차전용]",
+          "carNumber": "0000",
+          "eventDate": "2026-03-03 06:56:02",
+          "estimatedTime": 238,
+          "isLastBus": false
+        }
+      ]
+    },
+    {
+      "at": "2026-03-02T22:00:10.000Z",
+      "payload": [
+        {
+          "line_no": "32072",
+          "inout": "LEFT",
+          "stop_no": "284260",
+          "seq": "9",
+          "stop_name": "서울혜화동우체국",
+          "get_date": "2026-03-03 오전 6:56:02",
+          "sequence": "5",
+          "stationName": "혜화동우체국 [하차전용]",
+          "carNumber": "0000",
+          "eventDate": "2026-03-03 06:56:02",
+          "estimatedTime": 248,
+          "isLastBus": false
+        }
+      ]
+    },
+    {
+      "at": "2026-03-02T22:00:20.000Z",
+      "payload": [
+        {
+          "line_no": "32072",
+          "inout": "LEFT",
+          "stop_no": "284260",
+          "seq": "9",
+          "stop_name": "서울혜화동우체국",
+          "get_date": "2026-03-03 오전 6:56:02",
+          "sequence": "5",
+          "stationName": "혜화동우체국 [하차전용]",
+          "carNumber": "0000",
+          "eventDate": "2026-03-03 06:56:02",
+          "estimatedTime": 258,
+          "isLastBus": false
+        }
+      ]
+    },
+    {
+      "at": "2026-03-02T22:00:30.000Z",
+      "payload": [
+        {
+          "line_no": "32072",
+          "inout": "LEFT",
+          "stop_no": "284260",
+          "seq": "9",
+          "stop_name": "서울혜화동우체국",
+          "get_date": "2026-03-03 오전 6:56:02",
+          "sequence": "5",
+          "stationName": "혜화동우체국 [하차전용]",
+          "carNumber": "0000",
+          "eventDate": "2026-03-03 06:56:02",
+          "estimatedTime": 268,
+          "isLastBus": false
+        }
+      ]
+    },
+    {
+      "at": "2026-03-02T22:00:40.000Z",
+      "payload": [
+        {
+          "line_no": "32072",
+          "inout": "LEFT",
+          "stop_no": "284260",
+          "seq": "9",
+          "stop_name": "서울혜화동우체국",
+          "get_date": "2026-03-03 오전 6:56:02",
+          "sequence": "5",
+          "stationName": "혜화동우체국 [하차전용]",
+          "carNumber": "0000",
+          "eventDate": "2026-03-03 06:56:02",
+          "estimatedTime": 278,
+          "isLastBus": false
+        }
+      ]
+    },
+    {
+      "at": "2026-03-02T22:00:50.000Z",
+      "payload": [
+        {
+          "line_no": "32072",
+          "inout": "LEFT",
+          "stop_no": "284260",
+          "seq": "9",
+          "stop_name": "서울혜화동우체국",
+          "get_date": "2026-03-03 오전 6:56:02",
+          "sequence": "5",
+          "stationName": "혜화동우체국 [하차전용]",
+          "carNumber": "0000",
+          "eventDate": "2026-03-03 06:56:02",
+          "estimatedTime": 288,
+          "isLastBus": false
+        }
+      ]
+    },
+    {
+      "at": "2026-03-02T22:01:00.000Z",
+      "payload": [
+        {
+          "line_no": "32072",
+          "inout": "LEFT",
+          "stop_no": "284260",
+          "seq": "9",
+          "stop_name": "서울혜화동우체국",
+          "get_date": "2026-03-03 오전 6:56:02",
+          "sequence": "5",
+          "stationName": "혜화동우체국 [하차전용]",
+          "carNumber": "0000",
+          "eventDate": "2026-03-03 06:56:02",
+          "estimatedTime": 298,
+          "isLastBus": false
+        }
+      ]
+    },
+    {
+      "at": "2026-03-02T22:01:10.000Z",
+      "payload": [
+        {
+          "line_no": "32072",
+          "inout": "LEFT",
+          "stop_no": "284260",
+          "seq": "9",
+          "stop_name": "서울혜화동우체국",
+          "get_date": "2026-03-03 오전 6:56:02",
+          "sequence": "5",
+          "stationName": "혜화동우체국 [하차전용]",
+          "carNumber": "0000",
+          "eventDate": "2026-03-03 06:56:02",
+          "estimatedTime": 308,
+          "isLastBus": false
+        }
+      ]
+    },
+    {
+      "at": "2026-03-02T22:01:20.000Z",
+      "payload": [
+        {
+          "line_no": "32072",
+          "inout": "LEFT",
+          "stop_no": "284260",
+          "seq": "9",
+          "stop_name": "서울혜화동우체국",
+          "get_date": "2026-03-03 오전 6:56:02",
+          "sequence": "5",
+          "stationName": "혜화동우체국 [하차전용]",
+          "carNumber": "0000",
+          "eventDate": "2026-03-03 06:56:02",
+          "estimatedTime": 318,
+          "isLastBus": false
+        }
+      ]
+    },
+    {
+      "at": "2026-03-02T22:01:30.000Z",
+      "payload": [
+        {
+          "line_no": "32072",
+          "inout": "LEFT",
+          "stop_no": "284260",
+          "seq": "9",
+          "stop_name": "서울혜화동우체국",
+          "get_date": "2026-03-03 오전 6:56:02",
+          "sequence": "5",
+          "stationName": "혜화동우체국 [하차전용]",
+          "carNumber": "0000",
+          "eventDate": "2026-03-03 06:56:02",
+          "estimatedTime": 328,
+          "isLastBus": false
+        }
+      ]
+    },
+    {
+      "at": "2026-03-02T22:01:40.000Z",
+      "payload": [
+        {
+          "line_no": "32072",
+          "inout": "LEFT",
+          "stop_no": "284260",
+          "seq": "9",
+          "stop_name": "서울혜화동우체국",
+          "get_date": "2026-03-03 오전 6:56:02",
+          "sequence": "5",
+          "stationName": "혜화동우체국 [하차전용]",
+          "carNumber": "0000",
+          "eventDate": "2026-03-03 06:56:02",
+          "estimatedTime": 338,
+          "isLastBus": false
+        }
+      ]
+    },
+    {
+      "at": "2026-03-02T22:01:50.000Z",
+      "payload": [
+        {
+          "line_no": "32072",
+          "inout": "LEFT",
+          "stop_no": "284260",
+          "seq": "9",
+          "stop_name": "서울혜화동우체국",
+          "get_date": "2026-03-03 오전 6:56:02",
+          "sequence": "5",
+          "stationName": "혜화동우체국 [하차전용]",
+          "carNumber": "0000",
+          "eventDate": "2026-03-03 06:56:02",
+          "estimatedTime": 348,
+          "isLastBus": false
+        }
+      ]
+    },
+    {
+      "at": "2026-03-02T22:02:00.000Z",
+      "payload": [
+        {
+          "line_no": "32072",
+          "inout": "LEFT",
+          "stop_no": "284260",
+          "seq": "9",
+          "stop_name": "서울혜화동우체국",
+          "get_date": "2026-03-03 오전 6:56:02",
+          "sequence": "5",
+          "stationName": "혜화동우체국 [하차전용]",
+          "carNumber": "0000",
+          "eventDate": "2026-03-03 06:56:02",
+          "estimatedTime": 358,
+          "isLastBus": false
+        }
+      ]
+    },
+    {
+      "at": "2026-03-02T22:02:10.000Z",
+      "payload": [
+        {
+          "line_no": "32072",
+          "inout": "LEFT",
+          "stop_no": "284260",
+          "seq": "9",
+          "stop_name": "서울혜화동우체국",
+          "get_date": "2026-03-03 오전 6:56:02",
+          "sequence": "5",
+          "stationName": "혜화동우체국 [하차전용]",
+          "carNumber": "0000",
+          "eventDate": "2026-03-03 06:56:02",
+          "estimatedTime": 368,
+          "isLastBus": false
+        }
+      ]
+    },
+    {
+      "at": "2026-03-02T22:02:20.000Z",
+      "payload": [
+        {
+          "line_no": "32072",
+          "inout": "LEFT",
+          "stop_no": "284260",
+          "seq": "9",
+          "stop_name": "서울혜화동우체국",
+          "get_date": "2026-03-03 오전 6:56:02",
+          "sequence": "5",
+          "stationName": "혜화동우체국 [하차전용]",
+          "carNumber": "0000",
+          "eventDate": "2026-03-03 06:56:02",
+          "estimatedTime": 378,
+          "isLastBus": false
+        }
+      ]
+    },
+    {
+      "at": "2026-03-02T22:02:30.000Z",
+      "payload": [
+        {
+          "line_no": "32072",
+          "inout": "LEFT",
+          "stop_no": "284260",
+          "seq": "9",
+          "stop_name": "서울혜화동우체국",
+          "get_date": "2026-03-03 오전 6:56:02",
+          "sequence": "5",
+          "stationName": "혜화동우체국 [하차전용]",
+          "carNumber": "0000",
+          "eventDate": "2026-03-03 06:56:02",
+          "estimatedTime": 388,
+          "isLastBus": false
+        }
+      ]
+    },
+    {
+      "at": "2026-03-02T22:02:40.000Z",
+      "payload": [
+        {
+          "line_no": "32072",
+          "inout": "LEFT",
+          "stop_no": "284260",
+          "seq": "9",
+          "stop_name": "서울혜화동우체국",
+          "get_date": "2026-03-03 오전 6:56:02",
+          "sequence": "5",
+          "stationName": "혜화동우체국 [하차전용]",
+          "carNumber": "0000",
+          "eventDate": "2026-03-03 06:56:02",
+          "estimatedTime": 398,
+          "isLastBus": false
+        }
+      ]
+    },
+    {
+      "at": "2026-03-02T22:02:50.000Z",
+      "payload": [
+        {
+          "line_no": "32072",
+          "inout": "LEFT",
+          "stop_no": "284260",
+          "seq": "9",
+          "stop_name": "서울혜화동우체국",
+          "get_date": "2026-03-03 오전 6:56:02",
+          "sequence": "5",
+          "stationName": "혜화동우체국 [하차전용]",
+          "carNumber": "0000",
+          "eventDate": "2026-03-03 06:56:02",
+          "estimatedTime": 408,
+          "isLastBus": false
+        }
+      ]
+    },
+    {
+      "at": "2026-03-02T22:03:00.000Z",
+      "payload": [
+        {
+          "line_no": "32072",
+          "inout": "LEFT",
+          "stop_no": "284260",
+          "seq": "9",
+          "stop_name": "서울혜화동우체국",
+          "get_date": "2026-03-03 오전 6:56:02",
+          "sequence": "5",
+          "stationName": "혜화동우체국 [하차전용]",
+          "carNumber": "0000",
+          "eventDate": "2026-03-03 06:56:02",
+          "estimatedTime": 418,
+          "isLastBus": false
+        }
+      ]
+    },
+    {
+      "at": "2026-03-02T22:03:10.000Z",
+      "payload": [
+        {
+          "line_no": "32072",
+          "inout": "LEFT",
+          "stop_no": "284260",
+          "seq": "9",
+          "stop_name": "서울혜화동우체국",
+          "get_date": "2026-03-03 오전 6:56:02",
+          "sequence": "5",
+          "stationName": "혜화동우체국 [하차전용]",
+          "carNumber": "0000",
+          "eventDate": "2026-03-03 06:56:02",
+          "estimatedTime": 428,
+          "isLastBus": false
+        }
+      ]
+    },
+    {
+      "at": "2026-03-02T22:03:20.000Z",
+      "payload": [
+        {
+          "line_no": "32072",
+          "inout": "LEFT",
+          "stop_no": "284260",
+          "seq": "9",
+          "stop_name": "서울혜화동우체국",
+          "get_date": "2026-03-03 오전 6:56:02",
+          "sequence": "5",
+          "stationName": "혜화동우체국 [하차전용]",
+          "carNumber": "0000",
+          "eventDate": "2026-03-03 06:56:02",
+          "estimatedTime": 438,
+          "isLastBus": false
+        }
+      ]
+    },
+    {
+      "at": "2026-03-02T22:03:30.000Z",
+      "payload": [
+        {
+          "line_no": "32072",
+          "inout": "LEFT",
+          "stop_no": "284260",
+          "seq": "9",
+          "stop_name": "서울혜화동우체국",
+          "get_date": "2026-03-03 오전 6:56:02",
+          "sequence": "5",
+          "stationName": "혜화동우체국 [하차전용]",
+          "carNumber": "0000",
+          "eventDate": "2026-03-03 06:56:02",
+          "estimatedTime": 448,
+          "isLastBus": false
+        }
+      ]
+    },
+    {
+      "at": "2026-03-02T22:03:40.000Z",
+      "payload": [
+        {
+          "line_no": "32072",
+          "inout": "LEFT",
+          "stop_no": "284260",
+          "seq": "9",
+          "stop_name": "서울혜화동우체국",
+          "get_date": "2026-03-03 오전 6:56:02",
+          "sequence": "5",
+          "stationName": "혜화동우체국 [하차전용]",
+          "carNumber": "0000",
+          "eventDate": "2026-03-03 06:56:02",
+          "estimatedTime": 458,
+          "isLastBus": false
+        }
+      ]
+    },
+    {
+      "at": "2026-03-02T22:03:50.000Z",
+      "payload": [
+        {
+          "line_no": "32072",
+          "inout": "LEFT",
+          "stop_no": "284260",
+          "seq": "9",
+          "stop_name": "서울혜화동우체국",
+          "get_date": "2026-03-03 오전 6:56:02",
+          "sequence": "5",
+          "stationName": "혜화동우체국 [하차전용]",
+          "carNumber": "0000",
+          "eventDate": "2026-03-03 06:56:02",
+          "estimatedTime": 468,
+          "isLastBus": false
+        }
+      ]
+    },
+    {
+      "at": "2026-03-02T22:04:00.000Z",
+      "payload": [
+        {
+          "line_no": "32072",
+          "inout": "LEFT",
+          "stop_no": "284260",
+          "seq": "9",
+          "stop_name": "서울혜화동우체국",
+          "get_date": "2026-03-03 오전 6:56:02",
+          "sequence": "5",
+          "stationName": "혜화동우체국 [하차전용]",
+          "carNumber": "0000",
+          "eventDate": "2026-03-03 06:56:02",
+          "estimatedTime": 478,
+          "isLastBus": false
+        }
+      ]
+    },
+    {
+      "at": "2026-03-02T22:04:10.000Z",
+      "payload": [
+        {
+          "line_no": "32072",
+          "inout": "LEFT",
+          "stop_no": "284260",
+          "seq": "9",
+          "stop_name": "서울혜화동우체국",
+          "get_date": "2026-03-03 오전 6:56:02",
+          "sequence": "5",
+          "stationName": "혜화동우체국 [하차전용]",
+          "carNumber": "0000",
+          "eventDate": "2026-03-03 06:56:02",
+          "estimatedTime": 488,
+          "isLastBus": false
+        }
+      ]
+    },
+    {
+      "at": "2026-03-02T22:04:20.000Z",
+      "payload": [
+        {
+          "line_no": "32072",
+          "inout": "LEFT",
+          "stop_no": "284260",
+          "seq": "9",
+          "stop_name": "서울혜화동우체국",
+          "get_date": "2026-03-03 오전 6:56:02",
+          "sequence": "5",
+          "stationName": "혜화동우체국 [하차전용]",
+          "carNumber": "0000",
+          "eventDate": "2026-03-03 06:56:02",
+          "estimatedTime": 498,
+          "isLastBus": false
+        }
+      ]
+    },
+    {
+      "at": "2026-03-02T22:04:30.000Z",
+      "payload": [
+        {
+          "line_no": "32072",
+          "inout": "LEFT",
+          "stop_no": "284260",
+          "seq": "9",
+          "stop_name": "서울혜화동우체국",
+          "get_date": "2026-03-03 오전 6:56:02",
+          "sequence": "5",
+          "stationName": "혜화동우체국 [하차전용]",
+          "carNumber": "0000",
+          "eventDate": "2026-03-03 06:56:02",
+          "estimatedTime": 508,
+          "isLastBus": false
+        }
+      ]
+    },
+    {
+      "at": "2026-03-02T22:04:40.000Z",
+      "payload": [
+        {
+          "line_no": "32072",
+          "inout": "LEFT",
+          "stop_no": "284260",
+          "seq": "9",
+          "stop_name": "서울혜화동우체국",
+          "get_date": "2026-03-03 오전 6:56:02",
+          "sequence": "5",
+          "stationName": "혜화동우체국 [하차전용]",
+          "carNumber": "0000",
+          "eventDate": "2026-03-03 06:56:02",
+          "estimatedTime": 518,
+          "isLastBus": false
+        }
+      ]
+    },
+    {
+      "at": "2026-03-02T22:04:50.000Z",
+      "payload": [
+        {
+          "line_no": "32072",
+          "inout": "LEFT",
+          "stop_no": "284260",
+          "seq": "9",
+          "stop_name": "서울혜화동우체국",
+          "get_date": "2026-03-03 오전 6:56:02",
+          "sequence": "5",
+          "stationName": "혜화동우체국 [하차전용]",
+          "carNumber": "0000",
+          "eventDate": "2026-03-03 06:56:02",
+          "estimatedTime": 528,
+          "isLastBus": false
+        }
+      ]
+    },
+    {
+      "at": "2026-03-02T22:05:00.000Z",
+      "payload": [
+        {
+          "line_no": "32072",
+          "inout": "LEFT",
+          "stop_no": "284260",
+          "seq": "9",
+          "stop_name": "서울혜화동우체국",
+          "get_date": "2026-03-03 오전 6:56:02",
+          "sequence": "5",
+          "stationName": "혜화동우체국 [하차전용]",
+          "carNumber": "0000",
+          "eventDate": "2026-03-03 06:56:02",
+          "estimatedTime": 538,
+          "isLastBus": false
+        }
+      ]
+    },
+    {
+      "at": "2026-03-02T22:05:10.000Z",
+      "payload": [
+        {
+          "line_no": "32072",
+          "inout": "LEFT",
+          "stop_no": "284260",
+          "seq": "9",
+          "stop_name": "서울혜화동우체국",
+          "get_date": "2026-03-03 오전 6:56:02",
+          "sequence": "5",
+          "stationName": "혜화동우체국 [하차전용]",
+          "carNumber": "0000",
+          "eventDate": "2026-03-03 06:56:02",
+          "estimatedTime": 548,
+          "isLastBus": false
+        }
+      ]
+    },
+    {
+      "at": "2026-03-02T22:05:20.000Z",
+      "payload": [
+        {
+          "line_no": "32072",
+          "inout": "LEFT",
+          "stop_no": "284260",
+          "seq": "9",
+          "stop_name": "서울혜화동우체국",
+          "get_date": "2026-03-03 오전 6:56:02",
+          "sequence": "5",
+          "stationName": "혜화동우체국 [하차전용]",
+          "carNumber": "0000",
+          "eventDate": "2026-03-03 06:56:02",
+          "estimatedTime": 558,
+          "isLastBus": false
+        }
+      ]
+    },
+    {
+      "at": "2026-03-02T22:05:30.000Z",
+      "payload": [
+        {
+          "line_no": "32072",
+          "inout": "LEFT",
+          "stop_no": "284260",
+          "seq": "9",
+          "stop_name": "서울혜화동우체국",
+          "get_date": "2026-03-03 오전 6:56:02",
+          "sequence": "5",
+          "stationName": "혜화동우체국 [하차전용]",
+          "carNumber": "0000",
+          "eventDate": "2026-03-03 06:56:02",
+          "estimatedTime": 568,
+          "isLastBus": false
+        }
+      ]
+    },
+    {
+      "at": "2026-03-02T22:05:40.000Z",
+      "payload": [
+        {
+          "line_no": "32072",
+          "inout": "LEFT",
+          "stop_no": "284260",
+          "seq": "9",
+          "stop_name": "서울혜화동우체국",
+          "get_date": "2026-03-03 오전 6:56:02",
+          "sequence": "5",
+          "stationName": "혜화동우체국 [하차전용]",
+          "carNumber": "0000",
+          "eventDate": "2026-03-03 06:56:02",
+          "estimatedTime": 578,
+          "isLastBus": false
+        }
+      ]
+    },
+    {
+      "at": "2026-03-02T22:05:50.000Z",
+      "payload": [
+        {
+          "line_no": "32072",
+          "inout": "LEFT",
+          "stop_no": "284260",
+          "seq": "9",
+          "stop_name": "서울혜화동우체국",
+          "get_date": "2026-03-03 오전 6:56:02",
+          "sequence": "5",
+          "stationName": "혜화동우체국 [하차전용]",
+          "carNumber": "0000",
+          "eventDate": "2026-03-03 06:56:02",
+          "estimatedTime": 588,
+          "isLastBus": false
+        }
+      ]
+    },
+    {
+      "at": "2026-03-02T22:06:00.000Z",
+      "payload": [
+        {
+          "line_no": "32072",
+          "inout": "LEFT",
+          "stop_no": "284260",
+          "seq": "9",
+          "stop_name": "서울혜화동우체국",
+          "get_date": "2026-03-03 오전 6:56:02",
+          "sequence": "5",
+          "stationName": "혜화동우체국 [하차전용]",
+          "carNumber": "0000",
+          "eventDate": "2026-03-03 06:56:02",
+          "estimatedTime": 598,
+          "isLastBus": false
+        }
+      ]
+    },
+    {
+      "at": "2026-03-02T22:06:10.000Z",
+      "payload": []
+    },
+    {
+      "at": "2026-03-02T22:06:20.000Z",
+      "payload": []
+    },
+    {
+      "at": "2026-03-02T22:06:30.000Z",
+      "payload": []
+    }
+  ]
+}

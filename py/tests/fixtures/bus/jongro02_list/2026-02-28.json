@@ -1,0 +1,3970 @@
+[
+  {
+    "at": "2026-02-28T16:28:11+09:00",
+    "payload": [
+      {
+        "stationId": "100900204",
+        "sequence": "1",
+        "stationName": "성균관대학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01881",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900202",
+        "sequence": "2",
+        "stationName": "서울성곽.성대후문",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01515",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900045",
+        "sequence": "3",
+        "stationName": "통일부",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01525",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900069",
+        "sequence": "4",
+        "stationName": "감사원",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01536",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900059",
+        "sequence": "5",
+        "stationName": "사우디대사관앞.북촌힐스",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01547",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900058",
+        "sequence": "6",
+        "stationName": "안국선원.삼거리",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01548",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900052",
+        "sequence": "7",
+        "stationName": "북촌한옥마을입구.정세권활동터",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01556",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900048",
+        "sequence": "8",
+        "stationName": "가회동주민센터",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01564",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900092",
+        "sequence": "9",
+        "stationName": "아름다운가게.정독도서관",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01570",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900086",
+        "sequence": "10",
+        "stationName": "헌법재판소.안국역",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01576",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900081",
+        "sequence": "11",
+        "stationName": "수운회관",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01583",
+        "eta": "4분59초후[1번째 전]"
+      },
+      {
+        "stationId": "100900078",
+        "sequence": "12",
+        "stationName": "낙원상가",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01589",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900121",
+        "sequence": "13",
+        "stationName": "종로2가.탑골공원",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01596",
+        "eta": "2분32초후[1번째 전]"
+      },
+      {
+        "stationId": "100900116",
+        "sequence": "14",
+        "stationName": "종각역.YMCA",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01683",
+        "eta": "4분56초후[2번째 전]"
+      },
+      {
+        "stationId": "100900211",
+        "sequence": "15",
+        "stationName": "종각.공평유적전시관",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01888",
+        "eta": "6분51초후[3번째 전]"
+      },
+      {
+        "stationId": "100900213",
+        "sequence": "16",
+        "stationName": "조계사",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01889",
+        "eta": "9분5초후[4번째 전]"
+      },
+      {
+        "stationId": "100000104",
+        "sequence": "17",
+        "stationName": "안국역6번출구.인사동문화의거리",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01200",
+        "eta": "10분53초후[5번째 전]"
+      },
+      {
+        "stationId": "100900189",
+        "sequence": "18",
+        "stationName": "안국역2번출구앞",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01805",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900131",
+        "sequence": "19",
+        "stationName": "재동초등학교",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01812",
+        "eta": "1분45초후[1번째 전]"
+      },
+      {
+        "stationId": "100900168",
+        "sequence": "20",
+        "stationName": "가회동주민센터",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01826",
+        "eta": "2분후[2번째 전]"
+      },
+      {
+        "stationId": "100900162",
+        "sequence": "21",
+        "stationName": "북촌한옥마을입구.정세권활동터",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01833",
+        "eta": "3분43초후[3번째 전]"
+      },
+      {
+        "stationId": "100900157",
+        "sequence": "22",
+        "stationName": "안국선원.삼거리",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01839",
+        "eta": "4분51초후[4번째 전]"
+      },
+      {
+        "stationId": "100900153",
+        "sequence": "23",
+        "stationName": "사우디대사관.북촌힐스",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01845",
+        "eta": "5분34초후[5번째 전]"
+      },
+      {
+        "stationId": "100900147",
+        "sequence": "24",
+        "stationName": "감사원",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01851",
+        "eta": "6분33초후[6번째 전]"
+      },
+      {
+        "stationId": "100900172",
+        "sequence": "25",
+        "stationName": "통일부",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01856",
+        "eta": "7분22초후[7번째 전]"
+      },
+      {
+        "stationId": "100900203",
+        "sequence": "26",
+        "stationName": "성대후문.와룡공원",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01860",
+        "eta": "8분50초후[8번째 전]"
+      },
+      {
+        "stationId": "100900204",
+        "sequence": "27",
+        "stationName": "성균관대학교",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01881",
+        "eta": "9분47초후[9번째 전]"
+      }
+    ]
+  },
+  {
+    "at": "2026-02-28T16:30:00+09:00",
+    "payload": [
+      {
+        "stationId": "100900204",
+        "sequence": "1",
+        "stationName": "성균관대학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:29:50.0",
+        "stationNumber": "01881",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900202",
+        "sequence": "2",
+        "stationName": "서울성곽.성대후문",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:29:50.0",
+        "stationNumber": "01515",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900045",
+        "sequence": "3",
+        "stationName": "통일부",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:29:50.0",
+        "stationNumber": "01525",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900069",
+        "sequence": "4",
+        "stationName": "감사원",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:29:50.0",
+        "stationNumber": "01536",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900059",
+        "sequence": "5",
+        "stationName": "사우디대사관앞.북촌힐스",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:29:50.0",
+        "stationNumber": "01547",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900058",
+        "sequence": "6",
+        "stationName": "안국선원.삼거리",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:29:50.0",
+        "stationNumber": "01548",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900052",
+        "sequence": "7",
+        "stationName": "북촌한옥마을입구.정세권활동터",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:29:50.0",
+        "stationNumber": "01556",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900048",
+        "sequence": "8",
+        "stationName": "가회동주민센터",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:29:50.0",
+        "stationNumber": "01564",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900092",
+        "sequence": "9",
+        "stationName": "아름다운가게.정독도서관",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:29:50.0",
+        "stationNumber": "01570",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900086",
+        "sequence": "10",
+        "stationName": "헌법재판소.안국역",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 16:29:50.0",
+        "stationNumber": "01576",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900081",
+        "sequence": "11",
+        "stationName": "수운회관",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 16:29:50.0",
+        "stationNumber": "01583",
+        "eta": "3분43초후[1번째 전]"
+      },
+      {
+        "stationId": "100900078",
+        "sequence": "12",
+        "stationName": "낙원상가",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 16:29:50.0",
+        "stationNumber": "01589",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900121",
+        "sequence": "13",
+        "stationName": "종로2가.탑골공원",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 16:29:50.0",
+        "stationNumber": "01596",
+        "eta": "2분32초후[1번째 전]"
+      },
+      {
+        "stationId": "100900116",
+        "sequence": "14",
+        "stationName": "종각역.YMCA",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 16:29:50.0",
+        "stationNumber": "01683",
+        "eta": "4분56초후[2번째 전]"
+      },
+      {
+        "stationId": "100900211",
+        "sequence": "15",
+        "stationName": "종각.공평유적전시관",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 16:29:50.0",
+        "stationNumber": "01888",
+        "eta": "6분51초후[3번째 전]"
+      },
+      {
+        "stationId": "100900213",
+        "sequence": "16",
+        "stationName": "조계사",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 16:29:50.0",
+        "stationNumber": "01889",
+        "eta": "9분5초후[4번째 전]"
+      },
+      {
+        "stationId": "100000104",
+        "sequence": "17",
+        "stationName": "안국역6번출구.인사동문화의거리",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 16:29:50.0",
+        "stationNumber": "01200",
+        "eta": "10분53초후[5번째 전]"
+      },
+      {
+        "stationId": "100900189",
+        "sequence": "18",
+        "stationName": "안국역2번출구앞",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 16:29:50.0",
+        "stationNumber": "01805",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900131",
+        "sequence": "19",
+        "stationName": "재동초등학교",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 16:29:50.0",
+        "stationNumber": "01812",
+        "eta": "1분24초후[1번째 전]"
+      },
+      {
+        "stationId": "100900168",
+        "sequence": "20",
+        "stationName": "가회동주민센터",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 16:29:50.0",
+        "stationNumber": "01826",
+        "eta": "2분후[2번째 전]"
+      },
+      {
+        "stationId": "100900162",
+        "sequence": "21",
+        "stationName": "북촌한옥마을입구.정세권활동터",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 16:29:50.0",
+        "stationNumber": "01833",
+        "eta": "3분22초후[3번째 전]"
+      },
+      {
+        "stationId": "100900157",
+        "sequence": "22",
+        "stationName": "안국선원.삼거리",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 16:29:50.0",
+        "stationNumber": "01839",
+        "eta": "4분30초후[4번째 전]"
+      },
+      {
+        "stationId": "100900153",
+        "sequence": "23",
+        "stationName": "사우디대사관.북촌힐스",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 16:29:50.0",
+        "stationNumber": "01845",
+        "eta": "5분13초후[5번째 전]"
+      },
+      {
+        "stationId": "100900147",
+        "sequence": "24",
+        "stationName": "감사원",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 16:29:50.0",
+        "stationNumber": "01851",
+        "eta": "6분12초후[6번째 전]"
+      },
+      {
+        "stationId": "100900172",
+        "sequence": "25",
+        "stationName": "통일부",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 16:29:50.0",
+        "stationNumber": "01856",
+        "eta": "7분1초후[7번째 전]"
+      },
+      {
+        "stationId": "100900203",
+        "sequence": "26",
+        "stationName": "성대후문.와룡공원",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 16:29:50.0",
+        "stationNumber": "01860",
+        "eta": "8분29초후[8번째 전]"
+      },
+      {
+        "stationId": "100900204",
+        "sequence": "27",
+        "stationName": "성균관대학교",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 16:29:50.0",
+        "stationNumber": "01881",
+        "eta": "9분26초후[9번째 전]"
+      }
+    ]
+  },
+  {
+    "at": "2026-02-28T17:00:00+09:00",
+    "payload": [
+      {
+        "stationId": "100900204",
+        "sequence": "1",
+        "stationName": "성균관대학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:59:59.0",
+        "stationNumber": "01881",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900202",
+        "sequence": "2",
+        "stationName": "서울성곽.성대후문",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 16:59:59.0",
+        "stationNumber": "01515",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900045",
+        "sequence": "3",
+        "stationName": "통일부",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 16:59:59.0",
+        "stationNumber": "01525",
+        "eta": "1분43초후[1번째 전]"
+      },
+      {
+        "stationId": "100900069",
+        "sequence": "4",
+        "stationName": "감사원",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 16:59:59.0",
+        "stationNumber": "01536",
+        "eta": "2분후[2번째 전]"
+      },
+      {
+        "stationId": "100900059",
+        "sequence": "5",
+        "stationName": "사우디대사관앞.북촌힐스",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 16:59:59.0",
+        "stationNumber": "01547",
+        "eta": "3분17초후[3번째 전]"
+      },
+      {
+        "stationId": "100900058",
+        "sequence": "6",
+        "stationName": "안국선원.삼거리",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 16:59:59.0",
+        "stationNumber": "01548",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900052",
+        "sequence": "7",
+        "stationName": "북촌한옥마을입구.정세권활동터",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 16:59:59.0",
+        "stationNumber": "01556",
+        "eta": "1분후[1번째 전]"
+      },
+      {
+        "stationId": "100900048",
+        "sequence": "8",
+        "stationName": "가회동주민센터",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 16:59:59.0",
+        "stationNumber": "01564",
+        "eta": "2분후[2번째 전]"
+      },
+      {
+        "stationId": "100900092",
+        "sequence": "9",
+        "stationName": "아름다운가게.정독도서관",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 16:59:59.0",
+        "stationNumber": "01570",
+        "eta": "3분32초후[3번째 전]"
+      },
+      {
+        "stationId": "100900086",
+        "sequence": "10",
+        "stationName": "헌법재판소.안국역",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 16:59:59.0",
+        "stationNumber": "01576",
+        "eta": "6분15초후[4번째 전]"
+      },
+      {
+        "stationId": "100900081",
+        "sequence": "11",
+        "stationName": "수운회관",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 16:59:59.0",
+        "stationNumber": "01583",
+        "eta": "10분33초후[5번째 전]"
+      },
+      {
+        "stationId": "100900078",
+        "sequence": "12",
+        "stationName": "낙원상가",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 16:59:59.0",
+        "stationNumber": "01589",
+        "eta": "11분58초후[6번째 전]"
+      },
+      {
+        "stationId": "100900121",
+        "sequence": "13",
+        "stationName": "종로2가.탑골공원",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 16:59:59.0",
+        "stationNumber": "01596",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900116",
+        "sequence": "14",
+        "stationName": "종각역.YMCA",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 16:59:59.0",
+        "stationNumber": "01683",
+        "eta": "2분29초후[1번째 전]"
+      },
+      {
+        "stationId": "100900211",
+        "sequence": "15",
+        "stationName": "종각.공평유적전시관",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 16:59:59.0",
+        "stationNumber": "01888",
+        "eta": "4분24초후[2번째 전]"
+      },
+      {
+        "stationId": "100900213",
+        "sequence": "16",
+        "stationName": "조계사",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 16:59:59.0",
+        "stationNumber": "01889",
+        "eta": "6분31초후[3번째 전]"
+      },
+      {
+        "stationId": "100000104",
+        "sequence": "17",
+        "stationName": "안국역6번출구.인사동문화의거리",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 16:59:59.0",
+        "stationNumber": "01200",
+        "eta": "8분31초후[4번째 전]"
+      },
+      {
+        "stationId": "100900189",
+        "sequence": "18",
+        "stationName": "안국역2번출구앞",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 16:59:59.0",
+        "stationNumber": "01805",
+        "eta": "11분24초후[5번째 전]"
+      },
+      {
+        "stationId": "100900131",
+        "sequence": "19",
+        "stationName": "재동초등학교",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 16:59:59.0",
+        "stationNumber": "01812",
+        "eta": "12분38초후[6번째 전]"
+      },
+      {
+        "stationId": "100900168",
+        "sequence": "20",
+        "stationName": "가회동주민센터",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 16:59:59.0",
+        "stationNumber": "01826",
+        "eta": "13분43초후[7번째 전]"
+      },
+      {
+        "stationId": "100900162",
+        "sequence": "21",
+        "stationName": "북촌한옥마을입구.정세권활동터",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 16:59:59.0",
+        "stationNumber": "01833",
+        "eta": "14분37초후[8번째 전]"
+      },
+      {
+        "stationId": "100900157",
+        "sequence": "22",
+        "stationName": "안국선원.삼거리",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 16:59:59.0",
+        "stationNumber": "01839",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900153",
+        "sequence": "23",
+        "stationName": "사우디대사관.북촌힐스",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 16:59:59.0",
+        "stationNumber": "01845",
+        "eta": "1분47초후[1번째 전]"
+      },
+      {
+        "stationId": "100900147",
+        "sequence": "24",
+        "stationName": "감사원",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 16:59:59.0",
+        "stationNumber": "01851",
+        "eta": "2분후[2번째 전]"
+      },
+      {
+        "stationId": "100900172",
+        "sequence": "25",
+        "stationName": "통일부",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 16:59:59.0",
+        "stationNumber": "01856",
+        "eta": "3분38초후[3번째 전]"
+      },
+      {
+        "stationId": "100900203",
+        "sequence": "26",
+        "stationName": "성대후문.와룡공원",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 16:59:59.0",
+        "stationNumber": "01860",
+        "eta": "5분11초후[4번째 전]"
+      },
+      {
+        "stationId": "100900204",
+        "sequence": "27",
+        "stationName": "성균관대학교",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 16:59:59.0",
+        "stationNumber": "01881",
+        "eta": "6분13초후[5번째 전]"
+      }
+    ]
+  },
+  {
+    "at": "2026-02-28T17:30:00+09:00",
+    "payload": [
+      {
+        "stationId": "100900204",
+        "sequence": "1",
+        "stationName": "성균관대학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 17:29:50.0",
+        "stationNumber": "01881",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900202",
+        "sequence": "2",
+        "stationName": "서울성곽.성대후문",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 17:29:50.0",
+        "stationNumber": "01515",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900045",
+        "sequence": "3",
+        "stationName": "통일부",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 17:29:50.0",
+        "stationNumber": "01525",
+        "eta": "1분45초후[1번째 전]"
+      },
+      {
+        "stationId": "100900069",
+        "sequence": "4",
+        "stationName": "감사원",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 17:29:50.0",
+        "stationNumber": "01536",
+        "eta": "2분후[2번째 전]"
+      },
+      {
+        "stationId": "100900059",
+        "sequence": "5",
+        "stationName": "사우디대사관앞.북촌힐스",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 17:29:50.0",
+        "stationNumber": "01547",
+        "eta": "3분19초후[3번째 전]"
+      },
+      {
+        "stationId": "100900058",
+        "sequence": "6",
+        "stationName": "안국선원.삼거리",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 17:29:50.0",
+        "stationNumber": "01548",
+        "eta": "4분3초후[4번째 전]"
+      },
+      {
+        "stationId": "100900052",
+        "sequence": "7",
+        "stationName": "북촌한옥마을입구.정세권활동터",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 17:29:50.0",
+        "stationNumber": "01556",
+        "eta": "4분48초후[5번째 전]"
+      },
+      {
+        "stationId": "100900048",
+        "sequence": "8",
+        "stationName": "가회동주민센터",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 17:29:50.0",
+        "stationNumber": "01564",
+        "eta": "6분2초후[6번째 전]"
+      },
+      {
+        "stationId": "100900092",
+        "sequence": "9",
+        "stationName": "아름다운가게.정독도서관",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 17:29:50.0",
+        "stationNumber": "01570",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900086",
+        "sequence": "10",
+        "stationName": "헌법재판소.안국역",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 17:29:50.0",
+        "stationNumber": "01576",
+        "eta": "2분58초후[1번째 전]"
+      },
+      {
+        "stationId": "100900081",
+        "sequence": "11",
+        "stationName": "수운회관",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 17:29:50.0",
+        "stationNumber": "01583",
+        "eta": "7분14초후[2번째 전]"
+      },
+      {
+        "stationId": "100900078",
+        "sequence": "12",
+        "stationName": "낙원상가",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 17:29:50.0",
+        "stationNumber": "01589",
+        "eta": "8분45초후[3번째 전]"
+      },
+      {
+        "stationId": "100900121",
+        "sequence": "13",
+        "stationName": "종로2가.탑골공원",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 17:29:50.0",
+        "stationNumber": "01596",
+        "eta": "12분18초후[4번째 전]"
+      },
+      {
+        "stationId": "100900116",
+        "sequence": "14",
+        "stationName": "종각역.YMCA",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 17:29:50.0",
+        "stationNumber": "01683",
+        "eta": "14분42초후[5번째 전]"
+      },
+      {
+        "stationId": "100900211",
+        "sequence": "15",
+        "stationName": "종각.공평유적전시관",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 17:29:50.0",
+        "stationNumber": "01888",
+        "eta": "17분3초후[6번째 전]"
+      },
+      {
+        "stationId": "100900213",
+        "sequence": "16",
+        "stationName": "조계사",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 17:29:50.0",
+        "stationNumber": "01889",
+        "eta": "19분8초후[7번째 전]"
+      },
+      {
+        "stationId": "100000104",
+        "sequence": "17",
+        "stationName": "안국역6번출구.인사동문화의거리",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 17:29:50.0",
+        "stationNumber": "01200",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900189",
+        "sequence": "18",
+        "stationName": "안국역2번출구앞",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 17:29:50.0",
+        "stationNumber": "01805",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900131",
+        "sequence": "19",
+        "stationName": "재동초등학교",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 17:29:50.0",
+        "stationNumber": "01812",
+        "eta": "1분18초후[1번째 전]"
+      },
+      {
+        "stationId": "100900168",
+        "sequence": "20",
+        "stationName": "가회동주민센터",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 17:29:50.0",
+        "stationNumber": "01826",
+        "eta": "2분후[2번째 전]"
+      },
+      {
+        "stationId": "100900162",
+        "sequence": "21",
+        "stationName": "북촌한옥마을입구.정세권활동터",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 17:29:50.0",
+        "stationNumber": "01833",
+        "eta": "3분15초후[3번째 전]"
+      },
+      {
+        "stationId": "100900157",
+        "sequence": "22",
+        "stationName": "안국선원.삼거리",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 17:29:50.0",
+        "stationNumber": "01839",
+        "eta": "4분17초후[4번째 전]"
+      },
+      {
+        "stationId": "100900153",
+        "sequence": "23",
+        "stationName": "사우디대사관.북촌힐스",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 17:29:50.0",
+        "stationNumber": "01845",
+        "eta": "4분55초후[5번째 전]"
+      },
+      {
+        "stationId": "100900147",
+        "sequence": "24",
+        "stationName": "감사원",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 17:29:50.0",
+        "stationNumber": "01851",
+        "eta": "5분54초후[6번째 전]"
+      },
+      {
+        "stationId": "100900172",
+        "sequence": "25",
+        "stationName": "통일부",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 17:29:50.0",
+        "stationNumber": "01856",
+        "eta": "6분43초후[7번째 전]"
+      },
+      {
+        "stationId": "100900203",
+        "sequence": "26",
+        "stationName": "성대후문.와룡공원",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 17:29:50.0",
+        "stationNumber": "01860",
+        "eta": "8분15초후[8번째 전]"
+      },
+      {
+        "stationId": "100900204",
+        "sequence": "27",
+        "stationName": "성균관대학교",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 17:29:50.0",
+        "stationNumber": "01881",
+        "eta": "9분17초후[9번째 전]"
+      }
+    ]
+  },
+  {
+    "at": "2026-02-28T18:00:00+09:00",
+    "payload": [
+      {
+        "stationId": "100900204",
+        "sequence": "1",
+        "stationName": "성균관대학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 17:59:33.0",
+        "stationNumber": "01881",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900202",
+        "sequence": "2",
+        "stationName": "서울성곽.성대후문",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 17:59:33.0",
+        "stationNumber": "01515",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900045",
+        "sequence": "3",
+        "stationName": "통일부",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 17:59:33.0",
+        "stationNumber": "01525",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900069",
+        "sequence": "4",
+        "stationName": "감사원",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 17:59:33.0",
+        "stationNumber": "01536",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900059",
+        "sequence": "5",
+        "stationName": "사우디대사관앞.북촌힐스",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 17:59:33.0",
+        "stationNumber": "01547",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900058",
+        "sequence": "6",
+        "stationName": "안국선원.삼거리",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 17:59:33.0",
+        "stationNumber": "01548",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900052",
+        "sequence": "7",
+        "stationName": "북촌한옥마을입구.정세권활동터",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 17:59:33.0",
+        "stationNumber": "01556",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900048",
+        "sequence": "8",
+        "stationName": "가회동주민센터",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 17:59:33.0",
+        "stationNumber": "01564",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900092",
+        "sequence": "9",
+        "stationName": "아름다운가게.정독도서관",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 17:59:33.0",
+        "stationNumber": "01570",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900086",
+        "sequence": "10",
+        "stationName": "헌법재판소.안국역",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 17:59:33.0",
+        "stationNumber": "01576",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900081",
+        "sequence": "11",
+        "stationName": "수운회관",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 17:59:33.0",
+        "stationNumber": "01583",
+        "eta": "3분후[0번째 전]"
+      },
+      {
+        "stationId": "100900078",
+        "sequence": "12",
+        "stationName": "낙원상가",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 17:59:33.0",
+        "stationNumber": "01589",
+        "eta": "4분23초후[1번째 전]"
+      },
+      {
+        "stationId": "100900121",
+        "sequence": "13",
+        "stationName": "종로2가.탑골공원",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 17:59:33.0",
+        "stationNumber": "01596",
+        "eta": "7분42초후[2번째 전]"
+      },
+      {
+        "stationId": "100900116",
+        "sequence": "14",
+        "stationName": "종각역.YMCA",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 17:59:33.0",
+        "stationNumber": "01683",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900211",
+        "sequence": "15",
+        "stationName": "종각.공평유적전시관",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 17:59:33.0",
+        "stationNumber": "01888",
+        "eta": "2분37초후[1번째 전]"
+      },
+      {
+        "stationId": "100900213",
+        "sequence": "16",
+        "stationName": "조계사",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 17:59:33.0",
+        "stationNumber": "01889",
+        "eta": "4분32초후[2번째 전]"
+      },
+      {
+        "stationId": "100000104",
+        "sequence": "17",
+        "stationName": "안국역6번출구.인사동문화의거리",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 17:59:33.0",
+        "stationNumber": "01200",
+        "eta": "6분23초후[3번째 전]"
+      },
+      {
+        "stationId": "100900189",
+        "sequence": "18",
+        "stationName": "안국역2번출구앞",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 17:59:33.0",
+        "stationNumber": "01805",
+        "eta": "9분30초후[4번째 전]"
+      },
+      {
+        "stationId": "100900131",
+        "sequence": "19",
+        "stationName": "재동초등학교",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 17:59:33.0",
+        "stationNumber": "01812",
+        "eta": "10분47초후[5번째 전]"
+      },
+      {
+        "stationId": "100900168",
+        "sequence": "20",
+        "stationName": "가회동주민센터",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 17:59:33.0",
+        "stationNumber": "01826",
+        "eta": "11분55초후[6번째 전]"
+      },
+      {
+        "stationId": "100900162",
+        "sequence": "21",
+        "stationName": "북촌한옥마을입구.정세권활동터",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 17:59:33.0",
+        "stationNumber": "01833",
+        "eta": "12분56초후[7번째 전]"
+      },
+      {
+        "stationId": "100900157",
+        "sequence": "22",
+        "stationName": "안국선원.삼거리",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 17:59:33.0",
+        "stationNumber": "01839",
+        "eta": "13분52초후[8번째 전]"
+      },
+      {
+        "stationId": "100900153",
+        "sequence": "23",
+        "stationName": "사우디대사관.북촌힐스",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 17:59:33.0",
+        "stationNumber": "01845",
+        "eta": "14분26초후[9번째 전]"
+      },
+      {
+        "stationId": "100900147",
+        "sequence": "24",
+        "stationName": "감사원",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 17:59:33.0",
+        "stationNumber": "01851",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900172",
+        "sequence": "25",
+        "stationName": "통일부",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 17:59:33.0",
+        "stationNumber": "01856",
+        "eta": "1분57초후[1번째 전]"
+      },
+      {
+        "stationId": "100900203",
+        "sequence": "26",
+        "stationName": "성대후문.와룡공원",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 17:59:33.0",
+        "stationNumber": "01860",
+        "eta": "3분29초후[2번째 전]"
+      },
+      {
+        "stationId": "100900204",
+        "sequence": "27",
+        "stationName": "성균관대학교",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 17:59:33.0",
+        "stationNumber": "01881",
+        "eta": "4분29초후[3번째 전]"
+      }
+    ]
+  },
+  {
+    "at": "2026-02-28T18:30:00+09:00",
+    "payload": [
+      {
+        "stationId": "100900204",
+        "sequence": "1",
+        "stationName": "성균관대학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 18:29:38.0",
+        "stationNumber": "01881",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900202",
+        "sequence": "2",
+        "stationName": "서울성곽.성대후문",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 18:29:38.0",
+        "stationNumber": "01515",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900045",
+        "sequence": "3",
+        "stationName": "통일부",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 18:29:38.0",
+        "stationNumber": "01525",
+        "eta": "1분50초후[1번째 전]"
+      },
+      {
+        "stationId": "100900069",
+        "sequence": "4",
+        "stationName": "감사원",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 18:29:38.0",
+        "stationNumber": "01536",
+        "eta": "2분후[2번째 전]"
+      },
+      {
+        "stationId": "100900059",
+        "sequence": "5",
+        "stationName": "사우디대사관앞.북촌힐스",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 18:29:38.0",
+        "stationNumber": "01547",
+        "eta": "3분23초후[3번째 전]"
+      },
+      {
+        "stationId": "100900058",
+        "sequence": "6",
+        "stationName": "안국선원.삼거리",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 18:29:38.0",
+        "stationNumber": "01548",
+        "eta": "4분1초후[4번째 전]"
+      },
+      {
+        "stationId": "100900052",
+        "sequence": "7",
+        "stationName": "북촌한옥마을입구.정세권활동터",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 18:29:38.0",
+        "stationNumber": "01556",
+        "eta": "4분43초후[5번째 전]"
+      },
+      {
+        "stationId": "100900048",
+        "sequence": "8",
+        "stationName": "가회동주민센터",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 18:29:38.0",
+        "stationNumber": "01564",
+        "eta": "5분44초후[6번째 전]"
+      },
+      {
+        "stationId": "100900092",
+        "sequence": "9",
+        "stationName": "아름다운가게.정독도서관",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 18:29:38.0",
+        "stationNumber": "01570",
+        "eta": "6분57초후[7번째 전]"
+      },
+      {
+        "stationId": "100900086",
+        "sequence": "10",
+        "stationName": "헌법재판소.안국역",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 18:29:38.0",
+        "stationNumber": "01576",
+        "eta": "8분42초후[8번째 전]"
+      },
+      {
+        "stationId": "100900081",
+        "sequence": "11",
+        "stationName": "수운회관",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 18:29:38.0",
+        "stationNumber": "01583",
+        "eta": "12분23초후[9번째 전]"
+      },
+      {
+        "stationId": "100900078",
+        "sequence": "12",
+        "stationName": "낙원상가",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 18:29:38.0",
+        "stationNumber": "01589",
+        "eta": "13분26초후[10번째 전]"
+      },
+      {
+        "stationId": "100900121",
+        "sequence": "13",
+        "stationName": "종로2가.탑골공원",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 18:29:38.0",
+        "stationNumber": "01596",
+        "eta": "2분50초후[0번째 전]"
+      },
+      {
+        "stationId": "100900116",
+        "sequence": "14",
+        "stationName": "종각역.YMCA",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 18:29:38.0",
+        "stationNumber": "01683",
+        "eta": "5분57초후[1번째 전]"
+      },
+      {
+        "stationId": "100900211",
+        "sequence": "15",
+        "stationName": "종각.공평유적전시관",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 18:29:38.0",
+        "stationNumber": "01888",
+        "eta": "8분41초후[2번째 전]"
+      },
+      {
+        "stationId": "100900213",
+        "sequence": "16",
+        "stationName": "조계사",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 18:29:38.0",
+        "stationNumber": "01889",
+        "eta": "10분21초후[3번째 전]"
+      },
+      {
+        "stationId": "100000104",
+        "sequence": "17",
+        "stationName": "안국역6번출구.인사동문화의거리",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 18:29:38.0",
+        "stationNumber": "01200",
+        "eta": "12분15초후[4번째 전]"
+      },
+      {
+        "stationId": "100900189",
+        "sequence": "18",
+        "stationName": "안국역2번출구앞",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 18:29:38.0",
+        "stationNumber": "01805",
+        "eta": "15분55초후[5번째 전]"
+      },
+      {
+        "stationId": "100900131",
+        "sequence": "19",
+        "stationName": "재동초등학교",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 18:29:38.0",
+        "stationNumber": "01812",
+        "eta": "17분21초후[6번째 전]"
+      },
+      {
+        "stationId": "100900168",
+        "sequence": "20",
+        "stationName": "가회동주민센터",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 18:29:38.0",
+        "stationNumber": "01826",
+        "eta": "18분5초후[7번째 전]"
+      },
+      {
+        "stationId": "100900162",
+        "sequence": "21",
+        "stationName": "북촌한옥마을입구.정세권활동터",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 18:29:38.0",
+        "stationNumber": "01833",
+        "eta": "18분52초후[8번째 전]"
+      },
+      {
+        "stationId": "100900157",
+        "sequence": "22",
+        "stationName": "안국선원.삼거리",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 18:29:38.0",
+        "stationNumber": "01839",
+        "eta": "19분34초후[9번째 전]"
+      },
+      {
+        "stationId": "100900153",
+        "sequence": "23",
+        "stationName": "사우디대사관.북촌힐스",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 18:29:38.0",
+        "stationNumber": "01845",
+        "eta": "20분4초후[10번째 전]"
+      },
+      {
+        "stationId": "100900147",
+        "sequence": "24",
+        "stationName": "감사원",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 18:29:38.0",
+        "stationNumber": "01851",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900172",
+        "sequence": "25",
+        "stationName": "통일부",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 18:29:38.0",
+        "stationNumber": "01856",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900203",
+        "sequence": "26",
+        "stationName": "성대후문.와룡공원",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 18:29:38.0",
+        "stationNumber": "01860",
+        "eta": "2분33초후[1번째 전]"
+      },
+      {
+        "stationId": "100900204",
+        "sequence": "27",
+        "stationName": "성균관대학교",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 18:29:38.0",
+        "stationNumber": "01881",
+        "eta": "3분33초후[2번째 전]"
+      }
+    ]
+  },
+  {
+    "at": "2026-02-28T19:00:00+09:00",
+    "payload": [
+      {
+        "stationId": "100900204",
+        "sequence": "1",
+        "stationName": "성균관대학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 18:59:48.0",
+        "stationNumber": "01881",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900202",
+        "sequence": "2",
+        "stationName": "서울성곽.성대후문",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 18:59:48.0",
+        "stationNumber": "01515",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900045",
+        "sequence": "3",
+        "stationName": "통일부",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 18:59:48.0",
+        "stationNumber": "01525",
+        "eta": "1분51초후[1번째 전]"
+      },
+      {
+        "stationId": "100900069",
+        "sequence": "4",
+        "stationName": "감사원",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 18:59:48.0",
+        "stationNumber": "01536",
+        "eta": "2분후[2번째 전]"
+      },
+      {
+        "stationId": "100900059",
+        "sequence": "5",
+        "stationName": "사우디대사관앞.북촌힐스",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 18:59:48.0",
+        "stationNumber": "01547",
+        "eta": "3분17초후[3번째 전]"
+      },
+      {
+        "stationId": "100900058",
+        "sequence": "6",
+        "stationName": "안국선원.삼거리",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 18:59:48.0",
+        "stationNumber": "01548",
+        "eta": "3분48초후[4번째 전]"
+      },
+      {
+        "stationId": "100900052",
+        "sequence": "7",
+        "stationName": "북촌한옥마을입구.정세권활동터",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 18:59:48.0",
+        "stationNumber": "01556",
+        "eta": "4분23초후[5번째 전]"
+      },
+      {
+        "stationId": "100900048",
+        "sequence": "8",
+        "stationName": "가회동주민센터",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 18:59:48.0",
+        "stationNumber": "01564",
+        "eta": "5분23초후[6번째 전]"
+      },
+      {
+        "stationId": "100900092",
+        "sequence": "9",
+        "stationName": "아름다운가게.정독도서관",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 18:59:48.0",
+        "stationNumber": "01570",
+        "eta": "6분24초후[7번째 전]"
+      },
+      {
+        "stationId": "100900086",
+        "sequence": "10",
+        "stationName": "헌법재판소.안국역",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 18:59:48.0",
+        "stationNumber": "01576",
+        "eta": "7분39초후[8번째 전]"
+      },
+      {
+        "stationId": "100900081",
+        "sequence": "11",
+        "stationName": "수운회관",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 18:59:48.0",
+        "stationNumber": "01583",
+        "eta": "2분41초후[0번째 전]"
+      },
+      {
+        "stationId": "100900078",
+        "sequence": "12",
+        "stationName": "낙원상가",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 18:59:48.0",
+        "stationNumber": "01589",
+        "eta": "3분43초후[1번째 전]"
+      },
+      {
+        "stationId": "100900121",
+        "sequence": "13",
+        "stationName": "종로2가.탑골공원",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 18:59:48.0",
+        "stationNumber": "01596",
+        "eta": "6분37초후[2번째 전]"
+      },
+      {
+        "stationId": "100900116",
+        "sequence": "14",
+        "stationName": "종각역.YMCA",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 18:59:48.0",
+        "stationNumber": "01683",
+        "eta": "9분40초후[3번째 전]"
+      },
+      {
+        "stationId": "100900211",
+        "sequence": "15",
+        "stationName": "종각.공평유적전시관",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 18:59:48.0",
+        "stationNumber": "01888",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900213",
+        "sequence": "16",
+        "stationName": "조계사",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 18:59:48.0",
+        "stationNumber": "01889",
+        "eta": "2분4초후[1번째 전]"
+      },
+      {
+        "stationId": "100000104",
+        "sequence": "17",
+        "stationName": "안국역6번출구.인사동문화의거리",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 18:59:48.0",
+        "stationNumber": "01200",
+        "eta": "3분51초후[2번째 전]"
+      },
+      {
+        "stationId": "100900189",
+        "sequence": "18",
+        "stationName": "안국역2번출구앞",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 18:59:48.0",
+        "stationNumber": "01805",
+        "eta": "7분27초후[3번째 전]"
+      },
+      {
+        "stationId": "100900131",
+        "sequence": "19",
+        "stationName": "재동초등학교",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 18:59:48.0",
+        "stationNumber": "01812",
+        "eta": "8분38초후[4번째 전]"
+      },
+      {
+        "stationId": "100900168",
+        "sequence": "20",
+        "stationName": "가회동주민센터",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 18:59:48.0",
+        "stationNumber": "01826",
+        "eta": "9분53초후[5번째 전]"
+      },
+      {
+        "stationId": "100900162",
+        "sequence": "21",
+        "stationName": "북촌한옥마을입구.정세권활동터",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 18:59:48.0",
+        "stationNumber": "01833",
+        "eta": "10분56초후[6번째 전]"
+      },
+      {
+        "stationId": "100900157",
+        "sequence": "22",
+        "stationName": "안국선원.삼거리",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 18:59:48.0",
+        "stationNumber": "01839",
+        "eta": "11분44초후[7번째 전]"
+      },
+      {
+        "stationId": "100900153",
+        "sequence": "23",
+        "stationName": "사우디대사관.북촌힐스",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 18:59:48.0",
+        "stationNumber": "01845",
+        "eta": "12분18초후[8번째 전]"
+      },
+      {
+        "stationId": "100900147",
+        "sequence": "24",
+        "stationName": "감사원",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 18:59:48.0",
+        "stationNumber": "01851",
+        "eta": "13분21초후[9번째 전]"
+      },
+      {
+        "stationId": "100900172",
+        "sequence": "25",
+        "stationName": "통일부",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 18:59:48.0",
+        "stationNumber": "01856",
+        "eta": "14분26초후[10번째 전]"
+      },
+      {
+        "stationId": "100900203",
+        "sequence": "26",
+        "stationName": "성대후문.와룡공원",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 18:59:48.0",
+        "stationNumber": "01860",
+        "eta": "16분3초후[11번째 전]"
+      },
+      {
+        "stationId": "100900204",
+        "sequence": "27",
+        "stationName": "성균관대학교",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 18:59:48.0",
+        "stationNumber": "01881",
+        "eta": "16분58초후[12번째 전]"
+      }
+    ]
+  },
+  {
+    "at": "2026-02-28T19:30:00+09:00",
+    "payload": [
+      {
+        "stationId": "100900204",
+        "sequence": "1",
+        "stationName": "성균관대학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 19:29:53.0",
+        "stationNumber": "01881",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900202",
+        "sequence": "2",
+        "stationName": "서울성곽.성대후문",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 19:29:53.0",
+        "stationNumber": "01515",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900045",
+        "sequence": "3",
+        "stationName": "통일부",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 19:29:53.0",
+        "stationNumber": "01525",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900069",
+        "sequence": "4",
+        "stationName": "감사원",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 19:29:53.0",
+        "stationNumber": "01536",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900059",
+        "sequence": "5",
+        "stationName": "사우디대사관앞.북촌힐스",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 19:29:53.0",
+        "stationNumber": "01547",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900058",
+        "sequence": "6",
+        "stationName": "안국선원.삼거리",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 19:29:53.0",
+        "stationNumber": "01548",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900052",
+        "sequence": "7",
+        "stationName": "북촌한옥마을입구.정세권활동터",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 19:29:53.0",
+        "stationNumber": "01556",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900048",
+        "sequence": "8",
+        "stationName": "가회동주민센터",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 19:29:53.0",
+        "stationNumber": "01564",
+        "eta": "1분28초후[1번째 전]"
+      },
+      {
+        "stationId": "100900092",
+        "sequence": "9",
+        "stationName": "아름다운가게.정독도서관",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 19:29:53.0",
+        "stationNumber": "01570",
+        "eta": "2분후[2번째 전]"
+      },
+      {
+        "stationId": "100900086",
+        "sequence": "10",
+        "stationName": "헌법재판소.안국역",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 19:29:53.0",
+        "stationNumber": "01576",
+        "eta": "3분11초후[3번째 전]"
+      },
+      {
+        "stationId": "100900081",
+        "sequence": "11",
+        "stationName": "수운회관",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 19:29:53.0",
+        "stationNumber": "01583",
+        "eta": "5분17초후[4번째 전]"
+      },
+      {
+        "stationId": "100900078",
+        "sequence": "12",
+        "stationName": "낙원상가",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 19:29:53.0",
+        "stationNumber": "01589",
+        "eta": "6분6초후[5번째 전]"
+      },
+      {
+        "stationId": "100900121",
+        "sequence": "13",
+        "stationName": "종로2가.탑골공원",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 19:29:53.0",
+        "stationNumber": "01596",
+        "eta": "7분48초후[6번째 전]"
+      },
+      {
+        "stationId": "100900116",
+        "sequence": "14",
+        "stationName": "종각역.YMCA",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 19:29:53.0",
+        "stationNumber": "01683",
+        "eta": "10분3초후[7번째 전]"
+      },
+      {
+        "stationId": "100900211",
+        "sequence": "15",
+        "stationName": "종각.공평유적전시관",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 19:29:53.0",
+        "stationNumber": "01888",
+        "eta": "11분26초후[8번째 전]"
+      },
+      {
+        "stationId": "100900213",
+        "sequence": "16",
+        "stationName": "조계사",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 19:29:53.0",
+        "stationNumber": "01889",
+        "eta": "12분40초후[9번째 전]"
+      },
+      {
+        "stationId": "100000104",
+        "sequence": "17",
+        "stationName": "안국역6번출구.인사동문화의거리",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 19:29:53.0",
+        "stationNumber": "01200",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900189",
+        "sequence": "18",
+        "stationName": "안국역2번출구앞",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 19:29:53.0",
+        "stationNumber": "01805",
+        "eta": "4분10초후[1번째 전]"
+      },
+      {
+        "stationId": "100900131",
+        "sequence": "19",
+        "stationName": "재동초등학교",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 19:29:53.0",
+        "stationNumber": "01812",
+        "eta": "5분17초후[2번째 전]"
+      },
+      {
+        "stationId": "100900168",
+        "sequence": "20",
+        "stationName": "가회동주민센터",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 19:29:53.0",
+        "stationNumber": "01826",
+        "eta": "6분32초후[3번째 전]"
+      },
+      {
+        "stationId": "100900162",
+        "sequence": "21",
+        "stationName": "북촌한옥마을입구.정세권활동터",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 19:29:53.0",
+        "stationNumber": "01833",
+        "eta": "7분34초후[4번째 전]"
+      },
+      {
+        "stationId": "100900157",
+        "sequence": "22",
+        "stationName": "안국선원.삼거리",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 19:29:53.0",
+        "stationNumber": "01839",
+        "eta": "8분19초후[5번째 전]"
+      },
+      {
+        "stationId": "100900153",
+        "sequence": "23",
+        "stationName": "사우디대사관.북촌힐스",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 19:29:53.0",
+        "stationNumber": "01845",
+        "eta": "8분52초후[6번째 전]"
+      },
+      {
+        "stationId": "100900147",
+        "sequence": "24",
+        "stationName": "감사원",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 19:29:53.0",
+        "stationNumber": "01851",
+        "eta": "9분59초후[7번째 전]"
+      },
+      {
+        "stationId": "100900172",
+        "sequence": "25",
+        "stationName": "통일부",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 19:29:53.0",
+        "stationNumber": "01856",
+        "eta": "11분후[8번째 전]"
+      },
+      {
+        "stationId": "100900203",
+        "sequence": "26",
+        "stationName": "성대후문.와룡공원",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 19:29:53.0",
+        "stationNumber": "01860",
+        "eta": "12분36초후[9번째 전]"
+      },
+      {
+        "stationId": "100900204",
+        "sequence": "27",
+        "stationName": "성균관대학교",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 19:29:53.0",
+        "stationNumber": "01881",
+        "eta": "곧 도착"
+      }
+    ]
+  },
+  {
+    "at": "2026-02-28T20:00:00+09:00",
+    "payload": [
+      {
+        "stationId": "100900204",
+        "sequence": "1",
+        "stationName": "성균관대학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 19:59:52.0",
+        "stationNumber": "01881",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900202",
+        "sequence": "2",
+        "stationName": "서울성곽.성대후문",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 19:59:52.0",
+        "stationNumber": "01515",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900045",
+        "sequence": "3",
+        "stationName": "통일부",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 19:59:52.0",
+        "stationNumber": "01525",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900069",
+        "sequence": "4",
+        "stationName": "감사원",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 19:59:52.0",
+        "stationNumber": "01536",
+        "eta": "1분22초후[1번째 전]"
+      },
+      {
+        "stationId": "100900059",
+        "sequence": "5",
+        "stationName": "사우디대사관앞.북촌힐스",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 19:59:52.0",
+        "stationNumber": "01547",
+        "eta": "2분후[2번째 전]"
+      },
+      {
+        "stationId": "100900058",
+        "sequence": "6",
+        "stationName": "안국선원.삼거리",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 19:59:52.0",
+        "stationNumber": "01548",
+        "eta": "2분53초후[3번째 전]"
+      },
+      {
+        "stationId": "100900052",
+        "sequence": "7",
+        "stationName": "북촌한옥마을입구.정세권활동터",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 19:59:52.0",
+        "stationNumber": "01556",
+        "eta": "3분27초후[4번째 전]"
+      },
+      {
+        "stationId": "100900048",
+        "sequence": "8",
+        "stationName": "가회동주민센터",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 19:59:52.0",
+        "stationNumber": "01564",
+        "eta": "4분22초후[5번째 전]"
+      },
+      {
+        "stationId": "100900092",
+        "sequence": "9",
+        "stationName": "아름다운가게.정독도서관",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 19:59:52.0",
+        "stationNumber": "01570",
+        "eta": "5분5초후[6번째 전]"
+      },
+      {
+        "stationId": "100900086",
+        "sequence": "10",
+        "stationName": "헌법재판소.안국역",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 19:59:52.0",
+        "stationNumber": "01576",
+        "eta": "5분51초후[7번째 전]"
+      },
+      {
+        "stationId": "100900081",
+        "sequence": "11",
+        "stationName": "수운회관",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 19:59:52.0",
+        "stationNumber": "01583",
+        "eta": "7분30초후[8번째 전]"
+      },
+      {
+        "stationId": "100900078",
+        "sequence": "12",
+        "stationName": "낙원상가",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 19:59:52.0",
+        "stationNumber": "01589",
+        "eta": "8분10초후[9번째 전]"
+      },
+      {
+        "stationId": "100900121",
+        "sequence": "13",
+        "stationName": "종로2가.탑골공원",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 19:59:52.0",
+        "stationNumber": "01596",
+        "eta": "9분50초후[10번째 전]"
+      },
+      {
+        "stationId": "100900116",
+        "sequence": "14",
+        "stationName": "종각역.YMCA",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 19:59:52.0",
+        "stationNumber": "01683",
+        "eta": "11분39초후[11번째 전]"
+      },
+      {
+        "stationId": "100900211",
+        "sequence": "15",
+        "stationName": "종각.공평유적전시관",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 19:59:52.0",
+        "stationNumber": "01888",
+        "eta": "13분11초후[12번째 전]"
+      },
+      {
+        "stationId": "100900213",
+        "sequence": "16",
+        "stationName": "조계사",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 19:59:52.0",
+        "stationNumber": "01889",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100000104",
+        "sequence": "17",
+        "stationName": "안국역6번출구.인사동문화의거리",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 19:59:52.0",
+        "stationNumber": "01200",
+        "eta": "2분26초후[1번째 전]"
+      },
+      {
+        "stationId": "100900189",
+        "sequence": "18",
+        "stationName": "안국역2번출구앞",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 19:59:52.0",
+        "stationNumber": "01805",
+        "eta": "5분4초후[2번째 전]"
+      },
+      {
+        "stationId": "100900131",
+        "sequence": "19",
+        "stationName": "재동초등학교",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 19:59:52.0",
+        "stationNumber": "01812",
+        "eta": "6분8초후[3번째 전]"
+      },
+      {
+        "stationId": "100900168",
+        "sequence": "20",
+        "stationName": "가회동주민센터",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 19:59:52.0",
+        "stationNumber": "01826",
+        "eta": "7분17초후[4번째 전]"
+      },
+      {
+        "stationId": "100900162",
+        "sequence": "21",
+        "stationName": "북촌한옥마을입구.정세권활동터",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 19:59:52.0",
+        "stationNumber": "01833",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900157",
+        "sequence": "22",
+        "stationName": "안국선원.삼거리",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 19:59:52.0",
+        "stationNumber": "01839",
+        "eta": "1분후[1번째 전]"
+      },
+      {
+        "stationId": "100900153",
+        "sequence": "23",
+        "stationName": "사우디대사관.북촌힐스",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 19:59:52.0",
+        "stationNumber": "01845",
+        "eta": "2분후[2번째 전]"
+      },
+      {
+        "stationId": "100900147",
+        "sequence": "24",
+        "stationName": "감사원",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 19:59:52.0",
+        "stationNumber": "01851",
+        "eta": "2분28초후[3번째 전]"
+      },
+      {
+        "stationId": "100900172",
+        "sequence": "25",
+        "stationName": "통일부",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 19:59:52.0",
+        "stationNumber": "01856",
+        "eta": "3분10초후[4번째 전]"
+      },
+      {
+        "stationId": "100900203",
+        "sequence": "26",
+        "stationName": "성대후문.와룡공원",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 19:59:52.0",
+        "stationNumber": "01860",
+        "eta": "4분46초후[5번째 전]"
+      },
+      {
+        "stationId": "100900204",
+        "sequence": "27",
+        "stationName": "성균관대학교",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 19:59:52.0",
+        "stationNumber": "01881",
+        "eta": "5분40초후[6번째 전]"
+      }
+    ]
+  },
+  {
+    "at": "2026-02-28T20:30:00+09:00",
+    "payload": [
+      {
+        "stationId": "100900204",
+        "sequence": "1",
+        "stationName": "성균관대학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:29:50.0",
+        "stationNumber": "01881",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900202",
+        "sequence": "2",
+        "stationName": "서울성곽.성대후문",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:29:50.0",
+        "stationNumber": "01515",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900045",
+        "sequence": "3",
+        "stationName": "통일부",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:29:50.0",
+        "stationNumber": "01525",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900069",
+        "sequence": "4",
+        "stationName": "감사원",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:29:50.0",
+        "stationNumber": "01536",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900059",
+        "sequence": "5",
+        "stationName": "사우디대사관앞.북촌힐스",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:29:50.0",
+        "stationNumber": "01547",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900058",
+        "sequence": "6",
+        "stationName": "안국선원.삼거리",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:29:50.0",
+        "stationNumber": "01548",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900052",
+        "sequence": "7",
+        "stationName": "북촌한옥마을입구.정세권활동터",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:29:50.0",
+        "stationNumber": "01556",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900048",
+        "sequence": "8",
+        "stationName": "가회동주민센터",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:29:50.0",
+        "stationNumber": "01564",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900092",
+        "sequence": "9",
+        "stationName": "아름다운가게.정독도서관",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:29:50.0",
+        "stationNumber": "01570",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900086",
+        "sequence": "10",
+        "stationName": "헌법재판소.안국역",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:29:50.0",
+        "stationNumber": "01576",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900081",
+        "sequence": "11",
+        "stationName": "수운회관",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:29:50.0",
+        "stationNumber": "01583",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900078",
+        "sequence": "12",
+        "stationName": "낙원상가",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 20:29:50.0",
+        "stationNumber": "01589",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900121",
+        "sequence": "13",
+        "stationName": "종로2가.탑골공원",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 20:29:50.0",
+        "stationNumber": "01596",
+        "eta": "2분29초후[1번째 전]"
+      },
+      {
+        "stationId": "100900116",
+        "sequence": "14",
+        "stationName": "종각역.YMCA",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 20:29:50.0",
+        "stationNumber": "01683",
+        "eta": "4분12초후[2번째 전]"
+      },
+      {
+        "stationId": "100900211",
+        "sequence": "15",
+        "stationName": "종각.공평유적전시관",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 20:29:50.0",
+        "stationNumber": "01888",
+        "eta": "5분35초후[3번째 전]"
+      },
+      {
+        "stationId": "100900213",
+        "sequence": "16",
+        "stationName": "조계사",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 20:29:50.0",
+        "stationNumber": "01889",
+        "eta": "6분45초후[4번째 전]"
+      },
+      {
+        "stationId": "100000104",
+        "sequence": "17",
+        "stationName": "안국역6번출구.인사동문화의거리",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 20:29:50.0",
+        "stationNumber": "01200",
+        "eta": "8분9초후[5번째 전]"
+      },
+      {
+        "stationId": "100900189",
+        "sequence": "18",
+        "stationName": "안국역2번출구앞",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 20:29:50.0",
+        "stationNumber": "01805",
+        "eta": "10분32초후[6번째 전]"
+      },
+      {
+        "stationId": "100900131",
+        "sequence": "19",
+        "stationName": "재동초등학교",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 20:29:50.0",
+        "stationNumber": "01812",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900168",
+        "sequence": "20",
+        "stationName": "가회동주민센터",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 20:29:50.0",
+        "stationNumber": "01826",
+        "eta": "1분54초후[1번째 전]"
+      },
+      {
+        "stationId": "100900162",
+        "sequence": "21",
+        "stationName": "북촌한옥마을입구.정세권활동터",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 20:29:50.0",
+        "stationNumber": "01833",
+        "eta": "2분후[2번째 전]"
+      },
+      {
+        "stationId": "100900157",
+        "sequence": "22",
+        "stationName": "안국선원.삼거리",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 20:29:50.0",
+        "stationNumber": "01839",
+        "eta": "3분35초후[3번째 전]"
+      },
+      {
+        "stationId": "100900153",
+        "sequence": "23",
+        "stationName": "사우디대사관.북촌힐스",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 20:29:50.0",
+        "stationNumber": "01845",
+        "eta": "4분7초후[4번째 전]"
+      },
+      {
+        "stationId": "100900147",
+        "sequence": "24",
+        "stationName": "감사원",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 20:29:50.0",
+        "stationNumber": "01851",
+        "eta": "5분11초후[5번째 전]"
+      },
+      {
+        "stationId": "100900172",
+        "sequence": "25",
+        "stationName": "통일부",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 20:29:50.0",
+        "stationNumber": "01856",
+        "eta": "6분2초후[6번째 전]"
+      },
+      {
+        "stationId": "100900203",
+        "sequence": "26",
+        "stationName": "성대후문.와룡공원",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 20:29:50.0",
+        "stationNumber": "01860",
+        "eta": "7분37초후[7번째 전]"
+      },
+      {
+        "stationId": "100900204",
+        "sequence": "27",
+        "stationName": "성균관대학교",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 20:29:50.0",
+        "stationNumber": "01881",
+        "eta": "8분30초후[8번째 전]"
+      }
+    ]
+  },
+  {
+    "at": "2026-02-28T21:00:00+09:00",
+    "payload": [
+      {
+        "stationId": "100900204",
+        "sequence": "1",
+        "stationName": "성균관대학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:59:41.0",
+        "stationNumber": "01881",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900202",
+        "sequence": "2",
+        "stationName": "서울성곽.성대후문",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:59:41.0",
+        "stationNumber": "01515",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900045",
+        "sequence": "3",
+        "stationName": "통일부",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:59:41.0",
+        "stationNumber": "01525",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900069",
+        "sequence": "4",
+        "stationName": "감사원",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:59:41.0",
+        "stationNumber": "01536",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900059",
+        "sequence": "5",
+        "stationName": "사우디대사관앞.북촌힐스",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:59:41.0",
+        "stationNumber": "01547",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900058",
+        "sequence": "6",
+        "stationName": "안국선원.삼거리",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:59:41.0",
+        "stationNumber": "01548",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900052",
+        "sequence": "7",
+        "stationName": "북촌한옥마을입구.정세권활동터",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:59:41.0",
+        "stationNumber": "01556",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900048",
+        "sequence": "8",
+        "stationName": "가회동주민센터",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:59:41.0",
+        "stationNumber": "01564",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900092",
+        "sequence": "9",
+        "stationName": "아름다운가게.정독도서관",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:59:41.0",
+        "stationNumber": "01570",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900086",
+        "sequence": "10",
+        "stationName": "헌법재판소.안국역",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:59:41.0",
+        "stationNumber": "01576",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900081",
+        "sequence": "11",
+        "stationName": "수운회관",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:59:41.0",
+        "stationNumber": "01583",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900078",
+        "sequence": "12",
+        "stationName": "낙원상가",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:59:41.0",
+        "stationNumber": "01589",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900121",
+        "sequence": "13",
+        "stationName": "종로2가.탑골공원",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:59:41.0",
+        "stationNumber": "01596",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900116",
+        "sequence": "14",
+        "stationName": "종각역.YMCA",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 20:59:41.0",
+        "stationNumber": "01683",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900211",
+        "sequence": "15",
+        "stationName": "종각.공평유적전시관",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 20:59:41.0",
+        "stationNumber": "01888",
+        "eta": "3분4초후[1번째 전]"
+      },
+      {
+        "stationId": "100900213",
+        "sequence": "16",
+        "stationName": "조계사",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 20:59:41.0",
+        "stationNumber": "01889",
+        "eta": "4분25초후[2번째 전]"
+      },
+      {
+        "stationId": "100000104",
+        "sequence": "17",
+        "stationName": "안국역6번출구.인사동문화의거리",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 20:59:41.0",
+        "stationNumber": "01200",
+        "eta": "5분58초후[3번째 전]"
+      },
+      {
+        "stationId": "100900189",
+        "sequence": "18",
+        "stationName": "안국역2번출구앞",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 20:59:41.0",
+        "stationNumber": "01805",
+        "eta": "8분14초후[4번째 전]"
+      },
+      {
+        "stationId": "100900131",
+        "sequence": "19",
+        "stationName": "재동초등학교",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 20:59:41.0",
+        "stationNumber": "01812",
+        "eta": "9분17초후[5번째 전]"
+      },
+      {
+        "stationId": "100900168",
+        "sequence": "20",
+        "stationName": "가회동주민센터",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 20:59:41.0",
+        "stationNumber": "01826",
+        "eta": "10분25초후[6번째 전]"
+      },
+      {
+        "stationId": "100900162",
+        "sequence": "21",
+        "stationName": "북촌한옥마을입구.정세권활동터",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 20:59:41.0",
+        "stationNumber": "01833",
+        "eta": "11분27초후[7번째 전]"
+      },
+      {
+        "stationId": "100900157",
+        "sequence": "22",
+        "stationName": "안국선원.삼거리",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 20:59:41.0",
+        "stationNumber": "01839",
+        "eta": "12분11초후[8번째 전]"
+      },
+      {
+        "stationId": "100900153",
+        "sequence": "23",
+        "stationName": "사우디대사관.북촌힐스",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 20:59:41.0",
+        "stationNumber": "01845",
+        "eta": "12분46초후[9번째 전]"
+      },
+      {
+        "stationId": "100900147",
+        "sequence": "24",
+        "stationName": "감사원",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 20:59:41.0",
+        "stationNumber": "01851",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900172",
+        "sequence": "25",
+        "stationName": "통일부",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 20:59:41.0",
+        "stationNumber": "01856",
+        "eta": "1분30초후[1번째 전]"
+      },
+      {
+        "stationId": "100900203",
+        "sequence": "26",
+        "stationName": "성대후문.와룡공원",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 20:59:41.0",
+        "stationNumber": "01860",
+        "eta": "3분3초후[2번째 전]"
+      },
+      {
+        "stationId": "100900204",
+        "sequence": "27",
+        "stationName": "성균관대학교",
+        "carNumber": "5511",
+        "eventDate": "2026-02-28 20:59:41.0",
+        "stationNumber": "01881",
+        "eta": "3분54초후[3번째 전]"
+      }
+    ]
+  },
+  {
+    "at": "2026-02-28T21:30:00+09:00",
+    "payload": [
+      {
+        "stationId": "100900204",
+        "sequence": "1",
+        "stationName": "성균관대학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:29:36.0",
+        "stationNumber": "01881",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900202",
+        "sequence": "2",
+        "stationName": "서울성곽.성대후문",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:29:36.0",
+        "stationNumber": "01515",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900045",
+        "sequence": "3",
+        "stationName": "통일부",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:29:36.0",
+        "stationNumber": "01525",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900069",
+        "sequence": "4",
+        "stationName": "감사원",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:29:36.0",
+        "stationNumber": "01536",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900059",
+        "sequence": "5",
+        "stationName": "사우디대사관앞.북촌힐스",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:29:36.0",
+        "stationNumber": "01547",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900058",
+        "sequence": "6",
+        "stationName": "안국선원.삼거리",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:29:36.0",
+        "stationNumber": "01548",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900052",
+        "sequence": "7",
+        "stationName": "북촌한옥마을입구.정세권활동터",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:29:36.0",
+        "stationNumber": "01556",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900048",
+        "sequence": "8",
+        "stationName": "가회동주민센터",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:29:36.0",
+        "stationNumber": "01564",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900092",
+        "sequence": "9",
+        "stationName": "아름다운가게.정독도서관",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:29:36.0",
+        "stationNumber": "01570",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900086",
+        "sequence": "10",
+        "stationName": "헌법재판소.안국역",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:29:36.0",
+        "stationNumber": "01576",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900081",
+        "sequence": "11",
+        "stationName": "수운회관",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:29:36.0",
+        "stationNumber": "01583",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900078",
+        "sequence": "12",
+        "stationName": "낙원상가",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:29:36.0",
+        "stationNumber": "01589",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900121",
+        "sequence": "13",
+        "stationName": "종로2가.탑골공원",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:29:36.0",
+        "stationNumber": "01596",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900116",
+        "sequence": "14",
+        "stationName": "종각역.YMCA",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:29:36.0",
+        "stationNumber": "01683",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900211",
+        "sequence": "15",
+        "stationName": "종각.공평유적전시관",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 21:29:36.0",
+        "stationNumber": "01888",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900213",
+        "sequence": "16",
+        "stationName": "조계사",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 21:29:36.0",
+        "stationNumber": "01889",
+        "eta": "1분38초후[1번째 전]"
+      },
+      {
+        "stationId": "100000104",
+        "sequence": "17",
+        "stationName": "안국역6번출구.인사동문화의거리",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 21:29:36.0",
+        "stationNumber": "01200",
+        "eta": "3분11초후[2번째 전]"
+      },
+      {
+        "stationId": "100900189",
+        "sequence": "18",
+        "stationName": "안국역2번출구앞",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 21:29:36.0",
+        "stationNumber": "01805",
+        "eta": "5분33초후[3번째 전]"
+      },
+      {
+        "stationId": "100900131",
+        "sequence": "19",
+        "stationName": "재동초등학교",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 21:29:36.0",
+        "stationNumber": "01812",
+        "eta": "6분39초후[4번째 전]"
+      },
+      {
+        "stationId": "100900168",
+        "sequence": "20",
+        "stationName": "가회동주민센터",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 21:29:36.0",
+        "stationNumber": "01826",
+        "eta": "7분49초후[5번째 전]"
+      },
+      {
+        "stationId": "100900162",
+        "sequence": "21",
+        "stationName": "북촌한옥마을입구.정세권활동터",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 21:29:36.0",
+        "stationNumber": "01833",
+        "eta": "8분47초후[6번째 전]"
+      },
+      {
+        "stationId": "100900157",
+        "sequence": "22",
+        "stationName": "안국선원.삼거리",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 21:29:36.0",
+        "stationNumber": "01839",
+        "eta": "9분32초후[7번째 전]"
+      },
+      {
+        "stationId": "100900153",
+        "sequence": "23",
+        "stationName": "사우디대사관.북촌힐스",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 21:29:36.0",
+        "stationNumber": "01845",
+        "eta": "10분8초후[8번째 전]"
+      },
+      {
+        "stationId": "100900147",
+        "sequence": "24",
+        "stationName": "감사원",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 21:29:36.0",
+        "stationNumber": "01851",
+        "eta": "11분9초후[9번째 전]"
+      },
+      {
+        "stationId": "100900172",
+        "sequence": "25",
+        "stationName": "통일부",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 21:29:36.0",
+        "stationNumber": "01856",
+        "eta": "12분2초후[10번째 전]"
+      },
+      {
+        "stationId": "100900203",
+        "sequence": "26",
+        "stationName": "성대후문.와룡공원",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 21:29:36.0",
+        "stationNumber": "01860",
+        "eta": "13분39초후[11번째 전]"
+      },
+      {
+        "stationId": "100900204",
+        "sequence": "27",
+        "stationName": "성균관대학교",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 21:29:36.0",
+        "stationNumber": "01881",
+        "eta": "곧 도착"
+      }
+    ]
+  },
+  {
+    "at": "2026-02-28T22:00:00+09:00",
+    "payload": [
+      {
+        "stationId": "100900204",
+        "sequence": "1",
+        "stationName": "성균관대학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01881",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900202",
+        "sequence": "2",
+        "stationName": "서울성곽.성대후문",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01515",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900045",
+        "sequence": "3",
+        "stationName": "통일부",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01525",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900069",
+        "sequence": "4",
+        "stationName": "감사원",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01536",
+        "eta": "1분31초후[1번째 전]"
+      },
+      {
+        "stationId": "100900059",
+        "sequence": "5",
+        "stationName": "사우디대사관앞.북촌힐스",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01547",
+        "eta": "2분후[2번째 전]"
+      },
+      {
+        "stationId": "100900058",
+        "sequence": "6",
+        "stationName": "안국선원.삼거리",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01548",
+        "eta": "2분57초후[3번째 전]"
+      },
+      {
+        "stationId": "100900052",
+        "sequence": "7",
+        "stationName": "북촌한옥마을입구.정세권활동터",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01556",
+        "eta": "3분35초후[4번째 전]"
+      },
+      {
+        "stationId": "100900048",
+        "sequence": "8",
+        "stationName": "가회동주민센터",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01564",
+        "eta": "4분22초후[5번째 전]"
+      },
+      {
+        "stationId": "100900092",
+        "sequence": "9",
+        "stationName": "아름다운가게.정독도서관",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01570",
+        "eta": "5분36초후[6번째 전]"
+      },
+      {
+        "stationId": "100900086",
+        "sequence": "10",
+        "stationName": "헌법재판소.안국역",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01576",
+        "eta": "6분1초후[7번째 전]"
+      },
+      {
+        "stationId": "100900081",
+        "sequence": "11",
+        "stationName": "수운회관",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01583",
+        "eta": "7분37초후[8번째 전]"
+      },
+      {
+        "stationId": "100900078",
+        "sequence": "12",
+        "stationName": "낙원상가",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01589",
+        "eta": "8분24초후[9번째 전]"
+      },
+      {
+        "stationId": "100900121",
+        "sequence": "13",
+        "stationName": "종로2가.탑골공원",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01596",
+        "eta": "9분47초후[10번째 전]"
+      },
+      {
+        "stationId": "100900116",
+        "sequence": "14",
+        "stationName": "종각역.YMCA",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01683",
+        "eta": "11분28초후[11번째 전]"
+      },
+      {
+        "stationId": "100900211",
+        "sequence": "15",
+        "stationName": "종각.공평유적전시관",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01888",
+        "eta": "12분55초후[12번째 전]"
+      },
+      {
+        "stationId": "100900213",
+        "sequence": "16",
+        "stationName": "조계사",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01889",
+        "eta": "14분14초후[13번째 전]"
+      },
+      {
+        "stationId": "100000104",
+        "sequence": "17",
+        "stationName": "안국역6번출구.인사동문화의거리",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01200",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900189",
+        "sequence": "18",
+        "stationName": "안국역2번출구앞",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01805",
+        "eta": "2분41초후[1번째 전]"
+      },
+      {
+        "stationId": "100900131",
+        "sequence": "19",
+        "stationName": "재동초등학교",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01812",
+        "eta": "3분48초후[2번째 전]"
+      },
+      {
+        "stationId": "100900168",
+        "sequence": "20",
+        "stationName": "가회동주민센터",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01826",
+        "eta": "4분52초후[3번째 전]"
+      },
+      {
+        "stationId": "100900162",
+        "sequence": "21",
+        "stationName": "북촌한옥마을입구.정세권활동터",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01833",
+        "eta": "5분50초후[4번째 전]"
+      },
+      {
+        "stationId": "100900157",
+        "sequence": "22",
+        "stationName": "안국선원.삼거리",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01839",
+        "eta": "6분38초후[5번째 전]"
+      },
+      {
+        "stationId": "100900153",
+        "sequence": "23",
+        "stationName": "사우디대사관.북촌힐스",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01845",
+        "eta": "7분14초후[6번째 전]"
+      },
+      {
+        "stationId": "100900147",
+        "sequence": "24",
+        "stationName": "감사원",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01851",
+        "eta": "8분14초후[7번째 전]"
+      },
+      {
+        "stationId": "100900172",
+        "sequence": "25",
+        "stationName": "통일부",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01856",
+        "eta": "9분7초후[8번째 전]"
+      },
+      {
+        "stationId": "100900203",
+        "sequence": "26",
+        "stationName": "성대후문.와룡공원",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01860",
+        "eta": "10분42초후[9번째 전]"
+      },
+      {
+        "stationId": "100900204",
+        "sequence": "27",
+        "stationName": "성균관대학교",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01881",
+        "eta": "11분36초후[10번째 전]"
+      }
+    ]
+  },
+  {
+    "at": "2026-02-28T22:30:00+09:00",
+    "payload": [
+      {
+        "stationId": "100900204",
+        "sequence": "1",
+        "stationName": "성균관대학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:29:47.0",
+        "stationNumber": "01881",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900202",
+        "sequence": "2",
+        "stationName": "서울성곽.성대후문",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:29:47.0",
+        "stationNumber": "01515",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900045",
+        "sequence": "3",
+        "stationName": "통일부",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:29:47.0",
+        "stationNumber": "01525",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900069",
+        "sequence": "4",
+        "stationName": "감사원",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:29:47.0",
+        "stationNumber": "01536",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900059",
+        "sequence": "5",
+        "stationName": "사우디대사관앞.북촌힐스",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:29:47.0",
+        "stationNumber": "01547",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900058",
+        "sequence": "6",
+        "stationName": "안국선원.삼거리",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:29:47.0",
+        "stationNumber": "01548",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900052",
+        "sequence": "7",
+        "stationName": "북촌한옥마을입구.정세권활동터",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:29:47.0",
+        "stationNumber": "01556",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900048",
+        "sequence": "8",
+        "stationName": "가회동주민센터",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 22:29:47.0",
+        "stationNumber": "01564",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900092",
+        "sequence": "9",
+        "stationName": "아름다운가게.정독도서관",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 22:29:47.0",
+        "stationNumber": "01570",
+        "eta": "1분54초후[1번째 전]"
+      },
+      {
+        "stationId": "100900086",
+        "sequence": "10",
+        "stationName": "헌법재판소.안국역",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 22:29:47.0",
+        "stationNumber": "01576",
+        "eta": "2분후[2번째 전]"
+      },
+      {
+        "stationId": "100900081",
+        "sequence": "11",
+        "stationName": "수운회관",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 22:29:47.0",
+        "stationNumber": "01583",
+        "eta": "3분55초후[3번째 전]"
+      },
+      {
+        "stationId": "100900078",
+        "sequence": "12",
+        "stationName": "낙원상가",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 22:29:47.0",
+        "stationNumber": "01589",
+        "eta": "4분43초후[4번째 전]"
+      },
+      {
+        "stationId": "100900121",
+        "sequence": "13",
+        "stationName": "종로2가.탑골공원",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 22:29:47.0",
+        "stationNumber": "01596",
+        "eta": "6분13초후[5번째 전]"
+      },
+      {
+        "stationId": "100900116",
+        "sequence": "14",
+        "stationName": "종각역.YMCA",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 22:29:47.0",
+        "stationNumber": "01683",
+        "eta": "7분55초후[6번째 전]"
+      },
+      {
+        "stationId": "100900211",
+        "sequence": "15",
+        "stationName": "종각.공평유적전시관",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 22:29:47.0",
+        "stationNumber": "01888",
+        "eta": "9분24초후[7번째 전]"
+      },
+      {
+        "stationId": "100900213",
+        "sequence": "16",
+        "stationName": "조계사",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 22:29:47.0",
+        "stationNumber": "01889",
+        "eta": "10분47초후[8번째 전]"
+      },
+      {
+        "stationId": "100000104",
+        "sequence": "17",
+        "stationName": "안국역6번출구.인사동문화의거리",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 22:29:47.0",
+        "stationNumber": "01200",
+        "eta": "12분11초후[9번째 전]"
+      },
+      {
+        "stationId": "100900189",
+        "sequence": "18",
+        "stationName": "안국역2번출구앞",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 22:29:47.0",
+        "stationNumber": "01805",
+        "eta": "14분31초후[10번째 전]"
+      },
+      {
+        "stationId": "100900131",
+        "sequence": "19",
+        "stationName": "재동초등학교",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 22:29:47.0",
+        "stationNumber": "01812",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900168",
+        "sequence": "20",
+        "stationName": "가회동주민센터",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 22:29:47.0",
+        "stationNumber": "01826",
+        "eta": "1분53초후[1번째 전]"
+      },
+      {
+        "stationId": "100900162",
+        "sequence": "21",
+        "stationName": "북촌한옥마을입구.정세권활동터",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 22:29:47.0",
+        "stationNumber": "01833",
+        "eta": "2분후[2번째 전]"
+      },
+      {
+        "stationId": "100900157",
+        "sequence": "22",
+        "stationName": "안국선원.삼거리",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 22:29:47.0",
+        "stationNumber": "01839",
+        "eta": "3분38초후[3번째 전]"
+      },
+      {
+        "stationId": "100900153",
+        "sequence": "23",
+        "stationName": "사우디대사관.북촌힐스",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 22:29:47.0",
+        "stationNumber": "01845",
+        "eta": "4분15초후[4번째 전]"
+      },
+      {
+        "stationId": "100900147",
+        "sequence": "24",
+        "stationName": "감사원",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 22:29:47.0",
+        "stationNumber": "01851",
+        "eta": "5분15초후[5번째 전]"
+      },
+      {
+        "stationId": "100900172",
+        "sequence": "25",
+        "stationName": "통일부",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 22:29:47.0",
+        "stationNumber": "01856",
+        "eta": "6분6초후[6번째 전]"
+      },
+      {
+        "stationId": "100900203",
+        "sequence": "26",
+        "stationName": "성대후문.와룡공원",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 22:29:47.0",
+        "stationNumber": "01860",
+        "eta": "7분45초후[7번째 전]"
+      },
+      {
+        "stationId": "100900204",
+        "sequence": "27",
+        "stationName": "성균관대학교",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 22:29:47.0",
+        "stationNumber": "01881",
+        "eta": "8분41초후[8번째 전]"
+      }
+    ]
+  },
+  {
+    "at": "2026-02-28T23:00:00+09:00",
+    "payload": [
+      {
+        "stationId": "100900204",
+        "sequence": "1",
+        "stationName": "성균관대학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:59:50.0",
+        "stationNumber": "01881",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900202",
+        "sequence": "2",
+        "stationName": "서울성곽.성대후문",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 22:59:50.0",
+        "stationNumber": "01515",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900045",
+        "sequence": "3",
+        "stationName": "통일부",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 22:59:50.0",
+        "stationNumber": "01525",
+        "eta": "1분37초후[1번째 전]"
+      },
+      {
+        "stationId": "100900069",
+        "sequence": "4",
+        "stationName": "감사원",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 22:59:50.0",
+        "stationNumber": "01536",
+        "eta": "2분후[2번째 전]"
+      },
+      {
+        "stationId": "100900059",
+        "sequence": "5",
+        "stationName": "사우디대사관앞.북촌힐스",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 22:59:50.0",
+        "stationNumber": "01547",
+        "eta": "2분55초후[3번째 전]"
+      },
+      {
+        "stationId": "100900058",
+        "sequence": "6",
+        "stationName": "안국선원.삼거리",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 22:59:50.0",
+        "stationNumber": "01548",
+        "eta": "3분24초후[4번째 전]"
+      },
+      {
+        "stationId": "100900052",
+        "sequence": "7",
+        "stationName": "북촌한옥마을입구.정세권활동터",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 22:59:50.0",
+        "stationNumber": "01556",
+        "eta": "3분56초후[5번째 전]"
+      },
+      {
+        "stationId": "100900048",
+        "sequence": "8",
+        "stationName": "가회동주민센터",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 22:59:50.0",
+        "stationNumber": "01564",
+        "eta": "4분44초후[6번째 전]"
+      },
+      {
+        "stationId": "100900092",
+        "sequence": "9",
+        "stationName": "아름다운가게.정독도서관",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 22:59:50.0",
+        "stationNumber": "01570",
+        "eta": "5분37초후[7번째 전]"
+      },
+      {
+        "stationId": "100900086",
+        "sequence": "10",
+        "stationName": "헌법재판소.안국역",
+        "carNumber": "2008",
+        "eventDate": "2026-02-28 22:59:50.0",
+        "stationNumber": "01576",
+        "eta": "6분15초후[8번째 전]"
+      },
+      {
+        "stationId": "100900081",
+        "sequence": "11",
+        "stationName": "수운회관",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 22:59:50.0",
+        "stationNumber": "01583",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900078",
+        "sequence": "12",
+        "stationName": "낙원상가",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 22:59:50.0",
+        "stationNumber": "01589",
+        "eta": "1분후[1번째 전]"
+      },
+      {
+        "stationId": "100900121",
+        "sequence": "13",
+        "stationName": "종로2가.탑골공원",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 22:59:50.0",
+        "stationNumber": "01596",
+        "eta": "2분후[2번째 전]"
+      },
+      {
+        "stationId": "100900116",
+        "sequence": "14",
+        "stationName": "종각역.YMCA",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 22:59:50.0",
+        "stationNumber": "01683",
+        "eta": "4분15초후[3번째 전]"
+      },
+      {
+        "stationId": "100900211",
+        "sequence": "15",
+        "stationName": "종각.공평유적전시관",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 22:59:50.0",
+        "stationNumber": "01888",
+        "eta": "5분45초후[4번째 전]"
+      },
+      {
+        "stationId": "100900213",
+        "sequence": "16",
+        "stationName": "조계사",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 22:59:50.0",
+        "stationNumber": "01889",
+        "eta": "7분14초후[5번째 전]"
+      },
+      {
+        "stationId": "100000104",
+        "sequence": "17",
+        "stationName": "안국역6번출구.인사동문화의거리",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 22:59:50.0",
+        "stationNumber": "01200",
+        "eta": "8분27초후[6번째 전]"
+      },
+      {
+        "stationId": "100900189",
+        "sequence": "18",
+        "stationName": "안국역2번출구앞",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 22:59:50.0",
+        "stationNumber": "01805",
+        "eta": "10분51초후[7번째 전]"
+      },
+      {
+        "stationId": "100900131",
+        "sequence": "19",
+        "stationName": "재동초등학교",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 22:59:50.0",
+        "stationNumber": "01812",
+        "eta": "12분후[8번째 전]"
+      },
+      {
+        "stationId": "100900168",
+        "sequence": "20",
+        "stationName": "가회동주민센터",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 22:59:50.0",
+        "stationNumber": "01826",
+        "eta": "12분58초후[9번째 전]"
+      },
+      {
+        "stationId": "100900162",
+        "sequence": "21",
+        "stationName": "북촌한옥마을입구.정세권활동터",
+        "carNumber": "5512",
+        "eventDate": "2026-02-28 22:59:50.0",
+        "stationNumber": "01833",
+        "eta": "13분46초후[10번째 전]"
+      },
+      {
+        "stationId": "100900157",
+        "sequence": "22",
+        "stationName": "안국선원.삼거리",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 22:59:50.0",
+        "stationNumber": "01839",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900153",
+        "sequence": "23",
+        "stationName": "사우디대사관.북촌힐스",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 22:59:50.0",
+        "stationNumber": "01845",
+        "eta": "1분1초후[1번째 전]"
+      },
+      {
+        "stationId": "100900147",
+        "sequence": "24",
+        "stationName": "감사원",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 22:59:50.0",
+        "stationNumber": "01851",
+        "eta": "2분후[2번째 전]"
+      },
+      {
+        "stationId": "100900172",
+        "sequence": "25",
+        "stationName": "통일부",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 22:59:50.0",
+        "stationNumber": "01856",
+        "eta": "2분47초후[3번째 전]"
+      },
+      {
+        "stationId": "100900203",
+        "sequence": "26",
+        "stationName": "성대후문.와룡공원",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 22:59:50.0",
+        "stationNumber": "01860",
+        "eta": "4분27초후[4번째 전]"
+      },
+      {
+        "stationId": "100900204",
+        "sequence": "27",
+        "stationName": "성균관대학교",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 22:59:50.0",
+        "stationNumber": "01881",
+        "eta": "5분22초후[5번째 전]"
+      }
+    ]
+  },
+  {
+    "at": "2026-02-28T23:30:00+09:00",
+    "payload": [
+      {
+        "stationId": "100900204",
+        "sequence": "1",
+        "stationName": "성균관대학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 23:29:46.0",
+        "stationNumber": "01881",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900202",
+        "sequence": "2",
+        "stationName": "서울성곽.성대후문",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 23:29:46.0",
+        "stationNumber": "01515",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900045",
+        "sequence": "3",
+        "stationName": "통일부",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 23:29:46.0",
+        "stationNumber": "01525",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900069",
+        "sequence": "4",
+        "stationName": "감사원",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 23:29:46.0",
+        "stationNumber": "01536",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900059",
+        "sequence": "5",
+        "stationName": "사우디대사관앞.북촌힐스",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 23:29:46.0",
+        "stationNumber": "01547",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900058",
+        "sequence": "6",
+        "stationName": "안국선원.삼거리",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 23:29:46.0",
+        "stationNumber": "01548",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900052",
+        "sequence": "7",
+        "stationName": "북촌한옥마을입구.정세권활동터",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 23:29:46.0",
+        "stationNumber": "01556",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900048",
+        "sequence": "8",
+        "stationName": "가회동주민센터",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 23:29:46.0",
+        "stationNumber": "01564",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900092",
+        "sequence": "9",
+        "stationName": "아름다운가게.정독도서관",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 23:29:46.0",
+        "stationNumber": "01570",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900086",
+        "sequence": "10",
+        "stationName": "헌법재판소.안국역",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 23:29:46.0",
+        "stationNumber": "01576",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900081",
+        "sequence": "11",
+        "stationName": "수운회관",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 23:29:46.0",
+        "stationNumber": "01583",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900078",
+        "sequence": "12",
+        "stationName": "낙원상가",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 23:29:46.0",
+        "stationNumber": "01589",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900121",
+        "sequence": "13",
+        "stationName": "종로2가.탑골공원",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 23:29:46.0",
+        "stationNumber": "01596",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900116",
+        "sequence": "14",
+        "stationName": "종각역.YMCA",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 23:29:46.0",
+        "stationNumber": "01683",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900211",
+        "sequence": "15",
+        "stationName": "종각.공평유적전시관",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 23:29:46.0",
+        "stationNumber": "01888",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900213",
+        "sequence": "16",
+        "stationName": "조계사",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 23:29:46.0",
+        "stationNumber": "01889",
+        "eta": "[막차] 2분43초후[1번째 전]"
+      },
+      {
+        "stationId": "100000104",
+        "sequence": "17",
+        "stationName": "안국역6번출구.인사동문화의거리",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 23:29:46.0",
+        "stationNumber": "01200",
+        "eta": "[막차] 3분52초후[2번째 전]"
+      },
+      {
+        "stationId": "100900189",
+        "sequence": "18",
+        "stationName": "안국역2번출구앞",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 23:29:46.0",
+        "stationNumber": "01805",
+        "eta": "[막차] 6분19초후[3번째 전]"
+      },
+      {
+        "stationId": "100900131",
+        "sequence": "19",
+        "stationName": "재동초등학교",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 23:29:46.0",
+        "stationNumber": "01812",
+        "eta": "[막차] 7분20초후[4번째 전]"
+      },
+      {
+        "stationId": "100900168",
+        "sequence": "20",
+        "stationName": "가회동주민센터",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 23:29:46.0",
+        "stationNumber": "01826",
+        "eta": "[막차] 8분10초후[5번째 전]"
+      },
+      {
+        "stationId": "100900162",
+        "sequence": "21",
+        "stationName": "북촌한옥마을입구.정세권활동터",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 23:29:46.0",
+        "stationNumber": "01833",
+        "eta": "[막차] 8분59초후[6번째 전]"
+      },
+      {
+        "stationId": "100900157",
+        "sequence": "22",
+        "stationName": "안국선원.삼거리",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 23:29:46.0",
+        "stationNumber": "01839",
+        "eta": "[막차] 9분49초후[7번째 전]"
+      },
+      {
+        "stationId": "100900153",
+        "sequence": "23",
+        "stationName": "사우디대사관.북촌힐스",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 23:29:46.0",
+        "stationNumber": "01845",
+        "eta": "[막차] 10분22초후[8번째 전]"
+      },
+      {
+        "stationId": "100900147",
+        "sequence": "24",
+        "stationName": "감사원",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 23:29:46.0",
+        "stationNumber": "01851",
+        "eta": "[막차] 11분22초후[9번째 전]"
+      },
+      {
+        "stationId": "100900172",
+        "sequence": "25",
+        "stationName": "통일부",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 23:29:46.0",
+        "stationNumber": "01856",
+        "eta": "[막차] 12분4초후[10번째 전]"
+      },
+      {
+        "stationId": "100900203",
+        "sequence": "26",
+        "stationName": "성대후문.와룡공원",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 23:29:46.0",
+        "stationNumber": "01860",
+        "eta": "[막차] 13분43초후[11번째 전]"
+      },
+      {
+        "stationId": "100900204",
+        "sequence": "27",
+        "stationName": "성균관대학교",
+        "carNumber": "2009",
+        "eventDate": "2026-02-28 23:29:46.0",
+        "stationNumber": "01881",
+        "eta": "[막차] 14분37초후[12번째 전]"
+      }
+    ]
+  }
+]

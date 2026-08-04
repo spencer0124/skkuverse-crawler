@@ -1,0 +1,1086 @@
+{
+  "source": "2026-02-28T16:28:11+09:00",
+  "intervalMs": 40000,
+  "rows": [
+    {
+      "at": "2026-02-28T07:28:11.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:28:11.000Z",
+          "estimatedTime": 0,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:28:11.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:28:11.000Z",
+          "estimatedTime": 0,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:28:11.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:28:51.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:28:11.000Z",
+          "estimatedTime": 40,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:28:11.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:28:11.000Z",
+          "estimatedTime": 40,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:28:11.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:29:31.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:28:11.000Z",
+          "estimatedTime": 80,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:28:11.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:28:11.000Z",
+          "estimatedTime": 80,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:28:11.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:30:11.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:28:11.000Z",
+          "estimatedTime": 120,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:28:11.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:28:11.000Z",
+          "estimatedTime": 120,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:28:11.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:30:51.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:28:11.000Z",
+          "estimatedTime": 160,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:28:11.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:28:11.000Z",
+          "estimatedTime": 160,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:28:11.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:31:31.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:28:11.000Z",
+          "estimatedTime": 200,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:28:11.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:28:11.000Z",
+          "estimatedTime": 200,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:28:11.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:32:11.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:28:11.000Z",
+          "estimatedTime": 240,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:28:11.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:28:11.000Z",
+          "estimatedTime": 240,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:28:11.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:32:51.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:28:11.000Z",
+          "estimatedTime": 280,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:28:11.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:28:11.000Z",
+          "estimatedTime": 280,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:28:11.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:33:31.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:28:11.000Z",
+          "estimatedTime": 320,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:28:11.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:28:11.000Z",
+          "estimatedTime": 320,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:28:11.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:34:11.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:28:11.000Z",
+          "estimatedTime": 360,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:28:11.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:28:11.000Z",
+          "estimatedTime": 360,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:28:11.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:34:51.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:28:11.000Z",
+          "estimatedTime": 400,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:28:11.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:28:11.000Z",
+          "estimatedTime": 400,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:28:11.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:35:31.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:28:11.000Z",
+          "estimatedTime": 440,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:28:11.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:28:11.000Z",
+          "estimatedTime": 440,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:28:11.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:36:11.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:28:11.000Z",
+          "estimatedTime": 480,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:28:11.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:28:11.000Z",
+          "estimatedTime": 480,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:28:11.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:36:51.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:28:11.000Z",
+          "estimatedTime": 520,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:28:11.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:28:11.000Z",
+          "estimatedTime": 520,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:28:11.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:37:31.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:28:11.000Z",
+          "estimatedTime": 560,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:28:11.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:28:11.000Z",
+          "estimatedTime": 560,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:28:11.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:38:11.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:28:11.000Z",
+          "estimatedTime": 600,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:28:11.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:28:11.000Z",
+          "estimatedTime": 600,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:28:11.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:38:51.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:38:51.000Z",
+          "estimatedTime": 0,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:38:51.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:38:51.000Z",
+          "estimatedTime": 0,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:38:51.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:39:31.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:38:51.000Z",
+          "estimatedTime": 40,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:38:51.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:38:51.000Z",
+          "estimatedTime": 40,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:38:51.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:40:11.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:38:51.000Z",
+          "estimatedTime": 80,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:38:51.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:38:51.000Z",
+          "estimatedTime": 80,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:38:51.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:40:51.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:38:51.000Z",
+          "estimatedTime": 120,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:38:51.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:38:51.000Z",
+          "estimatedTime": 120,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:38:51.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:41:31.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:38:51.000Z",
+          "estimatedTime": 160,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:38:51.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:38:51.000Z",
+          "estimatedTime": 160,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:38:51.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:42:11.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:38:51.000Z",
+          "estimatedTime": 200,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:38:51.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:38:51.000Z",
+          "estimatedTime": 200,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:38:51.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:42:51.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:38:51.000Z",
+          "estimatedTime": 240,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:38:51.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:38:51.000Z",
+          "estimatedTime": 240,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:38:51.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:43:31.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:38:51.000Z",
+          "estimatedTime": 280,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:38:51.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:38:51.000Z",
+          "estimatedTime": 280,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:38:51.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:44:11.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:38:51.000Z",
+          "estimatedTime": 320,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:38:51.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:38:51.000Z",
+          "estimatedTime": 320,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:38:51.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:44:51.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:38:51.000Z",
+          "estimatedTime": 360,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:38:51.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:38:51.000Z",
+          "estimatedTime": 360,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:38:51.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:45:31.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:38:51.000Z",
+          "estimatedTime": 400,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:38:51.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:38:51.000Z",
+          "estimatedTime": 400,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:38:51.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:46:11.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:38:51.000Z",
+          "estimatedTime": 440,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:38:51.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:38:51.000Z",
+          "estimatedTime": 440,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:38:51.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:46:51.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:38:51.000Z",
+          "estimatedTime": 480,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:38:51.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:38:51.000Z",
+          "estimatedTime": 480,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:38:51.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:47:31.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:38:51.000Z",
+          "estimatedTime": 520,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:38:51.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:38:51.000Z",
+          "estimatedTime": 520,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:38:51.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:48:11.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:38:51.000Z",
+          "estimatedTime": 560,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:38:51.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:38:51.000Z",
+          "estimatedTime": 560,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:38:51.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:48:51.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:38:51.000Z",
+          "estimatedTime": 600,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:38:51.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:38:51.000Z",
+          "estimatedTime": 600,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:38:51.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:49:31.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:49:31.000Z",
+          "estimatedTime": 0,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:49:31.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:49:31.000Z",
+          "estimatedTime": 0,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:49:31.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:50:11.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:49:31.000Z",
+          "estimatedTime": 40,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:49:31.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:49:31.000Z",
+          "estimatedTime": 40,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:49:31.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:50:51.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:49:31.000Z",
+          "estimatedTime": 80,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:49:31.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:49:31.000Z",
+          "estimatedTime": 80,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:49:31.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:51:31.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:49:31.000Z",
+          "estimatedTime": 120,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:49:31.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:49:31.000Z",
+          "estimatedTime": 120,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:49:31.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:52:11.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:49:31.000Z",
+          "estimatedTime": 160,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:49:31.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:49:31.000Z",
+          "estimatedTime": 160,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:49:31.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:52:51.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:49:31.000Z",
+          "estimatedTime": 200,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:49:31.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:49:31.000Z",
+          "estimatedTime": 200,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:49:31.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:53:31.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:49:31.000Z",
+          "estimatedTime": 240,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:49:31.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:49:31.000Z",
+          "estimatedTime": 240,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:49:31.000Z"
+        }
+      ]
+    },
+    {
+      "at": "2026-02-28T07:54:11.000Z",
+      "payload": [
+        {
+          "sequence": "6",
+          "stationName": "혜화역4번출구",
+          "carNumber": "3612",
+          "eventDate": "2026-02-28T07:49:31.000Z",
+          "estimatedTime": 280,
+          "stationId": "100900027",
+          "latitude": "37.582118",
+          "longitude": "127.001885",
+          "recordTime": "2026-02-28T07:49:31.000Z"
+        },
+        {
+          "sequence": "13",
+          "stationName": "혜화동로터리",
+          "carNumber": "3613",
+          "eventDate": "2026-02-28T07:49:31.000Z",
+          "estimatedTime": 280,
+          "stationId": "100000130",
+          "latitude": "37.585451",
+          "longitude": "127.000773",
+          "recordTime": "2026-02-28T07:49:31.000Z"
+        }
+      ]
+    }
+  ]
+}

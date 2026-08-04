@@ -1,0 +1,2962 @@
+[
+  {
+    "at": "2026-02-28T16:28:11+09:00",
+    "payload": [
+      {
+        "stationId": "100900220",
+        "sequence": "1",
+        "stationName": "성균관대운동장",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01617",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900221",
+        "sequence": "2",
+        "stationName": "학생회관",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01618",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900110",
+        "sequence": "3",
+        "stationName": "성균관대학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01722",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100000421",
+        "sequence": "4",
+        "stationName": "유림회관앞",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01612",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900197",
+        "sequence": "5",
+        "stationName": "명륜새마을금고",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01504",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900031",
+        "sequence": "6",
+        "stationName": "서울국제고등학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01512",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900017",
+        "sequence": "7",
+        "stationName": "국민생활관",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01521",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900003",
+        "sequence": "8",
+        "stationName": "혜화초등학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01532",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900063",
+        "sequence": "9",
+        "stationName": "혜화우체국",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01543",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900027",
+        "sequence": "10",
+        "stationName": "혜화역4번출구",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01876",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100000125",
+        "sequence": "11",
+        "stationName": "혜화역3번출구.서울대병원입구",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01221",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900028",
+        "sequence": "12",
+        "stationName": "방송통신대앞",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01877",
+        "eta": "2분27초후[1번째 전]"
+      },
+      {
+        "stationId": "100900043",
+        "sequence": "13",
+        "stationName": "이화사거리",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01886",
+        "eta": "3분29초후[2번째 전]"
+      },
+      {
+        "stationId": "100000123",
+        "sequence": "14",
+        "stationName": "방송통신대.이화장",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01219",
+        "eta": "5분32초후[3번째 전]"
+      },
+      {
+        "stationId": "100000124",
+        "sequence": "15",
+        "stationName": "혜화역2번출구.마로니에공원",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01220",
+        "eta": "7분3초후[4번째 전]"
+      },
+      {
+        "stationId": "100900075",
+        "sequence": "16",
+        "stationName": "혜화역1번출구",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01592",
+        "eta": "8분24초후[5번째 전]"
+      },
+      {
+        "stationId": "100000130",
+        "sequence": "17",
+        "stationName": "혜화동로터리",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01226",
+        "eta": "9분48초후[6번째 전]"
+      },
+      {
+        "stationId": "100900199",
+        "sequence": "18",
+        "stationName": "성대입구",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01697",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900218",
+        "sequence": "19",
+        "stationName": "성균관대정문",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01615",
+        "eta": "2분37초후[1번째 전]"
+      },
+      {
+        "stationId": "100900219",
+        "sequence": "20",
+        "stationName": "600주년기념관",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 16:27:50.0",
+        "stationNumber": "01616",
+        "eta": "4분11초후[2번째 전]"
+      }
+    ]
+  },
+  {
+    "at": "2026-02-28T16:30:00+09:00",
+    "payload": [
+      {
+        "stationId": "100900220",
+        "sequence": "1",
+        "stationName": "성균관대운동장",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:29:46.0",
+        "stationNumber": "01617",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900221",
+        "sequence": "2",
+        "stationName": "학생회관",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:29:46.0",
+        "stationNumber": "01618",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900110",
+        "sequence": "3",
+        "stationName": "성균관대학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:29:46.0",
+        "stationNumber": "01722",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100000421",
+        "sequence": "4",
+        "stationName": "유림회관앞",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:29:46.0",
+        "stationNumber": "01612",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900197",
+        "sequence": "5",
+        "stationName": "명륜새마을금고",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:29:46.0",
+        "stationNumber": "01504",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900031",
+        "sequence": "6",
+        "stationName": "서울국제고등학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:29:46.0",
+        "stationNumber": "01512",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900017",
+        "sequence": "7",
+        "stationName": "국민생활관",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:29:46.0",
+        "stationNumber": "01521",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900003",
+        "sequence": "8",
+        "stationName": "혜화초등학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:29:46.0",
+        "stationNumber": "01532",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900063",
+        "sequence": "9",
+        "stationName": "혜화우체국",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:29:46.0",
+        "stationNumber": "01543",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900027",
+        "sequence": "10",
+        "stationName": "혜화역4번출구",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:29:46.0",
+        "stationNumber": "01876",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100000125",
+        "sequence": "11",
+        "stationName": "혜화역3번출구.서울대병원입구",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:29:46.0",
+        "stationNumber": "01221",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900028",
+        "sequence": "12",
+        "stationName": "방송통신대앞",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:29:46.0",
+        "stationNumber": "01877",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900043",
+        "sequence": "13",
+        "stationName": "이화사거리",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 16:29:46.0",
+        "stationNumber": "01886",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100000123",
+        "sequence": "14",
+        "stationName": "방송통신대.이화장",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 16:29:46.0",
+        "stationNumber": "01219",
+        "eta": "3분2초후[1번째 전]"
+      },
+      {
+        "stationId": "100000124",
+        "sequence": "15",
+        "stationName": "혜화역2번출구.마로니에공원",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 16:29:46.0",
+        "stationNumber": "01220",
+        "eta": "4분33초후[2번째 전]"
+      },
+      {
+        "stationId": "100900075",
+        "sequence": "16",
+        "stationName": "혜화역1번출구",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 16:29:46.0",
+        "stationNumber": "01592",
+        "eta": "5분54초후[3번째 전]"
+      },
+      {
+        "stationId": "100000130",
+        "sequence": "17",
+        "stationName": "혜화동로터리",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 16:29:46.0",
+        "stationNumber": "01226",
+        "eta": "7분18초후[4번째 전]"
+      },
+      {
+        "stationId": "100900199",
+        "sequence": "18",
+        "stationName": "성대입구",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 16:29:46.0",
+        "stationNumber": "01697",
+        "eta": "8분36초후[5번째 전]"
+      },
+      {
+        "stationId": "100900218",
+        "sequence": "19",
+        "stationName": "성균관대정문",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 16:29:46.0",
+        "stationNumber": "01615",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900219",
+        "sequence": "20",
+        "stationName": "600주년기념관",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 16:29:46.0",
+        "stationNumber": "01616",
+        "eta": "2분22초후[1번째 전]"
+      }
+    ]
+  },
+  {
+    "at": "2026-02-28T17:00:00+09:00",
+    "payload": [
+      {
+        "stationId": "100900220",
+        "sequence": "1",
+        "stationName": "성균관대운동장",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 16:59:58.0",
+        "stationNumber": "01617",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900221",
+        "sequence": "2",
+        "stationName": "학생회관",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 16:59:58.0",
+        "stationNumber": "01618",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900110",
+        "sequence": "3",
+        "stationName": "성균관대학교",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 16:59:58.0",
+        "stationNumber": "01722",
+        "eta": "2분52초후[1번째 전]"
+      },
+      {
+        "stationId": "100000421",
+        "sequence": "4",
+        "stationName": "유림회관앞",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 16:59:58.0",
+        "stationNumber": "01612",
+        "eta": "3분42초후[2번째 전]"
+      },
+      {
+        "stationId": "100900197",
+        "sequence": "5",
+        "stationName": "명륜새마을금고",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 16:59:58.0",
+        "stationNumber": "01504",
+        "eta": "4분21초후[3번째 전]"
+      },
+      {
+        "stationId": "100900031",
+        "sequence": "6",
+        "stationName": "서울국제고등학교",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 16:59:58.0",
+        "stationNumber": "01512",
+        "eta": "4분57초후[4번째 전]"
+      },
+      {
+        "stationId": "100900017",
+        "sequence": "7",
+        "stationName": "국민생활관",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 16:59:58.0",
+        "stationNumber": "01521",
+        "eta": "5분44초후[5번째 전]"
+      },
+      {
+        "stationId": "100900003",
+        "sequence": "8",
+        "stationName": "혜화초등학교",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 16:59:58.0",
+        "stationNumber": "01532",
+        "eta": "7분5초후[6번째 전]"
+      },
+      {
+        "stationId": "100900063",
+        "sequence": "9",
+        "stationName": "혜화우체국",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 16:59:58.0",
+        "stationNumber": "01543",
+        "eta": "7분40초후[7번째 전]"
+      },
+      {
+        "stationId": "100900027",
+        "sequence": "10",
+        "stationName": "혜화역4번출구",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 16:59:58.0",
+        "stationNumber": "01876",
+        "eta": "9분26초후[8번째 전]"
+      },
+      {
+        "stationId": "100000125",
+        "sequence": "11",
+        "stationName": "혜화역3번출구.서울대병원입구",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 16:59:58.0",
+        "stationNumber": "01221",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900028",
+        "sequence": "12",
+        "stationName": "방송통신대앞",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 16:59:58.0",
+        "stationNumber": "01877",
+        "eta": "3분35초후[1번째 전]"
+      },
+      {
+        "stationId": "100900043",
+        "sequence": "13",
+        "stationName": "이화사거리",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 16:59:58.0",
+        "stationNumber": "01886",
+        "eta": "4분32초후[2번째 전]"
+      },
+      {
+        "stationId": "100000123",
+        "sequence": "14",
+        "stationName": "방송통신대.이화장",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 16:59:58.0",
+        "stationNumber": "01219",
+        "eta": "6분40초후[3번째 전]"
+      },
+      {
+        "stationId": "100000124",
+        "sequence": "15",
+        "stationName": "혜화역2번출구.마로니에공원",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 16:59:58.0",
+        "stationNumber": "01220",
+        "eta": "8분29초후[4번째 전]"
+      },
+      {
+        "stationId": "100900075",
+        "sequence": "16",
+        "stationName": "혜화역1번출구",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 16:59:58.0",
+        "stationNumber": "01592",
+        "eta": "9분51초후[5번째 전]"
+      },
+      {
+        "stationId": "100000130",
+        "sequence": "17",
+        "stationName": "혜화동로터리",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 16:59:58.0",
+        "stationNumber": "01226",
+        "eta": "11분50초후[6번째 전]"
+      },
+      {
+        "stationId": "100900199",
+        "sequence": "18",
+        "stationName": "성대입구",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 16:59:58.0",
+        "stationNumber": "01697",
+        "eta": "13분11초후[7번째 전]"
+      },
+      {
+        "stationId": "100900218",
+        "sequence": "19",
+        "stationName": "성균관대정문",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 16:59:58.0",
+        "stationNumber": "01615",
+        "eta": "15분1초후[8번째 전]"
+      },
+      {
+        "stationId": "100900219",
+        "sequence": "20",
+        "stationName": "600주년기념관",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 16:59:58.0",
+        "stationNumber": "01616",
+        "eta": "16분36초후[9번째 전]"
+      }
+    ]
+  },
+  {
+    "at": "2026-02-28T17:30:00+09:00",
+    "payload": [
+      {
+        "stationId": "100900220",
+        "sequence": "1",
+        "stationName": "성균관대운동장",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 17:29:51.0",
+        "stationNumber": "01617",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900221",
+        "sequence": "2",
+        "stationName": "학생회관",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 17:29:51.0",
+        "stationNumber": "01618",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900110",
+        "sequence": "3",
+        "stationName": "성균관대학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 17:29:51.0",
+        "stationNumber": "01722",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100000421",
+        "sequence": "4",
+        "stationName": "유림회관앞",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 17:29:51.0",
+        "stationNumber": "01612",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900197",
+        "sequence": "5",
+        "stationName": "명륜새마을금고",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 17:29:51.0",
+        "stationNumber": "01504",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900031",
+        "sequence": "6",
+        "stationName": "서울국제고등학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 17:29:51.0",
+        "stationNumber": "01512",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900017",
+        "sequence": "7",
+        "stationName": "국민생활관",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 17:29:51.0",
+        "stationNumber": "01521",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900003",
+        "sequence": "8",
+        "stationName": "혜화초등학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 17:29:51.0",
+        "stationNumber": "01532",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900063",
+        "sequence": "9",
+        "stationName": "혜화우체국",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 17:29:51.0",
+        "stationNumber": "01543",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900027",
+        "sequence": "10",
+        "stationName": "혜화역4번출구",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 17:29:51.0",
+        "stationNumber": "01876",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100000125",
+        "sequence": "11",
+        "stationName": "혜화역3번출구.서울대병원입구",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 17:29:51.0",
+        "stationNumber": "01221",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900028",
+        "sequence": "12",
+        "stationName": "방송통신대앞",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 17:29:51.0",
+        "stationNumber": "01877",
+        "eta": "2분31초후[1번째 전]"
+      },
+      {
+        "stationId": "100900043",
+        "sequence": "13",
+        "stationName": "이화사거리",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 17:29:51.0",
+        "stationNumber": "01886",
+        "eta": "3분28초후[2번째 전]"
+      },
+      {
+        "stationId": "100000123",
+        "sequence": "14",
+        "stationName": "방송통신대.이화장",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 17:29:51.0",
+        "stationNumber": "01219",
+        "eta": "5분42초후[3번째 전]"
+      },
+      {
+        "stationId": "100000124",
+        "sequence": "15",
+        "stationName": "혜화역2번출구.마로니에공원",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 17:29:51.0",
+        "stationNumber": "01220",
+        "eta": "7분10초후[4번째 전]"
+      },
+      {
+        "stationId": "100900075",
+        "sequence": "16",
+        "stationName": "혜화역1번출구",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 17:29:51.0",
+        "stationNumber": "01592",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100000130",
+        "sequence": "17",
+        "stationName": "혜화동로터리",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 17:29:51.0",
+        "stationNumber": "01226",
+        "eta": "2분8초후[1번째 전]"
+      },
+      {
+        "stationId": "100900199",
+        "sequence": "18",
+        "stationName": "성대입구",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 17:29:51.0",
+        "stationNumber": "01697",
+        "eta": "3분25초후[2번째 전]"
+      },
+      {
+        "stationId": "100900218",
+        "sequence": "19",
+        "stationName": "성균관대정문",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 17:29:51.0",
+        "stationNumber": "01615",
+        "eta": "5분15초후[3번째 전]"
+      },
+      {
+        "stationId": "100900219",
+        "sequence": "20",
+        "stationName": "600주년기념관",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 17:29:51.0",
+        "stationNumber": "01616",
+        "eta": "6분50초후[4번째 전]"
+      }
+    ]
+  },
+  {
+    "at": "2026-02-28T18:00:00+09:00",
+    "payload": [
+      {
+        "stationId": "100900220",
+        "sequence": "1",
+        "stationName": "성균관대운동장",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 17:59:40.0",
+        "stationNumber": "01617",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900221",
+        "sequence": "2",
+        "stationName": "학생회관",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 17:59:40.0",
+        "stationNumber": "01618",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900110",
+        "sequence": "3",
+        "stationName": "성균관대학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 17:59:40.0",
+        "stationNumber": "01722",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100000421",
+        "sequence": "4",
+        "stationName": "유림회관앞",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 17:59:40.0",
+        "stationNumber": "01612",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900197",
+        "sequence": "5",
+        "stationName": "명륜새마을금고",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 17:59:40.0",
+        "stationNumber": "01504",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900031",
+        "sequence": "6",
+        "stationName": "서울국제고등학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 17:59:40.0",
+        "stationNumber": "01512",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900017",
+        "sequence": "7",
+        "stationName": "국민생활관",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 17:59:40.0",
+        "stationNumber": "01521",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900003",
+        "sequence": "8",
+        "stationName": "혜화초등학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 17:59:40.0",
+        "stationNumber": "01532",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900063",
+        "sequence": "9",
+        "stationName": "혜화우체국",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 17:59:40.0",
+        "stationNumber": "01543",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900027",
+        "sequence": "10",
+        "stationName": "혜화역4번출구",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 17:59:40.0",
+        "stationNumber": "01876",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100000125",
+        "sequence": "11",
+        "stationName": "혜화역3번출구.서울대병원입구",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 17:59:40.0",
+        "stationNumber": "01221",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900028",
+        "sequence": "12",
+        "stationName": "방송통신대앞",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 17:59:40.0",
+        "stationNumber": "01877",
+        "eta": "1분39초후[1번째 전]"
+      },
+      {
+        "stationId": "100900043",
+        "sequence": "13",
+        "stationName": "이화사거리",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 17:59:40.0",
+        "stationNumber": "01886",
+        "eta": "2분후[2번째 전]"
+      },
+      {
+        "stationId": "100000123",
+        "sequence": "14",
+        "stationName": "방송통신대.이화장",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 17:59:40.0",
+        "stationNumber": "01219",
+        "eta": "4분12초후[3번째 전]"
+      },
+      {
+        "stationId": "100000124",
+        "sequence": "15",
+        "stationName": "혜화역2번출구.마로니에공원",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 17:59:40.0",
+        "stationNumber": "01220",
+        "eta": "5분45초후[4번째 전]"
+      },
+      {
+        "stationId": "100900075",
+        "sequence": "16",
+        "stationName": "혜화역1번출구",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 17:59:40.0",
+        "stationNumber": "01592",
+        "eta": "6분56초후[5번째 전]"
+      },
+      {
+        "stationId": "100000130",
+        "sequence": "17",
+        "stationName": "혜화동로터리",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 17:59:40.0",
+        "stationNumber": "01226",
+        "eta": "9분9초후[6번째 전]"
+      },
+      {
+        "stationId": "100900199",
+        "sequence": "18",
+        "stationName": "성대입구",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 17:59:40.0",
+        "stationNumber": "01697",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900218",
+        "sequence": "19",
+        "stationName": "성균관대정문",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 17:59:40.0",
+        "stationNumber": "01615",
+        "eta": "2분34초후[1번째 전]"
+      },
+      {
+        "stationId": "100900219",
+        "sequence": "20",
+        "stationName": "600주년기념관",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 17:59:40.0",
+        "stationNumber": "01616",
+        "eta": "4분1초후[2번째 전]"
+      }
+    ]
+  },
+  {
+    "at": "2026-02-28T18:30:00+09:00",
+    "payload": [
+      {
+        "stationId": "100900220",
+        "sequence": "1",
+        "stationName": "성균관대운동장",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 18:29:50.0",
+        "stationNumber": "01617",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900221",
+        "sequence": "2",
+        "stationName": "학생회관",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 18:29:50.0",
+        "stationNumber": "01618",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900110",
+        "sequence": "3",
+        "stationName": "성균관대학교",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 18:29:50.0",
+        "stationNumber": "01722",
+        "eta": "2분24초후[1번째 전]"
+      },
+      {
+        "stationId": "100000421",
+        "sequence": "4",
+        "stationName": "유림회관앞",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 18:29:50.0",
+        "stationNumber": "01612",
+        "eta": "3분11초후[2번째 전]"
+      },
+      {
+        "stationId": "100900197",
+        "sequence": "5",
+        "stationName": "명륜새마을금고",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 18:29:50.0",
+        "stationNumber": "01504",
+        "eta": "3분57초후[3번째 전]"
+      },
+      {
+        "stationId": "100900031",
+        "sequence": "6",
+        "stationName": "서울국제고등학교",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 18:29:50.0",
+        "stationNumber": "01512",
+        "eta": "4분37초후[4번째 전]"
+      },
+      {
+        "stationId": "100900017",
+        "sequence": "7",
+        "stationName": "국민생활관",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 18:29:50.0",
+        "stationNumber": "01521",
+        "eta": "5분21초후[5번째 전]"
+      },
+      {
+        "stationId": "100900003",
+        "sequence": "8",
+        "stationName": "혜화초등학교",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 18:29:50.0",
+        "stationNumber": "01532",
+        "eta": "6분41초후[6번째 전]"
+      },
+      {
+        "stationId": "100900063",
+        "sequence": "9",
+        "stationName": "혜화우체국",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 18:29:50.0",
+        "stationNumber": "01543",
+        "eta": "7분14초후[7번째 전]"
+      },
+      {
+        "stationId": "100900027",
+        "sequence": "10",
+        "stationName": "혜화역4번출구",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 18:29:50.0",
+        "stationNumber": "01876",
+        "eta": "8분34초후[8번째 전]"
+      },
+      {
+        "stationId": "100000125",
+        "sequence": "11",
+        "stationName": "혜화역3번출구.서울대병원입구",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 18:29:50.0",
+        "stationNumber": "01221",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900028",
+        "sequence": "12",
+        "stationName": "방송통신대앞",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 18:29:50.0",
+        "stationNumber": "01877",
+        "eta": "2분4초후[1번째 전]"
+      },
+      {
+        "stationId": "100900043",
+        "sequence": "13",
+        "stationName": "이화사거리",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 18:29:50.0",
+        "stationNumber": "01886",
+        "eta": "2분후[2번째 전]"
+      },
+      {
+        "stationId": "100000123",
+        "sequence": "14",
+        "stationName": "방송통신대.이화장",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 18:29:50.0",
+        "stationNumber": "01219",
+        "eta": "4분26초후[3번째 전]"
+      },
+      {
+        "stationId": "100000124",
+        "sequence": "15",
+        "stationName": "혜화역2번출구.마로니에공원",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 18:29:50.0",
+        "stationNumber": "01220",
+        "eta": "5분59초후[4번째 전]"
+      },
+      {
+        "stationId": "100900075",
+        "sequence": "16",
+        "stationName": "혜화역1번출구",
+        "carNumber": "3612",
+        "eventDate": "2026-02-28 18:29:50.0",
+        "stationNumber": "01592",
+        "eta": "7분1초후[5번째 전]"
+      },
+      {
+        "stationId": "100000130",
+        "sequence": "17",
+        "stationName": "혜화동로터리",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 18:29:50.0",
+        "stationNumber": "01226",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900199",
+        "sequence": "18",
+        "stationName": "성대입구",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 18:29:50.0",
+        "stationNumber": "01697",
+        "eta": "1분25초후[1번째 전]"
+      },
+      {
+        "stationId": "100900218",
+        "sequence": "19",
+        "stationName": "성균관대정문",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 18:29:50.0",
+        "stationNumber": "01615",
+        "eta": "3분8초후[2번째 전]"
+      },
+      {
+        "stationId": "100900219",
+        "sequence": "20",
+        "stationName": "600주년기념관",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 18:29:50.0",
+        "stationNumber": "01616",
+        "eta": "4분30초후[3번째 전]"
+      }
+    ]
+  },
+  {
+    "at": "2026-02-28T19:00:00+09:00",
+    "payload": [
+      {
+        "stationId": "100900220",
+        "sequence": "1",
+        "stationName": "성균관대운동장",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 18:59:40.0",
+        "stationNumber": "01617",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900221",
+        "sequence": "2",
+        "stationName": "학생회관",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 18:59:40.0",
+        "stationNumber": "01618",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900110",
+        "sequence": "3",
+        "stationName": "성균관대학교",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 18:59:40.0",
+        "stationNumber": "01722",
+        "eta": "2분47초후[1번째 전]"
+      },
+      {
+        "stationId": "100000421",
+        "sequence": "4",
+        "stationName": "유림회관앞",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 18:59:40.0",
+        "stationNumber": "01612",
+        "eta": "3분32초후[2번째 전]"
+      },
+      {
+        "stationId": "100900197",
+        "sequence": "5",
+        "stationName": "명륜새마을금고",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 18:59:40.0",
+        "stationNumber": "01504",
+        "eta": "4분18초후[3번째 전]"
+      },
+      {
+        "stationId": "100900031",
+        "sequence": "6",
+        "stationName": "서울국제고등학교",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 18:59:40.0",
+        "stationNumber": "01512",
+        "eta": "4분59초후[4번째 전]"
+      },
+      {
+        "stationId": "100900017",
+        "sequence": "7",
+        "stationName": "국민생활관",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 18:59:40.0",
+        "stationNumber": "01521",
+        "eta": "5분41초후[5번째 전]"
+      },
+      {
+        "stationId": "100900003",
+        "sequence": "8",
+        "stationName": "혜화초등학교",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 18:59:40.0",
+        "stationNumber": "01532",
+        "eta": "7분11초후[6번째 전]"
+      },
+      {
+        "stationId": "100900063",
+        "sequence": "9",
+        "stationName": "혜화우체국",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 18:59:40.0",
+        "stationNumber": "01543",
+        "eta": "7분47초후[7번째 전]"
+      },
+      {
+        "stationId": "100900027",
+        "sequence": "10",
+        "stationName": "혜화역4번출구",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 18:59:40.0",
+        "stationNumber": "01876",
+        "eta": "9분15초후[8번째 전]"
+      },
+      {
+        "stationId": "100000125",
+        "sequence": "11",
+        "stationName": "혜화역3번출구.서울대병원입구",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 18:59:40.0",
+        "stationNumber": "01221",
+        "eta": "10분24초후[9번째 전]"
+      },
+      {
+        "stationId": "100900028",
+        "sequence": "12",
+        "stationName": "방송통신대앞",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 18:59:40.0",
+        "stationNumber": "01877",
+        "eta": "11분49초후[10번째 전]"
+      },
+      {
+        "stationId": "100900043",
+        "sequence": "13",
+        "stationName": "이화사거리",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 18:59:40.0",
+        "stationNumber": "01886",
+        "eta": "12분34초후[11번째 전]"
+      },
+      {
+        "stationId": "100000123",
+        "sequence": "14",
+        "stationName": "방송통신대.이화장",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 18:59:40.0",
+        "stationNumber": "01219",
+        "eta": "13분57초후[12번째 전]"
+      },
+      {
+        "stationId": "100000124",
+        "sequence": "15",
+        "stationName": "혜화역2번출구.마로니에공원",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 18:59:40.0",
+        "stationNumber": "01220",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900075",
+        "sequence": "16",
+        "stationName": "혜화역1번출구",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 18:59:40.0",
+        "stationNumber": "01592",
+        "eta": "1분6초후[1번째 전]"
+      },
+      {
+        "stationId": "100000130",
+        "sequence": "17",
+        "stationName": "혜화동로터리",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 18:59:40.0",
+        "stationNumber": "01226",
+        "eta": "3분38초후[2번째 전]"
+      },
+      {
+        "stationId": "100900199",
+        "sequence": "18",
+        "stationName": "성대입구",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 18:59:40.0",
+        "stationNumber": "01697",
+        "eta": "4분56초후[3번째 전]"
+      },
+      {
+        "stationId": "100900218",
+        "sequence": "19",
+        "stationName": "성균관대정문",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 18:59:40.0",
+        "stationNumber": "01615",
+        "eta": "6분25초후[4번째 전]"
+      },
+      {
+        "stationId": "100900219",
+        "sequence": "20",
+        "stationName": "600주년기념관",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 18:59:40.0",
+        "stationNumber": "01616",
+        "eta": "7분42초후[5번째 전]"
+      }
+    ]
+  },
+  {
+    "at": "2026-02-28T19:30:00+09:00",
+    "payload": [
+      {
+        "stationId": "100900220",
+        "sequence": "1",
+        "stationName": "성균관대운동장",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 19:29:40.0",
+        "stationNumber": "01617",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900221",
+        "sequence": "2",
+        "stationName": "학생회관",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 19:29:40.0",
+        "stationNumber": "01618",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900110",
+        "sequence": "3",
+        "stationName": "성균관대학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 19:29:40.0",
+        "stationNumber": "01722",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100000421",
+        "sequence": "4",
+        "stationName": "유림회관앞",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 19:29:40.0",
+        "stationNumber": "01612",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900197",
+        "sequence": "5",
+        "stationName": "명륜새마을금고",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 19:29:40.0",
+        "stationNumber": "01504",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900031",
+        "sequence": "6",
+        "stationName": "서울국제고등학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 19:29:40.0",
+        "stationNumber": "01512",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900017",
+        "sequence": "7",
+        "stationName": "국민생활관",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 19:29:40.0",
+        "stationNumber": "01521",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900003",
+        "sequence": "8",
+        "stationName": "혜화초등학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 19:29:40.0",
+        "stationNumber": "01532",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900063",
+        "sequence": "9",
+        "stationName": "혜화우체국",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 19:29:40.0",
+        "stationNumber": "01543",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900027",
+        "sequence": "10",
+        "stationName": "혜화역4번출구",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 19:29:40.0",
+        "stationNumber": "01876",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100000125",
+        "sequence": "11",
+        "stationName": "혜화역3번출구.서울대병원입구",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 19:29:40.0",
+        "stationNumber": "01221",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900028",
+        "sequence": "12",
+        "stationName": "방송통신대앞",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 19:29:40.0",
+        "stationNumber": "01877",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900043",
+        "sequence": "13",
+        "stationName": "이화사거리",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 19:29:40.0",
+        "stationNumber": "01886",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100000123",
+        "sequence": "14",
+        "stationName": "방송통신대.이화장",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 19:29:40.0",
+        "stationNumber": "01219",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100000124",
+        "sequence": "15",
+        "stationName": "혜화역2번출구.마로니에공원",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 19:29:40.0",
+        "stationNumber": "01220",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900075",
+        "sequence": "16",
+        "stationName": "혜화역1번출구",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 19:29:40.0",
+        "stationNumber": "01592",
+        "eta": "1분45초후[1번째 전]"
+      },
+      {
+        "stationId": "100000130",
+        "sequence": "17",
+        "stationName": "혜화동로터리",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 19:29:40.0",
+        "stationNumber": "01226",
+        "eta": "4분32초후[2번째 전]"
+      },
+      {
+        "stationId": "100900199",
+        "sequence": "18",
+        "stationName": "성대입구",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 19:29:40.0",
+        "stationNumber": "01697",
+        "eta": "5분49초후[3번째 전]"
+      },
+      {
+        "stationId": "100900218",
+        "sequence": "19",
+        "stationName": "성균관대정문",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 19:29:40.0",
+        "stationNumber": "01615",
+        "eta": "7분23초후[4번째 전]"
+      },
+      {
+        "stationId": "100900219",
+        "sequence": "20",
+        "stationName": "600주년기념관",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 19:29:40.0",
+        "stationNumber": "01616",
+        "eta": "8분37초후[5번째 전]"
+      }
+    ]
+  },
+  {
+    "at": "2026-02-28T20:00:00+09:00",
+    "payload": [
+      {
+        "stationId": "100900220",
+        "sequence": "1",
+        "stationName": "성균관대운동장",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 19:59:16.0",
+        "stationNumber": "01617",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900221",
+        "sequence": "2",
+        "stationName": "학생회관",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 19:59:16.0",
+        "stationNumber": "01618",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900110",
+        "sequence": "3",
+        "stationName": "성균관대학교",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 19:59:16.0",
+        "stationNumber": "01722",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100000421",
+        "sequence": "4",
+        "stationName": "유림회관앞",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 19:59:16.0",
+        "stationNumber": "01612",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900197",
+        "sequence": "5",
+        "stationName": "명륜새마을금고",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 19:59:16.0",
+        "stationNumber": "01504",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900031",
+        "sequence": "6",
+        "stationName": "서울국제고등학교",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 19:59:16.0",
+        "stationNumber": "01512",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900017",
+        "sequence": "7",
+        "stationName": "국민생활관",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 19:59:16.0",
+        "stationNumber": "01521",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900003",
+        "sequence": "8",
+        "stationName": "혜화초등학교",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 19:59:16.0",
+        "stationNumber": "01532",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900063",
+        "sequence": "9",
+        "stationName": "혜화우체국",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 19:59:16.0",
+        "stationNumber": "01543",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900027",
+        "sequence": "10",
+        "stationName": "혜화역4번출구",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 19:59:16.0",
+        "stationNumber": "01876",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100000125",
+        "sequence": "11",
+        "stationName": "혜화역3번출구.서울대병원입구",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 19:59:16.0",
+        "stationNumber": "01221",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900028",
+        "sequence": "12",
+        "stationName": "방송통신대앞",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 19:59:16.0",
+        "stationNumber": "01877",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900043",
+        "sequence": "13",
+        "stationName": "이화사거리",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 19:59:16.0",
+        "stationNumber": "01886",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100000123",
+        "sequence": "14",
+        "stationName": "방송통신대.이화장",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 19:59:16.0",
+        "stationNumber": "01219",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100000124",
+        "sequence": "15",
+        "stationName": "혜화역2번출구.마로니에공원",
+        "carNumber": "5537",
+        "eventDate": "2026-02-28 19:59:16.0",
+        "stationNumber": "01220",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900075",
+        "sequence": "16",
+        "stationName": "혜화역1번출구",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 19:59:16.0",
+        "stationNumber": "01592",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100000130",
+        "sequence": "17",
+        "stationName": "혜화동로터리",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 19:59:16.0",
+        "stationNumber": "01226",
+        "eta": "4분7초후[1번째 전]"
+      },
+      {
+        "stationId": "100900199",
+        "sequence": "18",
+        "stationName": "성대입구",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 19:59:16.0",
+        "stationNumber": "01697",
+        "eta": "5분21초후[2번째 전]"
+      },
+      {
+        "stationId": "100900218",
+        "sequence": "19",
+        "stationName": "성균관대정문",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 19:59:16.0",
+        "stationNumber": "01615",
+        "eta": "6분58초후[3번째 전]"
+      },
+      {
+        "stationId": "100900219",
+        "sequence": "20",
+        "stationName": "600주년기념관",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 19:59:16.0",
+        "stationNumber": "01616",
+        "eta": "8분13초후[4번째 전]"
+      }
+    ]
+  },
+  {
+    "at": "2026-02-28T20:30:00+09:00",
+    "payload": [
+      {
+        "stationId": "100900220",
+        "sequence": "1",
+        "stationName": "성균관대운동장",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:29:56.0",
+        "stationNumber": "01617",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900221",
+        "sequence": "2",
+        "stationName": "학생회관",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:29:56.0",
+        "stationNumber": "01618",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900110",
+        "sequence": "3",
+        "stationName": "성균관대학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:29:56.0",
+        "stationNumber": "01722",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100000421",
+        "sequence": "4",
+        "stationName": "유림회관앞",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:29:56.0",
+        "stationNumber": "01612",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900197",
+        "sequence": "5",
+        "stationName": "명륜새마을금고",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:29:56.0",
+        "stationNumber": "01504",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900031",
+        "sequence": "6",
+        "stationName": "서울국제고등학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:29:56.0",
+        "stationNumber": "01512",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900017",
+        "sequence": "7",
+        "stationName": "국민생활관",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:29:56.0",
+        "stationNumber": "01521",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900003",
+        "sequence": "8",
+        "stationName": "혜화초등학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:29:56.0",
+        "stationNumber": "01532",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900063",
+        "sequence": "9",
+        "stationName": "혜화우체국",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:29:56.0",
+        "stationNumber": "01543",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900027",
+        "sequence": "10",
+        "stationName": "혜화역4번출구",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:29:56.0",
+        "stationNumber": "01876",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100000125",
+        "sequence": "11",
+        "stationName": "혜화역3번출구.서울대병원입구",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:29:56.0",
+        "stationNumber": "01221",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900028",
+        "sequence": "12",
+        "stationName": "방송통신대앞",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:29:56.0",
+        "stationNumber": "01877",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900043",
+        "sequence": "13",
+        "stationName": "이화사거리",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:29:56.0",
+        "stationNumber": "01886",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100000123",
+        "sequence": "14",
+        "stationName": "방송통신대.이화장",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:29:56.0",
+        "stationNumber": "01219",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100000124",
+        "sequence": "15",
+        "stationName": "혜화역2번출구.마로니에공원",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:29:56.0",
+        "stationNumber": "01220",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900075",
+        "sequence": "16",
+        "stationName": "혜화역1번출구",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 20:29:56.0",
+        "stationNumber": "01592",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100000130",
+        "sequence": "17",
+        "stationName": "혜화동로터리",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 20:29:56.0",
+        "stationNumber": "01226",
+        "eta": "4분20초후[1번째 전]"
+      },
+      {
+        "stationId": "100900199",
+        "sequence": "18",
+        "stationName": "성대입구",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 20:29:56.0",
+        "stationNumber": "01697",
+        "eta": "5분31초후[2번째 전]"
+      },
+      {
+        "stationId": "100900218",
+        "sequence": "19",
+        "stationName": "성균관대정문",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 20:29:56.0",
+        "stationNumber": "01615",
+        "eta": "7분3초후[3번째 전]"
+      },
+      {
+        "stationId": "100900219",
+        "sequence": "20",
+        "stationName": "600주년기념관",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 20:29:56.0",
+        "stationNumber": "01616",
+        "eta": "8분20초후[4번째 전]"
+      }
+    ]
+  },
+  {
+    "at": "2026-02-28T21:00:00+09:00",
+    "payload": [
+      {
+        "stationId": "100900220",
+        "sequence": "1",
+        "stationName": "성균관대운동장",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:59:50.0",
+        "stationNumber": "01617",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900221",
+        "sequence": "2",
+        "stationName": "학생회관",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:59:50.0",
+        "stationNumber": "01618",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900110",
+        "sequence": "3",
+        "stationName": "성균관대학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:59:50.0",
+        "stationNumber": "01722",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100000421",
+        "sequence": "4",
+        "stationName": "유림회관앞",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:59:50.0",
+        "stationNumber": "01612",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900197",
+        "sequence": "5",
+        "stationName": "명륜새마을금고",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:59:50.0",
+        "stationNumber": "01504",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900031",
+        "sequence": "6",
+        "stationName": "서울국제고등학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:59:50.0",
+        "stationNumber": "01512",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900017",
+        "sequence": "7",
+        "stationName": "국민생활관",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:59:50.0",
+        "stationNumber": "01521",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900003",
+        "sequence": "8",
+        "stationName": "혜화초등학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:59:50.0",
+        "stationNumber": "01532",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900063",
+        "sequence": "9",
+        "stationName": "혜화우체국",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:59:50.0",
+        "stationNumber": "01543",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900027",
+        "sequence": "10",
+        "stationName": "혜화역4번출구",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:59:50.0",
+        "stationNumber": "01876",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100000125",
+        "sequence": "11",
+        "stationName": "혜화역3번출구.서울대병원입구",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:59:50.0",
+        "stationNumber": "01221",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900028",
+        "sequence": "12",
+        "stationName": "방송통신대앞",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:59:50.0",
+        "stationNumber": "01877",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900043",
+        "sequence": "13",
+        "stationName": "이화사거리",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:59:50.0",
+        "stationNumber": "01886",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100000123",
+        "sequence": "14",
+        "stationName": "방송통신대.이화장",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 20:59:50.0",
+        "stationNumber": "01219",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100000124",
+        "sequence": "15",
+        "stationName": "혜화역2번출구.마로니에공원",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 20:59:50.0",
+        "stationNumber": "01220",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900075",
+        "sequence": "16",
+        "stationName": "혜화역1번출구",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 20:59:50.0",
+        "stationNumber": "01592",
+        "eta": "1분31초후[1번째 전]"
+      },
+      {
+        "stationId": "100000130",
+        "sequence": "17",
+        "stationName": "혜화동로터리",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 20:59:50.0",
+        "stationNumber": "01226",
+        "eta": "4분32초후[2번째 전]"
+      },
+      {
+        "stationId": "100900199",
+        "sequence": "18",
+        "stationName": "성대입구",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 20:59:50.0",
+        "stationNumber": "01697",
+        "eta": "5분44초후[3번째 전]"
+      },
+      {
+        "stationId": "100900218",
+        "sequence": "19",
+        "stationName": "성균관대정문",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 20:59:50.0",
+        "stationNumber": "01615",
+        "eta": "7분22초후[4번째 전]"
+      },
+      {
+        "stationId": "100900219",
+        "sequence": "20",
+        "stationName": "600주년기념관",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 20:59:50.0",
+        "stationNumber": "01616",
+        "eta": "8분40초후[5번째 전]"
+      }
+    ]
+  },
+  {
+    "at": "2026-02-28T21:30:00+09:00",
+    "payload": [
+      {
+        "stationId": "100900220",
+        "sequence": "1",
+        "stationName": "성균관대운동장",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:29:40.0",
+        "stationNumber": "01617",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900221",
+        "sequence": "2",
+        "stationName": "학생회관",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:29:40.0",
+        "stationNumber": "01618",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900110",
+        "sequence": "3",
+        "stationName": "성균관대학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:29:40.0",
+        "stationNumber": "01722",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100000421",
+        "sequence": "4",
+        "stationName": "유림회관앞",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:29:40.0",
+        "stationNumber": "01612",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900197",
+        "sequence": "5",
+        "stationName": "명륜새마을금고",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:29:40.0",
+        "stationNumber": "01504",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900031",
+        "sequence": "6",
+        "stationName": "서울국제고등학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:29:40.0",
+        "stationNumber": "01512",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900017",
+        "sequence": "7",
+        "stationName": "국민생활관",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:29:40.0",
+        "stationNumber": "01521",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900003",
+        "sequence": "8",
+        "stationName": "혜화초등학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:29:40.0",
+        "stationNumber": "01532",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900063",
+        "sequence": "9",
+        "stationName": "혜화우체국",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:29:40.0",
+        "stationNumber": "01543",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900027",
+        "sequence": "10",
+        "stationName": "혜화역4번출구",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:29:40.0",
+        "stationNumber": "01876",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100000125",
+        "sequence": "11",
+        "stationName": "혜화역3번출구.서울대병원입구",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:29:40.0",
+        "stationNumber": "01221",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900028",
+        "sequence": "12",
+        "stationName": "방송통신대앞",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:29:40.0",
+        "stationNumber": "01877",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900043",
+        "sequence": "13",
+        "stationName": "이화사거리",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:29:40.0",
+        "stationNumber": "01886",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100000123",
+        "sequence": "14",
+        "stationName": "방송통신대.이화장",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:29:40.0",
+        "stationNumber": "01219",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100000124",
+        "sequence": "15",
+        "stationName": "혜화역2번출구.마로니에공원",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 21:29:40.0",
+        "stationNumber": "01220",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100900075",
+        "sequence": "16",
+        "stationName": "혜화역1번출구",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 21:29:40.0",
+        "stationNumber": "01592",
+        "eta": "2분후[1번째 전]"
+      },
+      {
+        "stationId": "100000130",
+        "sequence": "17",
+        "stationName": "혜화동로터리",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 21:29:40.0",
+        "stationNumber": "01226",
+        "eta": "4분39초후[2번째 전]"
+      },
+      {
+        "stationId": "100900199",
+        "sequence": "18",
+        "stationName": "성대입구",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 21:29:40.0",
+        "stationNumber": "01697",
+        "eta": "5분52초후[3번째 전]"
+      },
+      {
+        "stationId": "100900218",
+        "sequence": "19",
+        "stationName": "성균관대정문",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 21:29:40.0",
+        "stationNumber": "01615",
+        "eta": "7분37초후[4번째 전]"
+      },
+      {
+        "stationId": "100900219",
+        "sequence": "20",
+        "stationName": "600주년기념관",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 21:29:40.0",
+        "stationNumber": "01616",
+        "eta": "8분56초후[5번째 전]"
+      }
+    ]
+  },
+  {
+    "at": "2026-02-28T22:00:00+09:00",
+    "payload": [
+      {
+        "stationId": "100900220",
+        "sequence": "1",
+        "stationName": "성균관대운동장",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01617",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900221",
+        "sequence": "2",
+        "stationName": "학생회관",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01618",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900110",
+        "sequence": "3",
+        "stationName": "성균관대학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01722",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100000421",
+        "sequence": "4",
+        "stationName": "유림회관앞",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01612",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900197",
+        "sequence": "5",
+        "stationName": "명륜새마을금고",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01504",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900031",
+        "sequence": "6",
+        "stationName": "서울국제고등학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01512",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900017",
+        "sequence": "7",
+        "stationName": "국민생활관",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01521",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900003",
+        "sequence": "8",
+        "stationName": "혜화초등학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01532",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900063",
+        "sequence": "9",
+        "stationName": "혜화우체국",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01543",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900027",
+        "sequence": "10",
+        "stationName": "혜화역4번출구",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01876",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100000125",
+        "sequence": "11",
+        "stationName": "혜화역3번출구.서울대병원입구",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01221",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900028",
+        "sequence": "12",
+        "stationName": "방송통신대앞",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01877",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100900043",
+        "sequence": "13",
+        "stationName": "이화사거리",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01886",
+        "eta": "출발대기"
+      },
+      {
+        "stationId": "100000123",
+        "sequence": "14",
+        "stationName": "방송통신대.이화장",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01219",
+        "eta": "곧 도착"
+      },
+      {
+        "stationId": "100000124",
+        "sequence": "15",
+        "stationName": "혜화역2번출구.마로니에공원",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01220",
+        "eta": "1분36초후[1번째 전]"
+      },
+      {
+        "stationId": "100900075",
+        "sequence": "16",
+        "stationName": "혜화역1번출구",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01592",
+        "eta": "3분후[2번째 전]"
+      },
+      {
+        "stationId": "100000130",
+        "sequence": "17",
+        "stationName": "혜화동로터리",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01226",
+        "eta": "5분34초후[3번째 전]"
+      },
+      {
+        "stationId": "100900199",
+        "sequence": "18",
+        "stationName": "성대입구",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01697",
+        "eta": "6분49초후[4번째 전]"
+      },
+      {
+        "stationId": "100900218",
+        "sequence": "19",
+        "stationName": "성균관대정문",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01615",
+        "eta": "8분33초후[5번째 전]"
+      },
+      {
+        "stationId": "100900219",
+        "sequence": "20",
+        "stationName": "600주년기념관",
+        "carNumber": "3613",
+        "eventDate": "2026-02-28 21:59:50.0",
+        "stationNumber": "01616",
+        "eta": "9분52초후[6번째 전]"
+      }
+    ]
+  },
+  {
+    "at": "2026-02-28T22:30:00+09:00",
+    "payload": [
+      {
+        "stationId": "100900220",
+        "sequence": "1",
+        "stationName": "성균관대운동장",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:29:40.0",
+        "stationNumber": "01617",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900221",
+        "sequence": "2",
+        "stationName": "학생회관",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:29:40.0",
+        "stationNumber": "01618",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900110",
+        "sequence": "3",
+        "stationName": "성균관대학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:29:40.0",
+        "stationNumber": "01722",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100000421",
+        "sequence": "4",
+        "stationName": "유림회관앞",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:29:40.0",
+        "stationNumber": "01612",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900197",
+        "sequence": "5",
+        "stationName": "명륜새마을금고",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:29:40.0",
+        "stationNumber": "01504",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900031",
+        "sequence": "6",
+        "stationName": "서울국제고등학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:29:40.0",
+        "stationNumber": "01512",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900017",
+        "sequence": "7",
+        "stationName": "국민생활관",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:29:40.0",
+        "stationNumber": "01521",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900003",
+        "sequence": "8",
+        "stationName": "혜화초등학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:29:40.0",
+        "stationNumber": "01532",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900063",
+        "sequence": "9",
+        "stationName": "혜화우체국",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:29:40.0",
+        "stationNumber": "01543",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900027",
+        "sequence": "10",
+        "stationName": "혜화역4번출구",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:29:40.0",
+        "stationNumber": "01876",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100000125",
+        "sequence": "11",
+        "stationName": "혜화역3번출구.서울대병원입구",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:29:40.0",
+        "stationNumber": "01221",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900028",
+        "sequence": "12",
+        "stationName": "방송통신대앞",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:29:40.0",
+        "stationNumber": "01877",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900043",
+        "sequence": "13",
+        "stationName": "이화사거리",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:29:40.0",
+        "stationNumber": "01886",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100000123",
+        "sequence": "14",
+        "stationName": "방송통신대.이화장",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:29:40.0",
+        "stationNumber": "01219",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100000124",
+        "sequence": "15",
+        "stationName": "혜화역2번출구.마로니에공원",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:29:40.0",
+        "stationNumber": "01220",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900075",
+        "sequence": "16",
+        "stationName": "혜화역1번출구",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:29:40.0",
+        "stationNumber": "01592",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100000130",
+        "sequence": "17",
+        "stationName": "혜화동로터리",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:29:40.0",
+        "stationNumber": "01226",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900199",
+        "sequence": "18",
+        "stationName": "성대입구",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:29:40.0",
+        "stationNumber": "01697",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900218",
+        "sequence": "19",
+        "stationName": "성균관대정문",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:29:40.0",
+        "stationNumber": "01615",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900219",
+        "sequence": "20",
+        "stationName": "600주년기념관",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:29:40.0",
+        "stationNumber": "01616",
+        "eta": "운행종료"
+      }
+    ]
+  },
+  {
+    "at": "2026-02-28T23:00:00+09:00",
+    "payload": [
+      {
+        "stationId": "100900220",
+        "sequence": "1",
+        "stationName": "성균관대운동장",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:59:40.0",
+        "stationNumber": "01617",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900221",
+        "sequence": "2",
+        "stationName": "학생회관",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:59:40.0",
+        "stationNumber": "01618",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900110",
+        "sequence": "3",
+        "stationName": "성균관대학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:59:40.0",
+        "stationNumber": "01722",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100000421",
+        "sequence": "4",
+        "stationName": "유림회관앞",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:59:40.0",
+        "stationNumber": "01612",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900197",
+        "sequence": "5",
+        "stationName": "명륜새마을금고",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:59:40.0",
+        "stationNumber": "01504",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900031",
+        "sequence": "6",
+        "stationName": "서울국제고등학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:59:40.0",
+        "stationNumber": "01512",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900017",
+        "sequence": "7",
+        "stationName": "국민생활관",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:59:40.0",
+        "stationNumber": "01521",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900003",
+        "sequence": "8",
+        "stationName": "혜화초등학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:59:40.0",
+        "stationNumber": "01532",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900063",
+        "sequence": "9",
+        "stationName": "혜화우체국",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:59:40.0",
+        "stationNumber": "01543",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900027",
+        "sequence": "10",
+        "stationName": "혜화역4번출구",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:59:40.0",
+        "stationNumber": "01876",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100000125",
+        "sequence": "11",
+        "stationName": "혜화역3번출구.서울대병원입구",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:59:40.0",
+        "stationNumber": "01221",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900028",
+        "sequence": "12",
+        "stationName": "방송통신대앞",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:59:40.0",
+        "stationNumber": "01877",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900043",
+        "sequence": "13",
+        "stationName": "이화사거리",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:59:40.0",
+        "stationNumber": "01886",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100000123",
+        "sequence": "14",
+        "stationName": "방송통신대.이화장",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:59:40.0",
+        "stationNumber": "01219",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100000124",
+        "sequence": "15",
+        "stationName": "혜화역2번출구.마로니에공원",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:59:40.0",
+        "stationNumber": "01220",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900075",
+        "sequence": "16",
+        "stationName": "혜화역1번출구",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:59:40.0",
+        "stationNumber": "01592",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100000130",
+        "sequence": "17",
+        "stationName": "혜화동로터리",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:59:40.0",
+        "stationNumber": "01226",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900199",
+        "sequence": "18",
+        "stationName": "성대입구",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:59:40.0",
+        "stationNumber": "01697",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900218",
+        "sequence": "19",
+        "stationName": "성균관대정문",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:59:40.0",
+        "stationNumber": "01615",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900219",
+        "sequence": "20",
+        "stationName": "600주년기념관",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 22:59:40.0",
+        "stationNumber": "01616",
+        "eta": "운행종료"
+      }
+    ]
+  },
+  {
+    "at": "2026-02-28T23:30:00+09:00",
+    "payload": [
+      {
+        "stationId": "100900220",
+        "sequence": "1",
+        "stationName": "성균관대운동장",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 23:29:40.0",
+        "stationNumber": "01617",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900221",
+        "sequence": "2",
+        "stationName": "학생회관",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 23:29:40.0",
+        "stationNumber": "01618",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900110",
+        "sequence": "3",
+        "stationName": "성균관대학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 23:29:40.0",
+        "stationNumber": "01722",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100000421",
+        "sequence": "4",
+        "stationName": "유림회관앞",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 23:29:40.0",
+        "stationNumber": "01612",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900197",
+        "sequence": "5",
+        "stationName": "명륜새마을금고",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 23:29:40.0",
+        "stationNumber": "01504",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900031",
+        "sequence": "6",
+        "stationName": "서울국제고등학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 23:29:40.0",
+        "stationNumber": "01512",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900017",
+        "sequence": "7",
+        "stationName": "국민생활관",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 23:29:40.0",
+        "stationNumber": "01521",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900003",
+        "sequence": "8",
+        "stationName": "혜화초등학교",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 23:29:40.0",
+        "stationNumber": "01532",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900063",
+        "sequence": "9",
+        "stationName": "혜화우체국",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 23:29:40.0",
+        "stationNumber": "01543",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900027",
+        "sequence": "10",
+        "stationName": "혜화역4번출구",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 23:29:40.0",
+        "stationNumber": "01876",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100000125",
+        "sequence": "11",
+        "stationName": "혜화역3번출구.서울대병원입구",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 23:29:40.0",
+        "stationNumber": "01221",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900028",
+        "sequence": "12",
+        "stationName": "방송통신대앞",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 23:29:40.0",
+        "stationNumber": "01877",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900043",
+        "sequence": "13",
+        "stationName": "이화사거리",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 23:29:40.0",
+        "stationNumber": "01886",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100000123",
+        "sequence": "14",
+        "stationName": "방송통신대.이화장",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 23:29:40.0",
+        "stationNumber": "01219",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100000124",
+        "sequence": "15",
+        "stationName": "혜화역2번출구.마로니에공원",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 23:29:40.0",
+        "stationNumber": "01220",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900075",
+        "sequence": "16",
+        "stationName": "혜화역1번출구",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 23:29:40.0",
+        "stationNumber": "01592",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100000130",
+        "sequence": "17",
+        "stationName": "혜화동로터리",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 23:29:40.0",
+        "stationNumber": "01226",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900199",
+        "sequence": "18",
+        "stationName": "성대입구",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 23:29:40.0",
+        "stationNumber": "01697",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900218",
+        "sequence": "19",
+        "stationName": "성균관대정문",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 23:29:40.0",
+        "stationNumber": "01615",
+        "eta": "운행종료"
+      },
+      {
+        "stationId": "100900219",
+        "sequence": "20",
+        "stationName": "600주년기념관",
+        "carNumber": "----",
+        "eventDate": "2026-02-28 23:29:40.0",
+        "stationNumber": "01616",
+        "eta": "운행종료"
+      }
+    ]
+  }
+]
