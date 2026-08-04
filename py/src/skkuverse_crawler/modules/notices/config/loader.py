@@ -12,7 +12,10 @@ from ....shared.logger import get_logger
 logger = get_logger("config_loader")
 
 REQUIRED_SELECTORS: dict[str, list[str]] = {
-    "skku-standard": ["listItem", "category", "titleLink", "infoList", "detailContent", "attachmentList"],
+    # "category" is deliberately absent: this CMS has boards with no category
+    # column (chem), and the parser reads it with .get() so its absence means
+    # "no category" rather than a config error.
+    "skku-standard": ["listItem", "titleLink", "infoList", "detailContent", "attachmentList"],
     "wordpress-api": [],
     "skkumed-asp": ["listItem", "titleLink", "infoList", "detailContent", "attachmentList"],
     "jsp-dorm": ["listRow", "pinnedRow", "titleLink", "detailContent", "attachmentLink"],
@@ -93,6 +96,19 @@ def load_and_validate() -> list[dict[str, Any]]:
         for sel in required:
             if sel not in selectors:
                 errors.append(f'{dept_id}: missing selector "{sel}" for strategy "{strategy}"')
+
+        # A declared-but-empty selector is never valid: soupsieve rejects ""
+        # with "Expected a selector at position 0", and because that raises
+        # per row inside the parser's row loop it surfaces as an endless
+        # trickle of parse warnings and a source that silently yields
+        # nothing — chem lost every notice this way for months. Fail at
+        # config load instead, where it is one loud error.
+        for key, value in selectors.items():
+            if not isinstance(value, str) or not value.strip():
+                errors.append(
+                    f'{dept_id}: selector "{key}" is empty — '
+                    f"remove the key entirely if the board has no such element"
+                )
 
     # Duplicate ID check
     ids: list[str] = []

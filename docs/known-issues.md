@@ -29,7 +29,7 @@
   - 일시적 `refresh` 토큰 제거, `?wpdmdl={id}`만 저장 (검증: refresh 없이 다운로드 작동)
   - 파일명은 `h3.package-title a` 텍스트에서 추출
   - `html_cleaner.py`의 `REMOVE_SELECTORS`에 `div.w3eden` 추가 → cleanHtml/cleanMarkdown에서 WPDM UI 블록 제거
-  - `backfill-wpdm-attachments` CLI 명령어로 기존 DB 문서 수정 지원
+  - `backfill-wpdm-attachments` CLI 명령어로 기존 DB 문서 수정 지원 *(당시. 이 커맨드는 adr-006 리팩터에서 삭제됐다 — [cli-usage.md](cli-usage.md) §없어진 커맨드)*
 
 ### ~~6. 리스트 페이지 byte-truncation으로 인한 false-positive 변경 감지~~ (2026-04-21 해결)
 - **문제**: `cal.skku.edu` 등 일부 소스가 list page의 title을 byte 경계로 잘라서, UTF-8 다바이트 문자(예: `공`, 3-byte) 중간이 끊겨 trailing U+FFFD(`�`) replacement character가 `...` 직전에 들어감. `dedup.has_changed()`의 ellipsis-prefix 방어 로직이 `�`를 prefix 끝에 포함시켜 DB에 저장된 정상 title과 startswith 매칭 실패 → 변경됨으로 오판.
@@ -88,7 +88,31 @@
   - cheme: SSL 통과 후에도 **Cloudflare 봇 챌린지 403** ("Just a moment...") — wp-json·RSS(`/feed/` 등)·루트 전 경로, 로컬·oracle VM IP 모두 동일. 챌린지 우회는 만들지 않음(정책).
 - **결정 (2026-07-29, 운영자)**: 크롤러 측 인증서 보충/우회 없이 **소스 제외로 처리**. `sources.json`에서 두 소스 `crawlAvailable: false` + `excludeReason: "temporarilyUnavailable"`(앱 노출: "잠시 점검 중이에요" + 공과대학 우산 대안 제안) + 기술 사유는 내부 전용 `excludeNote` 필드(ssl / ssl+cloudflare)에 기록.
 - **재활성 조건**: nano — `openssl s_client`로 체인 정상 서빙 확인 시 플래그 원복만 하면 됨. cheme — 챌린지 해제 확인 시. 재활성 후 백필분은 푸시 억제 절차(§8 참조) 필요.
-- **파생 수정**: 제외된 소스의 stale crawl_health 상태가 일일 요약을 영구 오염하는 문제 → 요약이 enabled 소스로 필터하도록 수정 (`crawl_health/module.py`).
+- **파생 수정**: 제외된 소스의 stale crawl_health 상태가 일일 요약을 영구 오염하는 문제 → 요약이 enabled 소스로 필터하도록 수정 (당시 `crawl_health/module.py`, 현재 `plugins/health/module.py`).
+
+### ~~12. 첨부 4종 동시 파손 — 그리고 검증기가 넷 다 정상으로 보고하던 이유~~ (2026-08-04 해결)
+
+- **탐지 구멍이 본체다**: 파손된 다운로드 엔드포인트는 404를 주지 않는다. **HTTP 200 + `text/html`**로 JavaScript alert 페이지를 준다 — cal은 `alert("Access denied!!")`(110B), dorm은 "다운로드 받으실 파일이 존재하지 않습니다"(327B), bio는 `오류안내 페이지`. `check_reachability`가 `status >= 400`만 봤으므로 **넷 다 정상으로 보고돼 왔다**. HEAD → ranged GET으로 바꾸고 `html_response` 체크를 추가 (Content-Type이 `text/html`이면서 `Content-Disposition: attachment`가 없으면 파손). 부수 효과로 §8의 **sls HEAD 오탐도 해소** — sls는 HEAD에 404/403, GET에만 정상.
+
+- **(a) cal 첨부 101건 전량 사망** — NFUpload가 `Referer` 헤더를 검증하는데 `custom_php.py`가 `{name, url}`만 저장. 서버 프록시는 저장된 `referer`가 있을 때만 헤더를 실어 보내므로(`notices.controller.ts:397`) 보낼 것이 없었다. 실증: Referer만 → 407KB PDF / 쿠키만 → Access denied 110B. gnuboard와 같은 형태로 `referer` 저장 + `REFERER_REQUIRED_STRATEGIES` 신설.
+  - ⚠️ `GNUBOARD_STRATEGIES`와 **별도 상수로 유지**해야 한다. gnuboard는 세션 게이트라 HTTP 체크를 *스킵*하지만, cal은 referer만으로 충분하므로 체크를 *받아야* 한다. 한 상수로 합치면 cal이 검증 사각지대로 들어간다.
+
+- **(b) dorm `attach_no`가 안정적 ID가 아님** — 글 수정 시 재발급된다. 87776은 저장 `7470` → 실제 `7473`. 더 나쁜 건 **87829의 `7472`**: 저장명은 "2026 Fall Semester Dormitory Admission Guidance.pdf"인데 서버는 `Guidance_for_Paying_dormitory_fee.pdf`를 서빙했다(md5 대조 확인). **오류 없이 다른 문서가 다운로드되는** 상태. 구조적 원인은 Tier-2가 `attachments`를 갱신하지 않던 것([follow-ups.md](follow-ups.md) §5-c) → `ContentFields.as_set(attachments=...)`로 크롤·Tier-2가 같은 필드 정의를 지나가게 수정.
+  - 단, Tier-2는 **content hash가 움직일 때만** 쓴다. 파일만 교체된 글은 여전히 안 잡히므로 `repair-attachments`가 필요하다.
+
+- **(c) chem 공지 0건 (영구), 경고 470건/일** — `sources.json`에 `"category": ""`. soupsieve가 빈 셀렉터를 `Expected a selector at position 0`으로 거부하는데, 그 raise가 파서의 **행 단위 try 안**에서 터져 10행이 전부 조용히 삼켜지고 `empty_list_page`가 됐다. 3계층 수정: 파서가 `category`를 optional로(`selectors.get`), 로더가 **빈 문자열 셀렉터를 기동 시점에 거부**, `parse_list_item_failed` 로그에 `dept_id` 추가(이게 없어서 470건이 추적 불가능했다). `REQUIRED_SELECTORS["skku-standard"]`에서 `category` 제거 — 카테고리 컬럼 없는 게시판은 정당하다.
+  - **테스트가 못 잡은 이유**: `ONCLICK_CONFIG` 픽스처가 `"category": ""`를 그대로 들고 있었지만 `crawl_detail`에만 쓰여 `crawl_list`를 한 번도 통과하지 않았다.
+  - chem은 유일한 `attachmentParser: "onclick"` 소스 — 이 수정으로 **해당 경로가 프로덕션에서 처음 실행**됐고, 첨부 추출 정상 확인 (295KB PDF).
+
+- **(d) support 공지 57건 전부 `contentText: null`** — 상세 페이지가 portal 로그인 폼을 반환(HTTP 200 + 로그인 HTML). null-content 자동 재크롤 루프가 하루 51회(`detail_fetch_failed` 25 + `non_retryable_error` 26) 영구 재시도 중이었다. `crawlEnabled/crawlAvailable: false` + `excludeReason: "loginRequired"`로 제외. 기존 57건은 삭제하지 않음(소스 제외로 앱 미노출).
+
+- **(e) 세 번째 실패 유형 — 원본이 파일을 지운 경우**: cal-grad 1353은 상세 페이지에 첨부 링크가 0개인데 저장된 URL만 남아 있었다. offline 수리로는 보이지 않고 Tier-2도 못 잡는다(파일 삭제는 본문 해시를 움직이지 않는다). `repair-attachments --refetch`로 처리.
+
+- **수리 결과 (프로덕션)**: cal 63건(첨부 101) + dorm 5건 + cal-grad 1건. 검증 재실행 시 **issues 66건 → 0건**. 재실행 멱등 확인(scanned 76, repaired 0).
+
+- **버그가 아니라고 확인한 것**: `ccrf`/`comedu-grad`/`sco-culture` 공지 0건은 최신글이 각각 2026-01-16 / 2026-03-06 / 2025-09-05로 전부 `SERVICE_START_DATE`(2026-03-09) 미만 — floor 로직 정상. `health`/`larc`/`gbme-grad` 첨부 0%는 실제로 첨부 없는 글. `pharm`/`bio`는 세션 수립 후 정상(166KB HWP, 299KB PDF) — 프록시가 이미 처리 중.
+
+- **파생 수정**: `ValidationReport.issue_counts`가 `Counter`라 `dataclasses.asdict`가 (key, value) 튜플을 Counter 생성자에 먹여 **`--json`이 이슈 발견 시 항상 TypeError로 죽던** 잠복 버그 — 평범한 dict로 교체 (attachment·markdown 리포트 둘 다).
 
 ### 3. `lastModified` 필드 미구현
 - 상세 페이지 `<span class="date">최종 수정일 : 2026.03.27</span>` 에서 추출 가능

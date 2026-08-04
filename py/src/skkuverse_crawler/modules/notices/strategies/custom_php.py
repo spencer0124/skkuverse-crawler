@@ -128,7 +128,11 @@ class CustomPhpStrategy:
                 if full_url in seen_urls:
                     continue
                 seen_urls.add(full_url)
-                attachments.append({"name": name, "url": full_url})
+                # NFUpload serves the file only to a request carrying a
+                # Referer from the site; without one it answers 200 with
+                # `alert("Access denied!!")`. The server proxy forwards this
+                # field when present, so store it the way gnuboard does.
+                attachments.append({"name": name, "url": full_url, "referer": url})
 
             detail_title: str | None = None
             title_selector = config.get("selectors", {}).get("detailTitle")

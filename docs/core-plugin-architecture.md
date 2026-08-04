@@ -4,7 +4,22 @@
 
 > **상태**: 설계 v2. **PR 0~9 구현 완료 (2026-08-02) — 로드맵 종료.** Stage/Pipeline은 `core/pipeline.py`(모양) + `modules/notices/stages.py`(구체 스테이지, 설계 스케치의 `core/content/`와 다름: 사유는 plan.md PR 7 확정 사항), 조립 시점 검증은 `wiring.py`의 `_require`, flush 계약은 `core/runner.py`. PR 8(extras) — optional-dependencies + 지연 click group + `env.py`/`core/settings.py` 분리 + production 부팅 거부(`wiring.ProfileError`) + `core/sinks.JsonLinesSink`. PR 9(공개 문서) — `core/__init__` 재수출 + `core/testing.assert_sink_contract` 출하 + 버전 0.1.0 + 레포 루트 README(CI가 실행하는 예제) + [sink 작성자 가이드](sink-authors-guide.md).
 >
-> **⚠️ §facade 스케치와 실제가 다르다**: `iter_notices()`는 `core/simple.py`가 아니라 **`modules/notices/simple.py`**에 있고, `skkuverse_crawler/__init__.py`가 PEP 562로 지연 재수출한다 (README 첫 줄 = `from skkuverse_crawler import iter_notices`). 사유: PR 6이 `iter_source`를 modules 소유로 확정했으므로 core의 facade는 자기가 감쌀 대상을 부를 수 없다 — 아래 §레이아웃의 `core/simple.py` 표기는 **초기안의 기록**으로 남긴다. 무엇이 왜 바뀌었는지는 adr-006 근거 ⑦~⑬ + plan.md PR 9 §구현 시 확정 사항.
+> **⚠️ 이 문서는 설계안이다. 현재 코드 배치는 [architecture.md](architecture.md) §Directory Layout이 정답이다.**
+>
+> 아래 §레이아웃은 **구현 전 스케치**이며 실제와 9곳 다르다. 지우지 않고 남기는 이유는 무엇을 설계했고 무엇이 살아남았는지가 그 자체로 기록이기 때문이다 — 어긋난 지점은 전부 여기 적는다.
+>
+> | 설계 스케치 | 실제 구현 | 사유 |
+> |------------|----------|------|
+> | `core/simple.py`의 `iter_notices()` | `modules/notices/simple.py` + 최상위 PEP 562 지연 재수출 | PR 6이 `iter_source`를 modules 소유로 확정 → core의 facade가 자기가 감쌀 대상을 부를 수 없다 (adr-006 근거 ⑦~⑬, plan.md PR 9) |
+> | **`shared/` 해체** | **`shared/`는 그대로 남아 있다** — `db.py`·`logger.py`·`fetcher.py`·`html_cleaner.py`·`html_to_markdown.py` | 이 리팩터의 범위 밖. 층 경계(core/modules/plugins)를 세우는 것이 목표였고 `shared/`는 미배정 상태로 유예됐다 |
+> | `core/net/fetcher.py` | `shared/fetcher.py` | 위와 같음 |
+> | `core/logging.py` | `shared/logger.py` | 위와 같음 |
+> | `core/content/{html_cleaner,html_to_markdown}.py` | `shared/`에 잔류 | 위와 같음 |
+> | `core/content/stages.py` | `modules/notices/stages.py` | 코어는 **모양만**(`core/pipeline.py`), 구체 스테이지는 콘텐츠 의미를 소유한 모듈에 (plan.md PR 7) |
+> | `core/content/hashing.py` | `modules/notices/hashing.py` | 위와 같음 |
+> | `core/models.py` | `modules/notices/models.py` | Notice는 공지 도메인 모델. 코어에 남은 결과 타입은 `core/results.py`의 `SourceResult` |
+> | `modules/notices/{crawler.py, data/}` | `{orchestrator.py, config/}` | `data/` 개명은 loader가 `core/sources.py`로 해체될 때로 유예 |
+> | `plugins/health/{logic,state}.py` | `plugins/health/{logic,store,module,cli}.py` | 일일 요약 모듈과 CLI 리프가 추가됨 |
 >
 > **불변식**: `core/`는 `modules/`·`plugins/`를 import하지 않는다. `modules/`는 `plugins/`를 import하지 않는다. `plugins/`를 import하는 파일은 **조립 리프뿐** — `wiring.py`, 루트 `cli.py`, 각 플러그인의 `cli.py` *(PR 7 개정, adr-006 §발동 기록)*. `os.environ`을 읽는 파일은 `env.py` 하나 — *(PR 8 정정)* 실제로는 **둘**: `env.py`와 `modules/notices/config/loader.py`(SOURCES_JSON_PATH). 경로 해석이 Config 생성보다 먼저라 구조적으로 불가피하며, `test_env_is_the_only_environment_reader`의 허용목록이 두 항목을 명시한다. — AST 테스트로 강제. *(v2)* 증분/전량 같은 실행 모드는 bool 플래그가 아니라 **합 타입**으로 — 불법 조합은 런타임 검증이 아니라 타입 구조로 차단한다.
 
@@ -28,6 +43,8 @@ async for ev in iter_source(source, strategy, mode=Incremental(seen=my_index)):
 ```
 
 ## 레이아웃
+
+> **구현 전 스케치다.** 실제 배치는 [architecture.md](architecture.md) §Directory Layout 참조 — 차이 9곳은 문서 상단 표에 정리돼 있다.
 
 ```
 skkuverse_crawler/
@@ -55,6 +72,8 @@ skkuverse_crawler/
 
 `shared/`는 해체된다: `config.py` → `env.py` + `core/settings.py` / `db.py` → `plugins/mongo` / `discord.py` → `plugins/discord` / `fetcher.py` → `core/net` / `html_cleaner.py`·`html_to_markdown.py` → `core/content` / `logger.py` → `core/logging.py`.
 
+> *(구현 결과)* **6개 중 2개만 실행됐다.** `config.py` → `env.py` + `core/settings.py` ✅, `discord.py` → `plugins/discord/webhook.py` ✅. 나머지 4개(`db`·`fetcher`·`html_*`·`logger`)는 `shared/`에 그대로 있다. 층 경계를 세우는 것이 이 리팩터의 목표였고, 이미 경계를 넘지 않는 파일을 옮기는 일은 이득 없이 diff만 키운다고 판단해 유예했다. `architecture.md`의 트리가 이 상태를 "아직 층에 배정되지 않은 공통 코드"로 표기한다.
+
 조립부를 `app/` 패키지가 아니라 리프 모듈 3개로 두는 이유: 아무도 import하지 않는 리프라 코어 전용 설치가 이 파일들을 건드리지 않는다.
 
 > *(PR 8 기각)* 같은 논리로 `click`·`python-dotenv`까지 기본 의존성에서 빼자는 결론은 채택하지 않았다. `[project.scripts]`가 콘솔 스크립트를 선언하는 이상, 코어 전용 설치가 동작하는 바이너리를 만들지 못하면 §목표 상태의 `env -i skkuverse-crawler notices …` 인수 조건이 구조적으로 불가능해진다. 레이어링 주장(리프는 아무도 import하지 않는다)은 유효하지만 패키징 결론은 따라오지 않는다.
@@ -70,7 +89,7 @@ skkuverse_crawler/
 | `attachment_validator.py:88-175`, `markdown_validator.py:129-238` 순수 검사 | `modules/notices/validation.py` | 이미 순수 |
 | 위 두 파일의 DB 스캔 드라이버 | `plugins/mongo/audit.py` | |
 | `update_checker.py` 전체 | `plugins/mongo/` | 전면 DB 주도(14일 창 질의 → 재조회 → 해시 비교 → soft-delete). 유일한 장애물이 `STRATEGY_MAP` import |
-| `image_verifier.py` | `core/content/stages.py`의 **선택** 스테이지 | 코어 자격 있음(httpx + imagesize)이나 현재 무조건 실행. 게시판 하나 긁는 OSS 사용자가 공지당 N회 추가 HTTP를 끌 수 있어야 함 |
+| `image_verifier.py` | `modules/notices/stages.py`의 **선택** 스테이지 *(스케치는 `core/content/stages.py`)* | 코어 자격 있음(httpx + imagesize)이나 당시 무조건 실행. 게시판 하나 긁는 OSS 사용자가 공지당 N회 추가 HTTP를 끌 수 있어야 함 → 구현됨: `VerifyImages`를 `DEFAULT_PIPELINE.without("verify-images")`로 끌 수 있다 |
 | `Notifier` 프로토콜 | `core/ports.py` | Discord는 구현 하나. `plugins/health` → `plugins/discord` 하드 엣지 회피 |
 | `ModuleConfig.collection_name` | **삭제** | 4곳에서 쓰고(`notices/module.py:18,47`, `notices_summary/module.py:14`, `crawl_health/module.py:73`) 읽는 곳 0. 코어 계약에 박힌 DB 개념 |
 
@@ -233,7 +252,7 @@ v1은 전량 스윕을 `NullSeenIndex`가 `{}`를 흘리면 `should_continue`가
 
 *(PR 6 구현 addendum)* `ContentRefreshed` → `updated` (outcome 무시 — 현행 백필 계수) · `SourceStarted` → 무집계 · 미지의 이벤트 → accept 후 무집계. 구현은 `core/runner.py::run_events`.
 
-### facade — `core/simple.py` *(v2 신설, adr-006 §⑨)*
+### facade — ~~`core/simple.py`~~ → 구현은 `modules/notices/simple.py` *(v2 신설, adr-006 §⑨)*
 
 ```python
 async def iter_notices(source, strategy, **kw) -> AsyncIterator[Notice]:

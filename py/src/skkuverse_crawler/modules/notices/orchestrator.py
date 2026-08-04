@@ -265,7 +265,7 @@ async def iter_source(
                 yield ContentRefreshed(
                     source_id=dept["id"],
                     ref=ref,
-                    fields={**fields.as_set(), "attachments": detail.attachments},
+                    fields=fields.as_set(attachments=detail.attachments),
                 )
 
     # Crawl list pages

@@ -187,7 +187,7 @@
 | `chec` | 성균인성교육센터 | hssc |  | O |
 | `larc` | 실험동물센터 | nsc |  | O |
 | `helper` | 인권센터 | both |  | O |
-| `support` | 장애학생지원센터 | both |  | O |
+| `support` | 장애학생지원센터 | both |  |  |
 | `scc` | 카운슬링센터 | both |  | O |
 | `success` | 학생성공센터 | both |  | O |
 

@@ -298,7 +298,7 @@ async def _check_department(
             doc_filter,
             {
                 "$set": {
-                    **fields.as_set(),
+                    **fields.as_set(attachments=detail.attachments),
                     "consecutiveFailures": 0,
                     "crawledAt": now,
                 },

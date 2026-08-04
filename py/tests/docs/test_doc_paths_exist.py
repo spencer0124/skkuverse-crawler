@@ -67,6 +67,104 @@ def test_source_paths_named_in_docs_exist(doc: Path):
     )
 
 
+# ── Retired layouts ──────────────────────────────────────────────────
+# The scan above only sees full `py/src/...` paths, and almost no doc line
+# writes one — prose says `plugins/health/store.py`. That blind spot is
+# where the rot actually lived: on 2026-08-04 every stale line found was a
+# bare path, and the full-path scan had been green the whole time.
+#
+# So this second scan names the dead layouts directly. It cannot catch a
+# path that goes stale in some *future* move — only the full-path scan
+# generalizes — but it does pin the ones that already rotted once, which
+# is the population that demonstrably comes back.
+RETIRED: dict[str, str] = {
+    "crawl_health/": "plugins/health/",
+    "notices_summary/": "plugins/ai_summary/",
+    "notices_embedding/": "(deleted — adr-007)",
+    "dispatch_client.py": "plugins/dispatch/client.py",
+    "net/fetcher.py": "shared/fetcher.py",
+    "core/logging.py": "shared/logger.py",
+    "core/simple.py": "modules/notices/simple.py",
+    "core/content/": "modules/notices/stages.py",
+    "shared/config.py": "env.py + core/settings.py",
+    "modules/base.py": "core/module.py",
+    "modules/registry.py": "core/registry.py",
+    "notices/dedup.py": "modules/notices/policy.py",
+    "notices/backfill.py": "plugins/mongo/work_seed.py",
+}
+
+# A retired name is fine when the line also says where the code lives now
+# — that is a statement about history, not a stale pointer. These are the
+# lines that cannot do that: design sketches and migration checklists,
+# where the old layout *is* the content. Keyed by (doc name, retired path)
+# so a new occurrence elsewhere still fails.
+SANCTIONED: set[tuple[str, str]] = {
+    # §레이아웃 is the pre-implementation sketch, flagged as such in the
+    # doc's own header table.
+    ("core-plugin-architecture.md", "net/fetcher.py"),
+    ("core-plugin-architecture.md", "core/content/"),
+    ("core-plugin-architecture.md", "notices_summary/"),
+    ("core-plugin-architecture.md", "crawl_health/"),
+    # PR checklists record the tree as it stood when the work was planned.
+    ("core-plugin-plan.md", "dispatch_client.py"),
+    ("core-plugin-plan.md", "core/simple.py"),
+    ("core-plugin-plan.md", "core/content/"),
+    ("core-plugin-plan.md", "shared/config.py"),
+    ("core-plugin-plan.md", "modules/base.py"),
+    ("core-plugin-plan.md", "modules/registry.py"),
+    # Names a module deliberately NOT created — the sentence's whole point
+    # is that the work fits on the existing write paths without one.
+    ("search-mcp-plan.md", "notices_embedding/"),
+    # ADR-006/007 are decision records; rewriting them falsifies the record.
+    ("adr-006-core-plugin-split.md", "core/simple.py"),
+    ("adr-006-core-plugin-split.md", "shared/config.py"),
+    ("adr-006-core-plugin-split.md", "modules/base.py"),
+    ("adr-007-atlas-auto-embedding.md", "notices_embedding/"),
+}
+
+# `(?<![\w/])` keeps `notices/dedup.py` from matching inside
+# `modules/notices/dedup.py`, and `crawl_health/` from matching the
+# MongoDB collection named `crawl_health` (no trailing slash).
+_RETIRED_RE = {
+    dead: re.compile(r"(?<![\w/])" + re.escape(dead)) for dead in RETIRED
+}
+
+
+def _live_paths() -> set[str]:
+    pkg = REPO_ROOT / "py/src/skkuverse_crawler"
+    out = set()
+    for p in pkg.rglob("*"):
+        if "__pycache__" in p.parts:
+            continue
+        rel = p.relative_to(pkg).as_posix()
+        out.add(rel + "/" if p.is_dir() else rel)
+    return out
+
+
+@pytest.mark.parametrize("doc", _doc_files(), ids=lambda p: str(p.name))
+def test_docs_do_not_point_at_retired_layouts(doc: Path):
+    live = _live_paths()
+    offenders = []
+    for lineno, line in enumerate(doc.read_text().splitlines(), 1):
+        for dead, now in RETIRED.items():
+            if not _RETIRED_RE[dead].search(line):
+                continue
+            if (doc.name, dead) in SANCTIONED:
+                continue
+            # Naming any current location on the same line is the
+            # "당시 X, 현재 Y" pattern the docs already use.
+            if any(p in line for p in live if len(p) > 6):
+                continue
+            offenders.append(f"{lineno}: {dead!r} (now {now})")
+
+    assert not offenders, (
+        f"{doc.relative_to(REPO_ROOT)} points at retired layouts:\n  "
+        + "\n  ".join(offenders)
+        + "\nName the current home on the same line, or add (doc, path) to "
+        "SANCTIONED if the old layout is the point (design sketch, ADR)."
+    )
+
+
 def test_the_scan_finds_paths_at_all():
     """Guards the regex, which is the failure mode of every grep-based
     check: a pattern that matches nothing makes every test above pass

@@ -8,8 +8,11 @@ import pytest
 import respx
 
 from skkuverse_crawler.modules.notices.validation import (
+    GNUBOARD_STRATEGIES,
+    REFERER_REQUIRED_STRATEGIES,
     ValidationReport,
     check_reachability,
+    judge_served_response,
     validate_duplicates,
     validate_host_allowed,
     validate_name,
@@ -136,6 +139,33 @@ class TestValidateReferer:
         att = {"url": "https://skku.edu/f", "name": "f"}
         assert validate_referer(att, 0, None) is None
 
+    def test_custom_php_missing_referer(self):
+        """cal's NFUpload checks the Referer too, so custom-php must carry one."""
+        issue = validate_referer({"url": "https://cal.skku.edu/f", "name": "f"}, 0, "custom-php")
+        assert issue is not None
+        assert issue.check == "missing_referer"
+
+    def test_custom_php_with_referer(self):
+        att = {
+            "url": "https://cal.skku.edu/NFUpload/nfupload_down.php?tmp_name=a",
+            "name": "f",
+            "referer": "https://cal.skku.edu/index.php?page=view&idx=1",
+        }
+        assert validate_referer(att, 0, "custom-php") is None
+
+    def test_referer_requirement_does_not_widen_the_http_skip(self):
+        """The two sets answer different questions and must stay apart.
+
+        gnuboard is exempt from the reachability probe because its downloads
+        are session-gated and a cold probe always fails. custom-php is not:
+        a Referer is enough, so cal MUST keep being probed. Merging the
+        constants would move cal's attachments into the blind spot this
+        whole check exists to close.
+        """
+        assert "custom-php" in REFERER_REQUIRED_STRATEGIES
+        assert "custom-php" not in GNUBOARD_STRATEGIES
+        assert GNUBOARD_STRATEGIES < REFERER_REQUIRED_STRATEGIES
+
 
 # ---------------------------------------------------------------------------
 # Sync: validate_host_allowed
@@ -229,43 +259,129 @@ class TestValidateNoticeAttachments:
 # ---------------------------------------------------------------------------
 
 
+URL = "https://www.skku.edu/f.pdf"
+
+
+async def _probe(index: int = 0) -> object:
+    sem = asyncio.Semaphore(5)
+    async with httpx.AsyncClient() as client:
+        return await check_reachability(URL, "https://skku.edu", client, sem, index, "f.pdf")
+
+
 class TestCheckReachability:
     @respx.mock
     async def test_reachable_200(self):
-        respx.head("https://www.skku.edu/f.pdf").mock(return_value=httpx.Response(200))
-        sem = asyncio.Semaphore(5)
-        async with httpx.AsyncClient() as client:
-            issue = await check_reachability("https://www.skku.edu/f.pdf", "https://skku.edu", client, sem, 0, "f.pdf")
-        assert issue is None
+        respx.get(URL).mock(
+            return_value=httpx.Response(200, headers={"content-type": "application/pdf"}),
+        )
+        assert await _probe() is None
 
     @respx.mock
     async def test_unreachable_404(self):
-        respx.head("https://www.skku.edu/f.pdf").mock(return_value=httpx.Response(404))
-        sem = asyncio.Semaphore(5)
-        async with httpx.AsyncClient() as client:
-            issue = await check_reachability("https://www.skku.edu/f.pdf", "https://skku.edu", client, sem, 0, "f.pdf")
+        respx.get(URL).mock(return_value=httpx.Response(404))
+        issue = await _probe()
         assert issue is not None
         assert issue.check == "unreachable"
         assert "404" in issue.detail
 
     @respx.mock
     async def test_unreachable_timeout(self):
-        respx.head("https://www.skku.edu/f.pdf").mock(side_effect=httpx.ConnectTimeout("timeout"))
-        sem = asyncio.Semaphore(5)
-        async with httpx.AsyncClient() as client:
-            issue = await check_reachability("https://www.skku.edu/f.pdf", "https://skku.edu", client, sem, 0, "f.pdf")
+        respx.get(URL).mock(side_effect=httpx.ConnectTimeout("timeout"))
+        issue = await _probe()
         assert issue is not None
         assert issue.check == "unreachable"
         assert "timeout" in issue.detail.lower()
 
     @respx.mock
     async def test_unreachable_connection_error(self):
-        respx.head("https://www.skku.edu/f.pdf").mock(side_effect=httpx.ConnectError("refused"))
-        sem = asyncio.Semaphore(5)
-        async with httpx.AsyncClient() as client:
-            issue = await check_reachability("https://www.skku.edu/f.pdf", "https://skku.edu", client, sem, 0, "f.pdf")
+        respx.get(URL).mock(side_effect=httpx.ConnectError("refused"))
+        issue = await _probe()
         assert issue is not None
         assert issue.check == "unreachable"
+
+    @respx.mock
+    async def test_head_only_failure_does_not_count(self):
+        """sls answers HEAD with 404 and GET correctly.
+
+        The check must be a GET, or every sls attachment is reported broken.
+        Mocking only GET proves no HEAD is sent: a HEAD would go unmocked and
+        surface as an ``unreachable`` issue.
+        """
+        respx.get(URL).mock(
+            return_value=httpx.Response(200, headers={"content-type": "application/pdf"}),
+        )
+        assert await _probe() is None
+
+    @respx.mock
+    async def test_html_body_with_200_is_flagged(self):
+        """cal/dorm/bio all answer a dead download with 200 + an HTML alert."""
+        respx.get(URL).mock(
+            return_value=httpx.Response(
+                200,
+                headers={"content-type": "text/html; charset=utf-8"},
+                text='<script>alert("Access denied!!"); history.back();</script>',
+            ),
+        )
+        issue = await _probe()
+        assert issue is not None
+        assert issue.check == "html_response"
+
+    @respx.mock
+    async def test_html_offered_as_a_download_passes(self):
+        """An .html file legitimately served as an attachment is not broken."""
+        respx.get(URL).mock(
+            return_value=httpx.Response(
+                200,
+                headers={
+                    "content-type": "text/html",
+                    "content-disposition": 'attachment; filename="page.html"',
+                },
+            ),
+        )
+        assert await _probe() is None
+
+    @respx.mock
+    async def test_range_rejection_is_reprobed_without_range(self):
+        """A server that refuses Range must not be reported broken."""
+        calls = {"n": 0}
+
+        def _respond(request):
+            calls["n"] += 1
+            if "Range" in request.headers:
+                return httpx.Response(416)
+            return httpx.Response(200, headers={"content-type": "application/pdf"})
+
+        respx.get(URL).mock(side_effect=_respond)
+        assert await _probe() is None
+        assert calls["n"] == 2
+
+
+class TestJudgeServedResponse:
+    """Header-only verdict, tested without a socket."""
+
+    def test_non_html_passes(self):
+        assert judge_served_response({"content-type": "application/pdf"}, 0, URL, "f") is None
+
+    def test_missing_content_type_passes(self):
+        assert judge_served_response({}, 0, URL, "f") is None
+
+    def test_html_is_flagged(self):
+        issue = judge_served_response({"content-type": "text/html"}, 3, URL, "f")
+        assert issue is not None
+        assert issue.check == "html_response"
+        assert issue.attachment_index == 3
+
+    def test_html_with_attachment_disposition_passes(self):
+        headers = {
+            "content-type": "text/html",
+            "content-disposition": "attachment; filename=x.html",
+        }
+        assert judge_served_response(headers, 0, URL, "f") is None
+
+    def test_inline_disposition_does_not_excuse_html(self):
+        """Only `attachment` means "this really is the file"."""
+        headers = {"content-type": "text/html", "content-disposition": "inline"}
+        assert judge_served_response(headers, 0, URL, "f") is not None
 
 
 # ---------------------------------------------------------------------------

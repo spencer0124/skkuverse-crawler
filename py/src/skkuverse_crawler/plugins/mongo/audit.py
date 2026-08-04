@@ -113,8 +113,13 @@ async def validate_attachments(
                     att_url = att.get("url", "")
                     if not att_url.startswith(("http://", "https://")):
                         continue  # scheme check already flagged
+                    # The attachment's own referer when it has one: cal's
+                    # NFUpload endpoint checks it, and probing with the notice
+                    # URL instead would report a working download as broken.
+                    # Falls back to source_url for the boards that store none.
+                    att_referer = att.get("referer") or source_url
                     http_tasks.append(check_reachability(
-                        att_url, source_url, client, semaphore, i, att.get("name", ""),
+                        att_url, att_referer, client, semaphore, i, att.get("name", ""),
                     ))
                 if http_tasks:
                     results = await asyncio.gather(*http_tasks, return_exceptions=True)
@@ -129,7 +134,7 @@ async def validate_attachments(
             if issues:
                 report.notices_with_issues += 1
                 for issue in issues:
-                    report.issue_counts[issue.check] += 1
+                    report.issue_counts[issue.check] = report.issue_counts.get(issue.check, 0) + 1
                 report.results.append(NoticeValidationResult(
                     notice_id=notice_id,
                     article_no=article_no,
@@ -206,7 +211,7 @@ async def validate_markdown(
         if issues:
             report.notices_with_issues += 1
             for issue in issues:
-                report.issue_counts[issue.check] += 1
+                report.issue_counts[issue.check] = report.issue_counts.get(issue.check, 0) + 1
             report.results.append(NoticeMarkdownResult(
                 notice_id=notice_id,
                 article_no=doc.get("articleNo", 0),
