@@ -16,8 +16,8 @@ import pytest
 from skkuverse_crawler.core.crawl import FullSweep
 from skkuverse_crawler.core.events import (
     ItemSkipped,
-    NoticeCrawled,
-    PageCompleted,
+    ItemCrawled,
+    BatchCompleted,
     SourceFinished,
     SourceStarted,
 )
@@ -81,8 +81,8 @@ def _event_stream(*, notices=(1, 2, 3)):
         yield SourceStarted(source_id="fake-dept", source_name="가짜학과")
         yield ItemSkipped(source_id="fake-dept", article_no=99, reason="below_floor")
         for n in notices:
-            yield NoticeCrawled(source_id="fake-dept", notice=_notice(n))
-        yield PageCompleted(source_id="fake-dept", page=0)
+            yield ItemCrawled(source_id="fake-dept", item=_notice(n))
+        yield BatchCompleted(source_id="fake-dept", index=0)
         yield SourceFinished(
             source_id="fake-dept", stopped_by="max_pages", source_down=False, last_error=""
         )

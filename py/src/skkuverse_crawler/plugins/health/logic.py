@@ -51,13 +51,13 @@ def decide_transitions(
 ) -> HealthTransition:
     tr = HealthTransition()
     for r in results:
-        prev = prev_states.get(r.dept_id, {})
+        prev = prev_states.get(r.source_id, {})
         if r.source_down:
             count = int(prev.get("consecutiveFailures", 0)) + 1
             alerted = bool(prev.get("alerted", False))
             state = {
-                "sourceId": r.dept_id,
-                "sourceName": r.dept_name,
+                "sourceId": r.source_id,
+                "sourceName": r.source_name,
                 "consecutiveFailures": count,
                 "lastFailureAt": now,
                 "lastError": r.last_error[:500],
@@ -70,8 +70,8 @@ def decide_transitions(
             if count >= threshold and not alerted:
                 state["alerted"] = True
                 tr.alerts.append(SourceEvent(
-                    source_id=r.dept_id,
-                    source_name=r.dept_name,
+                    source_id=r.source_id,
+                    source_name=r.source_name,
                     consecutive_failures=count,
                     last_error=r.last_error,
                     last_success_at=prev.get("lastSuccessAt"),
@@ -79,13 +79,13 @@ def decide_transitions(
         else:
             if prev.get("alerted"):
                 tr.recoveries.append(SourceEvent(
-                    source_id=r.dept_id,
-                    source_name=r.dept_name,
+                    source_id=r.source_id,
+                    source_name=r.source_name,
                     inserted=r.inserted,
                 ))
             state = {
-                "sourceId": r.dept_id,
-                "sourceName": r.dept_name,
+                "sourceId": r.source_id,
+                "sourceName": r.source_name,
                 "consecutiveFailures": 0,
                 "lastFailureAt": prev.get("lastFailureAt"),
                 "lastError": prev.get("lastError", ""),
@@ -93,7 +93,7 @@ def decide_transitions(
                 "alerted": False,
                 "updatedAt": now,
             }
-        tr.new_states[r.dept_id] = state
+        tr.new_states[r.source_id] = state
     return tr
 
 

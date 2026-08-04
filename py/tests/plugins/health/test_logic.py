@@ -8,20 +8,20 @@ from skkuverse_crawler.plugins.health.logic import (
     format_alert_message,
     format_daily_summary,
 )
-from skkuverse_crawler.core.results import SourceResult as DeptResult
+from skkuverse_crawler.core.results import SourceResult
 
 NOW = datetime(2026, 7, 29, 3, 0, tzinfo=timezone.utc)
 
 
-def _down(dept_id: str = "sls-special", error: str = "404 Not Found") -> DeptResult:
-    return DeptResult(
-        dept_id=dept_id, dept_name="법학전문대학원",
+def _down(source_id: str = "sls-special", error: str = "404 Not Found") -> SourceResult:
+    return SourceResult(
+        source_id=source_id, source_name="법학전문대학원",
         errors=1, source_down=True, last_error=error,
     )
 
 
-def _ok(dept_id: str = "sls-special", inserted: int = 0) -> DeptResult:
-    return DeptResult(dept_id=dept_id, dept_name="법학전문대학원", inserted=inserted)
+def _ok(source_id: str = "sls-special", inserted: int = 0) -> SourceResult:
+    return SourceResult(source_id=source_id, source_name="법학전문대학원", inserted=inserted)
 
 
 class TestDecideTransitions:
@@ -71,7 +71,7 @@ class TestDecideTransitions:
 
     def test_partial_errors_not_source_down(self):
         """상세 페이지 부분 실패(errors>0, source_down=False)는 정상 취급."""
-        r = DeptResult(dept_id="sco", dept_name="글로벌융합학부(공통)", errors=2)
+        r = SourceResult(source_id="sco", source_name="글로벌융합학부(공통)", errors=2)
         prev = {"sco": {"consecutiveFailures": 2, "alerted": False}}
         tr = decide_transitions(prev, [r], NOW)
         assert tr.new_states["sco"]["consecutiveFailures"] == 0

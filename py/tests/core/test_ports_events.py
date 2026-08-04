@@ -14,7 +14,7 @@ import pytest
 from skkuverse_crawler.core.events import (
     ChangeInfo,
     CrawlEvent,
-    NoticeUnchanged,
+    ItemUnchanged,
 )
 from skkuverse_crawler.core.ports import (
     DetailRef,
@@ -46,7 +46,8 @@ async def test_sink_tolerates_unknown_events():
 async def test_null_sink_is_full_noop():
     sink = NullSink()
     assert await sink.prepare(SourceSpec(source_id="skku-main")) is None
-    assert await sink.accept(NoticeUnchanged(source_id="skku-main", article_no=1, views=3)) is None
+    unchanged = ItemUnchanged(source_id="skku-main", article_no=1, fields={"views": 3})
+    assert await sink.accept(unchanged) is None
     assert await sink.flush() is None
 
 
@@ -67,7 +68,7 @@ def test_port_dataclasses_are_frozen():
     rec = SeenRecord(article_no=1, title="t", date="2026-01-01")
     with pytest.raises(dataclasses.FrozenInstanceError):
         rec.title = "changed"  # type: ignore[misc]
-    event = NoticeUnchanged(source_id="s", article_no=1, views=0)
+    event = ItemUnchanged(source_id="s", article_no=1, fields={"views": 0})
     with pytest.raises(dataclasses.FrozenInstanceError):
         event.views = 9  # type: ignore[misc]
 

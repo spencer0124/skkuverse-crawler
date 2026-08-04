@@ -118,14 +118,14 @@ cli.py → wiring.notices_ports()          ← plugins 조립은 여기서만
                    build_notice() ∘ DEFAULT_PIPELINE
                      NormalizeUrls → CleanHtml → VerifyImages → InjectImageDimensions
                      → SizeGuard(5MB) → ExtractText → ToMarkdown → ContentHash
-                   → NoticeCrawled | NoticeUnchanged | ItemSkipped | ItemFailed
-                   PageCompleted }
+                   → ItemCrawled | ItemUnchanged | ItemSkipped | ItemFailed
+                   BatchCompleted }
             SourceFinished(stopped_by=…)
 
           run_events가 하는 것:
             모든 이벤트 → sink.accept()  (미지의 이벤트도 균일하게)
-            NoticeCrawled → accept 반환 Outcome이 inserted/updated 결정
-            PageCompleted → sink.flush()   ← 예외는 전파, 소스 결과 탈락
+            ItemCrawled → accept 반환 Outcome이 inserted/updated 결정
+            BatchCompleted → sink.flush()   ← 예외는 전파, 소스 결과 탈락
             SourceFinished → source_down / last_error / duration_ms
     → list[SourceResult] → record_and_alert 훅 (wiring이 설치)
   → close_client()

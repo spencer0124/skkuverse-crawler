@@ -15,7 +15,7 @@ from skkuverse_crawler.core import (
     ContentRefreshed,
     CrawlEvent,
     FullSweep,
-    NoticeCrawled,
+    ItemCrawled,
     Outcome,
     Ports,
     SourceResult,
@@ -31,8 +31,8 @@ structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(logging.
 class TitleIndexSink:
     """Keeps titles by article number, and nothing else.
 
-    Note what is stored: the two fields, not the event. A NoticeCrawled
-    holds a Notice that can carry megabytes of cleanHtml, so a sink that
+    Note what is stored: the two fields, not the event. An ItemCrawled
+    holds a notice that can carry megabytes of cleanHtml, so a sink that
     appends events to a list keeps all of that alive for the whole crawl.
     """
 
@@ -44,7 +44,7 @@ class TitleIndexSink:
 
     async def accept(self, event: CrawlEvent) -> Outcome | None:
         match event:
-            case NoticeCrawled(notice=notice):
+            case ItemCrawled(item=notice):
                 new = notice.articleNo not in self.titles
                 self.titles[notice.articleNo] = notice.title
                 # The runner reads this to count inserted vs updated.
@@ -82,7 +82,7 @@ async def main() -> None:
     )
 
     for result in results:
-        print(f"{result.dept_id}: {result.inserted} inserted, {result.errors} errors")
+        print(f"{result.source_id}: {result.inserted} inserted, {result.errors} errors")
     for article_no, title in list(sink.titles.items())[:5]:
         print(f"  {article_no}  {title}")
 

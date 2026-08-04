@@ -1,7 +1,33 @@
 # ADR-006: 코어/플러그인 분리 — 무상태 코어 + 3-포트 seam + 단일 배포물 extras
 
-- **상태**: 제안됨 (2026-07-30 최초 · 같은 날 설계 리뷰 라운드 후 v2 개정 — 근거 ⑦~⑬)
+- **상태**: 제안됨 (2026-07-30 최초 · 같은 날 설계 리뷰 라운드 후 v2 개정 — 근거 ⑦~⑬) · **일부 개정됨 (2026-08-04, 아래 참조)**
 - **관련**: [core-plugin-architecture.md](../core-plugin-architecture.md) (설계), [core-plugin-plan.md](../core-plugin-plan.md) (단계별 계획), `docs/known-issues.md` §7(침묵 차단 인시던트 — 본 ADR 위험 ⑤의 원형)
+
+> **2026-08-04 개정 — result tier 이름의 탈(脫)notices.** 두 번째 모듈(bus)을 붙이기 위한
+> 사전 정리로 결과 tier가 도메인 중립 이름으로 바뀌었다 — **bus는 아직 없다**:
+> `NoticeCrawled` → `ItemCrawled`(필드
+> `notice` → `item`, 타입은 `Notice`가 아니라 `Any`), `NoticeUnchanged(article_no, views)`
+> → `ItemUnchanged(article_no, fields)`, 진행 tier의 `PageCompleted(page)` →
+> `BatchCompleted(index)`. `SourceResult.dept_id/dept_name`도 `source_id/source_name`이
+> 됐다(crawl_health가 이미 `sourceId`/`sourceName`으로 저장하고 있었다).
+>
+> 이로써 `core/events.py`가 달고 있던 `TYPE_CHECKING` 역방향 import(core → modules)가
+> 삭제됐다 — 본문에서 "Notice의 최종 거처가 정해질 때까지 한시적"이라고 적어둔 그 부채다.
+> `CrawlItem` Protocol은 검토 후 **기각**했다: `@runtime_checkable`은 멤버 존재만 보고
+> 타입·시그니처를 보지 않아 안전망이 못 되고(`key`를 property로 두면 `issubclass`는
+> `TypeError`), 무엇보다 `$setOnInsert`/`$push editHistory` 같은 **필드 분할 정책**은
+> "스스로 직렬화하라"로 표현할 수 없어 구현체가 하나뿐인 인터페이스가 됐을 것이다.
+>
+> **result tier 부수 효과 하나** — `ItemUnchanged`가 mapping을 들게 되면서 hashable이
+> 아니게 됐다(`NoticeUnchanged(source_id, article_no, views)`는 hashable이었다). touch를
+> `set`으로 dedup하던 sink가 있다면 깨진다. result tier 변경이므로 명시해 둔다.
+>
+> 아래 본문은 당시 결정의 기록이므로 옛 이름 그대로 둔다. 현재 어휘는
+> `docs/architecture.md`와 `docs/sink-authors-guide.md`가 정본 —
+> `core-plugin-architecture.md`·`core-plugin-plan.md`도 옛 이름을 쓰지만 같은 이유로 둔다.
+>
+> ⑬의 1.0 게이트는 **아직 열리지 않았다** — 게이트 조건은 "두 번째 모듈이 실제로 돈다"이다.
+> 이 개정은 이름만 정리했을 뿐 두 번째 모듈을 추가하지 않았다.
 
 ## 맥락
 
