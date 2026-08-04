@@ -47,14 +47,18 @@
 ## Phase 1 — search.json SSOT + codegen [crawler]
 
 - [ ] 레포 루트 `search.json` 생성 (스키마: [search-architecture.md](search-architecture.md) §① — adr-007 로 `embedding` 섹션이 `model`/`quantization`/`inputVersion` 3개로 축소됨)
-- [ ] `py/scripts/generate_artifacts.py` 확장 — `SEARCH_JSON` 경로 + `validate_search()` + `gen_server_search()` + main() 블록 + `copy_to_sibling` **2곳**: `skkuverse-server/src/notices/search.json`, **`skkuverse-ai/app/generated/search.json`** (ai 측 확정 경로 — 수신 디렉터리는 이미 생성·커밋돼 있다). sources 화이트리스트 사본도 ai 에 추가
-- [ ] docstring·CLAUDE.md 아티팩트 표 갱신 (현재 표는 7개라 적혀 있으나 실제 9행), `py/tests/scripts/test_generate_artifacts.py` 확장
+- [ ] `py/scripts/generate_artifacts.py` 확장 — `SEARCH_JSON` 경로 + `validate_search()` + `gen_server_search()` + main() 블록 + `EXPECTED_GENERATED` 에 신규 아티팩트 등록. sources 화이트리스트 사본도 ai 용으로 추가
+- [ ] `skkuverse/contracts/manifest.json` 의 `search.config` / `search.source-whitelist` 항목을 `planned` → `active` 로 전환 (소비자: server `src/notices/search.json`, ai `app/generated/search.json`). 서버 쪽은 `scripts/copy-build-assets.js` 등록도 필요
+- [ ] docstring·CLAUDE.md 아티팩트 표 갱신, `py/tests/scripts/test_generate_artifacts.py` 확장
 
-⚠️ `copy_to_sibling()` 은 **대상의 부모 디렉터리가 없으면 조용히 건너뛴다** (`-- Skipped` 한 줄, 에러 없음, 반환값 없음). ai 측 `app/generated/` 는 이 함정 때문에 미리 만들어 커밋해뒀다.
+✅ `copy_to_sibling()` 의 silent-skip 함정은 해소됐다 — 형제 레포 push 자체가 삭제되고 pull 기반
+(`skkuverse_sync.py`)으로 바뀌었다. 신규 아티팩트는 `py/generated/` 에 쓰고 커밋하면 되며, 소비자는
+manifest 등록 후 `pull` 로 받는다. ai 측 `app/generated/` 디렉터리는 그대로 두되 존재 이유가
+"skip 방지 workaround" 에서 "pull 대상 경로" 로 바뀌었다.
 
 ⚠️ `main()` 의 검증 프리앰블은 SSOT 파일 누락 시 `sys.exit(1)` 한다 — `SEARCH_JSON` 을 그 튜플에 넣으면 **모든 codegen 실행에 이 파일이 필수**가 된다.
 
-**검증 게이트**: ruff+pytest green. codegen 실행 → 두 형제 레포에 사본 착지.
+**검증 게이트**: ruff+pytest green. codegen 실행 → `git diff --exit-code` green → `skkuverse_sync.py status` 에서 두 계약이 OK.
 
 ## Phase 2b — autoEmbed 인덱스 + `embeddingInput` 조합 [crawler]
 

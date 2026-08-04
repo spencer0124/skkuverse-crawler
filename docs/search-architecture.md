@@ -22,7 +22,7 @@
 
 ## ① search.json SSOT
 
-레포 루트, `sources.json`과 같은 방식으로 `py/scripts/generate_artifacts.py`가 검증 + 형제 레포 복사 (server·ai 2곳). 담는 것:
+레포 루트, `sources.json`과 같은 방식으로 `py/scripts/generate_artifacts.py`가 검증 + `py/generated/`에 산출. 소비자(server·ai 2곳)는 push가 아니라 **pull**로 받는다 — `skkuverse/contracts/manifest.json`에 계약을 등록하면 `skkuverse_sync.py pull`이 해시 락과 함께 사본을 갱신한다. 담는 것:
 
 ```jsonc
 {
