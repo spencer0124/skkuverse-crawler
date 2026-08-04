@@ -136,9 +136,26 @@ emit 경로는 `f"{baseUrl}{detailPath}"`로 이어 붙이고 `build_notice`는 
 
 **재개봉 조건**: `editHistory`에 tier2 단독 항목이 반복적으로 쌓이는 문서가 관측되면.
 
-### 5-c. tier-2는 `attachments`를 갱신하지 않는다 *(기존, 기록만)*
+### ~~5-c. tier-2는 `attachments`를 갱신하지 않는다~~ *(2026-08-04 해결)*
 
-`fields.as_set()`은 5개 콘텐츠 필드뿐이다. 크롤과 백필은 `attachments`를 쓰지만 tier-2는 안 쓴다 — 공지가 첨부만 교체되면 제목·날짜가 바뀌어 재크롤될 때까지 낡은 URL이 남는다. 해시와 무관하고 이 브랜치 이전부터 그랬으므로 범위 밖으로 뒀다. 다만 `TestTier2StoresTheSameFieldsAsACrawl`이라는 이름은 **콘텐츠 5필드에 한한 주장**이다.
+`fields.as_set()`은 5개 콘텐츠 필드뿐이었다. 크롤과 백필은 `attachments`를 쓰지만 tier-2는 안 썼다 — 공지가 첨부만 교체되면 제목·날짜가 바뀌어 재크롤될 때까지 낡은 URL이 남았다. "해시와 무관하니 범위 밖"으로 뒀는데, **dorm에서 실제로 터졌다**: `attach_no`가 글 수정 시 재발급되는 보드라 저장된 링크가 죽는 정도가 아니라 *다른 문서*를 가리키게 됐다 (87829의 `7472`가 "2026 Fall Semester Dormitory Admission Guidance.pdf"라는 이름으로 fee-payment PDF를 서빙). [known-issues §12](known-issues.md).
+
+`as_set(attachments=...)`로 크롤·tier-2가 한 정의를 지나가게 수정했고, `TestTier2StoresTheSameFieldsAsACrawl`도 첨부를 포함하도록 확장해 **이름이 비로소 참이 됐다**.
+
+**남은 한계 (아래 5-e로 승계)**: tier-2는 content hash가 움직일 때만 쓴다.
+
+### 5-e. 첨부만 바뀐 글은 여전히 tier-2가 못 잡는다 *(신규, 기록만)*
+
+첨부 교체·삭제는 본문 해시를 움직이지 않으므로 tier-2의 쓰기 조건에 걸리지 않는다. 5-c 수정은 "tier-2가 쓸 때 첨부도 함께 쓴다"까지고, "첨부가 바뀌었으니 쓴다"는 아니다. 현재 탈출구는 두 개:
+
+- `validate-attachments`가 `html_response`로 **탐지**한다 (죽은 링크가 200 + `text/html`로 오는 것을 잡는다)
+- `repair-attachments [--refetch]`로 **수리**한다
+
+해시에 첨부를 넣는 건 위험하다 — 첨부 URL에 휘발성 토큰이 섞이는 보드(WPDM `refresh`)가 있어 매 틱 변경으로 오탐할 수 있다. 별도 신호(첨부 목록만의 해시)가 필요하면 그때 설계할 것.
+
+### 5-f. `hasCategory`가 전략 단위 도출이라 chem이 거짓말한다 *(신규, 기록만)*
+
+codegen의 `STRATEGY_FEATURES`가 `hasCategory`를 **전략 단위**로 정한다. chem은 skku-standard지만 카테고리 컬럼이 없는 보드라 `hasCategory: true`로 광고하면서 빈 문자열을 낸다. 소스 단위 override로 바꾸려면 codegen 구조를 건드려야 해서 [known-issues §12](known-issues.md) 수정 범위 밖으로 뒀다. 같은 형태의 보드가 더 있을 수 있다 — `selectors`에 `category`가 없는 소스를 세면 나온다.
 
 ### 5-d. tier-2에는 `pipeline` 파라미터가 없다 *(잠재)*
 

@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import asyncio
 import re
-from collections import Counter
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from urllib.parse import urlparse
 
@@ -29,7 +29,18 @@ logger = get_logger("notices_validation")
 # ---------------------------------------------------------------------------
 
 ALLOWED_HOST_SUFFIXES = ("skku.edu", "skkumed.ac.kr")
+
+# Session-gated downloads: these boards hand out a file only to a client that
+# already holds a PHP session, so a cold HTTP probe always fails. audit.py
+# skips the reachability check for them entirely.
 GNUBOARD_STRATEGIES = frozenset({"gnuboard", "gnuboard-custom"})
+
+# Downloads that need a ``Referer`` on the attachment record. A superset of
+# GNUBOARD_STRATEGIES, and deliberately a *separate* constant: cal's NFUpload
+# endpoint checks the Referer but needs no session, so custom-php must keep
+# receiving the reachability check that gnuboard is exempt from. Folding these
+# two into one name would silently move cal into the blind spot.
+REFERER_REQUIRED_STRATEGIES = GNUBOARD_STRATEGIES | {"custom-php"}
 
 _BROWSER_UA = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
@@ -71,7 +82,13 @@ class ValidationReport:
     total_notices: int = 0
     total_attachments: int = 0
     notices_with_issues: int = 0
-    issue_counts: dict[str, int] = field(default_factory=lambda: Counter())  # type: ignore[arg-type]
+    # A plain dict, not a Counter: dataclasses.asdict rebuilds a dict
+    # subclass by feeding its (key, value) pairs to the constructor, and
+    # Counter reads those pairs as *elements to count* — so --json died
+    # with "keys must be str, ... not tuple" on any run that found an
+    # issue. The only Counter behaviour used here was += on a missing
+    # key, which the writers now do explicitly.
+    issue_counts: dict[str, int] = field(default_factory=dict)
     results: list[NoticeValidationResult] = field(default_factory=list)
     skipped_http_checks: int = 0
 
@@ -119,15 +136,21 @@ def validate_name_is_url(att: dict[str, str], index: int) -> AttachmentIssue | N
 def validate_referer(
     att: dict[str, str], index: int, strategy: str | None,
 ) -> AttachmentIssue | None:
-    """Gnuboard/gnuboard-custom attachments must carry a ``referer``."""
-    if strategy not in GNUBOARD_STRATEGIES:
+    """Referer-gated boards must carry a ``referer`` on every attachment.
+
+    The server proxy forwards a Referer header only when the crawler stored
+    one; without it these downloads come back as an HTML denial page, not a
+    file. See REFERER_REQUIRED_STRATEGIES.
+    """
+    if strategy not in REFERER_REQUIRED_STRATEGIES:
         return None
     url = att.get("url", "")
     name = att.get("name", "")
     referer = att.get("referer", "")
     if not referer or not referer.strip():
         return AttachmentIssue(
-            "missing_referer", index, "gnuboard attachment missing referer field", url, name,
+            "missing_referer", index,
+            f"{strategy} attachment missing referer field", url, name,
         )
     return None
 
@@ -196,6 +219,36 @@ _per_attachment_checks = (
 # ---------------------------------------------------------------------------
 
 
+def judge_served_response(
+    headers: Mapping[str, str], index: int, url: str, name: str,
+) -> AttachmentIssue | None:
+    """A download endpoint that serves HTML is serving an error page.
+
+    Pure and header-only so it can be tested without a socket. The one
+    legitimate way to serve HTML from a download URL is an ``.html`` file
+    actually offered as a download — that carries Content-Disposition, so it
+    passes. Everything else answering ``text/html`` here is a denial or
+    not-found page wearing a 200.
+    """
+    content_type = headers.get("content-type", "").lower()
+    if "text/html" not in content_type:
+        return None
+    disposition = headers.get("content-disposition", "").lower()
+    if "attachment" in disposition:
+        return None
+    return AttachmentIssue(
+        "html_response", index,
+        f"200 but served HTML instead of a file (content-type: {content_type[:60]})",
+        url, name,
+    )
+
+
+# Range is a hint to keep a full-corpus run cheap, not a requirement. A server
+# that refuses it says so with one of these, and gets re-probed without it —
+# otherwise a working download would be reported broken.
+_RANGE_REJECTED = frozenset({416, 501})
+
+
 async def check_reachability(
     url: str,
     referer: str,
@@ -204,20 +257,38 @@ async def check_reachability(
     index: int,
     name: str,
 ) -> AttachmentIssue | None:
-    """HEAD-request a single URL; return issue if unreachable."""
+    """Probe one download URL; return an issue if it does not serve a file.
+
+    A ranged GET, not a HEAD, for two reasons. Some handlers answer HEAD with
+    404/403 and only GET correctly — sls is the documented case, where the
+    HEAD-based check produced false ``unreachable`` reports (known-issues §8).
+    And a dead download endpoint here rarely returns an error *status*: it
+    returns 200 with an HTML page carrying a JavaScript alert. cal answers
+    ``alert("Access denied!!")``, dorm answers "파일이 존재하지 않습니다", bio
+    answers an 오류안내 page — all 200. Status alone cannot see any of them, so
+    the response has to be judged on what it actually serves.
+
+    Streamed so only the headers are read: the body is never pulled, which
+    keeps a full-corpus run from downloading every attachment.
+    """
     async with semaphore:
         try:
-            resp = await client.head(
-                url,
-                headers={"Referer": referer},
-                follow_redirects=True,
-            )
-            if resp.status_code >= 400:
-                return AttachmentIssue(
-                    "unreachable", index,
-                    f"HEAD returned {resp.status_code}",
-                    url, name,
-                )
+            for headers in (
+                {"Referer": referer, "Range": "bytes=0-2047"},
+                {"Referer": referer},
+            ):
+                async with client.stream(
+                    "GET", url, headers=headers, follow_redirects=True,
+                ) as resp:
+                    if resp.status_code in _RANGE_REJECTED and "Range" in headers:
+                        continue  # re-probe without the Range hint
+                    if resp.status_code >= 400:
+                        return AttachmentIssue(
+                            "unreachable", index,
+                            f"GET returned {resp.status_code}",
+                            url, name,
+                        )
+                    return judge_served_response(resp.headers, index, url, name)
         except httpx.TimeoutException:
             return AttachmentIssue("unreachable", index, "timeout", url, name)
         except httpx.HTTPError as exc:
@@ -262,7 +333,13 @@ class MarkdownValidationReport:
 
     total_notices: int = 0
     notices_with_issues: int = 0
-    issue_counts: dict[str, int] = field(default_factory=lambda: Counter())  # type: ignore[arg-type]
+    # A plain dict, not a Counter: dataclasses.asdict rebuilds a dict
+    # subclass by feeding its (key, value) pairs to the constructor, and
+    # Counter reads those pairs as *elements to count* — so --json died
+    # with "keys must be str, ... not tuple" on any run that found an
+    # issue. The only Counter behaviour used here was += on a missing
+    # key, which the writers now do explicitly.
+    issue_counts: dict[str, int] = field(default_factory=dict)
     results: list[NoticeMarkdownResult] = field(default_factory=list)
 
 

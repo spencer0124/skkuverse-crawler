@@ -33,13 +33,16 @@ MAIN_SITE_CONFIG = {
     "pagination": {"type": "offset", "param": "article.offset", "limit": 10},
 }
 
-# chem uses onclick parser
+# chem: onclick attachment parser, and a board with no category column.
+# The absent "category" key is the point — it used to be present-but-empty,
+# which crashed every row of crawl_list. Nothing here exercised crawl_list,
+# so the fixture carried the production bug and stayed green.
 ONCLICK_CONFIG = {
+    "id": "chem",
     "baseUrl": "https://chem.skku.edu/chem/News/notice.do",
     "attachmentParser": "onclick",
     "selectors": {
         "listItem": "ul.noticeList > li",
-        "category": "",
         "titleLink": "h3.noticeTit a",
         "infoList": "ul.noticeInfoList li",
         "detailContent": "div.noticeViewCont",
@@ -333,3 +336,37 @@ async def test_hakbu_list_url_includes_board_filter():
         "https://hakbu.skku.edu/hakbu/notice_total.do"
         "?boardId=138880&mode=list&articleLimit=10&article.offset=0"
     )
+
+
+# --- Boards with no category column (chem) ---
+
+
+async def test_crawl_list_parses_a_board_with_no_category_column():
+    """The regression that cost chem every notice it ever had.
+
+    Its config declared `"category": ""`, and soupsieve rejects an empty
+    selector with "Expected a selector at position 0". The raise happened
+    inside crawl_list's per-row try, so all ten rows were swallowed as
+    warnings and the page came back empty — 470 anonymous warnings a day
+    and zero notices, with no error anywhere that named the source.
+    """
+    html = """
+    <html><body>
+      <ul class="noticeList">
+        <li>
+          <h3 class="noticeTit"><a href="?mode=view&amp;articleNo=301">실험실 안전교육 안내</a></h3>
+          <ul class="noticeInfoList">
+            <li>작성일 2026-08-01</li>
+            <li>조회수 42</li>
+          </ul>
+        </li>
+      </ul>
+    </body></html>
+    """
+    strategy = _make_strategy(html)
+    items = await strategy.crawl_list(ONCLICK_CONFIG, page=0)
+
+    assert len(items) == 1
+    assert items[0].articleNo == 301
+    assert items[0].title == "실험실 안전교육 안내"
+    assert items[0].category == ""

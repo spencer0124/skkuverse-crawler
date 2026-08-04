@@ -36,6 +36,10 @@ _LAZY: dict[str, tuple[str, str, str, str | None]] = {
         ".modules.notices.cli", "notices_cli",
         "Run the notices crawler.", None,
     ),
+    "repair-attachments": (
+        ".plugins.mongo.cli", "repair_attachments_cli",
+        "Repair attachment links stored without a referer or with a stale id.", "mongo",
+    ),
     "repair-dimensions": (
         ".plugins.mongo.cli", "repair_dimensions_cli",
         "Repair notices Tier-2 wrote before it ran the content pipeline.", "mongo",

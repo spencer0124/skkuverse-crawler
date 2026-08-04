@@ -25,6 +25,9 @@ python -m skkuverse_crawler validate-markdown --source skku-main --severity erro
 python -m skkuverse_crawler health-summary                           # 크롤 헬스 일일 요약 1회 발송
 python -m skkuverse_crawler repair-dimensions                        # tier-2가 지운 이미지 차원 복구 (dry-run)
 python -m skkuverse_crawler repair-dimensions --apply                # 실제 쓰기. 멱등 — 재실행 시 repaired: 0
+python -m skkuverse_crawler repair-attachments                       # 깨진 첨부 링크 복구 (dry-run)
+python -m skkuverse_crawler repair-attachments --apply               # 실제 쓰기. 멱등
+python -m skkuverse_crawler repair-attachments --refetch --apply     # 원본이 삭제한 첨부까지 떨어냄 (공지당 요청 1회)
 
 # 테스트 & 린트
 python -m pytest tests/ -v                  # 전체 테스트
@@ -68,7 +71,7 @@ python scripts/generate_artifacts.py    # sources.json + categories.json → 7�
 
 ### 공통 패턴
 
-**모듈형 구조** (adr-006 core/plugin 분리, PR 0~8 완료): `core/` (포트·이벤트·러너·파이프라인 모양·설정 타입·JsonLinesSink — 인프라 import 금지) + `modules/notices/` (크롤 도메인 로직) + `plugins/` (인프라 어댑터: `mongo` 저장·update_checker·audit, `health`, `discord`, `ai_summary`, `dispatch`, `scheduler`) + `shared/` (DB, logger, HTTP 클라이언트, HTML 처리) + `env.py` (os.environ·dotenv 유일 접점). 조립은 `wiring.py`가 담당 — `modules/`는 `plugins/`를 import하지 않는다 (AST 테스트로 강제). `plugins/`를 import할 수 있는 건 조립 리프(wiring.py, cli.py들)뿐.
+**모듈형 구조** (adr-006 core/plugin 분리, PR 0~9 완료 — 로드맵 종료 2026-08-02): `core/` (포트·이벤트·러너·파이프라인 모양·설정 타입·JsonLinesSink — 인프라 import 금지) + `modules/notices/` (크롤 도메인 로직) + `plugins/` (인프라 어댑터: `mongo` 저장·update_checker·audit, `health`, `discord`, `ai_summary`, `dispatch`, `scheduler`) + `shared/` (DB, logger, HTTP 클라이언트, HTML 처리) + `env.py` (os.environ·dotenv 유일 접점). 조립은 `wiring.py`가 담당 — `modules/`는 `plugins/`를 import하지 않는다 (AST 테스트로 강제). `plugins/`를 import할 수 있는 건 조립 리프(wiring.py, cli.py들)뿐.
 
 **의존성 extras** (PR 8): `pip install skkuverse-crawler`는 크롤·파싱·정제·CLI만 설치한다. 인프라는 optional — `[mongo]`(motor) / `[sched]`(apscheduler) / `[discord]`·`[ai]`(tenacity) / `[all]`. Dockerfile은 4개 extra를 모두 설치하며, **그 집합이 pyproject와 어긋나면 `test_packaging.py`가 실패한다**. production 프로파일은 필수 플러그인(mongo, sched) 부재 시 `wiring.ProfileError`로 기동 거부. 저장소 없이 돌려보려면 `notices --json` (stdout JSON Lines, 로그는 stderr).
 
@@ -99,9 +102,15 @@ python scripts/generate_artifacts.py    # sources.json + categories.json → 7�
 
 **WPDM 첨부 추출**: `wordpress-api` 전략(cheme 전용). WPDM 플러그인은 `div.w3eden` 컨테이너 안에 `data-downloadurl` 속성으로 실제 다운로드 URL(`?wpdmdl={id}`)을 제공. 일시적 `refresh` 토큰은 제거하고 저장. 랜딩 페이지 URL(`/download/{slug}/`)은 첨부로 잡지 않음. 파일명은 `h3.package-title a` 텍스트에서 추출. `_extract_attachments()`는 반드시 `clean_html()` 이전에 raw HTML 대상으로 실행해야 함 — `div.w3eden`이 Stage 1에서 제거되므로.
 
-**첨부파일 Referer**: gnuboard 계열 학과(nano, bio-undergrad, bio-grad, pharm)의 `download.php`는 PHP 세션 + Referer 헤더를 검증. 크롤러가 attachment 메타데이터에 `referer` (상세 페이지 URL)를 저장하여 서버 프록시가 세션 수립 후 다운로드할 수 있도록 지원. gnuboard-custom(nano)은 케이스 A(아무 페이지 세션 OK), gnuboard 표준(pharm, bio)은 케이스 B(상세 페이지 방문 필수). bio는 https 미지원(http only).
+**첨부파일 Referer**: 다운로드 엔드포인트가 Referer를 검증하는 전략들이 attachment 메타데이터에 `referer`(상세 페이지 URL)를 저장한다. 목록의 진실 원천은 `validation.py`의 `REFERER_REQUIRED_STRATEGIES`:
+- **gnuboard 계열**(bio-undergrad, bio-grad, pharm, nano)의 `download.php`는 PHP 세션 + Referer 둘 다 검증. gnuboard-custom(nano)은 케이스 A(아무 페이지 세션 OK), gnuboard 표준(pharm, bio)은 케이스 B(상세 페이지 방문 필수). bio는 https 미지원(http only).
+- **custom-php**(cal-undergrad, cal-grad)의 NFUpload는 **Referer만** 검증한다(세션 불필요). 그래서 `GNUBOARD_STRATEGIES`와 **별도 상수로 유지**해야 한다 — gnuboard는 세션 게이트라 `validate-attachments`의 HTTP 체크를 스킵하지만 cal은 체크를 받아야 한다. 합치면 cal이 검증 사각지대로 들어간다.
 
-**첨부파일 검증**: 순수 검사는 `modules/notices/validation.py`, DB 스캔 드라이버는 `plugins/mongo/audit.py`. URL scheme·host 허용 여부, name 품질, gnuboard referer 존재, 중복 URL, HTTP 도달성(HEAD 요청)을 검사. CLI로 `validate-attachments` 실행. `--no-http`으로 네트워크 체크 스킵, `--json`으로 기계 판독 가능 출력.
+Referer가 없으면 **에러가 아니라 200 + HTML alert 페이지**가 온다 — 소비자에게는 "다운로드는 됐는데 파일이 아닌" 상태. 서버 프록시는 저장된 `referer`가 있을 때만 헤더를 붙이므로 이 필드가 비면 프록시가 할 수 있는 일이 없다 (`docs/known-issues.md` §12).
+
+**첨부파일 검증**: 순수 검사는 `modules/notices/validation.py`, DB 스캔 드라이버는 `plugins/mongo/audit.py`. URL scheme·host 허용 여부, name 품질, referer 존재, 중복 URL, HTTP 도달성을 검사. CLI로 `validate-attachments` 실행. `--no-http`으로 네트워크 체크 스킵, `--json`으로 기계 판독 가능 출력.
+
+도달성 검사는 **HEAD가 아니라 ranged GET**이고, status 외에 **응답 내용까지 판정**한다. 이 도메인의 파손된 다운로드는 404를 주지 않고 200 + `text/html`로 alert 페이지를 주기 때문 — `Content-Type`이 `text/html`인데 `Content-Disposition: attachment`가 없으면 `html_response`로 잡는다. GET인 이유는 하나 더 있다: sls 핸들러는 HEAD에 404/403을 주고 GET에만 정상 응답한다.
 
 **Markdown 검증**: 순수 검사는 `modules/notices/validation.py`, DB 스캔 드라이버는 `plugins/mongo/audit.py`. cleanMarkdown 필드의 렌더링 품질을 검사. broken emphasis(닫히지 않은 `*`/`**`), 빈 링크, 이미지 dimension 포맷(`{WxH}`), 과도한 빈 줄 등을 감지. severity는 `error`/`warning` 두 단계. CLI로 `validate-markdown` 실행.
 

@@ -301,3 +301,93 @@ def _print_repair_report(report, apply: bool) -> None:
         print()
         print("  Re-run with --apply to write these.")
     print()
+
+# ── repair-attachments ────────────────────────────────
+
+
+@click.command("repair-attachments")
+@click.option("--source", "dept", multiple=True, help="Department ID(s) to repair")
+@click.option("--limit", type=int, default=None, help="Max notices to scan")
+@click.option("--json", "json_output", is_flag=True, help="Output as JSON")
+@click.option(
+    "--apply",
+    is_flag=True,
+    help="Write the repairs. Without it this only reports what it would change.",
+)
+@click.option(
+    "--refetch",
+    is_flag=True,
+    help=(
+        "Re-read every notice's detail page instead of repairing from stored "
+        "data. Needed only to drop attachments the source has deleted."
+    ),
+)
+def repair_attachments_cli(
+    dept: tuple[str, ...],
+    limit: int | None,
+    json_output: bool,
+    apply: bool,
+    refetch: bool,
+) -> None:
+    """Repair attachment links stored without a referer or with a stale id."""
+    from ...env import init_config
+
+    cfg = init_config()
+    configure_logging(cfg, stream=sys.stderr if json_output else None)
+    asyncio.run(_run_repair_attachments(dept, limit, json_output, apply, refetch))
+
+
+async def _run_repair_attachments(
+    dept_filter: tuple[str, ...],
+    limit: int | None,
+    json_output: bool,
+    apply: bool,
+    refetch: bool = False,
+) -> None:
+    from ...shared.db import close_client
+
+    try:
+        from .repair_attachments import repair_attachments
+
+        report = await repair_attachments(
+            dept_filter=dept_filter if dept_filter else None,
+            limit=limit,
+            apply=apply,
+            force_refetch=refetch,
+        )
+        if json_output:
+            print(_json.dumps(asdict(report), ensure_ascii=False, indent=2))
+        else:
+            _print_attachment_repair_report(report, apply)
+    finally:
+        await close_client()
+
+
+def _print_attachment_repair_report(report, apply: bool) -> None:
+    verb = "Repaired" if apply else "Would repair"
+    print()
+    print("=" * 60)
+    print(f"  Attachment repair — {'APPLIED' if apply else 'DRY RUN'}")
+    print("=" * 60)
+    print(f"  Scanned            : {report.scanned}")
+    print(f"  {verb:<19}: {report.repaired}")
+    print(f"  Already consistent : {report.already_consistent}")
+    # Its own line because it is neither repaired nor consistent: the notice
+    # could not be read, so nothing is known about it either way.
+    print(f"  Could not refetch  : {report.unfetchable}")
+    if report.by_source:
+        print("  By source:")
+        for name, count in sorted(report.by_source.items()):
+            print(f"    {name:<20} {count}")
+    if report.samples:
+        print("  Samples:")
+        for s in report.samples:
+            print(f"    [{s['sourceId']}] articleNo={s['articleNo']}")
+            for label in ("before", "after"):
+                for att in s[label]:
+                    ref = " +referer" if att.get("referer") else ""
+                    print(f"      {label:<7} {att.get('name', '')[:40]}{ref}")
+    if not apply and report.repaired:
+        print()
+        print("  Re-run with --apply to write these.")
+    print()

@@ -597,7 +597,12 @@ class TestTier2StoresTheSameFieldsAsACrawl:
         )
 
     async def _run_change(
-        self, collection: FakeCollection, new_html: str = NEW_HTML, dimensions=None
+        self,
+        collection: FakeCollection,
+        new_html: str = NEW_HTML,
+        dimensions=None,
+        attachments: list[dict[str, str]] | None = None,
+        stored_attachments: list[dict[str, str]] | None = None,
     ):
         """Store a notice, then let Tier-2 see different content for it."""
         old = await self._crawl_would_store(self.OLD_HTML)
@@ -605,7 +610,8 @@ class TestTier2StoresTheSameFieldsAsACrawl:
             {"articleNo": 1, "sourceId": "test-dept"},
             {"$set": {
                 "articleNo": 1, "sourceId": "test-dept", "detailPath": "?articleNo=1",
-                "sourceUrl": "https://example.com/1", "title": "제목", **old.as_set(),
+                "sourceUrl": "https://example.com/1", "title": "제목",
+                **old.as_set(attachments=stored_attachments or []),
             }},
             upsert=True,
         )
@@ -616,7 +622,8 @@ class TestTier2StoresTheSameFieldsAsACrawl:
         }]
         strategy = AsyncMock()
         strategy.crawl_detail.return_value = NoticeDetail(
-            content=new_html, contentText="strategy가 준 텍스트", attachments=[],
+            content=new_html, contentText="strategy가 준 텍스트",
+            attachments=attachments or [],
         )
         with self._probe(dimensions), patch(
             "skkuverse_crawler.plugins.mongo.update_checker.STRATEGY_MAP",
@@ -675,6 +682,38 @@ class TestTier2StoresTheSameFieldsAsACrawl:
 
         for field, value in expected.as_set().items():
             assert stored[field] == value, f"{field} did not follow the edit"
+
+    async def test_attachments_follow_the_edit(self):
+        """The fifth drift, and the one with the worst failure mode.
+
+        dorm re-issues `attach_no` when a post is edited, so an untouched
+        attachment list does not merely go stale — production had a stored
+        link labelled "2026 Fall Semester Dormitory Admission Guidance.pdf"
+        whose `attach_no` had been reassigned to a different document, and
+        the download silently returned that other file.
+        """
+        collection = FakeCollection()
+        _, stored = await self._run_change(
+            collection,
+            stored_attachments=[{"name": "old.pdf", "url": "https://e.com/d?attach_no=7470"}],
+            attachments=[{"name": "new.pdf", "url": "https://e.com/d?attach_no=7473"}],
+        )
+
+        assert stored["attachments"] == [
+            {"name": "new.pdf", "url": "https://e.com/d?attach_no=7473"},
+        ]
+
+    async def test_attachments_are_cleared_when_the_edit_removes_them(self):
+        """An empty list is a real value, not "nothing to say" — a notice
+        whose files were deleted must stop advertising them."""
+        collection = FakeCollection()
+        _, stored = await self._run_change(
+            collection,
+            stored_attachments=[{"name": "gone.pdf", "url": "https://e.com/d?attach_no=1"}],
+            attachments=[],
+        )
+
+        assert stored["attachments"] == []
 
     async def test_contentText_comes_from_the_sanitized_html(self):
         """Tier-2 used to store the strategy's own text. The crawl extracts

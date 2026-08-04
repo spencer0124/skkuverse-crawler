@@ -33,10 +33,13 @@ class SkkuStandardStrategy:
 
         for el in soup.select(selectors["listItem"]):
             try:
-                # Category
-                cat_el = el.select_one(selectors["category"])
-                category_raw = extract_text(cat_el)
-                category = category_raw.strip("[]")
+                # Category. Optional: some boards on this CMS have no
+                # category column at all, and a source that declares no
+                # selector for one means exactly that. Passing an empty
+                # string to select_one raises instead, which is how chem
+                # lost every row on every page (known-issues §12).
+                cat_sel = selectors.get("category")
+                category = extract_text(el.select_one(cat_sel)).strip("[]") if cat_sel else ""
 
                 # Title + link
                 title_link = el.select_one(selectors["titleLink"])
@@ -96,7 +99,11 @@ class SkkuStandardStrategy:
                     pinned=pinned,
                 ))
             except Exception as exc:
-                logger.warning("parse_list_item_failed", error=str(exc))
+                # dept_id, or this is untraceable: the warning fires per row,
+                # so a broken source becomes hundreds of anonymous lines a day.
+                logger.warning(
+                    "parse_list_item_failed", error=str(exc), dept_id=config.get("id"),
+                )
 
         logger.info("parsed_list_page", page=page, count=len(items))
         return items

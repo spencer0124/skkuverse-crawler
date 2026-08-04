@@ -2509,9 +2509,10 @@
     "campus": "both",
     "college": null,
     "appCategory": "general",
-    "crawlAvailable": true,
-    "crawlEnabled": true,
-    "excludeReason": null,
+    "crawlAvailable": false,
+    "crawlEnabled": false,
+    "excludeReason": "loginRequired",
+    "excludeNote": "list는 정상이나 상세 페이지가 portal 로그인 폼을 반환 (HTTP 200 + 로그인 HTML) — 2026-08-04 확인. 저장된 57건 전부 contentText:null이었고 null-content 재크롤 루프가 하루 51회 재시도 중이었다. 로그인 없이 상세를 받을 수 있게 되면 재활성",
     "baseUrl": "https://support.skku.edu/support/notice.do",
     "selectors": {
       "listItem": "dl.board-list-content-wrap",
@@ -3190,7 +3191,6 @@
     "baseUrl": "https://chem.skku.edu/chem/News/notice.do",
     "selectors": {
       "listItem": "ul.noticeList > li",
-      "category": "",
       "titleLink": "h3.noticeTit a",
       "infoList": "ul.noticeInfoList li",
       "detailContent": "div.noticeViewCont",

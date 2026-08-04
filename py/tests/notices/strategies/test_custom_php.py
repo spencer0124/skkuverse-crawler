@@ -100,3 +100,31 @@ async def test_custom_php_absolute_href_preserved():
 
     assert detail is not None
     assert detail.attachments[0]["url"] == "https://example.com/files/a.pdf"
+
+
+async def test_custom_php_attachments_carry_the_detail_page_as_referer():
+    """NFUpload serves the file only to a request with a Referer.
+
+    Without it the endpoint answers 200 with `alert("Access denied!!")` —
+    not a 404 — so a missing referer here shows up as a working link that
+    downloads nothing. The proxy forwards this field; if the crawler does
+    not store it, there is nothing to forward.
+    """
+    html = """
+    <html><body>
+      <div class="board_content">본문</div>
+      <div class="attachment">
+        <a href="./NFUpload/nfupload_down.php?tmp_name=a.pdf&name=poster.pdf">내 pc저장</a>
+      </div>
+    </body></html>
+    """
+    strategy = _make_strategy(html)
+    detail = await strategy.crawl_detail(
+        {"articleNo": 1309, "detailPath": "?hCode=BOARD&bo_idx=17&page=view&idx=1309"},
+        BASE_CONFIG,
+    )
+
+    assert detail is not None
+    assert detail.attachments[0]["referer"] == (
+        "https://cal.skku.edu/index.php?hCode=BOARD&bo_idx=17&page=view&idx=1309"
+    )

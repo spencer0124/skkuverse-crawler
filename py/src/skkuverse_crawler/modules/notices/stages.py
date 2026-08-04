@@ -238,14 +238,28 @@ class ContentFields:
             oversized=bool(doc.meta.get(OVERSIZED)),
         )
 
-    def as_set(self) -> dict[str, str | None]:
-        return {
+    def as_set(
+        self, *, attachments: list[dict[str, str]] | None = None,
+    ) -> dict[str, Any]:
+        """The stored fields a re-derivation owns.
+
+        ``attachments`` is a parameter rather than a field because it is not
+        derived from the content — it comes off the strategy. It belongs here
+        anyway so that every writer names the same set: when Tier-2 wrote the
+        content fields and left attachments alone, a board that rotates its
+        attachment IDs (dorm) kept serving stale links, and one of them had
+        already come to point at a different file entirely.
+        """
+        fields: dict[str, Any] = {
             "content": self.content,
             "contentText": self.contentText,
             "cleanHtml": self.cleanHtml,
             "cleanMarkdown": self.cleanMarkdown,
             "contentHash": self.contentHash,
         }
+        if attachments is not None:
+            fields["attachments"] = attachments
+        return fields
 
 
 async def derive_content_fields(

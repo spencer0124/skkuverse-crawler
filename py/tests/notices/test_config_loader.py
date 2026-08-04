@@ -34,6 +34,18 @@ def _entry(dept_id: str = "a", strategy: str = "wordpress-api", **extra) -> dict
     return {"id": dept_id, "strategy": strategy, **extra}
 
 
+# A complete, valid gnuboard selector set. Tests vary exactly one key off
+# this so a failure can only be attributed to that key.
+_GNUBOARD_SELECTORS = {
+    "listRow": "tr",
+    "titleLink": "a",
+    "author": "span.author",
+    "date": "td.date",
+    "detailContent": "div.content",
+    "detailAttachment": "a.file",
+}
+
+
 class TestValidation:
     def _load(self, monkeypatch, tmp_path: Path, entries: list[dict]):
         monkeypatch.setenv("SOURCES_JSON_PATH", str(_write_sources(tmp_path, entries)))
@@ -57,6 +69,58 @@ class TestValidation:
             self._load(
                 monkeypatch, tmp_path, [_entry(strategy="gnuboard", selectors=partial)]
             )
+
+    def test_empty_selector_string_raises(self, monkeypatch, tmp_path):
+        """chem shipped `"category": ""` and crawled nothing for months.
+
+        soupsieve rejects "" with "Expected a selector at position 0", and
+        because that raises per row inside the parser's loop it surfaced as
+        470 anonymous warnings a day and an empty list page — never as a
+        config error. A present-but-empty selector has to fail at load.
+        """
+        selectors = _GNUBOARD_SELECTORS | {"author": ""}
+        with pytest.raises(SourceConfigError):
+            self._load(
+                monkeypatch, tmp_path, [_entry(strategy="gnuboard", selectors=selectors)]
+            )
+
+    def test_whitespace_only_selector_raises(self, monkeypatch, tmp_path):
+        selectors = _GNUBOARD_SELECTORS | {"author": "   "}
+        with pytest.raises(SourceConfigError):
+            self._load(
+                monkeypatch, tmp_path, [_entry(strategy="gnuboard", selectors=selectors)]
+            )
+
+    def test_the_same_config_loads_once_the_selector_is_non_empty(
+        self, monkeypatch, tmp_path,
+    ):
+        """The control for the two above.
+
+        Every required key is present in all three, so the only thing that
+        can differ is the emptiness — without this, those tests would still
+        pass if some unrelated rule were rejecting the entry.
+        """
+        configs = self._load(
+            monkeypatch, tmp_path,
+            [_entry(strategy="gnuboard", selectors=_GNUBOARD_SELECTORS)],
+        )
+        assert configs[0]["selectors"]["author"] == "span.author"
+
+    def test_skku_standard_needs_no_category_selector(self, monkeypatch, tmp_path):
+        """Boards without a category column are legitimate — chem is one.
+
+        Omitting the key must be the supported way to say so, since the
+        alternative (an empty string) is now rejected outright.
+        """
+        selectors = {
+            "listItem": "li", "titleLink": "a", "infoList": "ul li",
+            "detailContent": "div", "attachmentList": "a",
+        }
+        configs = self._load(
+            monkeypatch, tmp_path,
+            [_entry(strategy="skku-standard", selectors=selectors)],
+        )
+        assert "category" not in configs[0]["selectors"]
 
     def test_duplicate_ids_raise(self, monkeypatch, tmp_path):
         with pytest.raises(SourceConfigError):
