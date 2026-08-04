@@ -153,14 +153,16 @@ function freezeAt(isoTimestamp) {
 // installed on an axios nobody calls and every request escapes to the network.
 const axiosModule = require(require.resolve("axios", { paths: [SERVER_ROOT] }));
 const axios = axiosModule.default || axiosModule;
-let scriptedResponse = null;
+// `undefined` means "nothing scripted" — distinct from a capture whose
+// data really is null/absent, which several transport-error captures are.
+let scriptedResponse = undefined;
 
 // Swapped at the ADAPTER, not by reassigning axios.get: the module object is
 // frozen, and the adapter is the documented seam anyway. Everything above it
 // — interceptors, response transforms — still runs, so the pollers see the
 // same shape they see in production.
 axios.defaults.adapter = async (requestConfig) => {
-  if (scriptedResponse === null) {
+  if (scriptedResponse === undefined) {
     throw new Error(
       `axios called for ${requestConfig.url} with no scripted response`,
     );
@@ -235,9 +237,11 @@ async function replayDay(captures, { makeService, drive, cacheKey }) {
   const out = [];
   for (const capture of captures) {
     freezeAt(capture.timestamp);
-    scriptedResponse = capture.data;
+    scriptedResponse = "data" in capture ? capture.data : null;
     const before = cache.writes.length;
     await drive(service);
+    scriptedResponse = undefined; // a second request per tick must not
+                                  // silently reuse this one's payload
     // The pollers write the cache fire-and-forget (`.catch()` without an
     // await), so the promise may not have settled when the method returns.
     // One turn of the microtask queue is enough — CapturingCache.write
@@ -270,7 +274,16 @@ function listDayIsInteresting(day, days, api) {
       days.filter((d) =>
         readCaptures(d, api).some((c) => {
           const cd = c.data?.msgHeader?.headerCd;
-          return (cd && !(cd === "0" || cd === "4")) || !c.data?.msgBody?.itemList;
+          const items = c.data?.msgBody?.itemList;
+          return (
+            (cd && !(cd === "0" || cd === "4")) ||
+            !Array.isArray(items) ||
+            // [] and null are different answers downstream (write an empty
+            // list vs write nothing), so a day whose only distinguishing
+            // feature is an empty itemList has to survive the sampling.
+            // `!items` would be false here, since ![] is false in JS.
+            items.length === 0
+          );
         }),
       ),
     );
@@ -408,7 +421,16 @@ async function denseReplays(days) {
     fs.writeFileSync(
       path.join(dir, `${spec.api}.json`),
       JSON.stringify(
-        { source: capture.timestamp, intervalMs: spec.intervalMs, rows },
+        {
+          source: capture.timestamp,
+          intervalMs: spec.intervalMs,
+          // The capture's own payload is embedded, not just referenced.
+          // These are the ONLY parity goldens that can run without a
+          // checkout of skkuverse-server, and they cover the stateful
+          // paths — which is exactly what CI would otherwise skip.
+          capture: capture.data,
+          rows,
+        },
         null,
         2,
       ) + "\n",

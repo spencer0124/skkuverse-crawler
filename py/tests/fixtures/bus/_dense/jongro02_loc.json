@@ -1,6 +1,79 @@
 {
   "source": "2026-02-28T16:28:11+09:00",
   "intervalMs": 40000,
+  "capture": {
+    "comMsgHeader": {
+      "responseTime": null,
+      "returnCode": null,
+      "errMsg": null,
+      "successYN": null,
+      "requestMsgID": null,
+      "responseMsgID": null
+    },
+    "msgHeader": {
+      "headerMsg": "정상적으로 처리되었습니다.",
+      "headerCd": "0",
+      "itemCount": 0
+    },
+    "msgBody": {
+      "itemList": [
+        {
+          "sectOrd": "9",
+          "sectDist": "171",
+          "stopFlag": "1",
+          "sectionId": "100701029",
+          "dataTm": "20260228162753",
+          "tmX": "126.985139",
+          "tmY": "37.579097",
+          "posX": "198687.4654442035",
+          "posY": "453288.03373654885",
+          "vehId": "100000017",
+          "plainNo": "서울70사5511",
+          "busType": "1",
+          "routeId": "100900008",
+          "lastStnId": "100900092",
+          "isFullFlag": "0",
+          "congetion": "0"
+        },
+        {
+          "sectOrd": "11",
+          "sectDist": "167",
+          "stopFlag": "0",
+          "sectionId": "100701197",
+          "dataTm": "20260228162756",
+          "tmX": "126.986907",
+          "tmY": "37.574986",
+          "posX": "198843.55293917222",
+          "posY": "452831.7856684965",
+          "vehId": "100000059",
+          "plainNo": "서울75사2009",
+          "busType": "0",
+          "routeId": "100900008",
+          "lastStnId": "100900081",
+          "isFullFlag": "0",
+          "congetion": "0"
+        },
+        {
+          "sectOrd": "17",
+          "sectDist": "128",
+          "stopFlag": "0",
+          "sectionId": "100701744",
+          "dataTm": "20260228162757",
+          "tmX": "126.986124",
+          "tmY": "37.576745",
+          "posX": "198774.42282514894",
+          "posY": "453027.0034094155",
+          "vehId": "100000058",
+          "plainNo": "서울75사2008",
+          "busType": "0",
+          "routeId": "100900008",
+          "lastStnId": "100000104",
+          "isFullFlag": "0",
+          "congetion": "0"
+        }
+      ]
+    }
+  },
   "rows": [
     {
       "at": "2026-02-28T07:28:11.000Z",

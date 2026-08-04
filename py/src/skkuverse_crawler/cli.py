@@ -32,6 +32,10 @@ _LAZY: dict[str, tuple[str, str, str, str | None]] = {
         ".plugins.health.cli", "health_summary_cli",
         "Send the daily crawl-health summary to Discord once.", "mongo,discord",
     ),
+    "bus": (
+        ".modules.bus.cli", "bus_cli",
+        "Fetch one bus tick and print it (no storage).", None,
+    ),
     "notices": (
         ".modules.notices.cli", "notices_cli",
         "Run the notices crawler.", None,

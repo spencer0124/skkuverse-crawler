@@ -33,6 +33,24 @@ empty list, which is how "no buses are running" is expressed.
 | `hssc/`, `jongro*_loc/` | all 17 | **stateful** — sticky event timestamps and per-station dwell clocks chain across ticks, so continuity is the point |
 | `jongro*_list/` | 3 | **stateless** field rename. Consecutive ticks prove nothing one tick does not, and all 17 days cost ~9.5MB of committed JSON that is mostly distinct `eta` strings copied through untouched. The generator keeps the first day, the last day, and any day the upstream errored — derived, so it survives a change to the corpus |
 
+## What the corpus does NOT cover
+
+Worth stating, because a corpus this large invites the assumption that it
+covers everything:
+
+- **Upstream error codes.** Every one of the 3,091 captured Jongro ticks
+  carries `headerCd` `"0"` or `"4"`. `Outcome.UPSTREAM_ERROR` has no parity
+  coverage at all and is pinned only by hand-written unit tests. That gap
+  is not academic — it hid a real divergence, where a falsy `headerCd`
+  made the port refuse to write while the TypeScript published normally.
+- **Non-integer `seq`, duplicate `(line_no, stop_no)`, sub-second
+  timestamps.** All absent from the captures, all places the two
+  implementations can disagree. See `tests/bus/test_pure_layer.py`,
+  `TestDivergencesFoundByReview`.
+
+The captures record what the upstreams happened to send over 17 days, not
+what they are capable of sending.
+
 ## `_dense/` — the part the real captures cannot reach
 
 Captures are 30 minutes apart. Jongro's dwell clock expires a station's
@@ -44,6 +62,12 @@ with a hole exactly where the trickiest logic lives is not much of a proof.
 So one real capture is replayed against a **synthetic tick schedule** at the
 production interval, long enough to cross the expiry twice. Same real
 transform, same real upstream payload; only the clock is arranged.
+
+Each `_dense` file embeds the capture it replays, so **these are the only
+parity tests that run without a checkout of `skkuverse-server`** — which
+means they are the only ones CI runs. They were chosen for that on
+purpose: they cover the stateful paths, which is where a port is most
+likely to be subtly wrong.
 
 - `hssc.json` — 10s ticks. `estimatedTime` climbs by 10 per tick as the sticky
   timestamp is reused, then items drop out when the stale filter catches them.

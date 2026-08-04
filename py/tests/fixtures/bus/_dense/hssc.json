@@ -1,6 +1,56 @@
 {
   "source": "2026-03-03T07:00:00+09:00",
   "intervalMs": 10000,
+  "capture": [
+    {
+      "line_no": "32072",
+      "inout": "LEFT",
+      "stop_no": "284260",
+      "seq": "9",
+      "stop_name": "서울혜화동우체국",
+      "get_date": "2026-03-03 오전 6:56:02"
+    },
+    {
+      "line_no": "32151",
+      "inout": "LEFT",
+      "stop_no": "285709",
+      "seq": "5",
+      "stop_name": "농구장정류소",
+      "get_date": "2026-02-27 오후 6:54:02"
+    },
+    {
+      "line_no": "32149",
+      "inout": "LEFT_LAST",
+      "stop_no": "285692",
+      "seq": "10",
+      "stop_name": "혜화동로터리",
+      "get_date": "2026-02-27 오전 11:36:52"
+    },
+    {
+      "line_no": "32153",
+      "inout": "ENTERED",
+      "stop_no": "285726",
+      "seq": "0",
+      "stop_name": "혜화역 1번출구 셔틀버스 정류소",
+      "get_date": "2025-02-14 오전 8:46:36"
+    },
+    {
+      "line_no": "32150",
+      "inout": "ENTERED",
+      "stop_no": "285698",
+      "seq": "5",
+      "stop_name": "농구장정류소",
+      "get_date": "2026-02-27 오후 12:58:39"
+    },
+    {
+      "line_no": "32152",
+      "inout": "ENTERED",
+      "stop_no": "285720",
+      "seq": "5",
+      "stop_name": "농구장정류소",
+      "get_date": "2026-02-27 오후 7:01:57"
+    }
+  ],
   "rows": [
     {
       "at": "2026-03-02T22:00:00.000Z",

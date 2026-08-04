@@ -1,6 +1,61 @@
 {
   "source": "2026-02-28T16:28:11+09:00",
   "intervalMs": 40000,
+  "capture": {
+    "comMsgHeader": {
+      "returnCode": null,
+      "errMsg": null,
+      "successYN": null,
+      "responseTime": null,
+      "requestMsgID": null,
+      "responseMsgID": null
+    },
+    "msgHeader": {
+      "headerMsg": "정상적으로 처리되었습니다.",
+      "headerCd": "0",
+      "itemCount": 0
+    },
+    "msgBody": {
+      "itemList": [
+        {
+          "sectOrd": "10",
+          "sectDist": "167",
+          "stopFlag": "0",
+          "sectionId": "100701736",
+          "dataTm": "20260228162808",
+          "tmX": "127.001885",
+          "tmY": "37.582118",
+          "posX": "200166.47787231373",
+          "posY": "453623.1921323752",
+          "vehId": "100000075",
+          "plainNo": "서울75사3612",
+          "busType": "0",
+          "routeId": "100900004",
+          "lastStnId": "100900027",
+          "isFullFlag": "0",
+          "congetion": "0"
+        },
+        {
+          "sectOrd": "17",
+          "sectDist": "6",
+          "stopFlag": "1",
+          "sectionId": "100701458",
+          "dataTm": "20260228162748",
+          "tmX": "127.000773",
+          "tmY": "37.585451",
+          "posX": "200068.26613148738",
+          "posY": "453993.07619878184",
+          "vehId": "100000076",
+          "plainNo": "서울75사3613",
+          "busType": "0",
+          "routeId": "100900004",
+          "lastStnId": "100000130",
+          "isFullFlag": "0",
+          "congetion": "0"
+        }
+      ]
+    }
+  },
   "rows": [
     {
       "at": "2026-02-28T07:28:11.000Z",
