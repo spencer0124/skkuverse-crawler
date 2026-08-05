@@ -36,6 +36,7 @@ __all__ = [
     "ProfileError",
     "UnknownModuleError",
     "WiringError",
+    "build_bus_runtime",
     "build_notices_runtime",
     "build_runtime",
     "known_module_names",
@@ -44,6 +45,37 @@ __all__ = [
 logger = get_logger("wiring")
 
 PortsFactory = Callable[[], Awaitable[tuple[Ports, SeenIndex]]]
+
+# ── bus migration switches ────────────────────────────────────────────────
+#
+# Until the cutover the crawler writes BESIDE skkuverse-server rather than
+# over it: `hssc__shadow`, not `hssc`. Flipping this to False IS the
+# cutover, and must not happen before the server stops writing those ids —
+# two writers on one `_id` is last-writer-wins, and the "compare the two"
+# step the migration rests on would have nothing left to compare.
+BUS_SHADOW_WRITES = True
+
+# The server's BusCacheService honours a MONGO_CACHE_COLLECTION override.
+# No deployment sets it and `.env.example` pins it to this default; if one
+# ever does, this needs the same Config field or the crawler writes to a
+# collection nobody reads — with no error anywhere.
+BUS_CACHE_COLLECTION = "bus_cache"
+
+# campus_eta lives OUTSIDE bus_cache. That collection carries the server's
+# `ttl_updatedAt` index (expireAfterSeconds 60) and SnapshotSink stamps
+# `_updatedAt` on every write, so a ten-minute cadence would leave the
+# document present for sixty seconds out of every six hundred. hssc (10s)
+# and jongro (40s) refresh well inside the window; this one cannot.
+CAMPUS_ETA_COLLECTION = "campus_eta"
+
+# Consecutive down-ticks before a Discord alert. Per module, because ticks
+# are not comparable across cadences: plugins/health's THRESHOLD of 3 is
+# ninety minutes of the half-hourly notices crawl and thirty SECONDS of the
+# HSSC poller. These are all roughly five minutes, except campus ETA, where
+# five minutes is less than one tick.
+HSSC_ALERT_TICKS = 30  # 10s  × 30 = 5 min
+JONGRO_ALERT_TICKS = 8  # 40s  × 8  ≈ 5 min
+CAMPUS_ETA_ALERT_TICKS = 3  # 600s × 3  = 30 min
 
 # plugin -> (a distribution its extra installs, is it configured?)
 #
@@ -125,7 +157,7 @@ def _build_notices(settings: Config, notifier: Notifier) -> tuple[CrawlModule, .
     from .modules.notices.module import NoticesModule
     from .plugins.ai_summary.module import NoticesSummaryModule
     from .plugins.health.module import CrawlHealthSummaryModule
-    from .plugins.health.probes import notices_probe
+    from .plugins.health.probes import bus_probe, notices_probe
     from .plugins.health.store import record_and_alert
     from .plugins.mongo.update_checker import NoticesUpdateCheckModule
 
@@ -141,7 +173,58 @@ def _build_notices(settings: Config, notifier: Notifier) -> tuple[CrawlModule, .
         # The summary itself is family-agnostic; what it reports on comes
         # in as probes. A second family adds its own here rather than
         # needing a second daily message.
-        CrawlHealthSummaryModule(notifier, probes=(notices_probe(),)),
+        #
+        # bus_probe() rides along even in a notices-only container, and has
+        # to: run_daily_summary filters the failing list to enabled ids, so
+        # without it a bus poller stuck down would be dropped from the
+        # 09:00 message instead of headlining it. It reads three enum
+        # values and needs no bus credentials.
+        CrawlHealthSummaryModule(notifier, probes=(notices_probe(), bus_probe())),
+    )
+
+
+def _build_bus(settings: Config, notifier: Notifier) -> tuple[CrawlModule, ...]:
+    from .modules.bus.module import BusHsscModule, BusJongroModule
+    from .plugins.health.store import record_and_alert
+
+    def alerts(threshold: int):
+        return functools.partial(
+            record_and_alert, notifier=notifier, threshold=threshold, label="bus"
+        )
+
+    return (
+        BusHsscModule(
+            sink_factory=bus_cache_ports,
+            endpoint=settings.hssc_api_url or "",
+            shadow_writes=BUS_SHADOW_WRITES,
+            on_results=alerts(HSSC_ALERT_TICKS),
+        ),
+        BusJongroModule(
+            sink_factory=bus_cache_ports,
+            service_key=settings.seoul_bus_service_key or "",
+            shadow_writes=BUS_SHADOW_WRITES,
+            on_results=alerts(JONGRO_ALERT_TICKS),
+        ),
+    )
+
+
+def _build_bus_eta(settings: Config, notifier: Notifier) -> tuple[CrawlModule, ...]:
+    from .modules.bus.module import BusCampusEtaModule
+    from .plugins.health.store import record_and_alert
+
+    return (
+        BusCampusEtaModule(
+            sink_factory=campus_eta_ports,
+            api_key_id=settings.naver_api_key_id or "",
+            api_key=settings.naver_api_key or "",
+            shadow_writes=BUS_SHADOW_WRITES,
+            on_results=functools.partial(
+                record_and_alert,
+                notifier=notifier,
+                threshold=CAMPUS_ETA_ALERT_TICKS,
+                label="bus-eta",
+            ),
+        ),
     )
 
 
@@ -157,6 +240,25 @@ _FAMILIES: tuple[ModuleFamily, ...] = (
         # Nothing beyond mongo, which the plugin probes already cover.
         requires=(),
         build=_build_notices,
+    ),
+    ModuleFamily(
+        name="bus",
+        module_names=("bus-hssc", "bus-jongro"),
+        requires=("mongo_bus_db_name", "hssc_api_url", "seoul_bus_service_key"),
+        build=_build_bus,
+    ),
+    # Separate from `bus`, not folded into it. A family is "modules that
+    # ship and configure together", and these do not: the credentials come
+    # from a different issuer (Naver Cloud, not SKKU + Seoul TOPIS), the
+    # cadence is sixty times slower, and the storage is a different
+    # collection. Folded together, a lapsed Naver key would be an
+    # unconfigured selected family — which in production is a boot refusal
+    # — and would take the shuttle board down with it.
+    ModuleFamily(
+        name="bus-eta",
+        module_names=("bus-campus-eta",),
+        requires=("mongo_bus_db_name", "naver_api_key_id", "naver_api_key"),
+        build=_build_bus_eta,
     ),
 )
 
@@ -275,6 +377,55 @@ async def notices_ports() -> tuple[Ports, SeenIndex]:
 
     db = await get_db()
     return build_notices_runtime(db["notices"])
+
+
+def build_bus_runtime(collection: AsyncIOMotorCollection) -> Sink:
+    """The snapshot archetype's whole assembly: one sink, no seen index,
+    no work seed. `SnapshotSink` has no instance state — no prepare guard,
+    no write buffer — so unlike MongoSink it would be safe to cache. It is
+    still built per call, because the reason not to cache is the same one
+    that applies to any collection handle: the client can be closed and
+    reopened underneath it."""
+    from .plugins.mongo.snapshot import SnapshotSink
+
+    sink = SnapshotSink(collection)
+    _require(sink, Sink, "Sink", "prepare/accept/flush")
+    return sink
+
+
+async def _bus_collection(name: str) -> AsyncIOMotorCollection:
+    """Resolve a collection in the BUS database, never the notices one.
+
+    The explicit emptiness check is the point. `get_db(None)` falls back to
+    `Config.mongo_db_name`, so a missing `MONGO_DB_NAME_BUS_CAMPUS` would
+    not fail — it would quietly write bus_cache documents into
+    skku_notices, where nothing reads them and nothing complains. The
+    family gate refuses that configuration before this runs; this is the
+    guard for everything that does not come through the gate.
+    """
+    from .env import get_config
+    from .shared.db import get_db
+
+    db_name = get_config().mongo_bus_db_name
+    if not db_name:
+        raise WiringError(
+            "the bus database is not configured (MONGO_DB_NAME_BUS_CAMPUS) — "
+            "without it the bus modules would write into the notices database"
+        )
+    db = await get_db(db_name)
+    return db[name]
+
+
+async def bus_cache_ports() -> Sink:
+    """Realtime shuttle/Jongro documents — the collection skkuverse-server
+    already owns, and whose 60-second TTL index governs these writes."""
+    return build_bus_runtime(await _bus_collection(BUS_CACHE_COLLECTION))
+
+
+async def campus_eta_ports() -> Sink:
+    """Campus ETA, in its own collection. See CAMPUS_ETA_COLLECTION for why
+    it is not in bus_cache."""
+    return build_bus_runtime(await _bus_collection(CAMPUS_ETA_COLLECTION))
 
 
 def _refuse_if_required_plugins_are_missing(settings: Config, profile: CrawlerEnv) -> None:

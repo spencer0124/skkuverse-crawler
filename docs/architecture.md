@@ -5,8 +5,10 @@
 skkuverse-crawler — SKKU 관련 데이터 크롤링 + 콘텐츠 정제 서비스.
 모듈형 구조로 다양한 크롤러를 추가할 수 있다.
 
-현재 **notices** 모듈이 구현되어 있으며,
-Strategy 패턴으로 게시판 유형별 파서를 분리하고 asyncio.Semaphore로 학과를 병렬 크롤링한다 (학과 목록은 `sources.json` 참조).
+두 개의 모듈 가족이 구현되어 있고, 둘은 **서로 다른 아키타입**이다 (adr-008 ①):
+
+- **notices** — 항목 스트림. Strategy 패턴으로 게시판 유형별 파서를 분리하고 asyncio.Semaphore로 학과를 병렬 크롤링한다 (학과 목록은 `sources.json` 참조).
+- **bus** — 스냅샷. 키 하나당 문서 하나를 통째 교체한다. 페이지도 없고 항목별 diff도 없다. `skkuverse-server`에서 이관 중이며 현재는 `__shadow` 키에만 쓴다.
 
 ## Directory Layout
 
@@ -54,8 +56,20 @@ py/src/skkuverse_crawler/
 │   ├── config/                 ← loader.py (sources.json 로드 + 셀렉터 검증) + 패키지 사본
 │   └── strategies/             ← CrawlStrategy 9종 + STRATEGY_MAP 레지스트리
 │
+├── modules/bus/                ← 실시간 버스. 스냅샷 아키타입 (adr-008 ①)
+│   ├── module.py               ← BusHsscModule(10초) · BusJongroModule(40초) · BusCampusEtaModule(600초)
+│   ├── cli.py                  ← bus --once --poller (저장 없음. 업스트림 모양 확인용)
+│   ├── hssc.py                 ← 순수: 파싱 + sticky 타임스탬프 (체류시간)
+│   ├── jongro.py               ← 순수: TOPIS 봉투 + 목록 변환 + 정류장 체류 시계
+│   ├── campus_eta.py           ← 순수: 네이버 Directions 봉투 + 한국어 소요시간 문자열
+│   ├── time_ko.py              ← 오전/오후 파싱 + Math.round/toISOString 동치 (locale·tzdata 없이)
+│   ├── registry.py             ← jongro-routes.json 로드 + fail-loud 검증 (importlib.resources)
+│   ├── sources.py              ← BusSource/CacheKey enum + shadow 키 파생
+│   └── models.py               ← CacheSnapshot (SnapshotSink가 읽는 .key/.fields 둘뿐)
+│
 ├── plugins/                    ← 바깥 세계에 붙는 어댑터. 전부 optional extra
 │   ├── mongo/                  ← seen.py · sink.py · work_seed.py (3 포트 구현)
+│   │                             snapshot.py (스냅샷 아키타입의 Sink — 키 = _id, 통째 upsert)
 │   │                             update_checker.py (Tier-2) · audit.py (검증 DB 스캔) · cli.py
 │   ├── health/                 ← logic.py(순수 판정) · store.py · module.py(09:00 요약) · cli.py
 │   ├── discord/webhook.py      ← Notifier 구현 (config 게이트, never-raise)
@@ -77,7 +91,7 @@ py/src/skkuverse_crawler/
 
 ## Execution Modes
 
-`--help`가 뱉는 8개 서브커맨드가 전부다. 일회성 `backfill-*` 커맨드들은 소멸했다 — null content 재크롤은 `WorkSeed` 포트 + `ContentRefreshed` 이벤트로 크롤 경로에 흡수됐고, 나머지 첨부 백필은 일회성 마이그레이션이라 유지할 이유가 없었다.
+`--help`가 뱉는 10개 서브커맨드가 전부다. 일회성 `backfill-*` 커맨드들은 소멸했다 — null content 재크롤은 `WorkSeed` 포트 + `ContentRefreshed` 이벤트로 크롤 경로에 흡수됐고, 나머지 첨부 백필은 일회성 마이그레이션이라 유지할 이유가 없었다.
 
 | 명령 | 필요 extra | 설명 |
 |------|-----------|------|
@@ -91,8 +105,10 @@ py/src/skkuverse_crawler/
 | `repair-dimensions` | mongo | tier-2가 지운 이미지 차원 복구. `--apply` 없이는 읽기만. 멱등 |
 | `summarize` | mongo, ai | AI 요약 1회 실행 |
 | `health-summary` | mongo, discord | 크롤 헬스 일일 요약 1회 발송 |
-| `start` | mongo, sched | 전체 스케줄러 (모든 모듈 cron) |
+| `bus --once --poller bus-hssc` | — | bus 1틱 fetch + 출력. 저장 없음 |
+| `start` | mongo, sched | 전체 스케줄러 (모든 모듈) |
 | `start --module notices` | mongo, sched | 단일 모듈만 스케줄링 |
+| `start --module bus-hssc,bus-jongro` | mongo, sched | 콤마 구분. 선택되지 않은 가족은 **빌드조차 안 된다** — 그래서 bus 컨테이너가 notices 설정 없이, notices 컨테이너가 bus 자격증명 없이 부팅한다 |
 
 extra가 없으면 해당 커맨드는 설치 방법을 알려주고 종료한다. `--help` 자체는 아무것도 import하지 않는다 (지연 그룹).
 

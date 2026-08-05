@@ -98,8 +98,12 @@ class TestPortsLifetime:
 
 class TestBuildRuntime:
     async def test_registers_every_scheduled_module(self):
+        # Fully-configured settings, explicitly: the ambient test config has
+        # no bus credentials, so both bus families would be skipped and the
+        # built list would legitimately be shorter than the table.
+        settings = TestProductionProfileGate._settings()
         with patch("skkuverse_crawler.core.registry.register") as register:
-            modules = wiring.build_runtime()
+            modules = wiring.build_runtime(settings)
 
         # Derived from the family table, not restated: a hardcoded list here
         # would have to be edited in lockstep with _FAMILIES, and the whole
@@ -107,7 +111,7 @@ class TestBuildRuntime:
         assert [m.config.name for m in modules] == list(wiring.known_module_names())
         assert register.call_count == len(modules)
 
-    async def test_the_table_still_describes_the_notices_family(self):
+    async def test_the_table_still_describes_every_family(self):
         """One literal assertion, so a table edit that drops a module is a
         failing test rather than a quietly smaller runtime."""
         assert wiring.known_module_names() == (
@@ -115,6 +119,9 @@ class TestBuildRuntime:
             "notices-update-check",
             "notices-summary",
             "crawl-health-summary",
+            "bus-hssc",
+            "bus-jongro",
+            "bus-campus-eta",
         )
 
     async def test_notices_module_gets_ports_factory_and_health_hook(self):
@@ -123,6 +130,181 @@ class TestBuildRuntime:
 
         assert notices._ports_factory is wiring.notices_ports
         assert notices._on_results is not None
+
+
+class TestBusFamilies:
+    """The second and third families — the reason adr-006 §⑬ gates 1.0 on a
+    second module. Assembly, not behaviour; the modules themselves are
+    tested in tests/bus/test_module.py."""
+
+    @staticmethod
+    def _built(**overrides):
+        settings = TestProductionProfileGate._settings(**overrides)
+        with patch("skkuverse_crawler.core.registry.register"):
+            return {m.config.name: m for m in wiring.build_runtime(settings)}
+
+    async def test_bus_modules_write_shadow_keys(self):
+        """Phase 4's whole safety property, asserted where a reviewer of a
+        future PR would look before flipping the constant."""
+        assert wiring.BUS_SHADOW_WRITES is True
+        built = self._built()
+        assert all(
+            built[name]._shadow_writes
+            for name in ("bus-hssc", "bus-jongro", "bus-campus-eta")
+        )
+
+    async def test_each_family_gets_its_own_collection(self):
+        """campus_eta is not in bus_cache: that collection carries the
+        server's 60-second TTL index, and a ten-minute cadence would leave
+        the document absent for nine of every ten minutes."""
+        built = self._built()
+        assert built["bus-hssc"]._sink_factory is wiring.bus_cache_ports
+        assert built["bus-jongro"]._sink_factory is wiring.bus_cache_ports
+        assert built["bus-campus-eta"]._sink_factory is wiring.campus_eta_ports
+
+    async def test_alert_thresholds_are_scaled_to_the_cadence(self):
+        """plugins/health's THRESHOLD of 3 is ninety minutes of the notices
+        crawl and thirty SECONDS of the HSSC poller. Left alone it would
+        fire on the first flap."""
+        built = self._built()
+        for name in ("bus-hssc", "bus-jongro", "bus-campus-eta"):
+            hook = built[name]._on_results
+            interval = built[name].config.interval_seconds
+            seconds = hook.keywords["threshold"] * interval
+            assert seconds >= 300, f"{name} would alert after {seconds}s"
+
+    async def test_the_two_families_carry_different_labels(self):
+        """One webhook, three processes once the containers split — the
+        label is what says which one is talking."""
+        built = self._built()
+        assert built["bus-hssc"]._on_results.keywords["label"] == "bus"
+        assert built["bus-campus-eta"]._on_results.keywords["label"] == "bus-eta"
+
+    async def test_a_lapsed_naver_key_does_not_take_the_shuttle_board_down(self):
+        """The entire reason for two families rather than one.
+
+        In production an unconfigured SELECTED family is a boot refusal.
+        Folded into a single `bus` family, the Phase 5 container's
+        `--module bus-hssc,bus-jongro` would select the family that also
+        owns campus ETA, and an expired Naver key would stop the shuttle
+        board. Split, that selection names only the family it needs.
+        """
+        settings = TestProductionProfileGate._settings(naver_api_key=None)
+        with patch("skkuverse_crawler.core.registry.register"):
+            modules = wiring.build_runtime(
+                settings, selection=["bus-hssc", "bus-jongro"]
+            )
+        assert [m.config.name for m in modules] == ["bus-hssc", "bus-jongro"]
+
+    async def test_outside_production_only_the_unconfigured_family_is_skipped(self):
+        """The developer without someone else's API key still gets the
+        rest — per family, so the missing Naver key costs exactly campus
+        ETA."""
+        from skkuverse_crawler.core.settings import CrawlerEnv
+
+        built = self._built(env=CrawlerEnv.DEVELOPMENT, naver_api_key=None)
+        assert "bus-campus-eta" not in built
+        assert {"bus-hssc", "bus-jongro", "notices"} <= set(built)
+
+    async def test_selecting_the_bus_modules_builds_nothing_else(self):
+        """The Phase 5 container split, which is why selection lives in
+        build_runtime: an unselected family is never built, so a bus-only
+        process boots without notices' configuration and vice versa."""
+        settings = TestProductionProfileGate._settings()
+        with patch("skkuverse_crawler.core.registry.register"):
+            modules = wiring.build_runtime(
+                settings, selection=["bus-hssc", "bus-jongro"]
+            )
+        assert [m.config.name for m in modules] == ["bus-hssc", "bus-jongro"]
+
+    async def test_a_notices_only_process_needs_no_bus_credentials(self):
+        settings = TestProductionProfileGate._settings(
+            mongo_bus_db_name=None,
+            hssc_api_url=None,
+            seoul_bus_service_key=None,
+            naver_api_key_id=None,
+            naver_api_key=None,
+        )
+        with patch("skkuverse_crawler.core.registry.register"):
+            modules = wiring.build_runtime(settings, selection=["notices"])
+        assert [m.config.name for m in modules] == ["notices"]
+
+
+class TestBusSinkFactories:
+    """Where the documents actually land.
+
+    Everything else injects an already-built sink, so without these the
+    database and collection names are unchecked — and both failures are
+    silent: the wrong collection is created on first write, and the wrong
+    database is the notices one, where nothing reads bus_cache and nothing
+    complains.
+    """
+
+    @staticmethod
+    def _spy():
+        asked: list[tuple[str | None, str]] = []
+
+        class _DB:
+            def __init__(self, name):
+                self._name = name
+
+            def __getitem__(self, collection):
+                asked.append((self._name, collection))
+                return object()
+
+        async def fake_get_db(name=None):
+            return _DB(name)
+
+        return asked, fake_get_db
+
+    async def test_bus_cache_goes_to_the_bus_database(self):
+        asked, fake_get_db = self._spy()
+        with patch("skkuverse_crawler.shared.db.get_db", side_effect=fake_get_db):
+            with patch("skkuverse_crawler.env.get_config") as get_config:
+                get_config.return_value = TestProductionProfileGate._settings()
+                sink = await wiring.bus_cache_ports()
+
+        assert asked == [("skkubus", "bus_cache")]
+        assert isinstance(sink, Sink)
+
+    async def test_campus_eta_goes_to_its_own_collection(self):
+        asked, fake_get_db = self._spy()
+        with patch("skkuverse_crawler.shared.db.get_db", side_effect=fake_get_db):
+            with patch("skkuverse_crawler.env.get_config") as get_config:
+                get_config.return_value = TestProductionProfileGate._settings()
+                await wiring.campus_eta_ports()
+
+        assert asked == [("skkubus", "campus_eta")]
+
+    async def test_a_missing_bus_database_is_refused_not_defaulted(self):
+        """`get_db(None)` falls back to the NOTICES database. Without this
+        guard a missing MONGO_DB_NAME_BUS_CAMPUS would put bus_cache
+        documents into skku_notices — no error, nothing reading them."""
+        _asked, fake_get_db = self._spy()
+        with patch("skkuverse_crawler.shared.db.get_db", side_effect=fake_get_db):
+            with patch("skkuverse_crawler.env.get_config") as get_config:
+                get_config.return_value = TestProductionProfileGate._settings(
+                    mongo_bus_db_name=None
+                )
+                with pytest.raises(WiringError, match="MONGO_DB_NAME_BUS_CAMPUS"):
+                    await wiring.bus_cache_ports()
+
+    async def test_a_sink_missing_flush_is_refused_by_name(self):
+        class _NoFlush:
+            def __init__(self, collection):
+                pass
+
+            async def prepare(self, source):
+                return None
+
+            async def accept(self, event):
+                return None
+
+        with patch(
+            "skkuverse_crawler.plugins.mongo.snapshot.SnapshotSink", _NoFlush
+        ):
+            with pytest.raises(WiringError, match="prepare/accept/flush"):
+                wiring.build_bus_runtime(object())
 
 
 class TestProductionProfileGate:
@@ -150,6 +332,17 @@ class TestProductionProfileGate:
             dispatch_url=None,
             internal_dispatch_token=None,
             discord_webhook_url=None,
+            # The bus families' credentials. Present by default because an
+            # unconfigured SELECTED family is a production refusal: without
+            # these, every unselected-scope build_runtime() call in this
+            # file would raise ProfileError before reaching what it tests.
+            # The service key has to satisfy the URL-encoding pattern —
+            # BusJongroModule validates it at construction.
+            mongo_bus_db_name="skkubus",
+            hssc_api_url="https://hssc.example/api",
+            seoul_bus_service_key="test-service-key",
+            naver_api_key_id="key-id",
+            naver_api_key="key",
         )
         base.update(overrides)
         return Config(**base)
@@ -244,8 +437,9 @@ class TestModuleSelection:
     """
 
     async def test_no_selection_means_everything(self):
+        settings = TestProductionProfileGate._settings()
         with patch("skkuverse_crawler.core.registry.register"):
-            modules = wiring.build_runtime()
+            modules = wiring.build_runtime(settings)
         assert len(modules) == len(wiring.known_module_names())
 
     async def test_a_subset_returns_only_those_modules(self):

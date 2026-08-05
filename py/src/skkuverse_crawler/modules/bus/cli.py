@@ -21,7 +21,7 @@ from typing import Any
 import click
 
 from ...shared.logger import configure_logging, get_logger
-from . import hssc, jongro
+from . import campus_eta, hssc, jongro
 from .client import UpstreamError, fetch_json
 from .registry import RouteConfigError, load_routes, validate_service_key
 from .sources import BusSource
@@ -58,7 +58,7 @@ async def _run_once(source: BusSource, config: Any, *, as_json: bool) -> None:
     async with httpx.AsyncClient() as client:
         try:
             payloads = await _collect(source, config, client, now=now)
-        except RouteConfigError as exc:
+        except (RouteConfigError, campus_eta.CampusEtaPayloadError) as exc:
             # Same treatment as the HSSC "not configured" path. Without
             # this the jongro route dies with a raw traceback while the
             # hssc one prints a sentence — and the CI check only exercises
@@ -76,13 +76,23 @@ async def _run_once(source: BusSource, config: Any, *, as_json: bool) -> None:
                 json.dumps({"key": key, "payload": payload}, ensure_ascii=False) + "\n"
             )
         else:
-            count = "no write" if payload is None else f"{len(payload)} item(s)"
-            click.echo(f"{key}: {count}")
+            click.echo(f"{key}: {_describe(payload)}")
+
+
+def _describe(payload: Any) -> str:
+    """Payloads are not all lists. The two realtime pollers publish arrays
+    of rows; campus ETA publishes one object with a leg per direction, and
+    `len()` on it would report "2 item(s)" for a document that has none."""
+    if payload is None:
+        return "no write"
+    if isinstance(payload, list):
+        return f"{len(payload)} item(s)"
+    return "1 document"
 
 
 async def _collect(
     source: BusSource, config: Any, client: Any, *, now: datetime
-) -> list[tuple[str, list[dict[str, Any]] | None]]:
+) -> list[tuple[str, Any]]:
     """One tick's worth of (cache key, payload) pairs.
 
     `None` means the upstream said nothing usable and the stored document
@@ -107,7 +117,7 @@ async def _collect(
     if source is BusSource.JONGRO:
         validate_service_key(config.seoul_bus_service_key)
         key = config.seoul_bus_service_key
-        out: list[tuple[str, list[dict[str, Any]] | None]] = []
+        out: list[tuple[str, Any]] = []
         for route in load_routes():
             listing = jongro.read_envelope(
                 await fetch_json(client, route.list_url(key))
@@ -131,7 +141,29 @@ async def _collect(
             out.append((f"jongro_locations_{route.code}", rows_loc))
         return out
 
-    raise click.ClickException(
-        f"{source.value} has no --once implementation yet "
-        "(campus ETA arrives with the scheduled modules)"
-    )
+    if source is BusSource.CAMPUS_ETA:
+        if not (config.naver_api_key_id and config.naver_api_key):
+            raise click.ClickException(
+                "the Naver Directions credentials are not configured "
+                "(set NAVER_API_KEY_ID and NAVER_API_KEY)"
+            )
+        headers = {
+            campus_eta.KEY_ID_HEADER: config.naver_api_key_id,
+            campus_eta.KEY_HEADER: config.naver_api_key,
+        }
+        # Strict here, unlike the scheduled module: a manual check that
+        # half-succeeded and printed a payload anyway is the one outcome
+        # this command exists to rule out. A failed leg raises and
+        # `_run_once` turns it into a message and a non-zero exit.
+        legs = {
+            name: campus_eta.read_leg(
+                await fetch_json(
+                    client, campus_eta.directions_url(start, goal), headers=headers
+                )
+            )
+            for name, (start, goal) in campus_eta.LEGS
+        }
+        data = campus_eta.EtaData(inja=legs["inja"], jain=legs["jain"])
+        return [("campus_eta", data.as_fields())]
+
+    raise click.ClickException(f"{source.value} has no --once implementation")

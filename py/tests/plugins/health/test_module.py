@@ -100,6 +100,25 @@ class TestProbeAggregation:
         assert result["enabled"] == 3
         assert result["inserted24h"] == 10
 
+    async def test_a_probe_without_an_intake_count_still_contributes_its_ids(
+        self, db
+    ):
+        """The snapshot archetype has no "documents created in 24 hours" —
+        its `_id` is a constant string and the document is upserted
+        forever. `None` says that; a hardcoded 0 would read as a measured
+        answer. The enabled ids are the half that decides whether a failing
+        source appears in the message at all, and they still count.
+        """
+        result = await run_daily_summary(
+            _Notifier(),
+            (
+                _probe("notices", {"a", "b"}, 7),
+                CoverageProbe(name="bus", enabled_ids=lambda: {"bus-hssc"}),
+            ),
+        )
+        assert result["enabled"] == 3
+        assert result["inserted24h"] == 7, "the countless probe adds nothing, not zero"
+
     async def test_ids_shared_between_families_are_not_double_counted(self, db):
         result = await run_daily_summary(
             _Notifier(), (_probe("x", {"a"}, 1), _probe("y", {"a"}, 1))

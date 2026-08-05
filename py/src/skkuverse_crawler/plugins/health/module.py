@@ -40,8 +40,15 @@ class CoverageProbe:
     name: str
     # Sources this family expects to be crawling right now.
     enabled_ids: Callable[[], set[str]]
-    # Documents this family stored since the given instant.
-    inserted_since: Callable[[datetime], Awaitable[int]]
+    # Documents this family stored since the given instant, or None when
+    # the family has no such number. The snapshot archetype is the case:
+    # its `_id` is a constant string and its document is upserted forever,
+    # so "created in the last 24 hours" has no answer — under a TTL a count
+    # would measure liveness instead, and a hardcoded 0 would look like one.
+    # Probes without it still contribute their enabled ids, which is the
+    # half that decides whether a failing source appears in the summary
+    # at all.
+    inserted_since: Callable[[datetime], Awaitable[int]] | None = None
 
 
 async def run_daily_summary(
@@ -66,7 +73,13 @@ async def run_daily_summary(
     ]
 
     cutoff = now - timedelta(hours=24)
-    inserted_24h = sum([await probe.inserted_since(cutoff) for probe in probes])
+    inserted_24h = sum(
+        [
+            await probe.inserted_since(cutoff)
+            for probe in probes
+            if probe.inserted_since is not None
+        ]
+    )
 
     from ...env import get_config
     from ...wiring import active_plugins

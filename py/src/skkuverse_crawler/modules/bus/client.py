@@ -13,7 +13,7 @@ never logged.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Mapping
 
 import httpx
 
@@ -32,11 +32,17 @@ class UpstreamError(RuntimeError):
     """
 
 
-async def fetch_json(client: httpx.AsyncClient, url: str) -> Any:
+async def fetch_json(
+    client: httpx.AsyncClient,
+    url: str,
+    *,
+    headers: Mapping[str, str] | None = None,
+) -> Any:
     """GET and decode. Raises `UpstreamError` for anything else.
 
     The URL is never included in the error: for HSSC it IS the credential,
-    and this message ends up in logs.
+    and this message ends up in logs. `headers` gets the same treatment for
+    the same reason — Naver's two keys travel there.
     """
     try:
         # follow_redirects, because axios does (maxRedirects: 5) and these
@@ -45,7 +51,10 @@ async def fetch_json(client: httpx.AsyncClient, url: str) -> Any:
         # permanently dark while reporting "upstream unavailable" — a
         # message pointing at the network rather than at this line.
         response = await client.get(
-            url, timeout=TIMEOUT_SECONDS, follow_redirects=True
+            url,
+            timeout=TIMEOUT_SECONDS,
+            follow_redirects=True,
+            headers=dict(headers) if headers else None,
         )
         response.raise_for_status()
         return response.json()

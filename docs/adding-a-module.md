@@ -70,6 +70,8 @@ yield ItemCrawled(source_id="my-source", item=snapshot)
 
 `SnapshotSink`가 받는 item은 `.key: str`(문서 `_id`)와 `.fields: Mapping`(그대로 `$set`에 병합) 둘을 가지면 된다. `_updatedAt`은 sink가 찍는다.
 
+⚠️ **대상 컬렉션의 인덱스를 누가 소유하는지 명시적으로 정하라.** `SnapshotSink.prepare`는 아무 인덱스도 만들지 않는다 — 키가 곧 `_id`라 sink 자신은 필요 없기 때문이지, "이 컬렉션엔 인덱스가 필요 없다"는 뜻이 아니다. 남이 만든 TTL 인덱스가 당신 문서를 조용히 지배할 수 있다: bus가 정확히 그 사례로, `bus_cache`의 `_updatedAt` TTL이 60초여서 주기 600초인 campus ETA는 그 컬렉션에 살 수 없었다(문서가 10분 중 9분 부재). 새 컬렉션을 쓰기로 했다면 **소비자가 생기기 전에** 정하라 — 계약이 없을 때만 공짜다.
+
 ## 4. `wiring.py`에 가족 등록
 
 ```python

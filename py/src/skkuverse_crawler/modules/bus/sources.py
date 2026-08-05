@@ -62,3 +62,14 @@ def shadow(key: CacheKey) -> str:
     """Derived, never hand-written — a typo here writes a document the
     comparison step would then silently not find."""
     return f"{key.value}{SHADOW_SUFFIX}"
+
+
+def document_id(key: CacheKey, *, shadow_writes: bool) -> str:
+    """The `_id` a payload is stored under, shadowed or not.
+
+    One function so the cutover is one decision. Spread across the call
+    sites, "did this one get the suffix" becomes a question you answer by
+    reading every write path — and the half that kept writing live ids
+    would be overwriting the server, silently, in production.
+    """
+    return shadow(key) if shadow_writes else key.value

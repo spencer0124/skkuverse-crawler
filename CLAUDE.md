@@ -23,6 +23,9 @@ python -m skkuverse_crawler validate-attachments --source cheme --no-http --json
 python -m skkuverse_crawler validate-markdown                        # cleanMarkdown 렌더링 품질 검증
 python -m skkuverse_crawler validate-markdown --source skku-main --severity error --json
 python -m skkuverse_crawler health-summary                           # 크롤 헬스 일일 요약 1회 발송
+python -m skkuverse_crawler bus --once --poller bus-hssc             # bus 1틱 fetch + 출력 (저장 안 함)
+python -m skkuverse_crawler bus --once --poller bus-jongro --json
+python -m skkuverse_crawler bus --once --poller bus-campus-eta       # 저장소·extra 불필요. 업스트림이 캡처와 같은 모양인지 확인용
 python -m skkuverse_crawler repair-dimensions                        # tier-2가 지운 이미지 차원 복구 (dry-run)
 python -m skkuverse_crawler repair-dimensions --apply                # 실제 쓰기. 멱등 — 재실행 시 repaired: 0
 python -m skkuverse_crawler repair-attachments                       # 깨진 첨부 링크 복구 (dry-run)
@@ -81,7 +84,9 @@ python scripts/generate_artifacts.py    # 세 SSOT 파일 → 8개 아티팩트 
 
 ### 공통 패턴
 
-**모듈형 구조** (adr-006 core/plugin 분리, PR 0~9 완료 — 로드맵 종료 2026-08-02): `core/` (포트·이벤트·러너·파이프라인 모양·설정 타입·JsonLinesSink — 인프라 import 금지) + `modules/notices/` (크롤 도메인 로직) + `plugins/` (인프라 어댑터: `mongo` 저장·update_checker·audit, `health`, `discord`, `ai_summary`, `dispatch`, `scheduler`) + `shared/` (DB, logger, HTTP 클라이언트, HTML 처리) + `env.py` (os.environ·dotenv 유일 접점). 조립은 `wiring.py`가 담당 — `modules/`는 `plugins/`를 import하지 않는다 (AST 테스트로 강제). `plugins/`를 import할 수 있는 건 조립 리프(wiring.py, cli.py들)뿐.
+**모듈형 구조** (adr-006 core/plugin 분리, PR 0~9 완료 — 로드맵 종료 2026-08-02): `core/` (포트·이벤트·러너·파이프라인 모양·설정 타입·JsonLinesSink — 인프라 import 금지) + `modules/notices/`·`modules/bus/` (크롤 도메인 로직 — 두 아키타입, adr-008 ①) + `plugins/` (인프라 어댑터: `mongo` 저장·snapshot·update_checker·audit, `health`, `discord`, `ai_summary`, `dispatch`, `scheduler`) + `shared/` (DB, logger, HTTP 클라이언트, HTML 처리) + `env.py` (os.environ·dotenv 유일 접점). 조립은 `wiring.py`가 담당 — `modules/`는 `plugins/`를 import하지 않는다 (AST 테스트로 강제). `plugins/`를 import할 수 있는 건 조립 리프(wiring.py, cli.py들)뿐.
+
+**두 아키타입** (adr-008 ①): **항목 스트림**(notices — 페이지네이션 + `SeenIndex`/`WorkSeed` + 항목별 diff)과 **스냅샷**(bus — 키 하나당 문서 하나를 통째 교체, `plugins/mongo/snapshot.SnapshotSink`). 하나로 일반화하지 않았다. 스냅샷 쪽에 **코어 변경은 없었다** — 플러그인 하나(≈100줄)면 충분했다는 게 둘을 따로 둔 근거다. 새 모듈은 `docs/adding-a-module.md` §0에서 아키타입부터 고른다.
 
 **의존성 extras** (PR 8): `pip install skkuverse-crawler`는 크롤·파싱·정제·CLI만 설치한다. 인프라는 optional — `[mongo]`(motor) / `[sched]`(apscheduler) / `[discord]`·`[ai]`(tenacity) / `[all]`. Dockerfile은 4개 extra를 모두 설치하며, **그 집합이 pyproject와 어긋나면 `test_packaging.py`가 실패한다**. production 프로파일은 필수 플러그인(mongo, sched) 부재 시 `wiring.ProfileError`로 기동 거부. 저장소 없이 돌려보려면 `notices --json` (stdout JSON Lines, 로그는 stderr).
 
@@ -135,12 +140,41 @@ Referer가 없으면 **에러가 아니라 200 + HTML alert 페이지**가 온�
 
 ### 스케줄 주기
 
-| 모듈 | 타입 | 주기 |
-|------|------|------|
-| notices | CronTrigger | `*/30 * * * *` (30분) |
-| notices-update-check | CronTrigger | `10 8,14,20 * * *` (하루 3회) |
-| notices-summary | CronTrigger | `20 * * * *` (매시 20분) |
-| crawl-health-summary | CronTrigger | `0 9 * * *` (매일 09:00 KST — 컨테이너 TZ가 KST) |
+| 모듈 | 가족 | 타입 | 주기 | 틱 관용 |
+|------|------|------|------|--------|
+| notices | notices | CronTrigger | `*/30 * * * *` (30분) | 기본(10초) |
+| notices-update-check | notices | CronTrigger | `10 8,14,20 * * *` (하루 3회) | 기본 |
+| notices-summary | notices | CronTrigger | `20 * * * *` (매시 20분) | 기본 |
+| crawl-health-summary | notices | CronTrigger | `0 9 * * *` (매일 09:00 KST — 컨테이너 TZ가 KST) | 기본 |
+| bus-hssc | bus | IntervalTrigger | 10초 | 30초 |
+| bus-jongro | bus | IntervalTrigger | 40초 | 120초 |
+| bus-campus-eta | bus-eta | IntervalTrigger | 600초 (부팅 시 1회 선행) | 300초 |
+
+**관용 시간(`misfire_grace_time`)이 주기보다 큰 이유**: 실시간 폴러는 *현재* 상태를 가져오므로
+늦은 틱이 오래된 틱은 아니다. 막아야 할 건 쌓임뿐이고 그건 `max_instances=1` + `coalesce=True`가
+이미 한다. 반대로 스케줄러 기본값(10초)을 10초 폴러에 그대로 쓰면 이벤트 루프가 바쁠 때마다
+틱이 통째로 버려진다 — misfire는 coalesce보다 **먼저** 판정되기 때문. 버려진 틱은
+`job_tick_missed` 경고로 남는다.
+
+### bus 모듈 (adr-008)
+
+bus는 `skkuverse-server`의 `ROLE=poller` 컨테이너에서 이관 중이다. **현재 단계에서는
+`__shadow` 접미사가 붙은 키에만 쓴다** — 서버가 아직 진짜 키를 쓰고 있고, 한 `_id`에
+writer가 둘이면 나중에 쓴 쪽이 이긴다. 커트오버는 `wiring.BUS_SHADOW_WRITES`를 `False`로
+바꾸는 커밋 하나이며, 서버가 해당 키 쓰기를 멈춘 뒤여야 한다.
+
+| 모듈 | 컬렉션 | 문서 `_id` |
+|------|--------|-----------|
+| bus-hssc | `bus_cache` (서버 소유, `_updatedAt` TTL 60초) | `hssc__shadow` |
+| bus-jongro | `bus_cache` | `jongro_{stations,locations}_{02,07}__shadow` |
+| bus-campus-eta | `campus_eta` (크롤러 소유, **TTL 없음**) | `campus_eta__shadow` |
+
+campus ETA만 컬렉션이 다른 이유: `bus_cache`의 TTL은 60초인데 이 모듈의 주기는 600초라
+`bus_cache`에 두면 10분 중 9분은 문서가 없다. 서버가 이 키를 `bus_cache`에서 읽은 적이
+없어(온디맨드 계산) 계약이 아직 없었고, 없을 때만 공짜인 선택을 한 것이다.
+
+문서 모양은 서버의 `BusCacheService.write`와 같다 — 페이로드는 `data` 아래 중첩되고,
+그 위에 모듈이 찍는 `fetchedAt`(업스트림이 응답한 시각)과 sink가 찍는 `_updatedAt`(쓴 시각)이 붙는다.
 
 ### DB 이름 규칙
 
@@ -161,6 +195,13 @@ Referer가 없으면 **에러가 아니라 200 + HTML alert 페이지**가 온�
 - `AI_SERVICE_URL` — AI 요약 서비스 URL. 환경별 자동 결정: `production` → `http://ai:4000`, `development`/`test` → `http://127.0.0.1:4000`. 직접 지정 시 우선
 - `DISCORD_WEBHOOK_URL` — 크롤 헬스 알림용 Discord webhook (선택). 미설정 시 알림만 조용히 스킵 (부팅 로그로 상태 1회 고지). 소스가 연속 3틱 page-0 실패하면 1회 알림 + 회복 알림, 매일 09:00 KST 일일 요약. URL은 시크릿 — 레포 커밋 금지
 - `CRAWL_SOURCE_FILTER` — 콤마 구분 학과 ID 필터 (e.g. `skku-main,law`). **dev 오버라이드 전용** ⚠️ 프로덕션 미설정 원칙. 미설정 시 `sources.json`의 `crawlEnabled: true` 항목만 크롤링
+
+**bus 가족** (전부 시크릿. 미설정 시 production은 기동 거부, 그 외는 가족 스킵 — 단 선택된 가족이 전부 스킵되면 어디서든 거부):
+
+- `MONGO_DB_NAME_BUS_CAMPUS` — bus 전용 DB. **기본값 없음** — skkuverse-server가 같은 변수를 기본값 없이 요구하고, 크롤러가 이름을 지어내면 서버가 읽지 않는 곳에 쓰게 된다(에러 없음, 앱만 빈 화면). `db_name_for()`가 환경 suffix를 붙이며 서버의 `devDbName()`과 규칙이 같다
+- `API_HSSC_NEW_PROD` / `API_HSSC_NEW_DEV` — HSSC 셔틀 엔드포인트. **URL 전체가 자격증명**이라 로그에 절대 남기지 않는다. production은 `_DEV`로 폴백하지 않는다
+- `SEOUL_BUS_SERVICE_KEY` — 서울 TOPIS 키. **URL-encoded여야 한다**(`A-Za-z0-9_%-`). 인코딩 안 된 키는 에러가 아니라 "인증만 안 되는 정상 요청"을 만든다 — 그래서 모듈 생성 시점에 검증하고 거부한다
+- `NAVER_API_KEY_ID` / `NAVER_API_KEY` — 네이버 Directions (campus ETA). `bus-eta` 가족만 필요하다 — 이게 만료돼도 셔틀 전광판은 계속 돈다(가족을 둘로 나눈 이유)
 
 
 ## Testing
