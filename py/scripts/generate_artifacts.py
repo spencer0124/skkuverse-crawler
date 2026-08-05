@@ -18,7 +18,7 @@ so an SSOT edit without a codegen run cannot merge.
 This script does NOT write into sibling repos. Consumers pull the artifacts
 under py/generated/ via the cross-repo contract tool:
 
-    python3 ../skkuverse/tools/skkuverse_sync.py pull --all
+    python3 ../skkuverse/exported/sync_contracts.py pull --all
 
 Usage:
     cd py
@@ -706,7 +706,7 @@ def main() -> None:
     print("Next:")
     print("  1. commit the artifacts here (CI enforces codegen == committed)")
     print("  2. propagate to consumers:")
-    print("       python3 ../skkuverse/tools/skkuverse_sync.py pull --all")
+    print("       python3 ../skkuverse/exported/sync_contracts.py pull --all")
 
 
 if __name__ == "__main__":

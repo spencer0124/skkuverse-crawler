@@ -52,13 +52,13 @@
 - [ ] docstring·CLAUDE.md 아티팩트 표 갱신, `py/tests/scripts/test_generate_artifacts.py` 확장
 
 ✅ `copy_to_sibling()` 의 silent-skip 함정은 해소됐다 — 형제 레포 push 자체가 삭제되고 pull 기반
-(`skkuverse_sync.py`)으로 바뀌었다. 신규 아티팩트는 `py/generated/` 에 쓰고 커밋하면 되며, 소비자는
+(`sync_contracts.py`)으로 바뀌었다. 신규 아티팩트는 `py/generated/` 에 쓰고 커밋하면 되며, 소비자는
 manifest 등록 후 `pull` 로 받는다. ai 측 `app/generated/` 디렉터리는 그대로 두되 존재 이유가
 "skip 방지 workaround" 에서 "pull 대상 경로" 로 바뀌었다.
 
 ⚠️ `main()` 의 검증 프리앰블은 SSOT 파일 누락 시 `sys.exit(1)` 한다 — `SEARCH_JSON` 을 그 튜플에 넣으면 **모든 codegen 실행에 이 파일이 필수**가 된다.
 
-**검증 게이트**: ruff+pytest green. codegen 실행 → `git diff --exit-code` green → `skkuverse_sync.py status` 에서 두 계약이 OK.
+**검증 게이트**: ruff+pytest green. codegen 실행 → `git diff --exit-code` green → `sync_contracts.py status` 에서 두 계약이 OK.
 
 ## Phase 2b — autoEmbed 인덱스 + `embeddingInput` 조합 [crawler]
 

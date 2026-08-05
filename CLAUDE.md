@@ -76,7 +76,7 @@ python scripts/generate_artifacts.py    # 세 SSOT 파일 → 8개 아티팩트 
 2. 새 카테고리 추가 시 `categories.json`도 수정
 3. `cd py && python scripts/generate_artifacts.py` 실행
 4. 생성된 아티팩트를 **이 레포에 커밋** (CI가 codegen == committed 강제)
-5. 소비자 레포로 전파: `python3 ../skkuverse/tools/skkuverse_sync.py pull --all`
+5. 소비자 레포로 전파: `python3 ../skkuverse/exported/sync_contracts.py pull --all`
    — 어느 레포에 커밋이 필요한지 출력해준다. 계약 정의는
    [skkuverse/contracts/manifest.json](https://github.com/spencer0124/skkuverse/blob/main/contracts/manifest.json)
 
