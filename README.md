@@ -75,7 +75,7 @@ from skkuverse_crawler.core import (
     ContentRefreshed,
     CrawlEvent,
     FullSweep,
-    NoticeCrawled,
+    ItemCrawled,
     Outcome,
     Ports,
     SourceResult,
@@ -91,8 +91,8 @@ structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(logging.
 class TitleIndexSink:
     """Keeps titles by article number, and nothing else.
 
-    Note what is stored: the two fields, not the event. A NoticeCrawled
-    holds a Notice that can carry megabytes of cleanHtml, so a sink that
+    Note what is stored: the two fields, not the event. An ItemCrawled
+    holds a notice that can carry megabytes of cleanHtml, so a sink that
     appends events to a list keeps all of that alive for the whole crawl.
     """
 
@@ -104,7 +104,7 @@ class TitleIndexSink:
 
     async def accept(self, event: CrawlEvent) -> Outcome | None:
         match event:
-            case NoticeCrawled(notice=notice):
+            case ItemCrawled(item=notice):
                 new = notice.articleNo not in self.titles
                 self.titles[notice.articleNo] = notice.title
                 # The runner reads this to count inserted vs updated.
@@ -142,7 +142,7 @@ async def main() -> None:
     )
 
     for result in results:
-        print(f"{result.dept_id}: {result.inserted} inserted, {result.errors} errors")
+        print(f"{result.source_id}: {result.inserted} inserted, {result.errors} errors")
     for article_no, title in list(sink.titles.items())[:5]:
         print(f"  {article_no}  {title}")
 
@@ -162,8 +162,8 @@ The crawl emits two tiers, and the difference is a versioning promise rather tha
 
 | Tier | Events | Promise |
 |------|--------|---------|
-| **Result** — something was crawled | `NoticeCrawled` `NoticeUnchanged` `ContentRefreshed` `ItemFailed` `ItemSkipped` | Frozen. Adding or changing one is a major release. |
-| **Progress** — where the crawl is | `SourceStarted` `PageCompleted` `ListFetchFailed` `SourceFinished` | May grow in a minor release. |
+| **Result** — something was crawled | `ItemCrawled` `ItemUnchanged` `ContentRefreshed` `ItemFailed` `ItemSkipped` | Frozen. Adding or changing one is a major release. |
+| **Progress** — where the crawl is | `SourceStarted` `BatchCompleted` `ListFetchFailed` `SourceFinished` | May grow in a minor release. |
 
 Growing the progress tier is safe only because sinks are tolerant readers: an event you do
 not recognise must return `None`, never raise. `assert_sink_contract` checks that for you.

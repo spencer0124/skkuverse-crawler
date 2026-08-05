@@ -2,6 +2,9 @@
 
 크롤러를 인프라 없이 도는 코어 + 플러그인으로 가르는 작업의 **전체 로드맵**. 설계는 [core-plugin-architecture.md](core-plugin-architecture.md), 결정 근거는 [decisions/adr-006](decisions/adr-006-core-plugin-split.md).
 
+> **⚠️ 이벤트 이름은 2026-08-04에 바뀌었다.** 이 문서의 `NoticeCrawled` / `NoticeUnchanged` / `PageCompleted`는 각각 `ItemCrawled`(필드 `notice` → `item`) / `ItemUnchanged(article_no, fields)` / `BatchCompleted(index)`이고, `SourceResult.dept_id`/`dept_name`은 `source_id`/`source_name`이다. 당시 기록이므로 본문은 그대로 둔다 — 복붙 전에 [sink-authors-guide.md](sink-authors-guide.md)를 볼 것. 근거는 [decisions/adr-006](decisions/adr-006-core-plugin-split.md) 2026-08-04 개정.
+>
+
 **진행 원칙**: PR 순서대로, `dev`에서 딴 feature 브랜치 → 검증 게이트 통과 → dev PR. main은 merge-only. 매 PR은 **테스트 green + 프로덕션 동작 바이트 동일**을 유지한다. 싼 순수 이동으로 import 그래프를 먼저 무해화하고, 가장 위험한 orchestrator 해체를 맨 뒤로 민다.
 
 **베이스라인**: `python -m pytest --collect-only -q` → **432 tests** (2026-07-30 실측). PR 8 시점 **657 passed / 18 mongo-deselected**, PR 9 완료 시점 **759 passed / 18 mongo-deselected** (2026-08-02).

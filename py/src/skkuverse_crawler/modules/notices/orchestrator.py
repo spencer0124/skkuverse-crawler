@@ -15,9 +15,9 @@ from ...core.events import (
     ItemFailed,
     ItemSkipped,
     ListFetchFailed,
-    NoticeCrawled,
-    NoticeUnchanged,
-    PageCompleted,
+    ItemCrawled,
+    ItemUnchanged,
+    BatchCompleted,
     SourceFinished,
     SourceStarted,
 )
@@ -175,7 +175,7 @@ async def _crawl_department(
         raise ValueError(f"Unknown strategy: {dept['strategy']}")
 
     strategy = strategy_cls(fetcher)
-    result = SourceResult(dept_id=dept["id"], dept_name=dept["name"])
+    result = SourceResult(source_id=dept["id"], source_name=dept["name"])
 
     # aclosing makes generator teardown deterministic when run_events
     # raises (accept/flush failure) — without it the suspended generator
@@ -188,10 +188,10 @@ async def _crawl_department(
     ) as events:
         await run_events(events, ports.sink, result=result)
 
-    # run_events flushes on PageCompleted only, and not every source reaches
+    # run_events flushes on BatchCompleted only, and not every source reaches
     # one: the null-content backfill emits write-bearing events BEFORE the
     # page loop, and a page-0 fetch failure or an empty first page breaks out
-    # before the first PageCompleted. Without this, a batching sink kept
+    # before the first BatchCompleted. Without this, a batching sink kept
     # those writes in its buffer forever while the runner counted them as
     # done. Safe to add unconditionally — flush must tolerate an empty
     # buffer (the runner already calls it on pages that buffered nothing,
@@ -200,7 +200,7 @@ async def _crawl_department(
 
     logger.info(
         "department_crawl_finished",
-        dept_id=result.dept_id,
+        dept_id=result.source_id,
         inserted=result.inserted,
         updated=result.updated,
         skipped=result.skipped,
@@ -339,7 +339,7 @@ async def iter_source(
         ) as page_events:
             async for ev in page_events:
                 yield ev
-        yield PageCompleted(source_id=dept["id"], page=page)
+        yield BatchCompleted(source_id=dept["id"], index=page)
 
         if is_first_page and all_known:
             stopped_by = "all_known_first_page"
@@ -387,10 +387,10 @@ async def _emit_page(
             existing = existing_meta.get(item.articleNo)
 
             if existing and not has_changed(item, existing):
-                yield NoticeUnchanged(
+                yield ItemUnchanged(
                     source_id=dept["id"],
                     article_no=item.articleNo,
-                    views=item.views,
+                    fields={"views": item.views},
                 )
                 continue
 
@@ -428,7 +428,7 @@ async def _emit_page(
             )
 
             if not existing:
-                yield NoticeCrawled(source_id=dept["id"], notice=notice)
+                yield ItemCrawled(source_id=dept["id"], item=notice)
             else:
                 logger.info(
                     "change_detected",
@@ -446,9 +446,9 @@ async def _emit_page(
                     title_changed=existing.title != item.title,
                     content_changed=old_hash is not None and old_hash != new_hash,
                 )
-                yield NoticeCrawled(
+                yield ItemCrawled(
                     source_id=dept["id"],
-                    notice=notice,
+                    item=notice,
                     previous=existing,
                     change=change,
                 )

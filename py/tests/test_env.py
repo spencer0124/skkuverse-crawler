@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from unittest.mock import patch
+from unittest.mock import Mock
 
 import pytest
 
@@ -103,20 +103,23 @@ class TestModeLabel:
 
 
 class TestValidation:
-    """Patch load_dotenv so .env file doesn't re-inject MONGO_URL.
-
-    Since PR 8 config loading no longer enforces MONGO_URL in any
+    """Since PR 8 config loading no longer enforces MONGO_URL in any
     environment: "no store" is a legitimate configuration once mongo is an
     optional dependency, and `notices --json` relies on it. The
     requirement moved to the two places that actually need a store —
     shared.db.get_client() and wiring's production profile gate — each
     with its own test.
+
+    These used to carry `@patch("skkuverse_crawler.env.load_dotenv")` each,
+    so a real `.env` could not re-inject the MONGO_URL they had just
+    deleted. The root conftest does that for every test now — three copies
+    of a workaround was three chances to forget it, and the bus tests are
+    where it got forgotten.
     """
 
     @pytest.mark.parametrize("env_name", ["production", "development", "test"])
-    @patch("skkuverse_crawler.env.load_dotenv")
     def test_missing_mongo_url_is_loadable_in_every_environment(
-        self, _mock_ld, monkeypatch, env_name
+        self, monkeypatch, env_name
     ):
         monkeypatch.setenv("CRAWLER_ENV", env_name)
         monkeypatch.delenv("MONGO_URL", raising=False)
@@ -124,8 +127,7 @@ class TestValidation:
         cfg = init_config(force=True)
         assert cfg.mongo_url is None
 
-    @patch("skkuverse_crawler.env.load_dotenv")
-    def test_asking_for_a_client_without_mongo_url_raises(self, _mock_ld, monkeypatch):
+    def test_asking_for_a_client_without_mongo_url_raises(self, monkeypatch):
         """The requirement did not disappear, it moved. Motor does not
         fail on a None URL — it quietly connects to localhost:27017."""
         import asyncio
@@ -139,8 +141,7 @@ class TestValidation:
         with pytest.raises(MongoUrlMissing, match="MONGO_URL"):
             asyncio.run(get_client())
 
-    @patch("skkuverse_crawler.env.load_dotenv")
-    def test_missing_mongo_url_ok_in_test(self, _mock_ld, monkeypatch):
+    def test_missing_mongo_url_ok_in_test(self, monkeypatch):
         monkeypatch.setenv("CRAWLER_ENV", "test")
         monkeypatch.delenv("MONGO_URL", raising=False)
         reset_config()
@@ -215,3 +216,148 @@ class TestImmutability:
         cfg = _init_fresh(monkeypatch, CRAWLER_ENV="test")
         with pytest.raises(AttributeError):
             cfg.env = CrawlerEnv.PRODUCTION  # type: ignore[misc]
+
+
+# ---------------------------------------------------------------------------
+# Bus family configuration (the module itself lands later)
+# ---------------------------------------------------------------------------
+
+
+class TestBusDatabase:
+    """Bus stores in its own database, so the suffixing has to work there too."""
+
+    def test_unset_is_none_rather_than_a_plausible_literal(self, monkeypatch):
+        """skkuverse-server requires the same variable with no default and
+        fails startup without it. A crawler that invented "bus_campus"
+        would write where the server is not reading — no error anywhere,
+        the app just serves nothing. So absent reads as absent and the
+        family gate refuses."""
+        monkeypatch.delenv("MONGO_DB_NAME_BUS_CAMPUS", raising=False)
+        cfg = _init_fresh(monkeypatch, CRAWLER_ENV="production")
+        assert cfg.mongo_bus_db_name is None
+
+    @pytest.mark.parametrize(
+        "crawler_env,expected",
+        [
+            ("production", "bus_campus"),
+            ("development", "bus_campus_dev"),
+            ("test", "bus_campus_test"),
+        ],
+    )
+    def test_a_set_name_gets_the_environment_suffix(
+        self, monkeypatch, crawler_env, expected
+    ):
+        """Matches skkuverse-server's devDbName exactly."""
+        cfg = _init_fresh(
+            monkeypatch,
+            CRAWLER_ENV=crawler_env,
+            MONGO_DB_NAME_BUS_CAMPUS="bus_campus",
+        )
+        assert cfg.mongo_bus_db_name == expected
+
+    def test_it_is_not_the_notices_database(self, monkeypatch):
+        """The whole reason get_db takes a name. Sharing one would put bus
+        cache documents in the collection the server reads notices from."""
+        cfg = _init_fresh(
+            monkeypatch, CRAWLER_ENV="production", MONGO_DB_NAME_BUS_CAMPUS="bus_campus"
+        )
+        assert cfg.mongo_bus_db_name != cfg.mongo_db_name
+
+
+class TestTheSuiteDoesNotReadTheDevelopersEnvFile:
+    """The guard for the failure that produced this class.
+
+    `load_dotenv` mutates `os.environ` permanently, so one `init_config()`
+    leaks every value in `py/.env` into the process for the rest of the
+    session. A test that deletes a variable and asserts "unset reads as
+    None" then watches `init_config(force=True)` put it straight back —
+    and passes anyway, until someone's `.env` grows that key. Four bus
+    tests below were green for exactly that reason and went red the moment
+    real credentials landed in `py/.env`.
+
+    CI has no `.env` at all, so this also keeps local and CI meaning the
+    same thing.
+    """
+
+    def test_load_dotenv_is_stubbed_for_every_test(self):
+        from skkuverse_crawler import env as env_module
+
+        assert isinstance(env_module.load_dotenv, Mock), (
+            "the root conftest must neutralise load_dotenv — without it the "
+            "suite reads whatever happens to be in this machine's py/.env"
+        )
+
+    def test_a_deleted_variable_stays_deleted(self, monkeypatch):
+        """The property every 'unset reads as None' test depends on."""
+        monkeypatch.setenv("SEOUL_BUS_SERVICE_KEY", "something")
+        assert _init_fresh(monkeypatch).seoul_bus_service_key == "something"
+
+        monkeypatch.delenv("SEOUL_BUS_SERVICE_KEY")
+        assert _init_fresh(monkeypatch).seoul_bus_service_key is None
+
+
+class TestBusSecrets:
+    """Absent means absent — the family gate reads these to decide whether
+    bus can run at all, so "" must not read as configured."""
+
+    def test_unset_secrets_are_none(self, monkeypatch):
+        for var in (
+            "SEOUL_BUS_SERVICE_KEY",
+            "NAVER_API_KEY_ID",
+            "NAVER_API_KEY",
+            "API_HSSC_NEW_PROD",
+            "API_HSSC_NEW_DEV",
+        ):
+            monkeypatch.delenv(var, raising=False)
+        cfg = _init_fresh(monkeypatch)
+        assert cfg.seoul_bus_service_key is None
+        assert cfg.naver_api_key_id is None
+        assert cfg.naver_api_key is None
+        assert cfg.hssc_api_url is None
+
+    def test_empty_string_is_treated_as_unset(self, monkeypatch):
+        cfg = _init_fresh(monkeypatch, SEOUL_BUS_SERVICE_KEY="")
+        assert cfg.seoul_bus_service_key is None
+
+    def test_a_set_key_survives_verbatim(self, monkeypatch):
+        cfg = _init_fresh(monkeypatch, SEOUL_BUS_SERVICE_KEY="abc%2Fdef")
+        assert cfg.seoul_bus_service_key == "abc%2Fdef"
+
+
+class TestHsscEndpointSelection:
+    """The whole URL is the credential, and there are two of them."""
+
+    def test_production_takes_prod(self, monkeypatch):
+        cfg = _init_fresh(
+            monkeypatch,
+            CRAWLER_ENV="production",
+            API_HSSC_NEW_PROD="https://prod.example/api",
+            API_HSSC_NEW_DEV="https://dev.example/api",
+        )
+        assert cfg.hssc_api_url == "https://prod.example/api"
+
+    def test_production_never_falls_back_to_dev(self, monkeypatch):
+        """Pointing the live crawler at a staging upstream is worse than not
+        crawling: it would publish staging data as real."""
+        monkeypatch.delenv("API_HSSC_NEW_PROD", raising=False)
+        cfg = _init_fresh(
+            monkeypatch, CRAWLER_ENV="production", API_HSSC_NEW_DEV="https://dev.example/api"
+        )
+        assert cfg.hssc_api_url is None
+
+    def test_development_prefers_dev(self, monkeypatch):
+        cfg = _init_fresh(
+            monkeypatch,
+            CRAWLER_ENV="development",
+            API_HSSC_NEW_PROD="https://prod.example/api",
+            API_HSSC_NEW_DEV="https://dev.example/api",
+        )
+        assert cfg.hssc_api_url == "https://dev.example/api"
+
+    def test_development_falls_back_to_prod(self, monkeypatch):
+        """A developer holding only one URL should still be able to run."""
+        monkeypatch.delenv("API_HSSC_NEW_DEV", raising=False)
+        cfg = _init_fresh(
+            monkeypatch, CRAWLER_ENV="development", API_HSSC_NEW_PROD="https://prod.example/api"
+        )
+        assert cfg.hssc_api_url == "https://prod.example/api"

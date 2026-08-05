@@ -17,6 +17,7 @@
 | [adr-005](adr-005-hakbu-board-remap.md) | 학부대학 게시판 개편 — hakbu 단일 복구 + 포털연동 슬라이스 폐기 | 채택됨 |
 | [adr-006](adr-006-core-plugin-split.md) | 코어/플러그인 분리 — 무상태 코어 + 3-포트 seam + 단일 배포물 extras | **제안됨** |
 | [adr-007](adr-007-atlas-auto-embedding.md) | **Atlas Automated Embedding 채택** (adr-001 대체) | **채택됨** (2026-08-01) |
+| [adr-008](adr-008-multi-module.md) | 두 번째 모듈 — 두 개의 아키타입, 가족 단위 조립, 선택적 실행 | **제안됨** (2026-08-04) |
 
 관련 문서: [search-architecture.md](../search-architecture.md) (설계), [search-mcp-plan.md](../search-mcp-plan.md) (단계별 작업 계획), [core-plugin-architecture.md](../core-plugin-architecture.md) (설계) + [core-plugin-plan.md](../core-plugin-plan.md) (단계별 작업 계획). MCP 서버 문서는 `skkuverse-ai/docs/explanation/mcp-server.md`로 이관됨 (크롤러 OSS 공개 계획 때문 — skkuverse-ai adr-001 참조).
 

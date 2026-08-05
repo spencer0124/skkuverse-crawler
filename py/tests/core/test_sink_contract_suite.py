@@ -16,15 +16,15 @@ from datetime import datetime, timezone
 import pytest
 
 from skkuverse_crawler.core.events import (
+    BatchCompleted,
     ChangeInfo,
     ContentRefreshed,
     CrawlEvent,
+    ItemCrawled,
     ItemFailed,
     ItemSkipped,
+    ItemUnchanged,
     ListFetchFailed,
-    NoticeCrawled,
-    NoticeUnchanged,
-    PageCompleted,
     SourceFinished,
     SourceStarted,
 )
@@ -42,9 +42,12 @@ from ..support.fake_mongo import FakeCollection
 WRITE_OPS = {"update_one", "bulk_write", "find_one_and_update", "insert_one"}
 
 
-def _sample() -> NoticeCrawled:
+SAMPLE_ARTICLE_NO = 4242
+
+
+def _sample() -> ItemCrawled:
     notice = Notice(
-        articleNo=4242,
+        articleNo=SAMPLE_ARTICLE_NO,
         title="계약 테스트 공지",
         category="일반",
         author="관리자",
@@ -61,29 +64,33 @@ def _sample() -> NoticeCrawled:
         crawledAt=datetime(2026, 3, 1, tzinfo=timezone.utc),
         contentHash="abc123",
     )
-    return NoticeCrawled(source_id=notice.sourceId, notice=notice)
+    return ItemCrawled(source_id=notice.sourceId, item=notice)
 
 
 # ── our own sinks satisfy the suite we hand out ───────────────────────────
 
 
 async def test_null_sink_conforms():
-    await assert_sink_contract(NullSink(), sample=_sample())
+    await assert_sink_contract(NullSink(), sample=_sample(), sample_article_no=SAMPLE_ARTICLE_NO)
 
 
 async def test_json_lines_sink_conforms():
     stream = io.StringIO()
-    await assert_sink_contract(JsonLinesSink(stream), sample=_sample())
+    await assert_sink_contract(
+        JsonLinesSink(stream), sample=_sample(), sample_article_no=SAMPLE_ARTICLE_NO
+    )
     lines = stream.getvalue().splitlines()
-    # The write tier really ran: a NoticeCrawled line and a ContentRefreshed
+    # The write tier really ran: a ItemCrawled line and a ContentRefreshed
     # line, and nothing from the progress tier leaked into the stream.
     assert len(lines) == 2, lines
-    assert all(json.loads(line)["articleNo"] == 4242 for line in lines)
+    assert all(json.loads(line)["articleNo"] == SAMPLE_ARTICLE_NO for line in lines)
 
 
 async def test_mongo_sink_conforms():
     collection = FakeCollection()
-    await assert_sink_contract(MongoSink(collection), sample=_sample())
+    await assert_sink_contract(
+        MongoSink(collection), sample=_sample(), sample_article_no=SAMPLE_ARTICLE_NO
+    )
 
 
 async def test_mongo_sink_conforms_with_a_history_bearing_sample():
@@ -91,9 +98,9 @@ async def test_mongo_sink_conforms_with_a_history_bearing_sample():
     UPDATED unconditionally instead of reading upserted_id), so it gets its
     own pass rather than riding on the plain-upsert one."""
     sample = _sample()
-    with_change = NoticeCrawled(
+    with_change = ItemCrawled(
         source_id=sample.source_id,
-        notice=sample.notice,
+        item=sample.item,
         change=ChangeInfo(
             old_hash="old",
             new_hash="new",
@@ -103,7 +110,9 @@ async def test_mongo_sink_conforms_with_a_history_bearing_sample():
             content_changed=False,
         ),
     )
-    await assert_sink_contract(MongoSink(FakeCollection()), sample=with_change)
+    await assert_sink_contract(
+        MongoSink(FakeCollection()), sample=with_change, sample_article_no=SAMPLE_ARTICLE_NO
+    )
 
 
 async def test_without_a_sample_nothing_is_stored():
@@ -133,16 +142,16 @@ async def test_a_sink_missing_flush_is_rejected():
 
 
 async def test_a_sink_that_reports_an_outcome_for_progress_is_rejected():
-    """PageCompleted stores nothing, so there is no outcome to report.
+    """BatchCompleted stores nothing, so there is no outcome to report.
     A sink returning one is mis-signalling to the runner's aggregation."""
 
     class _ChattyAboutProgress(NullSink):
         async def accept(self, event: CrawlEvent) -> Outcome | None:
-            if isinstance(event, PageCompleted):
+            if isinstance(event, BatchCompleted):
                 return Outcome.UPDATED
             return None
 
-    with pytest.raises(AssertionError, match="PageCompleted"):
+    with pytest.raises(AssertionError, match="BatchCompleted"):
         await assert_sink_contract(_ChattyAboutProgress())
 
 
@@ -152,13 +161,13 @@ async def test_a_sink_that_reports_an_outcome_for_progress_is_rejected():
 # exists for, and the only way to test it from the present.
 _ALL_KNOWN_EVENTS = (
     SourceStarted,
-    PageCompleted,
+    BatchCompleted,
     ListFetchFailed,
     SourceFinished,
     ItemFailed,
     ItemSkipped,
-    NoticeCrawled,
-    NoticeUnchanged,
+    ItemCrawled,
+    ItemUnchanged,
     ContentRefreshed,
 )
 
@@ -199,7 +208,7 @@ async def test_a_sink_that_raises_on_an_unknown_event_is_not_swallowed():
 
 
 async def test_a_sink_that_cannot_flush_an_empty_buffer_is_rejected():
-    """The runner flushes on every PageCompleted, including pages where
+    """The runner flushes on every BatchCompleted, including pages where
     nothing was buffered. A sink assuming otherwise dies on the first
     all-known page — the exception propagates rather than becoming an
     AssertionError, which is the more useful report."""
@@ -232,17 +241,20 @@ async def test_a_sink_returning_a_bare_string_for_a_notice_is_rejected():
 
     class _LegacyStrings(NullSink):
         async def accept(self, event: CrawlEvent) -> Outcome | None:
-            if isinstance(event, NoticeCrawled):
+            if isinstance(event, ItemCrawled):
                 return "updated"  # type: ignore[return-value]
             return None
 
     with pytest.raises(AssertionError, match="expected an Outcome"):
-        await assert_sink_contract(_LegacyStrings(), sample=_sample())
+        await assert_sink_contract(
+            _LegacyStrings(), sample=_sample(), sample_article_no=SAMPLE_ARTICLE_NO
+        )
 
 
 async def test_a_non_notice_sample_is_rejected():
-    with pytest.raises(AssertionError, match="sample must be a NoticeCrawled"):
+    with pytest.raises(AssertionError, match="sample must be an ItemCrawled"):
         await assert_sink_contract(
             NullSink(),
-            sample=PageCompleted(source_id="x", page=0),  # type: ignore[arg-type]
+            sample=BatchCompleted(source_id="x", index=0),  # type: ignore[arg-type]
+            sample_article_no=SAMPLE_ARTICLE_NO,
         )

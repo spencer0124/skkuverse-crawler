@@ -8,20 +8,20 @@ from skkuverse_crawler.plugins.health.logic import (
     format_alert_message,
     format_daily_summary,
 )
-from skkuverse_crawler.core.results import SourceResult as DeptResult
+from skkuverse_crawler.core.results import SourceResult
 
 NOW = datetime(2026, 7, 29, 3, 0, tzinfo=timezone.utc)
 
 
-def _down(dept_id: str = "sls-special", error: str = "404 Not Found") -> DeptResult:
-    return DeptResult(
-        dept_id=dept_id, dept_name="법학전문대학원",
+def _down(source_id: str = "sls-special", error: str = "404 Not Found") -> SourceResult:
+    return SourceResult(
+        source_id=source_id, source_name="법학전문대학원",
         errors=1, source_down=True, last_error=error,
     )
 
 
-def _ok(dept_id: str = "sls-special", inserted: int = 0) -> DeptResult:
-    return DeptResult(dept_id=dept_id, dept_name="법학전문대학원", inserted=inserted)
+def _ok(source_id: str = "sls-special", inserted: int = 0) -> SourceResult:
+    return SourceResult(source_id=source_id, source_name="법학전문대학원", inserted=inserted)
 
 
 class TestDecideTransitions:
@@ -71,7 +71,7 @@ class TestDecideTransitions:
 
     def test_partial_errors_not_source_down(self):
         """상세 페이지 부분 실패(errors>0, source_down=False)는 정상 취급."""
-        r = DeptResult(dept_id="sco", dept_name="글로벌융합학부(공통)", errors=2)
+        r = SourceResult(source_id="sco", source_name="글로벌융합학부(공통)", errors=2)
         prev = {"sco": {"consecutiveFailures": 2, "alerted": False}}
         tr = decide_transitions(prev, [r], NOW)
         assert tr.new_states["sco"]["consecutiveFailures"] == 0
@@ -146,3 +146,48 @@ class TestDailySummaryPlugins:
         label — the parameter defaults to empty so the existing callers and
         their tests are unaffected."""
         assert "플러그인" not in self._summary()
+
+
+class TestPerCallerThreshold:
+    """Ticks are not comparable across modules. Three consecutive failures
+    is ninety minutes of a half-hourly crawl and thirty seconds of a
+    ten-second poller, so both the firing rule and the number printed in
+    the message have to come from the caller."""
+
+    def test_a_higher_threshold_delays_the_alert(self):
+        prev = {"sls-special": {"consecutiveFailures": 2, "alerted": False}}
+        tr = decide_transitions(prev, [_down()], NOW, threshold=18)
+        assert tr.alerts == []
+
+    def test_and_still_fires_once_reached(self):
+        prev = {"sls-special": {"consecutiveFailures": 17, "alerted": False}}
+        tr = decide_transitions(prev, [_down()], NOW, threshold=18)
+        assert len(tr.alerts) == 1
+
+    def test_the_message_states_the_threshold_that_actually_fired(self):
+        """Printing the module-level constant while a different number
+        decided would make the alert quietly untrue."""
+        prev = {"sls-special": {"consecutiveFailures": 17, "alerted": False}}
+        tr = decide_transitions(prev, [_down()], NOW, threshold=18)
+        assert "연속 18틱" in format_alert_message(tr, threshold=18)
+
+
+class TestOriginLabel:
+    """Once modules are split across containers, more than one process
+    posts to the same webhook."""
+
+    def _alerting(self):
+        prev = {"sls-special": {"consecutiveFailures": THRESHOLD - 1, "alerted": False}}
+        return decide_transitions(prev, [_down()], NOW)
+
+    def test_a_label_names_the_origin(self):
+        assert "[bus]" in format_alert_message(self._alerting(), label="bus")
+
+    def test_recoveries_are_labelled_too(self):
+        prev = {"sls-special": {"alerted": True}}
+        tr = decide_transitions(prev, [_ok()], NOW)
+        assert "[bus]" in format_alert_message(tr, label="bus")
+
+    def test_no_label_leaves_the_message_as_it_was(self):
+        message = format_alert_message(self._alerting())
+        assert "[" not in message.splitlines()[0]

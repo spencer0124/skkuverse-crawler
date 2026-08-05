@@ -23,6 +23,7 @@ from .core.settings import (
     CrawlerEnv,
     db_name_for,
     default_ai_service_url,
+    endpoint_for,
 )
 
 __all__ = [
@@ -51,6 +52,14 @@ def settings_from_env() -> Config:
     raw_dept = os.getenv("CRAWL_SOURCE_FILTER", "").strip()
     dept_filter = tuple(d.strip() for d in raw_dept.split(",") if d.strip()) or None
 
+    # Bus lives in its own database, not alongside notices. Deliberately no
+    # default: skkuverse-server requires the same variable with none and
+    # fails startup without it, so a crawler that invented "bus_campus"
+    # would write where the server is not reading — no error anywhere, the
+    # app just serves nothing. Absent reads as absent and the family gate
+    # refuses.
+    bus_db = os.getenv("MONGO_DB_NAME_BUS_CAMPUS") or None
+
     return Config(
         env=env,
         mongo_url=os.getenv("MONGO_URL"),
@@ -61,6 +70,17 @@ def settings_from_env() -> Config:
         dispatch_url=os.getenv("DISPATCH_URL") or None,
         internal_dispatch_token=os.getenv("INTERNAL_DISPATCH_TOKEN") or None,
         discord_webhook_url=os.getenv("DISCORD_WEBHOOK_URL") or None,
+        mongo_bus_db_name=db_name_for(bus_db, env) if bus_db else None,
+        # The whole URL is the credential for this upstream — there is no
+        # separate key — so it is read like one and never logged.
+        hssc_api_url=endpoint_for(
+            env,
+            prod=os.getenv("API_HSSC_NEW_PROD") or None,
+            dev=os.getenv("API_HSSC_NEW_DEV") or None,
+        ),
+        seoul_bus_service_key=os.getenv("SEOUL_BUS_SERVICE_KEY") or None,
+        naver_api_key_id=os.getenv("NAVER_API_KEY_ID") or None,
+        naver_api_key=os.getenv("NAVER_API_KEY") or None,
     )
 
 

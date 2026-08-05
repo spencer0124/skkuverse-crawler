@@ -4,6 +4,8 @@
 
 > **상태**: 설계 v2. **PR 0~9 구현 완료 (2026-08-02) — 로드맵 종료.** Stage/Pipeline은 `core/pipeline.py`(모양) + `modules/notices/stages.py`(구체 스테이지, 설계 스케치의 `core/content/`와 다름: 사유는 plan.md PR 7 확정 사항), 조립 시점 검증은 `wiring.py`의 `_require`, flush 계약은 `core/runner.py`. PR 8(extras) — optional-dependencies + 지연 click group + `env.py`/`core/settings.py` 분리 + production 부팅 거부(`wiring.ProfileError`) + `core/sinks.JsonLinesSink`. PR 9(공개 문서) — `core/__init__` 재수출 + `core/testing.assert_sink_contract` 출하 + 버전 0.1.0 + 레포 루트 README(CI가 실행하는 예제) + [sink 작성자 가이드](sink-authors-guide.md).
 >
+> **⚠️ 이벤트 이름은 2026-08-04에 바뀌었다.** 이 문서의 `NoticeCrawled` / `NoticeUnchanged` / `PageCompleted`는 각각 `ItemCrawled`(필드 `notice` → `item`) / `ItemUnchanged(article_no, fields)` / `BatchCompleted(index)`이고, `SourceResult.dept_id`/`dept_name`은 `source_id`/`source_name`이다. 당시 기록이므로 본문은 그대로 둔다 — 복붙 전에 [sink-authors-guide.md](sink-authors-guide.md)를 볼 것. 근거는 [decisions/adr-006](decisions/adr-006-core-plugin-split.md) 2026-08-04 개정.
+>
 > **⚠️ 이 문서는 설계안이다. 현재 코드 배치는 [architecture.md](architecture.md) §Directory Layout이 정답이다.**
 >
 > 아래 §레이아웃은 **구현 전 스케치**이며 실제와 9곳 다르다. 지우지 않고 남기는 이유는 무엇을 설계했고 무엇이 살아남았는지가 그 자체로 기록이기 때문이다 — 어긋난 지점은 전부 여기 적는다.

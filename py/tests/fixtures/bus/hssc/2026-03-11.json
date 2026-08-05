@@ -1,0 +1,1091 @@
+[
+  {
+    "at": "2026-03-11T00:00:00+09:00",
+    "payload": []
+  },
+  {
+    "at": "2026-03-11T00:30:00+09:00",
+    "payload": []
+  },
+  {
+    "at": "2026-03-11T01:00:00+09:00",
+    "payload": []
+  },
+  {
+    "at": "2026-03-11T01:30:00+09:00",
+    "payload": []
+  },
+  {
+    "at": "2026-03-11T02:00:00+09:00",
+    "payload": []
+  },
+  {
+    "at": "2026-03-11T02:30:00+09:00",
+    "payload": []
+  },
+  {
+    "at": "2026-03-11T03:00:00+09:00",
+    "payload": []
+  },
+  {
+    "at": "2026-03-11T03:30:00+09:00",
+    "payload": []
+  },
+  {
+    "at": "2026-03-11T04:00:00+09:00",
+    "payload": []
+  },
+  {
+    "at": "2026-03-11T04:30:00+09:00",
+    "payload": []
+  },
+  {
+    "at": "2026-03-11T05:00:00+09:00",
+    "payload": []
+  },
+  {
+    "at": "2026-03-11T05:30:00+09:00",
+    "payload": []
+  },
+  {
+    "at": "2026-03-11T06:00:00+09:00",
+    "payload": []
+  },
+  {
+    "at": "2026-03-11T06:30:00+09:00",
+    "payload": []
+  },
+  {
+    "at": "2026-03-11T07:00:00+09:00",
+    "payload": [
+      {
+        "line_no": "32151",
+        "inout": "EMERGENCY",
+        "stop_no": "285709",
+        "seq": "5",
+        "stop_name": "농구장정류소",
+        "get_date": "2026-03-11 오전 6:58:08",
+        "sequence": "1",
+        "stationName": "농구장 (셔틀버스정류소)",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 06:58:08",
+        "estimatedTime": 112,
+        "isLastBus": false
+      }
+    ]
+  },
+  {
+    "at": "2026-03-11T07:30:00+09:00",
+    "payload": [
+      {
+        "line_no": "32151",
+        "inout": "ENTERED",
+        "stop_no": "285711",
+        "seq": "7",
+        "stop_name": "문묘입구[정문]-하교",
+        "get_date": "2026-03-11 오전 7:29:47",
+        "sequence": "3",
+        "stationName": "정문",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 07:29:47",
+        "estimatedTime": 13,
+        "isLastBus": false
+      },
+      {
+        "line_no": "32149",
+        "inout": "ENTERED",
+        "stop_no": "285684",
+        "seq": "2",
+        "stop_name": "성균관대입구사거리",
+        "get_date": "2026-03-11 오전 7:28:57",
+        "sequence": "9",
+        "stationName": "성균관대입구사거리",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 07:28:57",
+        "estimatedTime": 63,
+        "isLastBus": false
+      }
+    ]
+  },
+  {
+    "at": "2026-03-11T08:00:00+09:00",
+    "payload": [
+      {
+        "line_no": "32149",
+        "inout": "ENTERED",
+        "stop_no": "285682",
+        "seq": "0",
+        "stop_name": "혜화역 1번출구 셔틀버스 정류소",
+        "get_date": "2026-03-11 오전 7:57:27",
+        "sequence": "7",
+        "stationName": "혜화역 1번출구 (셔틀버스정류소)",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 07:57:27",
+        "estimatedTime": 153,
+        "isLastBus": false
+      },
+      {
+        "line_no": "32152",
+        "inout": "LEFT",
+        "stop_no": "285718",
+        "seq": "3",
+        "stop_name": "문묘입구[정문]-등교",
+        "get_date": "2026-03-11 오전 7:56:56",
+        "sequence": "10",
+        "stationName": "정문",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 07:56:56",
+        "estimatedTime": 184,
+        "isLastBus": false
+      }
+    ]
+  },
+  {
+    "at": "2026-03-11T08:30:00+09:00",
+    "payload": [
+      {
+        "line_no": "32151",
+        "inout": "LEFT",
+        "stop_no": "285712",
+        "seq": "8",
+        "stop_name": "올림픽기념국민생활관",
+        "get_date": "2026-03-11 오전 8:29:15",
+        "sequence": "4",
+        "stationName": "올림픽기념국민생활관 [하차전용]",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 08:29:15",
+        "estimatedTime": 45,
+        "isLastBus": false
+      },
+      {
+        "line_no": "32149",
+        "inout": "ENTERED",
+        "stop_no": "285683",
+        "seq": "1",
+        "stop_name": "혜화동로터리",
+        "get_date": "2026-03-11 오전 8:29:49",
+        "sequence": "8",
+        "stationName": "혜화동로터리 [미정차]",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 08:29:49",
+        "estimatedTime": 11,
+        "isLastBus": false
+      },
+      {
+        "line_no": "32152",
+        "inout": "ENTERED",
+        "stop_no": "285720",
+        "seq": "5",
+        "stop_name": "농구장정류소",
+        "get_date": "2026-03-11 오전 8:29:43",
+        "sequence": "1",
+        "stationName": "농구장 (셔틀버스정류소)",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 08:29:43",
+        "estimatedTime": 17,
+        "isLastBus": false
+      }
+    ]
+  },
+  {
+    "at": "2026-03-11T09:00:00+09:00",
+    "payload": [
+      {
+        "line_no": "32151",
+        "inout": "LEFT_LAST",
+        "stop_no": "285714",
+        "seq": "10",
+        "stop_name": "혜화동로터리",
+        "get_date": "2026-03-11 오전 8:58:45",
+        "sequence": "6",
+        "stationName": "혜화동로터리 [미정차]",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 08:58:45",
+        "estimatedTime": 75,
+        "isLastBus": false
+      },
+      {
+        "line_no": "32149",
+        "inout": "LEFT",
+        "stop_no": "285682",
+        "seq": "0",
+        "stop_name": "혜화역 1번출구 셔틀버스 정류소",
+        "get_date": "2026-03-11 오전 8:59:16",
+        "sequence": "7",
+        "stationName": "혜화역 1번출구 (셔틀버스정류소)",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 08:59:16",
+        "estimatedTime": 44,
+        "isLastBus": false
+      },
+      {
+        "line_no": "32150",
+        "inout": "ENTERED",
+        "stop_no": "285698",
+        "seq": "5",
+        "stop_name": "농구장정류소",
+        "get_date": "2026-03-11 오전 8:59:17",
+        "sequence": "1",
+        "stationName": "농구장 (셔틀버스정류소)",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 08:59:17",
+        "estimatedTime": 43,
+        "isLastBus": false
+      },
+      {
+        "line_no": "32152",
+        "inout": "LEFT",
+        "stop_no": "285717",
+        "seq": "2",
+        "stop_name": "성균관대입구사거리",
+        "get_date": "2026-03-11 오전 8:59:25",
+        "sequence": "9",
+        "stationName": "성균관대입구사거리",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 08:59:25",
+        "estimatedTime": 35,
+        "isLastBus": false
+      }
+    ]
+  },
+  {
+    "at": "2026-03-11T09:30:00+09:00",
+    "payload": [
+      {
+        "line_no": "32151",
+        "inout": "ENTERED",
+        "stop_no": "285704",
+        "seq": "0",
+        "stop_name": "혜화역 1번출구 셔틀버스 정류소",
+        "get_date": "2026-03-11 오전 9:28:16",
+        "sequence": "7",
+        "stationName": "혜화역 1번출구 (셔틀버스정류소)",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 09:28:16",
+        "estimatedTime": 104,
+        "isLastBus": false
+      },
+      {
+        "line_no": "32149",
+        "inout": "ENTERED",
+        "stop_no": "285687",
+        "seq": "5",
+        "stop_name": "농구장정류소",
+        "get_date": "2026-03-11 오전 9:28:40",
+        "sequence": "1",
+        "stationName": "농구장 (셔틀버스정류소)",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 09:28:40",
+        "estimatedTime": 80,
+        "isLastBus": false
+      },
+      {
+        "line_no": "32150",
+        "inout": "ENTERED",
+        "stop_no": "285701",
+        "seq": "8",
+        "stop_name": "올림픽기념국민생활관",
+        "get_date": "2026-03-11 오전 9:29:33",
+        "sequence": "4",
+        "stationName": "올림픽기념국민생활관 [하차전용]",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 09:29:33",
+        "estimatedTime": 27,
+        "isLastBus": false
+      },
+      {
+        "line_no": "32152",
+        "inout": "ENTERED",
+        "stop_no": "285724",
+        "seq": "9",
+        "stop_name": "서울혜화동우체국",
+        "get_date": "2026-03-11 오전 9:29:37",
+        "sequence": "5",
+        "stationName": "혜화동우체국 [하차전용]",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 09:29:37",
+        "estimatedTime": 23,
+        "isLastBus": false
+      }
+    ]
+  },
+  {
+    "at": "2026-03-11T10:00:00+09:00",
+    "payload": [
+      {
+        "line_no": "32151",
+        "inout": "LEFT",
+        "stop_no": "285706",
+        "seq": "2",
+        "stop_name": "성균관대입구사거리",
+        "get_date": "2026-03-11 오전 9:59:49",
+        "sequence": "9",
+        "stationName": "성균관대입구사거리",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 09:59:49",
+        "estimatedTime": 11,
+        "isLastBus": false
+      },
+      {
+        "line_no": "32150",
+        "inout": "ENTERED",
+        "stop_no": "285693",
+        "seq": "0",
+        "stop_name": "혜화역 1번출구 셔틀버스 정류소",
+        "get_date": "2026-03-11 오전 9:59:03",
+        "sequence": "7",
+        "stationName": "혜화역 1번출구 (셔틀버스정류소)",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 09:59:03",
+        "estimatedTime": 57,
+        "isLastBus": false
+      },
+      {
+        "line_no": "32152",
+        "inout": "ENTERED",
+        "stop_no": "285723",
+        "seq": "8",
+        "stop_name": "올림픽기념국민생활관",
+        "get_date": "2026-03-11 오전 9:59:41",
+        "sequence": "4",
+        "stationName": "올림픽기념국민생활관 [하차전용]",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 09:59:41",
+        "estimatedTime": 19,
+        "isLastBus": false
+      }
+    ]
+  },
+  {
+    "at": "2026-03-11T10:30:00+09:00",
+    "payload": [
+      {
+        "line_no": "32072",
+        "inout": "LEFT",
+        "stop_no": "284255",
+        "seq": "4",
+        "stop_name": "600주년기념관 앞-등교",
+        "get_date": "2026-03-11 오전 10:24:42",
+        "sequence": "11",
+        "stationName": "600주년기념관",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 10:24:42",
+        "estimatedTime": 318,
+        "isLastBus": false
+      },
+      {
+        "line_no": "32151",
+        "inout": "ENTERED",
+        "stop_no": "285709",
+        "seq": "5",
+        "stop_name": "농구장정류소",
+        "get_date": "2026-03-11 오전 10:27:43",
+        "sequence": "1",
+        "stationName": "농구장 (셔틀버스정류소)",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 10:27:43",
+        "estimatedTime": 137,
+        "isLastBus": false
+      },
+      {
+        "line_no": "32149",
+        "inout": "LEFT",
+        "stop_no": "285689",
+        "seq": "7",
+        "stop_name": "문묘입구[정문]-하교",
+        "get_date": "2026-03-11 오전 10:28:41",
+        "sequence": "3",
+        "stationName": "정문",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 10:28:41",
+        "estimatedTime": 79,
+        "isLastBus": false
+      },
+      {
+        "line_no": "32150",
+        "inout": "ENTERED",
+        "stop_no": "285694",
+        "seq": "1",
+        "stop_name": "혜화동로터리",
+        "get_date": "2026-03-11 오전 10:29:45",
+        "sequence": "8",
+        "stationName": "혜화동로터리 [미정차]",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 10:29:45",
+        "estimatedTime": 15,
+        "isLastBus": false
+      },
+      {
+        "line_no": "32152",
+        "inout": "LEFT_LAST",
+        "stop_no": "285725",
+        "seq": "10",
+        "stop_name": "혜화동로터리",
+        "get_date": "2026-03-11 오전 10:29:47",
+        "sequence": "6",
+        "stationName": "혜화동로터리 [미정차]",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 10:29:47",
+        "estimatedTime": 13,
+        "isLastBus": false
+      }
+    ]
+  },
+  {
+    "at": "2026-03-11T11:00:00+09:00",
+    "payload": [
+      {
+        "line_no": "32072",
+        "inout": "ENTERED",
+        "stop_no": "284259",
+        "seq": "8",
+        "stop_name": "올림픽기념국민생활관",
+        "get_date": "2026-03-11 오전 10:59:13",
+        "sequence": "4",
+        "stationName": "올림픽기념국민생활관 [하차전용]",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 10:59:13",
+        "estimatedTime": 47,
+        "isLastBus": false
+      },
+      {
+        "line_no": "32149",
+        "inout": "ENTERED",
+        "stop_no": "285682",
+        "seq": "0",
+        "stop_name": "혜화역 1번출구 셔틀버스 정류소",
+        "get_date": "2026-03-11 오전 10:59:29",
+        "sequence": "7",
+        "stationName": "혜화역 1번출구 (셔틀버스정류소)",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 10:59:29",
+        "estimatedTime": 31,
+        "isLastBus": false
+      },
+      {
+        "line_no": "32150",
+        "inout": "ENTERED",
+        "stop_no": "285698",
+        "seq": "5",
+        "stop_name": "농구장정류소",
+        "get_date": "2026-03-11 오전 10:57:13",
+        "sequence": "1",
+        "stationName": "농구장 (셔틀버스정류소)",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 10:57:13",
+        "estimatedTime": 167,
+        "isLastBus": false
+      },
+      {
+        "line_no": "32152",
+        "inout": "LEFT",
+        "stop_no": "285717",
+        "seq": "2",
+        "stop_name": "성균관대입구사거리",
+        "get_date": "2026-03-11 오전 10:59:35",
+        "sequence": "9",
+        "stationName": "성균관대입구사거리",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 10:59:35",
+        "estimatedTime": 25,
+        "isLastBus": false
+      }
+    ]
+  },
+  {
+    "at": "2026-03-11T11:30:00+09:00",
+    "payload": [
+      {
+        "line_no": "32151",
+        "inout": "LEFT",
+        "stop_no": "285712",
+        "seq": "8",
+        "stop_name": "올림픽기념국민생활관",
+        "get_date": "2026-03-11 오전 11:29:29",
+        "sequence": "4",
+        "stationName": "올림픽기념국민생활관 [하차전용]",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 11:29:29",
+        "estimatedTime": 31,
+        "isLastBus": false
+      },
+      {
+        "line_no": "32152",
+        "inout": "ENTERED",
+        "stop_no": "285720",
+        "seq": "5",
+        "stop_name": "농구장정류소",
+        "get_date": "2026-03-11 오전 11:28:09",
+        "sequence": "1",
+        "stationName": "농구장 (셔틀버스정류소)",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 11:28:09",
+        "estimatedTime": 111,
+        "isLastBus": false
+      }
+    ]
+  },
+  {
+    "at": "2026-03-11T12:00:00+09:00",
+    "payload": [
+      {
+        "line_no": "32072",
+        "inout": "LEFT",
+        "stop_no": "284259",
+        "seq": "8",
+        "stop_name": "올림픽기념국민생활관",
+        "get_date": "2026-03-11 오전 11:59:02",
+        "sequence": "4",
+        "stationName": "올림픽기념국민생활관 [하차전용]",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 11:59:02",
+        "estimatedTime": 58,
+        "isLastBus": false
+      },
+      {
+        "line_no": "32149",
+        "inout": "ENTERED",
+        "stop_no": "285684",
+        "seq": "2",
+        "stop_name": "성균관대입구사거리",
+        "get_date": "2026-03-11 오전 11:59:12",
+        "sequence": "9",
+        "stationName": "성균관대입구사거리",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 11:59:12",
+        "estimatedTime": 48,
+        "isLastBus": false
+      },
+      {
+        "line_no": "32152",
+        "inout": "LEFT",
+        "stop_no": "285719",
+        "seq": "4",
+        "stop_name": "600주년기념관 앞-등교",
+        "get_date": "2026-03-11 오전 11:59:45",
+        "sequence": "11",
+        "stationName": "600주년기념관",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 11:59:45",
+        "estimatedTime": 15,
+        "isLastBus": false
+      }
+    ]
+  },
+  {
+    "at": "2026-03-11T12:30:00+09:00",
+    "payload": [
+      {
+        "line_no": "32149",
+        "inout": "LEFT",
+        "stop_no": "285682",
+        "seq": "0",
+        "stop_name": "혜화역 1번출구 셔틀버스 정류소",
+        "get_date": "2026-03-11 오후 12:29:03",
+        "sequence": "7",
+        "stationName": "혜화역 1번출구 (셔틀버스정류소)",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 12:29:03",
+        "estimatedTime": 57,
+        "isLastBus": false
+      }
+    ]
+  },
+  {
+    "at": "2026-03-11T13:00:00+09:00",
+    "payload": [
+      {
+        "line_no": "32149",
+        "inout": "ENTERED",
+        "stop_no": "285684",
+        "seq": "2",
+        "stop_name": "성균관대입구사거리",
+        "get_date": "2026-03-11 오후 12:59:51",
+        "sequence": "9",
+        "stationName": "성균관대입구사거리",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 12:59:51",
+        "estimatedTime": 9,
+        "isLastBus": false
+      },
+      {
+        "line_no": "32150",
+        "inout": "LEFT",
+        "stop_no": "285697",
+        "seq": "4",
+        "stop_name": "600주년기념관 앞-등교",
+        "get_date": "2026-03-11 오후 12:52:17",
+        "sequence": "11",
+        "stationName": "600주년기념관",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 12:52:17",
+        "estimatedTime": 463,
+        "isLastBus": false
+      },
+      {
+        "line_no": "32152",
+        "inout": "ENTERED",
+        "stop_no": "285719",
+        "seq": "4",
+        "stop_name": "600주년기념관 앞-등교",
+        "get_date": "2026-03-11 오후 12:59:37",
+        "sequence": "11",
+        "stationName": "600주년기념관",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 12:59:37",
+        "estimatedTime": 23,
+        "isLastBus": false
+      }
+    ]
+  },
+  {
+    "at": "2026-03-11T13:30:00+09:00",
+    "payload": [
+      {
+        "line_no": "32149",
+        "inout": "LEFT",
+        "stop_no": "285683",
+        "seq": "1",
+        "stop_name": "혜화동로터리",
+        "get_date": "2026-03-11 오후 1:29:37",
+        "sequence": "8",
+        "stationName": "혜화동로터리 [미정차]",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 13:29:37",
+        "estimatedTime": 23,
+        "isLastBus": false
+      }
+    ]
+  },
+  {
+    "at": "2026-03-11T14:00:00+09:00",
+    "payload": [
+      {
+        "line_no": "32149",
+        "inout": "ENTERED",
+        "stop_no": "285682",
+        "seq": "0",
+        "stop_name": "혜화역 1번출구 셔틀버스 정류소",
+        "get_date": "2026-03-11 오후 1:55:49",
+        "sequence": "7",
+        "stationName": "혜화역 1번출구 (셔틀버스정류소)",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 13:55:49",
+        "estimatedTime": 251,
+        "isLastBus": false
+      },
+      {
+        "line_no": "32152",
+        "inout": "ENTERED",
+        "stop_no": "285720",
+        "seq": "5",
+        "stop_name": "농구장정류소",
+        "get_date": "2026-03-11 오후 1:59:37",
+        "sequence": "1",
+        "stationName": "농구장 (셔틀버스정류소)",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 13:59:37",
+        "estimatedTime": 23,
+        "isLastBus": false
+      }
+    ]
+  },
+  {
+    "at": "2026-03-11T14:30:00+09:00",
+    "payload": [
+      {
+        "line_no": "32149",
+        "inout": "LEFT",
+        "stop_no": "285683",
+        "seq": "1",
+        "stop_name": "혜화동로터리",
+        "get_date": "2026-03-11 오후 2:29:49",
+        "sequence": "8",
+        "stationName": "혜화동로터리 [미정차]",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 14:29:49",
+        "estimatedTime": 11,
+        "isLastBus": false
+      },
+      {
+        "line_no": "32152",
+        "inout": "ENTERED",
+        "stop_no": "285719",
+        "seq": "4",
+        "stop_name": "600주년기념관 앞-등교",
+        "get_date": "2026-03-11 오후 2:29:27",
+        "sequence": "11",
+        "stationName": "600주년기념관",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 14:29:27",
+        "estimatedTime": 33,
+        "isLastBus": false
+      }
+    ]
+  },
+  {
+    "at": "2026-03-11T15:00:00+09:00",
+    "payload": [
+      {
+        "line_no": "32152",
+        "inout": "ENTERED",
+        "stop_no": "285720",
+        "seq": "5",
+        "stop_name": "농구장정류소",
+        "get_date": "2026-03-11 오후 2:58:36",
+        "sequence": "1",
+        "stationName": "농구장 (셔틀버스정류소)",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 14:58:36",
+        "estimatedTime": 84,
+        "isLastBus": false
+      }
+    ]
+  },
+  {
+    "at": "2026-03-11T15:30:00+09:00",
+    "payload": [
+      {
+        "line_no": "32149",
+        "inout": "ENTERED",
+        "stop_no": "285684",
+        "seq": "2",
+        "stop_name": "성균관대입구사거리",
+        "get_date": "2026-03-11 오후 3:28:56",
+        "sequence": "9",
+        "stationName": "성균관대입구사거리",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 15:28:56",
+        "estimatedTime": 64,
+        "isLastBus": false
+      }
+    ]
+  },
+  {
+    "at": "2026-03-11T16:00:00+09:00",
+    "payload": []
+  },
+  {
+    "at": "2026-03-11T16:30:00+09:00",
+    "payload": [
+      {
+        "line_no": "32149",
+        "inout": "LEFT",
+        "stop_no": "285682",
+        "seq": "0",
+        "stop_name": "혜화역 1번출구 셔틀버스 정류소",
+        "get_date": "2026-03-11 오후 4:29:08",
+        "sequence": "7",
+        "stationName": "혜화역 1번출구 (셔틀버스정류소)",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 16:29:08",
+        "estimatedTime": 52,
+        "isLastBus": false
+      },
+      {
+        "line_no": "32152",
+        "inout": "ENTERED",
+        "stop_no": "285720",
+        "seq": "5",
+        "stop_name": "농구장정류소",
+        "get_date": "2026-03-11 오후 4:27:18",
+        "sequence": "1",
+        "stationName": "농구장 (셔틀버스정류소)",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 16:27:18",
+        "estimatedTime": 162,
+        "isLastBus": false
+      }
+    ]
+  },
+  {
+    "at": "2026-03-11T17:00:00+09:00",
+    "payload": [
+      {
+        "line_no": "32072",
+        "inout": "LEFT_LAST",
+        "stop_no": "284434",
+        "seq": "10",
+        "stop_name": "혜화동로터리",
+        "get_date": "2026-03-11 오후 4:58:15",
+        "sequence": "6",
+        "stationName": "혜화동로터리 [미정차]",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 16:58:15",
+        "estimatedTime": 105,
+        "isLastBus": false
+      },
+      {
+        "line_no": "32149",
+        "inout": "ENTERED",
+        "stop_no": "285684",
+        "seq": "2",
+        "stop_name": "성균관대입구사거리",
+        "get_date": "2026-03-11 오후 4:59:12",
+        "sequence": "9",
+        "stationName": "성균관대입구사거리",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 16:59:12",
+        "estimatedTime": 48,
+        "isLastBus": false
+      }
+    ]
+  },
+  {
+    "at": "2026-03-11T17:30:00+09:00",
+    "payload": []
+  },
+  {
+    "at": "2026-03-11T18:00:00+09:00",
+    "payload": [
+      {
+        "line_no": "32072",
+        "inout": "LEFT",
+        "stop_no": "284259",
+        "seq": "8",
+        "stop_name": "올림픽기념국민생활관",
+        "get_date": "2026-03-11 오후 5:58:25",
+        "sequence": "4",
+        "stationName": "올림픽기념국민생활관 [하차전용]",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 17:58:25",
+        "estimatedTime": 95,
+        "isLastBus": false
+      },
+      {
+        "line_no": "32151",
+        "inout": "LEFT",
+        "stop_no": "285709",
+        "seq": "5",
+        "stop_name": "농구장정류소",
+        "get_date": "2026-03-11 오후 5:59:36",
+        "sequence": "1",
+        "stationName": "농구장 (셔틀버스정류소)",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 17:59:36",
+        "estimatedTime": 24,
+        "isLastBus": false
+      }
+    ]
+  },
+  {
+    "at": "2026-03-11T18:30:00+09:00",
+    "payload": []
+  },
+  {
+    "at": "2026-03-11T19:00:00+09:00",
+    "payload": [
+      {
+        "line_no": "32152",
+        "inout": "ENTERED",
+        "stop_no": "285720",
+        "seq": "5",
+        "stop_name": "농구장정류소",
+        "get_date": "2026-03-11 오후 6:58:38",
+        "sequence": "1",
+        "stationName": "농구장 (셔틀버스정류소)",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 18:58:38",
+        "estimatedTime": 82,
+        "isLastBus": false
+      }
+    ]
+  },
+  {
+    "at": "2026-03-11T19:30:00+09:00",
+    "payload": [
+      {
+        "line_no": "32151",
+        "inout": "ENTERED",
+        "stop_no": "285709",
+        "seq": "5",
+        "stop_name": "농구장정류소",
+        "get_date": "2026-03-11 오후 7:29:22",
+        "sequence": "1",
+        "stationName": "농구장 (셔틀버스정류소)",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 19:29:22",
+        "estimatedTime": 38,
+        "isLastBus": false
+      }
+    ]
+  },
+  {
+    "at": "2026-03-11T20:00:00+09:00",
+    "payload": [
+      {
+        "line_no": "32152",
+        "inout": "LEFT_LAST",
+        "stop_no": "285725",
+        "seq": "10",
+        "stop_name": "혜화동로터리",
+        "get_date": "2026-03-11 오후 7:58:15",
+        "sequence": "6",
+        "stationName": "혜화동로터리 [미정차]",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 19:58:15",
+        "estimatedTime": 105,
+        "isLastBus": false
+      }
+    ]
+  },
+  {
+    "at": "2026-03-11T20:30:00+09:00",
+    "payload": [
+      {
+        "line_no": "32151",
+        "inout": "ENTERED",
+        "stop_no": "285709",
+        "seq": "5",
+        "stop_name": "농구장정류소",
+        "get_date": "2026-03-11 오후 8:29:28",
+        "sequence": "1",
+        "stationName": "농구장 (셔틀버스정류소)",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 20:29:28",
+        "estimatedTime": 32,
+        "isLastBus": false
+      }
+    ]
+  },
+  {
+    "at": "2026-03-11T21:00:00+09:00",
+    "payload": [
+      {
+        "line_no": "32149",
+        "inout": "ENTERED",
+        "stop_no": "285692",
+        "seq": "10",
+        "stop_name": "혜화동로터리",
+        "get_date": "2026-03-11 오후 8:59:54",
+        "sequence": "6",
+        "stationName": "혜화동로터리 [미정차]",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 20:59:54",
+        "estimatedTime": 6,
+        "isLastBus": false
+      },
+      {
+        "line_no": "32152",
+        "inout": "LEFT",
+        "stop_no": "285718",
+        "seq": "3",
+        "stop_name": "문묘입구[정문]-등교",
+        "get_date": "2026-03-11 오후 8:59:04",
+        "sequence": "10",
+        "stationName": "정문",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 20:59:04",
+        "estimatedTime": 56,
+        "isLastBus": false
+      }
+    ]
+  },
+  {
+    "at": "2026-03-11T21:30:00+09:00",
+    "payload": [
+      {
+        "line_no": "32072",
+        "inout": "ENTERED",
+        "stop_no": "284254",
+        "seq": "0",
+        "stop_name": "혜화역 1번출구 셔틀버스 정류소",
+        "get_date": "2026-03-11 오후 9:28:39",
+        "sequence": "7",
+        "stationName": "혜화역 1번출구 (셔틀버스정류소)",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 21:28:39",
+        "estimatedTime": 81,
+        "isLastBus": false
+      },
+      {
+        "line_no": "32149",
+        "inout": "EMERGENCY",
+        "stop_no": "285684",
+        "seq": "2",
+        "stop_name": "성균관대입구사거리",
+        "get_date": "2026-03-11 오후 9:29:29",
+        "sequence": "9",
+        "stationName": "성균관대입구사거리",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 21:29:29",
+        "estimatedTime": 31,
+        "isLastBus": false
+      }
+    ]
+  },
+  {
+    "at": "2026-03-11T22:00:00+09:00",
+    "payload": [
+      {
+        "line_no": "32072",
+        "inout": "LEFT_LAST",
+        "stop_no": "284434",
+        "seq": "10",
+        "stop_name": "혜화동로터리",
+        "get_date": "2026-03-11 오후 9:59:06",
+        "sequence": "6",
+        "stationName": "혜화동로터리 [미정차]",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 21:59:06",
+        "estimatedTime": 54,
+        "isLastBus": false
+      },
+      {
+        "line_no": "32149",
+        "inout": "LEFT",
+        "stop_no": "285683",
+        "seq": "1",
+        "stop_name": "혜화동로터리",
+        "get_date": "2026-03-11 오후 9:58:41",
+        "sequence": "8",
+        "stationName": "혜화동로터리 [미정차]",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 21:58:41",
+        "estimatedTime": 79,
+        "isLastBus": false
+      }
+    ]
+  },
+  {
+    "at": "2026-03-11T22:30:00+09:00",
+    "payload": []
+  },
+  {
+    "at": "2026-03-11T23:00:00+09:00",
+    "payload": [
+      {
+        "line_no": "32072",
+        "inout": "LEFT_LAST",
+        "stop_no": "284434",
+        "seq": "10",
+        "stop_name": "혜화동로터리",
+        "get_date": "2026-03-11 오후 10:59:12",
+        "sequence": "6",
+        "stationName": "혜화동로터리 [미정차]",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 22:59:12",
+        "estimatedTime": 48,
+        "isLastBus": false
+      },
+      {
+        "line_no": "32149",
+        "inout": "LEFT",
+        "stop_no": "285685",
+        "seq": "3",
+        "stop_name": "문묘입구[정문]-등교",
+        "get_date": "2026-03-11 오후 10:59:30",
+        "sequence": "10",
+        "stationName": "정문",
+        "carNumber": "0000",
+        "eventDate": "2026-03-11 22:59:30",
+        "estimatedTime": 30,
+        "isLastBus": false
+      }
+    ]
+  },
+  {
+    "at": "2026-03-11T23:30:00+09:00",
+    "payload": []
+  }
+]

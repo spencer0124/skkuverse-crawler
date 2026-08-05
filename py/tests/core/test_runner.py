@@ -8,15 +8,15 @@ from collections.abc import AsyncIterator, Iterable
 import pytest
 
 from skkuverse_crawler.core.events import (
+    BatchCompleted,
     ChangeInfo,
     ContentRefreshed,
     CrawlEvent,
+    ItemCrawled,
     ItemFailed,
     ItemSkipped,
+    ItemUnchanged,
     ListFetchFailed,
-    NoticeCrawled,
-    NoticeUnchanged,
-    PageCompleted,
     SourceFinished,
     SourceStarted,
 )
@@ -31,8 +31,8 @@ async def _stream(events: Iterable[CrawlEvent]) -> AsyncIterator[CrawlEvent]:
         yield event
 
 
-def _crawled(change: ChangeInfo | None = None) -> NoticeCrawled:
-    return NoticeCrawled(source_id="s", notice=object(), change=change)
+def _crawled(change: ChangeInfo | None = None) -> ItemCrawled:
+    return ItemCrawled(source_id="s", item=object(), change=change)
 
 
 def _change() -> ChangeInfo:
@@ -43,7 +43,7 @@ def _change() -> ChangeInfo:
 
 
 async def _run(events: Iterable[CrawlEvent], sink: RecordingSink) -> SourceResult:
-    return await run_events(_stream(events), sink, result=SourceResult(dept_id="s"))
+    return await run_events(_stream(events), sink, result=SourceResult(source_id="s"))
 
 
 class TestAggregationTable:
@@ -58,7 +58,7 @@ class TestAggregationTable:
 
     async def test_changed_crawled_is_outcome_driven_too(self):
         """The documented PR 6 delta, pinned on purpose: a None-returning
-        sink counts a changed NoticeCrawled as INSERTED (the old inline
+        sink counts a changed ItemCrawled as INSERTED (the old inline
         loop counted updated unconditionally; MongoSink returns UPDATED on
         the history path so production totals are unchanged)."""
         result = await _run([_crawled(change=_change())], RecordingSink())
@@ -72,7 +72,7 @@ class TestAggregationTable:
 
     async def test_unchanged_and_skipped_count_skipped(self):
         events = [
-            NoticeUnchanged(source_id="s", article_no=1, views=0),
+            ItemUnchanged(source_id="s", article_no=1, fields={"views": 0}),
             ItemSkipped(source_id="s", article_no=2, reason="below_floor"),
         ]
         result = await _run(events, RecordingSink())
@@ -89,7 +89,7 @@ class TestAggregationTable:
     async def test_page_completed_flushes_each_time(self):
         sink = RecordingSink()
         await _run(
-            [PageCompleted(source_id="s", page=0), PageCompleted(source_id="s", page=1)],
+            [BatchCompleted(source_id="s", index=0), BatchCompleted(source_id="s", index=1)],
             sink,
         )
         assert sink.flushes == 2
@@ -128,4 +128,4 @@ class TestFlushFailureContract:
                 raise RuntimeError("bulk_write down")
 
         with pytest.raises(RuntimeError, match="bulk_write down"):
-            await _run([PageCompleted(source_id="s", page=0)], _ExplodingFlushSink())
+            await _run([BatchCompleted(source_id="s", index=0)], _ExplodingFlushSink())

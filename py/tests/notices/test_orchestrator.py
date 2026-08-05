@@ -16,14 +16,14 @@ from structlog.testing import capture_logs
 
 from skkuverse_crawler.core.crawl import FullSweep, Incremental
 from skkuverse_crawler.core.events import (
+    BatchCompleted,
     ContentRefreshed,
     CrawlEvent,
+    ItemCrawled,
     ItemFailed,
     ItemSkipped,
+    ItemUnchanged,
     ListFetchFailed,
-    NoticeCrawled,
-    NoticeUnchanged,
-    PageCompleted,
     SourceFinished,
     SourceStarted,
 )
@@ -109,8 +109,8 @@ class TestStopScenarios:
         events = await _collect(_strategy(pages))
         assert _types(events) == [
             SourceStarted,
-            NoticeCrawled, PageCompleted,
-            NoticeCrawled, PageCompleted,
+            ItemCrawled, BatchCompleted,
+            ItemCrawled, BatchCompleted,
             SourceFinished,
         ]
         assert _finished(events).stopped_by == "empty_page"
@@ -119,7 +119,7 @@ class TestStopScenarios:
         strategy = _strategy([[_make_item(1)], [_make_item(2, date="2025-12-01")]])
         events = await _collect(strategy, mode=Incremental(NullSeenIndex()))
         assert _types(events) == [
-            SourceStarted, NoticeCrawled, PageCompleted, SourceFinished,
+            SourceStarted, ItemCrawled, BatchCompleted, SourceFinished,
         ]
         assert _finished(events).stopped_by == "floor_date"
         # Page-1 item never got a detail fetch — the pre-process break.
@@ -131,7 +131,7 @@ class TestStopScenarios:
         old = _make_item(1, date="2025-12-01")
         events = await _collect(_strategy([[pinned, old]]))
         assert _types(events) == [
-            SourceStarted, NoticeCrawled, ItemSkipped, PageCompleted, SourceFinished,
+            SourceStarted, ItemCrawled, ItemSkipped, BatchCompleted, SourceFinished,
         ]
         skipped = events[2]
         assert isinstance(skipped, ItemSkipped)
@@ -144,7 +144,7 @@ class TestStopScenarios:
         strategy = _strategy([[_make_item(1)], [_make_item(2)]])
         events = await _collect(strategy, mode=Incremental(_MetaSeen({2: known})))
         assert _types(events) == [
-            SourceStarted, NoticeCrawled, PageCompleted, SourceFinished,
+            SourceStarted, ItemCrawled, BatchCompleted, SourceFinished,
         ]
         assert _finished(events).stopped_by == "all_known"
 
@@ -153,7 +153,7 @@ class TestStopScenarios:
         strategy = _strategy([[_make_item(1)]])
         events = await _collect(strategy, mode=Incremental(_MetaSeen({1: known})))
         assert _types(events) == [
-            SourceStarted, NoticeUnchanged, PageCompleted, SourceFinished,
+            SourceStarted, ItemUnchanged, BatchCompleted, SourceFinished,
         ]
         assert _finished(events).stopped_by == "all_known_first_page"
 
@@ -168,7 +168,7 @@ class TestStopScenarios:
     async def test_fetch_fail_page1_not_source_down(self):
         events = await _collect(_strategy([[_make_item(1)], ConnectionError("refused")]))
         assert _types(events) == [
-            SourceStarted, NoticeCrawled, PageCompleted, ListFetchFailed, SourceFinished,
+            SourceStarted, ItemCrawled, BatchCompleted, ListFetchFailed, SourceFinished,
         ]
         finished = _finished(events)
         assert finished.stopped_by == "list_fetch_failed"
@@ -180,7 +180,7 @@ class TestStopScenarios:
             _strategy([[_make_item(1)]]), options=CrawlOptions(max_pages=1)
         )
         assert _types(events) == [
-            SourceStarted, NoticeCrawled, PageCompleted, SourceFinished,
+            SourceStarted, ItemCrawled, BatchCompleted, SourceFinished,
         ]
         assert _finished(events).stopped_by == "max_pages"
 
@@ -192,7 +192,7 @@ class TestStopScenarios:
         events = await _collect(
             _strategy([[_make_item(1)], []]), mode=Incremental(NullSeenIndex())
         )
-        assert NoticeCrawled in _types(events)
+        assert ItemCrawled in _types(events)
         assert _finished(events).stopped_by == "empty_page"
 
 
@@ -219,7 +219,7 @@ class TestItemBranches:
         mock_build.return_value = MagicMock(articleNo=1, sourceId="test-dept", contentHash="abc")
         events = await _collect(_strategy([[_make_item(1)], []]))
         crawled = events[1]
-        assert isinstance(crawled, NoticeCrawled)
+        assert isinstance(crawled, ItemCrawled)
         assert crawled.source_id == "test-dept"
         assert crawled.change is None
         assert crawled.previous is None
@@ -232,7 +232,7 @@ class TestItemBranches:
         strategy = _strategy([[_make_item(1, title="새 제목")]])
         events = await _collect(strategy, mode=Incremental(_MetaSeen({1: existing})))
         crawled = events[1]
-        assert isinstance(crawled, NoticeCrawled)
+        assert isinstance(crawled, ItemCrawled)
         assert crawled.previous == existing
         change = crawled.change
         assert change is not None
@@ -248,9 +248,9 @@ class TestItemBranches:
         strategy = _strategy([[_make_item(1, title="동일 제목")]])
         events = await _collect(strategy, mode=Incremental(_MetaSeen({1: existing})))
         touch = events[1]
-        assert isinstance(touch, NoticeUnchanged)
+        assert isinstance(touch, ItemUnchanged)
         assert touch.article_no == 1
-        assert touch.views == 10
+        assert touch.fields == {"views": 10}
         strategy.crawl_detail.assert_not_awaited()
 
     async def test_item_exception_yields_failed_and_continues(self):
@@ -260,7 +260,7 @@ class TestItemBranches:
         )
         events = await _collect(strategy)
         assert _types(events) == [
-            SourceStarted, ItemFailed, ItemFailed, PageCompleted, SourceFinished,
+            SourceStarted, ItemFailed, ItemFailed, BatchCompleted, SourceFinished,
         ]
         failed = events[1]
         assert isinstance(failed, ItemFailed)

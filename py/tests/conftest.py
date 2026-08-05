@@ -9,7 +9,8 @@ from skkuverse_crawler.env import init_config, reset_config
 
 @pytest.fixture(autouse=True)
 def _test_env_and_config(monkeypatch):
-    """Give every test an explicitly initialized test-mode config.
+    """Give every test an explicitly initialized test-mode config, built
+    from ``os.environ`` alone.
 
     Since PR 1 get_config() no longer lazy-initializes (it raises
     ConfigNotInitialized), so this fixture calls init_config() itself.
@@ -17,13 +18,24 @@ def _test_env_and_config(monkeypatch):
     *_test DB-name suffix, the CRITICAL log level, and the is_test guard
     that waives the MONGO_URL requirement inside init_config().
 
-    Tests that need different env values re-set them and call
-    init_config(force=True).
+    ``load_dotenv`` is stubbed out for the duration, and that is not a
+    convenience — it is what makes the suite mean the same thing on a
+    developer's machine as it does in CI. The real one mutates
+    ``os.environ`` **permanently**, so a single init_config() leaks every
+    value in ``py/.env`` into the process for the rest of the session.
+    Tests that assert "unset reads as None" then delete a variable and
+    watch init_config(force=True) put it straight back — and they pass
+    anyway, right up until someone's .env grows the key they were testing.
+    That is exactly how the bus tests broke: they were only ever green
+    because nobody had bus credentials locally.
+
+    Anything a test needs, it sets.
     """
     reset_config()
     monkeypatch.setenv("CRAWLER_ENV", "test")
-    init_config(force=True)
-    yield
+    with patch("skkuverse_crawler.env.load_dotenv"):
+        init_config(force=True)
+        yield
     reset_config()
 
 
@@ -80,7 +92,11 @@ def mock_db_patch(mock_collection):
     mock_db = MagicMock()
     mock_db.__getitem__ = MagicMock(return_value=mock_collection)
 
-    async def fake_get_db():
+    async def fake_get_db(name=None):
+        # `get_db` takes an optional database name since bus started
+        # writing to its own database. A zero-arg fake would make every
+        # `get_db(name)` caller fail with a TypeError that names the fixture
+        # rather than the code under test.
         return mock_db
 
     with patch("skkuverse_crawler.shared.db.get_db", side_effect=fake_get_db):

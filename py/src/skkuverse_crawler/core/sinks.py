@@ -1,4 +1,4 @@
-"""Core's only concrete sink: one JSON object per crawled notice.
+"""Core's only concrete sink: one JSON object per crawled item.
 
 It exists because `pip install skkuverse-crawler` has to put results
 somewhere. Every other sink is a plugin, and NullSink discards — without
@@ -18,7 +18,7 @@ import sys
 from datetime import date, datetime
 from typing import IO, Any
 
-from .events import ContentRefreshed, CrawlEvent, NoticeCrawled
+from .events import ContentRefreshed, CrawlEvent, ItemCrawled
 from .ports import Outcome, SourceSpec
 
 
@@ -51,8 +51,11 @@ class JsonLinesSink:
         return None
 
     async def accept(self, event: CrawlEvent) -> Outcome | None:
-        if isinstance(event, NoticeCrawled):
-            self._write(dataclasses.asdict(event.notice))
+        if isinstance(event, ItemCrawled):
+            # asdict, not a protocol call: core does not know the item's
+            # schema and does not want to. A non-dataclass item is a
+            # TypeError here rather than a half-serialised line.
+            self._write(dataclasses.asdict(event.item))
         elif isinstance(event, ContentRefreshed):
             # sourceId keeps the two line shapes uniform — every other line
             # carries it, and a consumer merging sources needs it.

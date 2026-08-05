@@ -14,10 +14,10 @@ import json
 from datetime import datetime, timezone
 
 from skkuverse_crawler.core.events import (
+    BatchCompleted,
     ContentRefreshed,
     CrawlEvent,
-    NoticeCrawled,
-    PageCompleted,
+    ItemCrawled,
     SourceFinished,
     SourceStarted,
 )
@@ -60,8 +60,8 @@ def test_satisfies_the_sink_protocol():
 async def test_writes_one_json_object_per_crawled_notice():
     sink, stream = _sink()
     await sink.prepare(SourceSpec(source_id="test-dept", name="테스트"))
-    await sink.accept(NoticeCrawled(source_id="test-dept", notice=_notice()))
-    await sink.accept(NoticeCrawled(source_id="test-dept", notice=_notice(articleNo=2)))
+    await sink.accept(ItemCrawled(source_id="test-dept", item=_notice()))
+    await sink.accept(ItemCrawled(source_id="test-dept", item=_notice(articleNo=2)))
     await sink.flush()
 
     lines = stream.getvalue().splitlines()
@@ -74,7 +74,7 @@ async def test_output_is_json_not_python_repr():
     str() on something a consumer then cannot parse."""
     sink, stream = _sink()
     stamp = datetime(2026, 8, 1, 12, 0, tzinfo=timezone.utc)
-    await sink.accept(NoticeCrawled(source_id="d", notice=_notice(crawledAt=stamp)))
+    await sink.accept(ItemCrawled(source_id="d", item=_notice(crawledAt=stamp)))
 
     payload = json.loads(stream.getvalue())
     assert payload["crawledAt"] == stamp.isoformat()
@@ -83,7 +83,7 @@ async def test_output_is_json_not_python_repr():
 
 async def test_korean_is_written_readably():
     sink, stream = _sink()
-    await sink.accept(NoticeCrawled(source_id="d", notice=_notice()))
+    await sink.accept(ItemCrawled(source_id="d", item=_notice()))
     assert "제목" in stream.getvalue()
 
 
@@ -107,7 +107,7 @@ async def test_progress_events_are_ignored_not_errors():
     sink, stream = _sink()
     for event in (
         SourceStarted(source_id="d", source_name="D"),
-        PageCompleted(source_id="d", page=0),
+        BatchCompleted(source_id="d", index=0),
         SourceFinished(
             source_id="d", stopped_by="max_pages", source_down=False, last_error=""
         ),

@@ -20,8 +20,8 @@ import respx
 
 from skkuverse_crawler.core.crawl import FullSweep
 from skkuverse_crawler.core.events import (
-    NoticeCrawled,
-    PageCompleted,
+    BatchCompleted,
+    ItemCrawled,
     SourceFinished,
     SourceStarted,
 )
@@ -101,22 +101,22 @@ async def test_sweep_with_injected_ports_never_touches_db():
     assert result.source_down is False
 
     # Uniform emission: the sink sees the full stream, bookended by the
-    # progress tier; every result-tier event is a fresh NoticeCrawled and
+    # progress tier; every result-tier event is a fresh ItemCrawled and
     # None outcomes all count as INSERTED.
     assert isinstance(sink.events[0], SourceStarted)
     finished = sink.events[-1]
     assert isinstance(finished, SourceFinished)
     assert finished.stopped_by == "max_pages"
     assert finished.source_down is False
-    assert any(isinstance(e, PageCompleted) for e in sink.events)
+    assert any(isinstance(e, BatchCompleted) for e in sink.events)
 
-    crawled = [e for e in sink.events if isinstance(e, NoticeCrawled)]
+    crawled = [e for e in sink.events if isinstance(e, ItemCrawled)]
     assert crawled
     assert all(e.change is None for e in crawled)
     assert result.inserted == len(crawled)
-    # Two: one on the page's PageCompleted, one when the source's stream
+    # Two: one on the page's BatchCompleted, one when the source's stream
     # ends. The second exists because not every source reaches a
-    # PageCompleted — see test_a_source_is_flushed_when_its_stream_ends.
+    # BatchCompleted — see test_a_source_is_flushed_when_its_stream_ends.
     assert sink.flushes == 2
 
     # prepare received this source's spec; the sink satisfies the protocol.
@@ -132,7 +132,7 @@ async def test_injected_ports_without_mode_defaults_to_full_sweep():
     results = await _run_sweep(sink)  # mode omitted on purpose
 
     assert results[0].errors == 0
-    crawled = [e for e in sink.events if isinstance(e, NoticeCrawled)]
+    crawled = [e for e in sink.events if isinstance(e, ItemCrawled)]
     assert crawled and all(e.change is None for e in crawled)
     finished = sink.events[-1]
     assert isinstance(finished, SourceFinished)
@@ -166,7 +166,7 @@ async def test_core_only_crawl_writes_json_lines_to_stdout():
 async def test_a_source_is_flushed_when_its_stream_ends():
     """A batching sink must not be left holding writes.
 
-    run_events flushes on PageCompleted, and not every source reaches one:
+    run_events flushes on BatchCompleted, and not every source reaches one:
     the null-content backfill emits write-bearing events before the page
     loop, and a page-0 failure breaks out before the first page completes.
     Those writes used to sit in the buffer while the runner counted them as
@@ -188,7 +188,7 @@ async def test_a_source_is_flushed_when_its_stream_ends():
     sink = _TimelineSink()
     await _run_sweep(sink, mode=FullSweep())
 
-    pages = sum(1 for e in sink.events if isinstance(e, PageCompleted))
+    pages = sum(1 for e in sink.events if isinstance(e, BatchCompleted))
     assert sink.flushes == pages + 1, (
         f"expected one flush per page ({pages}) plus one at the end, got {sink.flushes}"
     )
@@ -202,7 +202,7 @@ async def test_a_source_that_never_completes_a_page_is_still_flushed():
     """The case the end-of-source flush was actually written for.
 
     A page-0 fetch failure breaks out of the loop before any
-    PageCompleted, so the per-page flush never runs. Before the fix a
+    BatchCompleted, so the per-page flush never runs. Before the fix a
     batching sink kept whatever it had buffered — and the runner had
     already counted it. The healthy-path test above cannot see this,
     because there the per-page flush covers it anyway.
@@ -230,7 +230,7 @@ async def test_a_source_that_never_completes_a_page_is_still_flushed():
         )
 
     assert results[0].source_down is True
-    assert not any(isinstance(e, PageCompleted) for e in sink.events), (
+    assert not any(isinstance(e, BatchCompleted) for e in sink.events), (
         "this test is only meaningful if no page completes"
     )
     assert sink.flushes == 1, "a source that never completed a page was never flushed"
