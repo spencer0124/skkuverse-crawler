@@ -365,7 +365,7 @@ class TestArtifactInventory:
         """copy_to_sibling() wrote into ../skkuverse-server by positional
         path guess and skipped silently when the directory was absent —
         exit 0, one line of stdout, no return value. Propagation is now
-        pull-based (skkuverse_sync.py). Re-adding push here would also
+        pull-based (sync_contracts.py). Re-adding push here would also
         bypass the consumer lock files and leave them red on a copy the
         tooling itself had just made.
         """
