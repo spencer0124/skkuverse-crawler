@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from unittest.mock import patch
+from unittest.mock import Mock
 
 import pytest
 
@@ -103,20 +103,23 @@ class TestModeLabel:
 
 
 class TestValidation:
-    """Patch load_dotenv so .env file doesn't re-inject MONGO_URL.
-
-    Since PR 8 config loading no longer enforces MONGO_URL in any
+    """Since PR 8 config loading no longer enforces MONGO_URL in any
     environment: "no store" is a legitimate configuration once mongo is an
     optional dependency, and `notices --json` relies on it. The
     requirement moved to the two places that actually need a store —
     shared.db.get_client() and wiring's production profile gate — each
     with its own test.
+
+    These used to carry `@patch("skkuverse_crawler.env.load_dotenv")` each,
+    so a real `.env` could not re-inject the MONGO_URL they had just
+    deleted. The root conftest does that for every test now — three copies
+    of a workaround was three chances to forget it, and the bus tests are
+    where it got forgotten.
     """
 
     @pytest.mark.parametrize("env_name", ["production", "development", "test"])
-    @patch("skkuverse_crawler.env.load_dotenv")
     def test_missing_mongo_url_is_loadable_in_every_environment(
-        self, _mock_ld, monkeypatch, env_name
+        self, monkeypatch, env_name
     ):
         monkeypatch.setenv("CRAWLER_ENV", env_name)
         monkeypatch.delenv("MONGO_URL", raising=False)
@@ -124,8 +127,7 @@ class TestValidation:
         cfg = init_config(force=True)
         assert cfg.mongo_url is None
 
-    @patch("skkuverse_crawler.env.load_dotenv")
-    def test_asking_for_a_client_without_mongo_url_raises(self, _mock_ld, monkeypatch):
+    def test_asking_for_a_client_without_mongo_url_raises(self, monkeypatch):
         """The requirement did not disappear, it moved. Motor does not
         fail on a None URL — it quietly connects to localhost:27017."""
         import asyncio
@@ -139,8 +141,7 @@ class TestValidation:
         with pytest.raises(MongoUrlMissing, match="MONGO_URL"):
             asyncio.run(get_client())
 
-    @patch("skkuverse_crawler.env.load_dotenv")
-    def test_missing_mongo_url_ok_in_test(self, _mock_ld, monkeypatch):
+    def test_missing_mongo_url_ok_in_test(self, monkeypatch):
         monkeypatch.setenv("CRAWLER_ENV", "test")
         monkeypatch.delenv("MONGO_URL", raising=False)
         reset_config()
@@ -261,6 +262,38 @@ class TestBusDatabase:
             monkeypatch, CRAWLER_ENV="production", MONGO_DB_NAME_BUS_CAMPUS="bus_campus"
         )
         assert cfg.mongo_bus_db_name != cfg.mongo_db_name
+
+
+class TestTheSuiteDoesNotReadTheDevelopersEnvFile:
+    """The guard for the failure that produced this class.
+
+    `load_dotenv` mutates `os.environ` permanently, so one `init_config()`
+    leaks every value in `py/.env` into the process for the rest of the
+    session. A test that deletes a variable and asserts "unset reads as
+    None" then watches `init_config(force=True)` put it straight back —
+    and passes anyway, until someone's `.env` grows that key. Four bus
+    tests below were green for exactly that reason and went red the moment
+    real credentials landed in `py/.env`.
+
+    CI has no `.env` at all, so this also keeps local and CI meaning the
+    same thing.
+    """
+
+    def test_load_dotenv_is_stubbed_for_every_test(self):
+        from skkuverse_crawler import env as env_module
+
+        assert isinstance(env_module.load_dotenv, Mock), (
+            "the root conftest must neutralise load_dotenv — without it the "
+            "suite reads whatever happens to be in this machine's py/.env"
+        )
+
+    def test_a_deleted_variable_stays_deleted(self, monkeypatch):
+        """The property every 'unset reads as None' test depends on."""
+        monkeypatch.setenv("SEOUL_BUS_SERVICE_KEY", "something")
+        assert _init_fresh(monkeypatch).seoul_bus_service_key == "something"
+
+        monkeypatch.delenv("SEOUL_BUS_SERVICE_KEY")
+        assert _init_fresh(monkeypatch).seoul_bus_service_key is None
 
 
 class TestBusSecrets:
