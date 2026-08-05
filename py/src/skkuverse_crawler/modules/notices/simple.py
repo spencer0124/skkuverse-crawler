@@ -24,7 +24,7 @@ from contextlib import aclosing
 from typing import Any
 
 from ...core.crawl import FullSweep
-from ...core.events import NoticeCrawled
+from ...core.events import ItemCrawled
 from ...core.ports import NullWorkSeed
 from ...shared.fetcher import Fetcher
 from ...shared.logger import get_logger
@@ -157,7 +157,7 @@ async def iter_notices(
             )
         ) as events:
             async for event in events:
-                if isinstance(event, NoticeCrawled):
-                    yield event.notice
+                if isinstance(event, ItemCrawled):
+                    yield event.item
     finally:
         await fetcher.close()

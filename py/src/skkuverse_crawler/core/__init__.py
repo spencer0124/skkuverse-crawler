@@ -34,15 +34,15 @@ from __future__ import annotations
 
 from .crawl import CrawlMode, FullSweep, Incremental
 from .events import (
+    BatchCompleted,
     ChangeInfo,
     ContentRefreshed,
     CrawlEvent,
+    ItemCrawled,
     ItemFailed,
     ItemSkipped,
+    ItemUnchanged,
     ListFetchFailed,
-    NoticeCrawled,
-    NoticeUnchanged,
-    PageCompleted,
     SourceFinished,
     SourceStarted,
 )
@@ -72,13 +72,13 @@ __all__ = [
     "ChangeInfo",
     # ── events, result tier: frozen until 1.0 (adding one = major) ──
     "ContentRefreshed",
+    "ItemCrawled",
     "ItemFailed",
     "ItemSkipped",
-    "NoticeCrawled",
-    "NoticeUnchanged",
+    "ItemUnchanged",
     # ── events, progress tier: may grow in a minor release ──
+    "BatchCompleted",
     "ListFetchFailed",
-    "PageCompleted",
     "SourceFinished",
     "SourceStarted",
     # ── ports: implement these to plug in storage or notification ──
@@ -103,7 +103,7 @@ __all__ = [
     # ── driving a crawl and reading its outcome ──
     "SourceResult",
     "run_events",
-    # ── core's only concrete sink: one JSON object per notice ──
+    # ── core's only concrete sink: one JSON object per crawled item ──
     "JsonLinesSink",
     # ── content pipeline vocabulary (shapes only; stages live with the
     #    module that owns the content semantics) ──

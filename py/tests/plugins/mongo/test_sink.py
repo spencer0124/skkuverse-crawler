@@ -13,9 +13,9 @@ from skkuverse_crawler.core.events import (
     ItemFailed,
     ItemSkipped,
     ListFetchFailed,
-    NoticeCrawled,
-    NoticeUnchanged,
-    PageCompleted,
+    ItemCrawled,
+    ItemUnchanged,
+    BatchCompleted,
     SourceFinished,
     SourceStarted,
 )
@@ -47,8 +47,8 @@ def _make_notice(**overrides) -> Notice:
     return Notice(**defaults)
 
 
-def _crawled(notice: Notice, change: ChangeInfo | None = None) -> NoticeCrawled:
-    return NoticeCrawled(source_id=notice.sourceId, notice=notice, change=change)
+def _crawled(notice: Notice, change: ChangeInfo | None = None) -> ItemCrawled:
+    return ItemCrawled(source_id=notice.sourceId, item=notice, change=change)
 
 
 def _change(**overrides) -> ChangeInfo:
@@ -70,7 +70,7 @@ class _UnknownFutureEvent(CrawlEvent):
 
 
 class TestUpsertPath:
-    """NoticeCrawled(change=None) — dedup.upsert_notice assertions ported."""
+    """ItemCrawled(change=None) — dedup.upsert_notice assertions ported."""
 
     async def test_set_excludes_edit_fields(self, mock_collection):
         mock_collection.update_one.return_value = MagicMock(upserted_id="new")
@@ -95,7 +95,7 @@ class TestUpsertPath:
 
 
 class TestHistoryPath:
-    """NoticeCrawled(change=…) — dedup.update_with_history assertions ported,
+    """ItemCrawled(change=…) — dedup.update_with_history assertions ported,
     plus the edit_entry construction that moved in from the orchestrator."""
 
     async def test_push_edit_entry_with_slice(self, mock_collection):
@@ -142,8 +142,8 @@ class TestHistoryPath:
 
 
 class TestTouchBufferAndFlush:
-    def _unchanged(self, article_no: int, views: int = 5) -> NoticeUnchanged:
-        return NoticeUnchanged(source_id="test-dept", article_no=article_no, views=views)
+    def _unchanged(self, article_no: int, views: int = 5) -> ItemUnchanged:
+        return ItemUnchanged(source_id="test-dept", article_no=article_no, fields={"views": views})
 
     async def test_accept_buffers_without_writing(self, mock_collection):
         sink = MongoSink(mock_collection)
@@ -237,7 +237,7 @@ class TestTolerantReader:
         "event",
         [
             SourceStarted(source_id="s", source_name="n"),
-            PageCompleted(source_id="s", page=0),
+            BatchCompleted(source_id="s", index=0),
             ListFetchFailed(source_id="s", page=0, error="net"),
             SourceFinished(source_id="s", stopped_by="empty_page", source_down=False, last_error=""),
             ItemSkipped(source_id="s", article_no=1, reason="below_floor"),

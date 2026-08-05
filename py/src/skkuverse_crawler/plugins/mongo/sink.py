@@ -10,8 +10,8 @@ from ...core.events import (
     ChangeInfo,
     ContentRefreshed,
     CrawlEvent,
-    NoticeCrawled,
-    NoticeUnchanged,
+    ItemCrawled,
+    ItemUnchanged,
 )
 from ...core.ports import Outcome, SourceSpec
 
@@ -80,16 +80,16 @@ class MongoSink:
 
     async def accept(self, event: CrawlEvent) -> Outcome | None:
         match event:
-            case NoticeCrawled(notice=notice, change=None):
+            case ItemCrawled(item=notice, change=None):
                 return await self._upsert(notice)
-            case NoticeCrawled(notice=notice, change=ChangeInfo() as change):
+            case ItemCrawled(item=notice, change=ChangeInfo() as change):
                 await self._update_with_history(notice, _edit_entry(change))
                 return Outcome.UPDATED
-            case NoticeUnchanged():
+            case ItemUnchanged():
                 self._touches.append({
                     "articleNo": event.article_no,
                     "sourceId": event.source_id,
-                    "views": event.views,
+                    "fields": dict(event.fields),
                 })
                 return None
             case ContentRefreshed(ref=ref, fields=fields):
@@ -115,7 +115,7 @@ class MongoSink:
             {
                 "updateOne": {
                     "filter": {"articleNo": item["articleNo"], "sourceId": item["sourceId"]},
-                    "update": {"$set": {"views": item["views"], "crawledAt": now}},
+                    "update": {"$set": {**item["fields"], "crawledAt": now}},
                 }
             }
             for item in items

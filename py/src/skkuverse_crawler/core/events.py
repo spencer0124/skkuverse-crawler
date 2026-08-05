@@ -5,26 +5,25 @@ event once published. Progress tier may grow in minor releases. Sinks are
 tolerant readers: unknown events are silently ignored (``case _: return
 None``) — pinned by the sink contract test.
 
-Events are frozen but may hold mutable payloads (Notice carries lists),
-so they are not hashable in practice; nothing hashes events.
+Events are frozen but may hold mutable payloads (an item carries lists,
+ItemUnchanged carries a mapping), so they are not hashable in practice;
+nothing hashes events.
 
-In PR 5 only the write-bearing result events (NoticeCrawled,
-NoticeUnchanged, ContentRefreshed) are emitted by the inline loop; the
-rest are declared ahead of PR 6's generator, which owns full emission.
+The vocabulary is domain-neutral by contract: nothing here may name a
+concept belonging to one module. Core carried ``NoticeCrawled`` /
+``NoticeUnchanged`` and a TYPE_CHECKING import of the notices ``Notice``
+while notices was the only module — a core → modules edge the layering
+rule forbids, kept on the excuse that there was only one module to leak.
+Preparing for a second one retired it (adr-006, 2026-08-04 amendment).
 """
 
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from dataclasses import dataclass, field
+from typing import Any
 
 from .ports import DetailRef, SeenRecord
-
-if TYPE_CHECKING:
-    # Type-only reverse-layer edge (core → modules), sanctioned until
-    # Notice's final home is settled (PR 6/7). Must stay type-only.
-    from ..modules.notices.models import Notice
 
 
 @dataclass(frozen=True)
@@ -58,23 +57,46 @@ class ChangeInfo:
 
 
 @dataclass(frozen=True)
-class NoticeCrawled(CrawlEvent):
-    """A fetched notice ready to store. change=None means a new item
+class ItemCrawled(CrawlEvent):
+    """A fetched item ready to store. change=None means a new item
     (plain upsert); a populated change means a tier-1 detected edit
-    (history-preserving update)."""
+    (history-preserving update).
 
-    notice: Notice
+    ``item`` is deliberately untyped. Core used to annotate it as the
+    notices ``Notice`` behind a TYPE_CHECKING import — a reverse-layer
+    edge (core → modules) that the module boundary is supposed to forbid.
+    Nothing in core ever reached *into* the value: the one core consumer,
+    JsonLinesSink, calls ``dataclasses.asdict`` on it. So the annotation
+    bought no checking and cost the layering rule.
+
+    A ``CrawlItem`` Protocol was considered and rejected. Storage policy —
+    which fields are insert-only, which get history-pushed — is the sink's
+    business and cannot be expressed as "serialise yourself"; a protocol
+    designed against one implementor would just be Notice's interface with
+    the names filed off. Sinks narrow the type themselves (see
+    plugins/mongo/sink.py, which keeps its own sanctioned plugins → modules
+    import).
+    """
+
+    item: Any
     previous: SeenRecord | None = None
     change: ChangeInfo | None = None
 
 
 @dataclass(frozen=True)
-class NoticeUnchanged(CrawlEvent):
+class ItemUnchanged(CrawlEvent):
     """A known, unmodified item — the sink batches these and emits one
-    bulk touch per flush (crawledAt/views refresh; plan 위험 ②)."""
+    bulk touch per flush (crawledAt refresh; plan 위험 ②).
+
+    ``fields`` carries whatever the module wants refreshed on an otherwise
+    untouched document. Notices puts ``{"views": n}`` there; it used to be
+    a ``views: int`` field on this class, which made a notices-specific
+    column part of the core vocabulary. Modules with no such counter pass
+    an empty mapping and still get the crawledAt touch.
+    """
 
     article_no: int
-    views: int
+    fields: Mapping[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -114,8 +136,17 @@ class SourceStarted(CrawlEvent):
 
 
 @dataclass(frozen=True)
-class PageCompleted(CrawlEvent):
-    page: int
+class BatchCompleted(CrawlEvent):
+    """A unit of work finished and the sink may flush.
+
+    Named for the runner's use of it rather than for pagination: the
+    aggregation table's only reaction is ``await sink.flush()``. A module
+    that does not paginate emits it whenever a batch of writes is safe to
+    durably commit — or never, since run_crawl flushes once more after the
+    stream ends.
+    """
+
+    index: int
 
 
 @dataclass(frozen=True)

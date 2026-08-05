@@ -1,0 +1,1515 @@
+[
+  {
+    "at": "2026-03-06T00:00:00+09:00",
+    "payload": null
+  },
+  {
+    "at": "2026-03-06T00:30:00+09:00",
+    "payload": null
+  },
+  {
+    "at": "2026-03-06T01:00:00+09:00",
+    "payload": null
+  },
+  {
+    "at": "2026-03-06T01:30:00+09:00",
+    "payload": null
+  },
+  {
+    "at": "2026-03-06T02:00:00+09:00",
+    "payload": null
+  },
+  {
+    "at": "2026-03-06T02:30:00+09:00",
+    "payload": null
+  },
+  {
+    "at": "2026-03-06T03:00:00+09:00",
+    "payload": null
+  },
+  {
+    "at": "2026-03-06T03:30:00+09:00",
+    "payload": null
+  },
+  {
+    "at": "2026-03-06T04:00:00+09:00",
+    "payload": null
+  },
+  {
+    "at": "2026-03-06T04:30:00+09:00",
+    "payload": null
+  },
+  {
+    "at": "2026-03-06T05:00:00+09:00",
+    "payload": null
+  },
+  {
+    "at": "2026-03-06T05:30:00+09:00",
+    "payload": [
+      {
+        "sequence": "17",
+        "stationName": "성균관대운동장",
+        "carNumber": "3613",
+        "eventDate": "2026-03-05T20:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900220",
+        "latitude": "37.587863",
+        "longitude": "126.99237",
+        "recordTime": "2026-03-05T20:30:00.000Z"
+      }
+    ]
+  },
+  {
+    "at": "2026-03-06T06:00:00+09:00",
+    "payload": null
+  },
+  {
+    "at": "2026-03-06T06:30:00+09:00",
+    "payload": [
+      {
+        "sequence": "17",
+        "stationName": "성균관대운동장",
+        "carNumber": "5537",
+        "eventDate": "2026-03-05T21:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900220",
+        "latitude": "37.587863",
+        "longitude": "126.99237",
+        "recordTime": "2026-03-05T21:30:00.000Z"
+      },
+      {
+        "sequence": "6",
+        "stationName": "혜화역4번출구",
+        "carNumber": "5538",
+        "eventDate": "2026-03-05T21:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900027",
+        "latitude": "37.583509",
+        "longitude": "127.001555",
+        "recordTime": "2026-03-05T21:30:00.000Z"
+      },
+      {
+        "sequence": "14",
+        "stationName": "성대입구",
+        "carNumber": "3613",
+        "eventDate": "2026-03-05T21:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900199",
+        "latitude": "37.58321",
+        "longitude": "126.998877",
+        "recordTime": "2026-03-05T21:30:00.000Z"
+      }
+    ]
+  },
+  {
+    "at": "2026-03-06T07:00:00+09:00",
+    "payload": [
+      {
+        "sequence": "19",
+        "stationName": "성균관대학교",
+        "carNumber": "5537",
+        "eventDate": "2026-03-05T22:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900110",
+        "latitude": "37.584886",
+        "longitude": "126.996646",
+        "recordTime": "2026-03-05T22:00:00.000Z"
+      },
+      {
+        "sequence": "6",
+        "stationName": "혜화역4번출구",
+        "carNumber": "5538",
+        "eventDate": "2026-03-05T22:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900027",
+        "latitude": "37.582107",
+        "longitude": "127.001886",
+        "recordTime": "2026-03-05T22:00:00.000Z"
+      },
+      {
+        "sequence": "13",
+        "stationName": "혜화동로터리",
+        "carNumber": "3613",
+        "eventDate": "2026-03-05T22:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100000130",
+        "latitude": "37.584411",
+        "longitude": "127.00014",
+        "recordTime": "2026-03-05T22:00:00.000Z"
+      }
+    ]
+  },
+  {
+    "at": "2026-03-06T07:30:00+09:00",
+    "payload": [
+      {
+        "sequence": "17",
+        "stationName": "성균관대운동장",
+        "carNumber": "3613",
+        "eventDate": "2026-03-05T22:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900220",
+        "latitude": "37.587863",
+        "longitude": "126.99237",
+        "recordTime": "2026-03-05T22:30:00.000Z"
+      },
+      {
+        "sequence": "17",
+        "stationName": "성균관대운동장",
+        "carNumber": "5537",
+        "eventDate": "2026-03-05T22:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900220",
+        "latitude": "37.587863",
+        "longitude": "126.99237",
+        "recordTime": "2026-03-05T22:30:00.000Z"
+      },
+      {
+        "sequence": "2",
+        "stationName": "서울국제고등학교",
+        "carNumber": "5536",
+        "eventDate": "2026-03-05T22:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900031",
+        "latitude": "37.589128",
+        "longitude": "126.997263",
+        "recordTime": "2026-03-05T22:30:00.000Z"
+      },
+      {
+        "sequence": "6",
+        "stationName": "혜화역4번출구",
+        "carNumber": "5538",
+        "eventDate": "2026-03-05T22:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900027",
+        "latitude": "37.582468",
+        "longitude": "127.001823",
+        "recordTime": "2026-03-05T22:30:00.000Z"
+      },
+      {
+        "sequence": "10",
+        "stationName": "방송통신대.이화장",
+        "carNumber": "3612",
+        "eventDate": "2026-03-05T22:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100000123",
+        "latitude": "37.578043",
+        "longitude": "127.002437",
+        "recordTime": "2026-03-05T22:30:00.000Z"
+      }
+    ]
+  },
+  {
+    "at": "2026-03-06T08:00:00+09:00",
+    "payload": [
+      {
+        "sequence": "17",
+        "stationName": "성균관대운동장",
+        "carNumber": "3613",
+        "eventDate": "2026-03-05T23:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900220",
+        "latitude": "37.587863",
+        "longitude": "126.99237",
+        "recordTime": "2026-03-05T23:00:00.000Z"
+      },
+      {
+        "sequence": "3",
+        "stationName": "국민생활관",
+        "carNumber": "5537",
+        "eventDate": "2026-03-05T23:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900017",
+        "latitude": "37.589918",
+        "longitude": "126.998655",
+        "recordTime": "2026-03-05T23:00:00.000Z"
+      },
+      {
+        "sequence": "5",
+        "stationName": "혜화우체국",
+        "carNumber": "5536",
+        "eventDate": "2026-03-05T23:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900063",
+        "latitude": "37.586134",
+        "longitude": "127.000594",
+        "recordTime": "2026-03-05T23:00:00.000Z"
+      },
+      {
+        "sequence": "10",
+        "stationName": "방송통신대.이화장",
+        "carNumber": "5538",
+        "eventDate": "2026-03-05T23:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100000123",
+        "latitude": "37.578043",
+        "longitude": "127.002437",
+        "recordTime": "2026-03-05T23:00:00.000Z"
+      },
+      {
+        "sequence": "12",
+        "stationName": "혜화역1번출구",
+        "carNumber": "3612",
+        "eventDate": "2026-03-05T23:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900075",
+        "latitude": "37.583473",
+        "longitude": "127.001763",
+        "recordTime": "2026-03-05T23:00:00.000Z"
+      }
+    ]
+  },
+  {
+    "at": "2026-03-06T08:30:00+09:00",
+    "payload": [
+      {
+        "sequence": "1",
+        "stationName": "명륜새마을금고",
+        "carNumber": "3613",
+        "eventDate": "2026-03-05T23:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900197",
+        "latitude": "37.58805",
+        "longitude": "126.996815",
+        "recordTime": "2026-03-05T23:30:00.000Z"
+      },
+      {
+        "sequence": "5",
+        "stationName": "혜화우체국",
+        "carNumber": "5537",
+        "eventDate": "2026-03-05T23:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900063",
+        "latitude": "37.586115",
+        "longitude": "127.000611",
+        "recordTime": "2026-03-05T23:30:00.000Z"
+      },
+      {
+        "sequence": "10",
+        "stationName": "방송통신대.이화장",
+        "carNumber": "5536",
+        "eventDate": "2026-03-05T23:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100000123",
+        "latitude": "37.578043",
+        "longitude": "127.002437",
+        "recordTime": "2026-03-05T23:30:00.000Z"
+      },
+      {
+        "sequence": "12",
+        "stationName": "혜화역1번출구",
+        "carNumber": "5538",
+        "eventDate": "2026-03-05T23:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900075",
+        "latitude": "37.583473",
+        "longitude": "127.001763",
+        "recordTime": "2026-03-05T23:30:00.000Z"
+      },
+      {
+        "sequence": "14",
+        "stationName": "성대입구",
+        "carNumber": "3612",
+        "eventDate": "2026-03-05T23:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900199",
+        "latitude": "37.583205",
+        "longitude": "126.998872",
+        "recordTime": "2026-03-05T23:30:00.000Z"
+      }
+    ]
+  },
+  {
+    "at": "2026-03-06T09:00:00+09:00",
+    "payload": [
+      {
+        "sequence": "3",
+        "stationName": "국민생활관",
+        "carNumber": "3613",
+        "eventDate": "2026-03-06T00:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900017",
+        "latitude": "37.589352",
+        "longitude": "126.999256",
+        "recordTime": "2026-03-06T00:00:00.000Z"
+      },
+      {
+        "sequence": "7",
+        "stationName": "혜화역.서울대병원입구",
+        "carNumber": "5537",
+        "eventDate": "2026-03-06T00:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100000125",
+        "latitude": "37.581034",
+        "longitude": "127.001982",
+        "recordTime": "2026-03-06T00:00:00.000Z"
+      },
+      {
+        "sequence": "11",
+        "stationName": "혜화역.마로니에공원",
+        "carNumber": "5536",
+        "eventDate": "2026-03-06T00:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100000124",
+        "latitude": "37.581119",
+        "longitude": "127.002277",
+        "recordTime": "2026-03-06T00:00:00.000Z"
+      }
+    ]
+  },
+  {
+    "at": "2026-03-06T09:30:00+09:00",
+    "payload": [
+      {
+        "sequence": "17",
+        "stationName": "성균관대운동장",
+        "carNumber": "3612",
+        "eventDate": "2026-03-06T00:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900220",
+        "latitude": "37.587863",
+        "longitude": "126.99237",
+        "recordTime": "2026-03-06T00:30:00.000Z"
+      },
+      {
+        "sequence": "3",
+        "stationName": "국민생활관",
+        "carNumber": "3613",
+        "eventDate": "2026-03-06T00:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900017",
+        "latitude": "37.588888",
+        "longitude": "126.999403",
+        "recordTime": "2026-03-06T00:30:00.000Z"
+      },
+      {
+        "sequence": "7",
+        "stationName": "혜화역.서울대병원입구",
+        "carNumber": "5537",
+        "eventDate": "2026-03-06T00:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100000125",
+        "latitude": "37.58005",
+        "longitude": "127.002077",
+        "recordTime": "2026-03-06T00:30:00.000Z"
+      },
+      {
+        "sequence": "10",
+        "stationName": "방송통신대.이화장",
+        "carNumber": "5536",
+        "eventDate": "2026-03-06T00:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100000123",
+        "latitude": "37.578043",
+        "longitude": "127.002437",
+        "recordTime": "2026-03-06T00:30:00.000Z"
+      },
+      {
+        "sequence": "15",
+        "stationName": "성균관대정문",
+        "carNumber": "5538",
+        "eventDate": "2026-03-06T00:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900218",
+        "latitude": "37.584957",
+        "longitude": "126.99662",
+        "recordTime": "2026-03-06T00:30:00.000Z"
+      }
+    ]
+  },
+  {
+    "at": "2026-03-06T10:00:00+09:00",
+    "payload": [
+      {
+        "sequence": "17",
+        "stationName": "성균관대운동장",
+        "carNumber": "3612",
+        "eventDate": "2026-03-06T01:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900220",
+        "latitude": "37.587863",
+        "longitude": "126.99237",
+        "recordTime": "2026-03-06T01:00:00.000Z"
+      },
+      {
+        "sequence": "5",
+        "stationName": "혜화우체국",
+        "carNumber": "3613",
+        "eventDate": "2026-03-06T01:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900063",
+        "latitude": "37.58606",
+        "longitude": "127.000662",
+        "recordTime": "2026-03-06T01:00:00.000Z"
+      },
+      {
+        "sequence": "10",
+        "stationName": "방송통신대.이화장",
+        "carNumber": "5537",
+        "eventDate": "2026-03-06T01:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100000123",
+        "latitude": "37.578043",
+        "longitude": "127.002437",
+        "recordTime": "2026-03-06T01:00:00.000Z"
+      },
+      {
+        "sequence": "14",
+        "stationName": "성대입구",
+        "carNumber": "5536",
+        "eventDate": "2026-03-06T01:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900199",
+        "latitude": "37.58329",
+        "longitude": "126.998966",
+        "recordTime": "2026-03-06T01:00:00.000Z"
+      }
+    ]
+  },
+  {
+    "at": "2026-03-06T10:30:00+09:00",
+    "payload": [
+      {
+        "sequence": "17",
+        "stationName": "성균관대운동장",
+        "carNumber": "3612",
+        "eventDate": "2026-03-06T01:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900220",
+        "latitude": "37.587863",
+        "longitude": "126.99237",
+        "recordTime": "2026-03-06T01:30:00.000Z"
+      },
+      {
+        "sequence": "3",
+        "stationName": "국민생활관",
+        "carNumber": "3613",
+        "eventDate": "2026-03-06T01:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900017",
+        "latitude": "37.588097",
+        "longitude": "126.999651",
+        "recordTime": "2026-03-06T01:30:00.000Z"
+      },
+      {
+        "sequence": "9",
+        "stationName": "이화사거리",
+        "carNumber": "5537",
+        "eventDate": "2026-03-06T01:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900043",
+        "latitude": "37.576724",
+        "longitude": "127.002127",
+        "recordTime": "2026-03-06T01:30:00.000Z"
+      },
+      {
+        "sequence": "13",
+        "stationName": "혜화동로터리",
+        "carNumber": "5536",
+        "eventDate": "2026-03-06T01:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100000130",
+        "latitude": "37.58558",
+        "longitude": "127.000687",
+        "recordTime": "2026-03-06T01:30:00.000Z"
+      }
+    ]
+  },
+  {
+    "at": "2026-03-06T11:00:00+09:00",
+    "payload": [
+      {
+        "sequence": "17",
+        "stationName": "성균관대운동장",
+        "carNumber": "3612",
+        "eventDate": "2026-03-06T02:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900220",
+        "latitude": "37.587863",
+        "longitude": "126.99237",
+        "recordTime": "2026-03-06T02:00:00.000Z"
+      },
+      {
+        "sequence": "4",
+        "stationName": "혜화초등학교",
+        "carNumber": "3613",
+        "eventDate": "2026-03-06T02:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900003",
+        "latitude": "37.587331",
+        "longitude": "126.999868",
+        "recordTime": "2026-03-06T02:00:00.000Z"
+      },
+      {
+        "sequence": "9",
+        "stationName": "이화사거리",
+        "carNumber": "5537",
+        "eventDate": "2026-03-06T02:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900043",
+        "latitude": "37.5772",
+        "longitude": "127.002127",
+        "recordTime": "2026-03-06T02:00:00.000Z"
+      },
+      {
+        "sequence": "12",
+        "stationName": "혜화역1번출구",
+        "carNumber": "5538",
+        "eventDate": "2026-03-06T02:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900075",
+        "latitude": "37.583473",
+        "longitude": "127.001763",
+        "recordTime": "2026-03-06T02:00:00.000Z"
+      }
+    ]
+  },
+  {
+    "at": "2026-03-06T11:30:00+09:00",
+    "payload": [
+      {
+        "sequence": "18",
+        "stationName": "학생회관",
+        "carNumber": "5536",
+        "eventDate": "2026-03-06T02:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900221",
+        "latitude": "37.58742",
+        "longitude": "126.993675",
+        "recordTime": "2026-03-06T02:30:00.000Z"
+      },
+      {
+        "sequence": "5",
+        "stationName": "혜화우체국",
+        "carNumber": "3613",
+        "eventDate": "2026-03-06T02:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900063",
+        "latitude": "37.585909",
+        "longitude": "127.000802",
+        "recordTime": "2026-03-06T02:30:00.000Z"
+      },
+      {
+        "sequence": "10",
+        "stationName": "방송통신대.이화장",
+        "carNumber": "5537",
+        "eventDate": "2026-03-06T02:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100000123",
+        "latitude": "37.580457",
+        "longitude": "127.002173",
+        "recordTime": "2026-03-06T02:30:00.000Z"
+      },
+      {
+        "sequence": "14",
+        "stationName": "성대입구",
+        "carNumber": "5538",
+        "eventDate": "2026-03-06T02:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900199",
+        "latitude": "37.58329",
+        "longitude": "126.998966",
+        "recordTime": "2026-03-06T02:30:00.000Z"
+      }
+    ]
+  },
+  {
+    "at": "2026-03-06T12:00:00+09:00",
+    "payload": [
+      {
+        "sequence": "17",
+        "stationName": "성균관대운동장",
+        "carNumber": "5536",
+        "eventDate": "2026-03-06T03:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900220",
+        "latitude": "37.587863",
+        "longitude": "126.99237",
+        "recordTime": "2026-03-06T03:00:00.000Z"
+      },
+      {
+        "sequence": "5",
+        "stationName": "혜화우체국",
+        "carNumber": "3613",
+        "eventDate": "2026-03-06T03:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900063",
+        "latitude": "37.584911",
+        "longitude": "127.001318",
+        "recordTime": "2026-03-06T03:00:00.000Z"
+      },
+      {
+        "sequence": "12",
+        "stationName": "혜화역1번출구",
+        "carNumber": "5537",
+        "eventDate": "2026-03-06T03:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900075",
+        "latitude": "37.583473",
+        "longitude": "127.001763",
+        "recordTime": "2026-03-06T03:00:00.000Z"
+      }
+    ]
+  },
+  {
+    "at": "2026-03-06T12:30:00+09:00",
+    "payload": [
+      {
+        "sequence": "18",
+        "stationName": "학생회관",
+        "carNumber": "5536",
+        "eventDate": "2026-03-06T03:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900221",
+        "latitude": "37.58742",
+        "longitude": "126.993675",
+        "recordTime": "2026-03-06T03:30:00.000Z"
+      },
+      {
+        "sequence": "5",
+        "stationName": "혜화우체국",
+        "carNumber": "3613",
+        "eventDate": "2026-03-06T03:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900063",
+        "latitude": "37.585635",
+        "longitude": "127.000785",
+        "recordTime": "2026-03-06T03:30:00.000Z"
+      },
+      {
+        "sequence": "12",
+        "stationName": "혜화역1번출구",
+        "carNumber": "5537",
+        "eventDate": "2026-03-06T03:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900075",
+        "latitude": "37.583473",
+        "longitude": "127.001763",
+        "recordTime": "2026-03-06T03:30:00.000Z"
+      },
+      {
+        "sequence": "15",
+        "stationName": "성균관대정문",
+        "carNumber": "5538",
+        "eventDate": "2026-03-06T03:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900218",
+        "latitude": "37.584957",
+        "longitude": "126.99662",
+        "recordTime": "2026-03-06T03:30:00.000Z"
+      }
+    ]
+  },
+  {
+    "at": "2026-03-06T13:00:00+09:00",
+    "payload": [
+      {
+        "sequence": "17",
+        "stationName": "성균관대운동장",
+        "carNumber": "5536",
+        "eventDate": "2026-03-06T04:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900220",
+        "latitude": "37.587863",
+        "longitude": "126.99237",
+        "recordTime": "2026-03-06T04:00:00.000Z"
+      },
+      {
+        "sequence": "5",
+        "stationName": "혜화우체국",
+        "carNumber": "3613",
+        "eventDate": "2026-03-06T04:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900063",
+        "latitude": "37.58538",
+        "longitude": "127.00081",
+        "recordTime": "2026-03-06T04:00:00.000Z"
+      },
+      {
+        "sequence": "12",
+        "stationName": "혜화역1번출구",
+        "carNumber": "5537",
+        "eventDate": "2026-03-06T04:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900075",
+        "latitude": "37.583473",
+        "longitude": "127.001763",
+        "recordTime": "2026-03-06T04:00:00.000Z"
+      },
+      {
+        "sequence": "15",
+        "stationName": "성균관대정문",
+        "carNumber": "5538",
+        "eventDate": "2026-03-06T04:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900218",
+        "latitude": "37.584957",
+        "longitude": "126.99662",
+        "recordTime": "2026-03-06T04:00:00.000Z"
+      }
+    ]
+  },
+  {
+    "at": "2026-03-06T13:30:00+09:00",
+    "payload": [
+      {
+        "sequence": "17",
+        "stationName": "성균관대운동장",
+        "carNumber": "5536",
+        "eventDate": "2026-03-06T04:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900220",
+        "latitude": "37.587863",
+        "longitude": "126.99237",
+        "recordTime": "2026-03-06T04:30:00.000Z"
+      },
+      {
+        "sequence": "5",
+        "stationName": "혜화우체국",
+        "carNumber": "3613",
+        "eventDate": "2026-03-06T04:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900063",
+        "latitude": "37.585965",
+        "longitude": "127.000751",
+        "recordTime": "2026-03-06T04:30:00.000Z"
+      },
+      {
+        "sequence": "10",
+        "stationName": "방송통신대.이화장",
+        "carNumber": "5537",
+        "eventDate": "2026-03-06T04:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100000123",
+        "latitude": "37.578043",
+        "longitude": "127.002437",
+        "recordTime": "2026-03-06T04:30:00.000Z"
+      },
+      {
+        "sequence": "15",
+        "stationName": "성균관대정문",
+        "carNumber": "5538",
+        "eventDate": "2026-03-06T04:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900218",
+        "latitude": "37.584957",
+        "longitude": "126.99662",
+        "recordTime": "2026-03-06T04:30:00.000Z"
+      }
+    ]
+  },
+  {
+    "at": "2026-03-06T14:00:00+09:00",
+    "payload": [
+      {
+        "sequence": "18",
+        "stationName": "학생회관",
+        "carNumber": "5536",
+        "eventDate": "2026-03-06T05:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900221",
+        "latitude": "37.58742",
+        "longitude": "126.993675",
+        "recordTime": "2026-03-06T05:00:00.000Z"
+      },
+      {
+        "sequence": "5",
+        "stationName": "혜화우체국",
+        "carNumber": "3613",
+        "eventDate": "2026-03-06T05:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900063",
+        "latitude": "37.584091",
+        "longitude": "127.001485",
+        "recordTime": "2026-03-06T05:00:00.000Z"
+      },
+      {
+        "sequence": "11",
+        "stationName": "혜화역.마로니에공원",
+        "carNumber": "5537",
+        "eventDate": "2026-03-06T05:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100000124",
+        "latitude": "37.582322",
+        "longitude": "127.001999",
+        "recordTime": "2026-03-06T05:00:00.000Z"
+      },
+      {
+        "sequence": "15",
+        "stationName": "성균관대정문",
+        "carNumber": "5538",
+        "eventDate": "2026-03-06T05:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900218",
+        "latitude": "37.584957",
+        "longitude": "126.99662",
+        "recordTime": "2026-03-06T05:00:00.000Z"
+      }
+    ]
+  },
+  {
+    "at": "2026-03-06T14:30:00+09:00",
+    "payload": [
+      {
+        "sequence": "17",
+        "stationName": "성균관대운동장",
+        "carNumber": "5536",
+        "eventDate": "2026-03-06T05:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900220",
+        "latitude": "37.587863",
+        "longitude": "126.99237",
+        "recordTime": "2026-03-06T05:30:00.000Z"
+      },
+      {
+        "sequence": "4",
+        "stationName": "혜화초등학교",
+        "carNumber": "3613",
+        "eventDate": "2026-03-06T05:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900003",
+        "latitude": "37.586674",
+        "longitude": "127.00015",
+        "recordTime": "2026-03-06T05:30:00.000Z"
+      },
+      {
+        "sequence": "11",
+        "stationName": "혜화역.마로니에공원",
+        "carNumber": "5537",
+        "eventDate": "2026-03-06T05:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100000124",
+        "latitude": "37.581048",
+        "longitude": "127.002135",
+        "recordTime": "2026-03-06T05:30:00.000Z"
+      },
+      {
+        "sequence": "15",
+        "stationName": "성균관대정문",
+        "carNumber": "5538",
+        "eventDate": "2026-03-06T05:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900218",
+        "latitude": "37.584957",
+        "longitude": "126.99662",
+        "recordTime": "2026-03-06T05:30:00.000Z"
+      }
+    ]
+  },
+  {
+    "at": "2026-03-06T15:00:00+09:00",
+    "payload": [
+      {
+        "sequence": "18",
+        "stationName": "학생회관",
+        "carNumber": "5536",
+        "eventDate": "2026-03-06T06:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900221",
+        "latitude": "37.58742",
+        "longitude": "126.993675",
+        "recordTime": "2026-03-06T06:00:00.000Z"
+      },
+      {
+        "sequence": "6",
+        "stationName": "혜화역4번출구",
+        "carNumber": "3613",
+        "eventDate": "2026-03-06T06:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900027",
+        "latitude": "37.583558",
+        "longitude": "127.001594",
+        "recordTime": "2026-03-06T06:00:00.000Z"
+      },
+      {
+        "sequence": "12",
+        "stationName": "혜화역1번출구",
+        "carNumber": "5537",
+        "eventDate": "2026-03-06T06:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900075",
+        "latitude": "37.583473",
+        "longitude": "127.001763",
+        "recordTime": "2026-03-06T06:00:00.000Z"
+      },
+      {
+        "sequence": "14",
+        "stationName": "성대입구",
+        "carNumber": "5538",
+        "eventDate": "2026-03-06T06:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900199",
+        "latitude": "37.583236",
+        "longitude": "126.998906",
+        "recordTime": "2026-03-06T06:00:00.000Z"
+      }
+    ]
+  },
+  {
+    "at": "2026-03-06T15:30:00+09:00",
+    "payload": [
+      {
+        "sequence": "18",
+        "stationName": "학생회관",
+        "carNumber": "5536",
+        "eventDate": "2026-03-06T06:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900221",
+        "latitude": "37.58742",
+        "longitude": "126.993675",
+        "recordTime": "2026-03-06T06:30:00.000Z"
+      },
+      {
+        "sequence": "5",
+        "stationName": "혜화우체국",
+        "carNumber": "3613",
+        "eventDate": "2026-03-06T06:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900063",
+        "latitude": "37.584125",
+        "longitude": "127.001478",
+        "recordTime": "2026-03-06T06:30:00.000Z"
+      },
+      {
+        "sequence": "10",
+        "stationName": "방송통신대.이화장",
+        "carNumber": "5537",
+        "eventDate": "2026-03-06T06:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100000123",
+        "latitude": "37.578043",
+        "longitude": "127.002437",
+        "recordTime": "2026-03-06T06:30:00.000Z"
+      }
+    ]
+  },
+  {
+    "at": "2026-03-06T16:00:00+09:00",
+    "payload": [
+      {
+        "sequence": "17",
+        "stationName": "성균관대운동장",
+        "carNumber": "5536",
+        "eventDate": "2026-03-06T07:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900220",
+        "latitude": "37.587863",
+        "longitude": "126.99237",
+        "recordTime": "2026-03-06T07:00:00.000Z"
+      },
+      {
+        "sequence": "4",
+        "stationName": "혜화초등학교",
+        "carNumber": "3613",
+        "eventDate": "2026-03-06T07:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900003",
+        "latitude": "37.5865",
+        "longitude": "127.000265",
+        "recordTime": "2026-03-06T07:00:00.000Z"
+      },
+      {
+        "sequence": "10",
+        "stationName": "방송통신대.이화장",
+        "carNumber": "5537",
+        "eventDate": "2026-03-06T07:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100000123",
+        "latitude": "37.578043",
+        "longitude": "127.002437",
+        "recordTime": "2026-03-06T07:00:00.000Z"
+      }
+    ]
+  },
+  {
+    "at": "2026-03-06T16:30:00+09:00",
+    "payload": [
+      {
+        "sequence": "17",
+        "stationName": "성균관대운동장",
+        "carNumber": "5536",
+        "eventDate": "2026-03-06T07:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900220",
+        "latitude": "37.587863",
+        "longitude": "126.99237",
+        "recordTime": "2026-03-06T07:30:00.000Z"
+      },
+      {
+        "sequence": "5",
+        "stationName": "혜화우체국",
+        "carNumber": "3613",
+        "eventDate": "2026-03-06T07:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900063",
+        "latitude": "37.584161",
+        "longitude": "127.00147",
+        "recordTime": "2026-03-06T07:30:00.000Z"
+      },
+      {
+        "sequence": "11",
+        "stationName": "혜화역.마로니에공원",
+        "carNumber": "5537",
+        "eventDate": "2026-03-06T07:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100000124",
+        "latitude": "37.581856",
+        "longitude": "127.002055",
+        "recordTime": "2026-03-06T07:30:00.000Z"
+      },
+      {
+        "sequence": "15",
+        "stationName": "성균관대정문",
+        "carNumber": "5538",
+        "eventDate": "2026-03-06T07:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900218",
+        "latitude": "37.584957",
+        "longitude": "126.99662",
+        "recordTime": "2026-03-06T07:30:00.000Z"
+      }
+    ]
+  },
+  {
+    "at": "2026-03-06T17:00:00+09:00",
+    "payload": [
+      {
+        "sequence": "18",
+        "stationName": "학생회관",
+        "carNumber": "5536",
+        "eventDate": "2026-03-06T08:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900221",
+        "latitude": "37.58742",
+        "longitude": "126.993675",
+        "recordTime": "2026-03-06T08:00:00.000Z"
+      },
+      {
+        "sequence": "5",
+        "stationName": "혜화우체국",
+        "carNumber": "3613",
+        "eventDate": "2026-03-06T08:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900063",
+        "latitude": "37.585037",
+        "longitude": "127.001293",
+        "recordTime": "2026-03-06T08:00:00.000Z"
+      },
+      {
+        "sequence": "10",
+        "stationName": "방송통신대.이화장",
+        "carNumber": "5537",
+        "eventDate": "2026-03-06T08:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100000123",
+        "latitude": "37.578043",
+        "longitude": "127.002437",
+        "recordTime": "2026-03-06T08:00:00.000Z"
+      },
+      {
+        "sequence": "15",
+        "stationName": "성균관대정문",
+        "carNumber": "5538",
+        "eventDate": "2026-03-06T08:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900218",
+        "latitude": "37.584957",
+        "longitude": "126.99662",
+        "recordTime": "2026-03-06T08:00:00.000Z"
+      }
+    ]
+  },
+  {
+    "at": "2026-03-06T17:30:00+09:00",
+    "payload": [
+      {
+        "sequence": "17",
+        "stationName": "성균관대운동장",
+        "carNumber": "5536",
+        "eventDate": "2026-03-06T08:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900220",
+        "latitude": "37.587863",
+        "longitude": "126.99237",
+        "recordTime": "2026-03-06T08:30:00.000Z"
+      },
+      {
+        "sequence": "5",
+        "stationName": "혜화우체국",
+        "carNumber": "3613",
+        "eventDate": "2026-03-06T08:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900063",
+        "latitude": "37.585654",
+        "longitude": "127.00079",
+        "recordTime": "2026-03-06T08:30:00.000Z"
+      },
+      {
+        "sequence": "11",
+        "stationName": "혜화역.마로니에공원",
+        "carNumber": "5537",
+        "eventDate": "2026-03-06T08:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100000124",
+        "latitude": "37.581119",
+        "longitude": "127.002277",
+        "recordTime": "2026-03-06T08:30:00.000Z"
+      },
+      {
+        "sequence": "15",
+        "stationName": "성균관대정문",
+        "carNumber": "5538",
+        "eventDate": "2026-03-06T08:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900218",
+        "latitude": "37.584957",
+        "longitude": "126.99662",
+        "recordTime": "2026-03-06T08:30:00.000Z"
+      }
+    ]
+  },
+  {
+    "at": "2026-03-06T18:00:00+09:00",
+    "payload": [
+      {
+        "sequence": "17",
+        "stationName": "성균관대운동장",
+        "carNumber": "5536",
+        "eventDate": "2026-03-06T09:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900220",
+        "latitude": "37.587863",
+        "longitude": "126.99237",
+        "recordTime": "2026-03-06T09:00:00.000Z"
+      },
+      {
+        "sequence": "5",
+        "stationName": "혜화우체국",
+        "carNumber": "3613",
+        "eventDate": "2026-03-06T09:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900063",
+        "latitude": "37.585933",
+        "longitude": "127.00078",
+        "recordTime": "2026-03-06T09:00:00.000Z"
+      },
+      {
+        "sequence": "9",
+        "stationName": "이화사거리",
+        "carNumber": "5537",
+        "eventDate": "2026-03-06T09:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900043",
+        "latitude": "37.577525",
+        "longitude": "127.002275",
+        "recordTime": "2026-03-06T09:00:00.000Z"
+      },
+      {
+        "sequence": "15",
+        "stationName": "성균관대정문",
+        "carNumber": "5538",
+        "eventDate": "2026-03-06T09:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900218",
+        "latitude": "37.584957",
+        "longitude": "126.99662",
+        "recordTime": "2026-03-06T09:00:00.000Z"
+      }
+    ]
+  },
+  {
+    "at": "2026-03-06T18:30:00+09:00",
+    "payload": [
+      {
+        "sequence": "17",
+        "stationName": "성균관대운동장",
+        "carNumber": "3613",
+        "eventDate": "2026-03-06T09:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900220",
+        "latitude": "37.587863",
+        "longitude": "126.99237",
+        "recordTime": "2026-03-06T09:30:00.000Z"
+      },
+      {
+        "sequence": "18",
+        "stationName": "학생회관",
+        "carNumber": "5536",
+        "eventDate": "2026-03-06T09:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900221",
+        "latitude": "37.58742",
+        "longitude": "126.993675",
+        "recordTime": "2026-03-06T09:30:00.000Z"
+      },
+      {
+        "sequence": "5",
+        "stationName": "혜화우체국",
+        "carNumber": "5537",
+        "eventDate": "2026-03-06T09:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900063",
+        "latitude": "37.585756",
+        "longitude": "127.00086",
+        "recordTime": "2026-03-06T09:30:00.000Z"
+      },
+      {
+        "sequence": "12",
+        "stationName": "혜화역1번출구",
+        "carNumber": "5538",
+        "eventDate": "2026-03-06T09:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900075",
+        "latitude": "37.58576",
+        "longitude": "127.000867",
+        "recordTime": "2026-03-06T09:30:00.000Z"
+      }
+    ]
+  },
+  {
+    "at": "2026-03-06T19:00:00+09:00",
+    "payload": [
+      {
+        "sequence": "5",
+        "stationName": "혜화우체국",
+        "carNumber": "5537",
+        "eventDate": "2026-03-06T10:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900063",
+        "latitude": "37.584865",
+        "longitude": "127.001328",
+        "recordTime": "2026-03-06T10:00:00.000Z"
+      },
+      {
+        "sequence": "14",
+        "stationName": "성대입구",
+        "carNumber": "5538",
+        "eventDate": "2026-03-06T10:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900199",
+        "latitude": "37.583366",
+        "longitude": "126.999051",
+        "recordTime": "2026-03-06T10:00:00.000Z"
+      }
+    ]
+  },
+  {
+    "at": "2026-03-06T19:30:00+09:00",
+    "payload": [
+      {
+        "sequence": "7",
+        "stationName": "혜화역.서울대병원입구",
+        "carNumber": "5537",
+        "eventDate": "2026-03-06T10:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100000125",
+        "latitude": "37.580814",
+        "longitude": "127.002002",
+        "recordTime": "2026-03-06T10:30:00.000Z"
+      },
+      {
+        "sequence": "11",
+        "stationName": "혜화역.마로니에공원",
+        "carNumber": "5538",
+        "eventDate": "2026-03-06T10:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100000124",
+        "latitude": "37.582849",
+        "longitude": "127.001864",
+        "recordTime": "2026-03-06T10:30:00.000Z"
+      }
+    ]
+  },
+  {
+    "at": "2026-03-06T20:00:00+09:00",
+    "payload": [
+      {
+        "sequence": "17",
+        "stationName": "성균관대운동장",
+        "carNumber": "3613",
+        "eventDate": "2026-03-06T11:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900220",
+        "latitude": "37.587863",
+        "longitude": "126.99237",
+        "recordTime": "2026-03-06T11:00:00.000Z"
+      },
+      {
+        "sequence": "7",
+        "stationName": "혜화역.서울대병원입구",
+        "carNumber": "5537",
+        "eventDate": "2026-03-06T11:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100000125",
+        "latitude": "37.581009",
+        "longitude": "127.001984",
+        "recordTime": "2026-03-06T11:00:00.000Z"
+      },
+      {
+        "sequence": "14",
+        "stationName": "성대입구",
+        "carNumber": "5538",
+        "eventDate": "2026-03-06T11:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900199",
+        "latitude": "37.583293",
+        "longitude": "126.99897",
+        "recordTime": "2026-03-06T11:00:00.000Z"
+      }
+    ]
+  },
+  {
+    "at": "2026-03-06T20:30:00+09:00",
+    "payload": [
+      {
+        "sequence": "17",
+        "stationName": "성균관대운동장",
+        "carNumber": "3613",
+        "eventDate": "2026-03-06T11:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900220",
+        "latitude": "37.587863",
+        "longitude": "126.99237",
+        "recordTime": "2026-03-06T11:30:00.000Z"
+      },
+      {
+        "sequence": "7",
+        "stationName": "혜화역.서울대병원입구",
+        "carNumber": "5537",
+        "eventDate": "2026-03-06T11:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100000125",
+        "latitude": "37.580954",
+        "longitude": "127.001989",
+        "recordTime": "2026-03-06T11:30:00.000Z"
+      },
+      {
+        "sequence": "14",
+        "stationName": "성대입구",
+        "carNumber": "5538",
+        "eventDate": "2026-03-06T11:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900199",
+        "latitude": "37.58317",
+        "longitude": "126.998833",
+        "recordTime": "2026-03-06T11:30:00.000Z"
+      }
+    ]
+  },
+  {
+    "at": "2026-03-06T21:00:00+09:00",
+    "payload": [
+      {
+        "sequence": "10",
+        "stationName": "방송통신대.이화장",
+        "carNumber": "5537",
+        "eventDate": "2026-03-06T12:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100000123",
+        "latitude": "37.578043",
+        "longitude": "127.002437",
+        "recordTime": "2026-03-06T12:00:00.000Z"
+      },
+      {
+        "sequence": "14",
+        "stationName": "성대입구",
+        "carNumber": "5538",
+        "eventDate": "2026-03-06T12:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900199",
+        "latitude": "37.583164",
+        "longitude": "126.998827",
+        "recordTime": "2026-03-06T12:00:00.000Z"
+      }
+    ]
+  },
+  {
+    "at": "2026-03-06T21:30:00+09:00",
+    "payload": [
+      {
+        "sequence": "6",
+        "stationName": "혜화역4번출구",
+        "carNumber": "5537",
+        "eventDate": "2026-03-06T12:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900027",
+        "latitude": "37.583433",
+        "longitude": "127.001627",
+        "recordTime": "2026-03-06T12:30:00.000Z"
+      },
+      {
+        "sequence": "14",
+        "stationName": "성대입구",
+        "carNumber": "5538",
+        "eventDate": "2026-03-06T12:30:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900199",
+        "latitude": "37.583337",
+        "longitude": "126.999018",
+        "recordTime": "2026-03-06T12:30:00.000Z"
+      }
+    ]
+  },
+  {
+    "at": "2026-03-06T22:00:00+09:00",
+    "payload": [
+      {
+        "sequence": "17",
+        "stationName": "성균관대운동장",
+        "carNumber": "3613",
+        "eventDate": "2026-03-06T13:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900220",
+        "latitude": "37.587863",
+        "longitude": "126.99237",
+        "recordTime": "2026-03-06T13:00:00.000Z"
+      },
+      {
+        "sequence": "2",
+        "stationName": "서울국제고등학교",
+        "carNumber": "5538",
+        "eventDate": "2026-03-06T13:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900031",
+        "latitude": "37.589317",
+        "longitude": "126.997473",
+        "recordTime": "2026-03-06T13:00:00.000Z"
+      },
+      {
+        "sequence": "10",
+        "stationName": "방송통신대.이화장",
+        "carNumber": "5537",
+        "eventDate": "2026-03-06T13:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100000123",
+        "latitude": "37.580239",
+        "longitude": "127.002186",
+        "recordTime": "2026-03-06T13:00:00.000Z"
+      }
+    ]
+  },
+  {
+    "at": "2026-03-06T22:30:00+09:00",
+    "payload": null
+  },
+  {
+    "at": "2026-03-06T23:00:00+09:00",
+    "payload": [
+      {
+        "sequence": "2",
+        "stationName": "서울국제고등학교",
+        "carNumber": "5538",
+        "eventDate": "2026-03-06T14:00:00.000Z",
+        "estimatedTime": 0,
+        "stationId": "100900031",
+        "latitude": "37.589338",
+        "longitude": "126.997511",
+        "recordTime": "2026-03-06T14:00:00.000Z"
+      }
+    ]
+  },
+  {
+    "at": "2026-03-06T23:30:00+09:00",
+    "payload": null
+  }
+]

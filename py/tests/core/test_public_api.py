@@ -91,7 +91,7 @@ def test_result_tier_events_are_all_exported():
         "ContentRefreshed",
         "ItemFailed",
         "ItemSkipped",
-        "NoticeCrawled",
-        "NoticeUnchanged",
+        "ItemCrawled",
+        "ItemUnchanged",
     }
     assert result_tier <= set(core.__all__)

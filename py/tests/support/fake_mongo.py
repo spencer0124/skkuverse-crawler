@@ -508,14 +508,42 @@ class FakeCollection:
                         f"E11000 duplicate key error (fake): {dict(zip(key_fields, key))}"
                     )
 
-    def _upsert_insert(self, filter_: dict[str, Any], update: dict[str, Any]) -> ObjectId:
+    def _upsert_insert(self, filter_: dict[str, Any], update: dict[str, Any]) -> Any:
+        # Real Mongo extracts an equality out of a SINGLE-element $in when
+        # seeding an upsert ({"_id": {"$in": ["x"]}} inserts _id "x") but
+        # not out of a multi-element one or a negation. Rather than model
+        # that, refuse: the honesty contract is that this fake raises on
+        # what it does not implement instead of diverging quietly, and no
+        # caller in src/ upserts with anything but plain equality.
+        operators = sorted(
+            k for k, v in filter_.items() if not k.startswith("$") and _is_operator_doc(v)
+        )
+        if operators:
+            raise NotImplementedError(
+                f"FakeCollection: upsert with operator filter on {operators} "
+                f"not implemented (real Mongo's seeding rules differ per operator)"
+            )
         seeded = {
             k: copy.deepcopy(v)
             for k, v in filter_.items()
-            if not k.startswith("$") and not _is_operator_doc(v)
+            if not k.startswith("$")
         }
+        pinned_id = "_id" in seeded
         _apply_update(seeded, update, insert=True)
-        seeded["_id"] = ObjectId()
+        if pinned_id and seeded.get("_id") != filter_["_id"]:
+            # Real Mongo answers this with WriteError 66 (immutable field).
+            raise NotImplementedError(
+                "FakeCollection: an update that changes an _id pinned by the "
+                "filter is not implemented (real Mongo raises WriteError 66)"
+            )
+        # Mongo generates an _id only when the filter did not pin one. An
+        # equality filter on _id (the snapshot archetype's whole addressing
+        # scheme) supplies it, and overwriting it here made every upsert
+        # look like a fresh insert forever: the document went in under a
+        # random ObjectId, the next lookup missed it, and upserted_id was
+        # never None. Level-1 conformance pins this against real Mongo.
+        if "_id" not in seeded:
+            seeded["_id"] = ObjectId()
         self._check_unique(seeded)
         self.docs.append(seeded)
         return seeded["_id"]

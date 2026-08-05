@@ -31,14 +31,14 @@ sink. `wiring.py` does check `isinstance` at assembly time, which is why they ar
 |--------|--------|-----|
 | `prepare` | once per source, before its first event | Setup that depends on the source. Must be idempotent — the Mongo sink creates its indexes here and guards against repeats. |
 | `accept` | once per event, in emission order | Your storage. The return value matters for exactly one event type; see below. |
-| `flush` | on every `PageCompleted`; `run_crawl` adds one more when a source's stream ends | Where a batching sink writes. Called on pages where nothing was buffered too. |
+| `flush` | on every `BatchCompleted`; `run_crawl` adds one more when a source's stream ends | Where a batching sink writes. Called on pages where nothing was buffered too. |
 
 Return values from `prepare` and `flush` are never read. The suite does not check them, on
 purpose: enforcing a rule the runner does not have would have third parties writing code to
 satisfy a fiction.
 
 The end-of-source flush is not redundant with the per-page one, and the reason is worth
-knowing if you buffer: not every source reaches a `PageCompleted`. The null-content backfill
+knowing if you buffer: not every source reaches a `BatchCompleted`. The null-content backfill
 emits write-bearing events *before* the page loop, and a source whose page 0 fetch fails
 breaks out before the first page completes. Those writes used to sit in the buffer forever
 while the runner counted them as done.
@@ -47,7 +47,7 @@ So `flush` must tolerate an empty buffer — it will be called on pages that buf
 and again at the end.
 
 > **If you drive `run_events` yourself**, the end-of-source flush is not yours. It lives in
-> `run_crawl`, not in the runner — `core.runner.run_events` still flushes on `PageCompleted`
+> `run_crawl`, not in the runner — `core.runner.run_events` still flushes on `BatchCompleted`
 > and nothing else. Call `flush()` after the stream ends, and note that neither call is in a
 > `finally`: an `accept` that raises still leaves your buffer un-drained.
 
@@ -65,10 +65,10 @@ source's drained work while that source still reports success. That is a known p
 
 ## What `accept` returns
 
-Only `NoticeCrawled` reads it, and it decides one number:
+Only `ItemCrawled` reads it, and it decides one number:
 
 ```python
-case NoticeCrawled():
+case ItemCrawled():
     if outcome is Outcome.UPDATED:
         result.updated += 1
     else:
@@ -87,6 +87,25 @@ or `None` from it — but the runner counts it as `updated` either way, so the v
 informational. For everything else the return is ignored and the suite requires `None`:
 nothing was stored, so there is nothing to report.
 
+## `ItemCrawled.item` is untyped, and two things follow from that
+
+`item` is annotated `Any`. `core` does not know any module's schema and will not import one
+to find out — that is the layering rule, not laziness. Two consequences worth knowing before
+they cost you an afternoon:
+
+**Destructuring it in a `match` fails silently.** A class pattern whose keyword names a
+missing attribute is not an error — it is simply *no match*, and control falls through to
+`case _`. So `case ItemCrawled(notice=notice)` does not raise; it quietly never fires, your
+sink returns `None`, and `run_events` reads `None` as `INSERTED`. The crawl then reports a
+full page of inserts against an empty store. `assert_sink_contract` cannot catch this,
+because `None` is a legal answer meaning INSERTED. Bind the whole event and narrow it
+yourself if you want a loud failure.
+
+**`JsonLinesSink` requires a dataclass.** Core's own sink serialises with
+`dataclasses.asdict(event.item)`, so a non-dataclass item (a `TypedDict`, a plain `dict`)
+raises `TypeError` there. That only constrains modules that want `--json` to work; your own
+sink is free to accept anything.
+
 ## Tolerant reader
 
 **Return `None` for any event you do not recognise. Never raise.**
@@ -94,7 +113,7 @@ nothing was stored, so there is nothing to report.
 ```python
 async def accept(self, event: CrawlEvent) -> Outcome | None:
     match event:
-        case NoticeCrawled(notice=notice):
+        case ItemCrawled(item=notice):
             ...
         case _:
             return None   # <- the whole progress tier, and anything added later
@@ -104,8 +123,8 @@ This is not politeness, it is the versioning mechanism. The event vocabulary has
 
 | Tier | Events | Promise |
 |------|--------|---------|
-| **Result** | `NoticeCrawled` `NoticeUnchanged` `ContentRefreshed` `ItemFailed` `ItemSkipped` | Frozen. Adding or changing one is a major release. |
-| **Progress** | `SourceStarted` `PageCompleted` `ListFetchFailed` `SourceFinished` | May grow in a minor release. |
+| **Result** | `ItemCrawled` `ItemUnchanged` `ContentRefreshed` `ItemFailed` `ItemSkipped` | Frozen. Adding or changing one is a major release. |
+| **Progress** | `SourceStarted` `BatchCompleted` `ListFetchFailed` `SourceFinished` | May grow in a minor release. |
 
 A progress event can be added in a minor release *only* because every sink ignores what it has
 not heard of. A sink with an exhaustive match that raises on the unknown turns that minor
@@ -117,11 +136,11 @@ new event is a review question, not a naming preference (adr-006 §⑧).
 
 ### The result-tier events
 
-- **`NoticeCrawled`** — a fetched notice ready to store. `change=None` is a new or replaced
+- **`ItemCrawled`** — a fetched notice ready to store. `change=None` is a new or replaced
   item (plain upsert). A populated `change` is an edit detected against what you already had:
   same article, different title or content hash. The Mongo sink treats that as a
   history-preserving update; a simpler sink can treat both the same.
-- **`NoticeUnchanged`** — a known item that did not change. Usually batched and written on
+- **`ItemUnchanged`** — a known item that did not change. Usually batched and written on
   `flush` as a "seen at" refresh. Ignoring it entirely is valid; it costs you the ability to
   tell a stale record from a deleted one.
 - **`ContentRefreshed`** — backfilled content for an item stored earlier without any.
@@ -134,16 +153,16 @@ new event is a review question, not a naming preference (adr-006 §⑧).
 
 ### Do not buffer the events themselves
 
-`NoticeCrawled` holds a `Notice`, and a `Notice` can carry several megabytes of `cleanHtml`.
-Publishing the event is free — it is a reference — but a sink that appends events to a list
-keeps every one of those payloads alive until the crawl ends.
+`ItemCrawled` holds whatever the module built, and a notices item carries several megabytes
+of `cleanHtml`. Publishing the event is free — it is a reference — but a sink that appends
+events to a list keeps every one of those payloads alive until the crawl ends.
 
 ```python
 # no — keeps the whole Notice, cleanHtml and all, until the crawl ends
 self._pending.append(event)
 
 # yes — only the fields you will actually write
-self._pending.append({"articleNo": event.notice.articleNo, "title": event.notice.title})
+self._pending.append({"articleNo": event.item.articleNo, "title": event.item.title})
 ```
 
 `MongoSink._touches` is the reference implementation. Only a memory profile would catch the
@@ -186,13 +205,18 @@ async def test_my_sink_satisfies_the_contract():
 That call **stores nothing**, so it is safe against a sink pointed at a real store. It does
 call `prepare`, because prepare is by definition your own idempotent setup.
 
-To cover the write-bearing half, pass a sample. It has to come from you: the sample is a
-`NoticeCrawled`, which holds a `Notice`, which belongs to the notices module — `core` cannot
-build one without importing across its own layer boundary.
+To cover the write-bearing half, pass a sample and the identity of the item inside it. Both
+have to come from you: `ItemCrawled.item` is deliberately untyped so that `core` stays out of
+every module's schema, which also means `core` cannot read the item's key off it. The suite
+needs that key so its follow-up `ItemUnchanged` and `ContentRefreshed` aim at the same item
+your sample just wrote — otherwise they land on a document that does not exist and check
+nothing.
 
 ```python
-sample = NoticeCrawled(source_id="my-source", notice=a_notice)
-await assert_sink_contract(MySink(throwaway_store), sample=sample)
+sample = ItemCrawled(source_id="my-source", item=a_notice)
+await assert_sink_contract(
+    MySink(throwaway_store), sample=sample, sample_article_no=a_notice.articleNo
+)
 ```
 
 With a sample, expect writes. Point it at a scratch database, a fake collection or an

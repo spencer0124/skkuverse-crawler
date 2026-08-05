@@ -32,6 +32,10 @@ _LAZY: dict[str, tuple[str, str, str, str | None]] = {
         ".plugins.health.cli", "health_summary_cli",
         "Send the daily crawl-health summary to Discord once.", "mongo,discord",
     ),
+    "bus": (
+        ".modules.bus.cli", "bus_cli",
+        "Fetch one bus tick and print it (no storage).", None,
+    ),
     "notices": (
         ".modules.notices.cli", "notices_cli",
         "Run the notices crawler.", None,
@@ -160,20 +164,36 @@ def main() -> None:
 
 
 @main.command()
-@click.option("--module", "-m", default=None, help="Run specific module only")
+@click.option(
+    "--module",
+    "-m",
+    default=None,
+    help="Comma-separated module names to run (default: all). Unknown names are an error.",
+)
 def start(module: str | None) -> None:
-    """Start the cron scheduler for all (or one) module."""
+    """Start the cron scheduler for all (or some) modules."""
     from .env import init_config
 
     cfg = init_config()
     configure_logging(cfg)
-    asyncio.run(_start_scheduler(module))
+    # Split here, not in wiring: "a comma means several" is a CLI spelling
+    # decision, and wiring takes a sequence so a library caller can pass a
+    # list without stringifying it first.
+    #
+    # `is not None`, NOT truthiness: `--module ""` is a mistake, and under
+    # truthiness it would mean "run everything" — the exact opposite. That
+    # matters because the split-container deployment passes this through
+    # compose (`--module ${CRAWLER_MODULES}`), where an unset variable
+    # interpolates to an empty argument and would otherwise silently start
+    # a second full crawler.
+    selection = module.split(",") if module is not None else None
+    asyncio.run(_start_scheduler(selection))
 
 
-async def _start_scheduler(module_filter: str | None = None) -> None:
+async def _start_scheduler(selection: list[str] | None = None) -> None:
     from .plugins.scheduler.runner import run_scheduler
     from .shared.db import close_client
     from .wiring import build_runtime
 
-    modules = build_runtime()
-    await run_scheduler(modules, module_filter=module_filter, on_shutdown=close_client)
+    modules = build_runtime(selection=selection)
+    await run_scheduler(modules, on_shutdown=close_client)

@@ -114,6 +114,22 @@ jobs:
             echo "$out" | grep -q "skkuverse-crawler\[" \
               || { echo "no install hint for $cmd"; exit 1; }
           done
+      - name: bus runs on a core-only install and refuses without config
+        run: |
+          cd /tmp
+          set +e
+          out=$(env -i /tmp/core/bin/skkuverse-crawler bus --once --poller bus-hssc 2>&1)
+          code=$?
+          set -e
+          echo "--- bus (exit $code) ---"
+          echo "$out"
+          # Needs no extra to IMPORT — that is what this proves; modules/
+          # may not depend on motor or apscheduler. It must then refuse
+          # loudly for the one reason that is actually true (no endpoint),
+          # rather than by failing to import.
+          test $code -ne 0
+          echo "$out" | grep -qi "not configured" \
+            || { echo "bus did not refuse for the expected reason"; exit 1; }
       - name: A store-less crawl produces JSON on stdout
         run: |
           cd /tmp

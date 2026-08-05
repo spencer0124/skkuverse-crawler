@@ -104,7 +104,7 @@ async def test_without_a_factory_there_is_nothing_to_be_incremental_over():
 
 
 async def test_results_hook_receives_the_crawl_results():
-    results = [SourceResult(dept_id="d", dept_name="D", inserted=2)]
+    results = [SourceResult(source_id="d", source_name="D", inserted=2)]
     run_crawl = AsyncMock(return_value=results)
     hook = AsyncMock()
     module = NoticesModule(ports_factory=_CountingFactory(), on_results=hook)
@@ -119,7 +119,7 @@ async def test_results_hook_receives_the_crawl_results():
 async def test_absent_hook_is_a_no_op():
     """The --once CLI path assembles no hook, which is what keeps manual
     runs free of health-state side effects (crawl_health/store contract)."""
-    run_crawl = AsyncMock(return_value=[SourceResult(dept_id="d", dept_name="D")])
+    run_crawl = AsyncMock(return_value=[SourceResult(source_id="d", source_name="D")])
     module = NoticesModule(ports_factory=_CountingFactory())
 
     with _patched(run_crawl):

@@ -80,7 +80,11 @@ def mock_db_patch(mock_collection):
     mock_db = MagicMock()
     mock_db.__getitem__ = MagicMock(return_value=mock_collection)
 
-    async def fake_get_db():
+    async def fake_get_db(name=None):
+        # `get_db` takes an optional database name since bus started
+        # writing to its own database. A zero-arg fake would make every
+        # `get_db(name)` caller fail with a TypeError that names the fixture
+        # rather than the code under test.
         return mock_db
 
     with patch("skkuverse_crawler.shared.db.get_db", side_effect=fake_get_db):
