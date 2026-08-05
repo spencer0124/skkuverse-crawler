@@ -19,7 +19,12 @@ import httpx
 
 # The upstreams are slow enough that a tight timeout produces false
 # failures, and a 10s poller cannot afford to wait much longer than one
-# tick. Matches the TypeScript's axios timeout.
+# tick. Matches the axios timeout on the HSSC and Jongro pollers.
+#
+# It is a per-call default rather than a constant because the third
+# upstream disagrees: campus-eta.service.ts uses 5000, not 10000. One
+# shared number would have silently doubled that upstream's patience the
+# moment campus ETA started going through this function.
 TIMEOUT_SECONDS = 10.0
 
 
@@ -37,6 +42,7 @@ async def fetch_json(
     url: str,
     *,
     headers: Mapping[str, str] | None = None,
+    timeout: float = TIMEOUT_SECONDS,
 ) -> Any:
     """GET and decode. Raises `UpstreamError` for anything else.
 
@@ -52,7 +58,7 @@ async def fetch_json(
         # message pointing at the network rather than at this line.
         response = await client.get(
             url,
-            timeout=TIMEOUT_SECONDS,
+            timeout=timeout,
             follow_redirects=True,
             headers=dict(headers) if headers else None,
         )

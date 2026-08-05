@@ -15,6 +15,8 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
+from unittest.mock import patch
+
 import httpx
 import pytest
 import respx
@@ -217,6 +219,43 @@ class TestHssc:
         assert "HTTP 503" in sink.of(ListFetchFailed)[0].error
 
     @respx.mock
+    async def test_a_failed_tick_does_not_lose_the_sticky_timestamps(
+        self, sink, sink_factory
+    ):
+        """`_previous` is only reassigned after a successful normalise. If a
+        failed tick cleared it, every bus would restart its dwell at zero on
+        recovery — "just arrived" for one that had been sitting there."""
+        module = _hssc(sink_factory)
+        with respx.mock:
+            respx.get(HSSC_ENDPOINT).mock(
+                return_value=httpx.Response(200, json=[_hssc_row()])
+            )
+            await module.run(now=TICK)
+        with respx.mock:
+            respx.get(HSSC_ENDPOINT).mock(return_value=httpx.Response(503))
+            await module.run(now=TICK + timedelta(seconds=10))
+        with respx.mock:
+            # A LATER get_date on the recovery tick, which is what makes
+            # this test able to tell the two apart: with the state kept, the
+            # first sighting is carried and the upstream's new stamp is
+            # ignored; with it lost, the new stamp is used and the dwell
+            # collapses. A constant get_date would give the same number
+            # either way.
+            respx.get(HSSC_ENDPOINT).mock(
+                return_value=httpx.Response(
+                    200, json=[_hssc_row(get_date="2026-03-16 오전 8:59:30")]
+                )
+            )
+            await module.run(now=TICK + timedelta(seconds=20))
+
+        first, recovered = (w.fields["data"][0] for w in sink.writes)
+        assert first["eventDate"] == recovered["eventDate"] == "2026-03-16 08:58:46"
+        assert first["estimatedTime"] == 74
+        assert recovered["estimatedTime"] == 94, (
+            "50 would mean the outage reset the dwell to the new sighting"
+        )
+
+    @respx.mock
     async def test_the_error_never_carries_the_endpoint(self, sink, sink_factory):
         """For HSSC the URL IS the credential, and these strings are logged."""
         respx.get(HSSC_ENDPOINT).mock(return_value=httpx.Response(503))
@@ -313,6 +352,52 @@ class TestJongro:
         assert summary["down"] is False
         assert summary["skipped"] == 4
         assert len(sink.of(ItemSkipped)) == 4
+
+    @respx.mock
+    async def test_success_with_an_empty_body_is_a_failure_not_a_quiet_night(
+        self, sink, sink_factory
+    ):
+        """`read_envelope` returns NO_DATA for any non-list itemList
+        whatever the code — a faithful port of the TypeScript's
+        `if (!apiData) return;`, and it must stay that way because the
+        parity goldens are the correctness criterion.
+
+        The header code is still allowed to decide the HEALTH signal, which
+        writes nothing either way. `headerCd "0"` with no body is the
+        upstream claiming success and sending nothing; read as overnight
+        no-data it would be indistinguishable from 2am forever — no alert,
+        no log, four documents quietly going stale.
+        """
+        respx.route(host="ws.bus.go.kr").mock(
+            side_effect=lambda request: httpx.Response(
+                200, json={"msgHeader": {"headerCd": "0"}, "msgBody": None}
+            )
+        )
+        summary = await _jongro(sink_factory).run(now=TICK)
+
+        assert sink.writes == [], "still writes nothing — parity is unchanged"
+        assert summary["down"] is True
+        assert summary["errors"] == 4 and summary["skipped"] == 0
+        assert "empty body with headerCd=0" in sink.of(ItemFailed)[0].error
+
+    @respx.mock
+    async def test_an_unparseable_item_is_a_down_tick_not_a_dead_job(
+        self, sink, sink_factory
+    ):
+        """`read_envelope` only checks that itemList is a list, so a
+        non-object element reaches `normalize_list` and raises. Escaping
+        `run()` would skip the health hook entirely, leaving the module
+        recorded as neither up nor down."""
+        respx.route(host="ws.bus.go.kr").mock(
+            side_effect=lambda request: httpx.Response(
+                200,
+                json={"msgHeader": {"headerCd": "0"}, "msgBody": {"itemList": ["oops"]}},
+            )
+        )
+        summary = await _jongro(sink_factory).run(now=TICK)
+
+        assert summary["down"] is True
+        assert sink.writes == []
 
     @respx.mock
     async def test_an_upstream_error_code_is_a_failure(self, sink, sink_factory):
@@ -526,6 +611,80 @@ class TestClientLifetime:
         await _hssc(sink_factory).shutdown()
 
 
+class TestNoTickGoesUnrecorded:
+    """A tick that raises must still reach the health hook.
+
+    This is the failure mode worth the broad `except Exception` in `run()`:
+    an escaping exception leaves `consecutiveFailures` wherever it was —
+    zero, for a healthy poller — so no alert can ever fire and the 09:00
+    summary calls the module healthy while it writes nothing. Recorded
+    failure beats no record.
+    """
+
+    @respx.mock
+    async def test_a_sink_that_raises_still_produces_a_down_result(self):
+        recorded: list = []
+
+        class _BrokenSink(_RecordingSink):
+            async def accept(self, event):
+                if isinstance(event, ItemCrawled):
+                    raise RuntimeError("mongo went away")
+                return await super().accept(event)
+
+        async def factory():
+            return _BrokenSink()
+
+        async def on_results(results):
+            recorded.extend(results)
+
+        respx.get(HSSC_ENDPOINT).mock(
+            return_value=httpx.Response(200, json=[_hssc_row()])
+        )
+        summary = await BusHsscModule(
+            sink_factory=factory, endpoint=HSSC_ENDPOINT, on_results=on_results
+        ).run(now=TICK)
+
+        assert summary["down"] is True
+        assert len(recorded) == 1 and recorded[0].source_down is True
+        assert "mongo went away" in recorded[0].last_error
+
+    @respx.mock
+    async def test_the_health_hook_receives_the_source_id_crawl_health_keys_on(
+        self, sink_factory
+    ):
+        recorded: list = []
+
+        async def on_results(results):
+            recorded.extend(results)
+
+        respx.get(HSSC_ENDPOINT).mock(return_value=httpx.Response(200, json=[]))
+        await _hssc(sink_factory, on_results=on_results).run(now=TICK)
+
+        assert recorded[0].source_id == BusSource.HSSC.value
+        assert recorded[0].source_name
+
+    @respx.mock
+    async def test_a_renamed_leg_table_fails_loudly_rather_than_writing_nothing(
+        self, sink, sink_factory
+    ):
+        """`EtaData(**legs)` rather than `legs.get("inja")`. Under `.get`, a
+        LEGS entry renamed without renaming the dataclass field would make
+        every tick write nothing and report success — the exact silent hole
+        the table was introduced to close."""
+        from skkuverse_crawler.modules.bus import campus_eta as module_under_test
+
+        respx.route(host=NAVER_HOST).mock(return_value=_naver_ok())
+        with patch.object(
+            module_under_test,
+            "LEGS",
+            (("injaa", ("a", "b")), ("jain", ("b", "a"))),
+        ):
+            summary = await _campus_eta(sink_factory).run(now=TICK)
+
+        assert sink.writes == []
+        assert summary["down"] is True, "the drift is recorded, not swallowed"
+
+
 class TestSchedules:
     @pytest.mark.parametrize(
         "module_factory,name,interval,grace,warm",
@@ -536,11 +695,16 @@ class TestSchedules:
         ],
     )
     def test_the_cadences(self, sink_factory, module_factory, name, interval, grace, warm):
-        """Grace must exceed the interval, not sit under it. These fetch
-        CURRENT state, so a late tick is not a stale one — the scheduler's
-        ten-second default would drop a ten-second poller's ticks whenever
-        the event loop was busy, and misfire is judged before coalesce, so
-        the dropped tick is not merged into the next."""
+        """Every module states its own grace, and every one of them exceeds
+        the scheduler's default. These fetch CURRENT state, so a late tick
+        is not a stale one — and misfire is judged BEFORE coalesce, so a
+        tick past the window is dropped whole rather than merged into the
+        next. The ten-second default applied to a ten-second poller would
+        drop ticks whenever the event loop was busy.
+
+        Grace is not required to exceed the interval: campus ETA's 300s sits
+        under its 600s cadence deliberately, because a tick five minutes
+        late is better folded into the next slot than run twice."""
         from skkuverse_crawler.plugins.scheduler.runner import (
             DEFAULT_MISFIRE_GRACE_SECONDS,
         )

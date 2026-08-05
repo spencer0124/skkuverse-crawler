@@ -196,7 +196,10 @@ campus ETA만 컬렉션이 다른 이유: `bus_cache`의 TTL은 60초인데 이 
 - `DISCORD_WEBHOOK_URL` — 크롤 헬스 알림용 Discord webhook (선택). 미설정 시 알림만 조용히 스킵 (부팅 로그로 상태 1회 고지). 소스가 연속 3틱 page-0 실패하면 1회 알림 + 회복 알림, 매일 09:00 KST 일일 요약. URL은 시크릿 — 레포 커밋 금지
 - `CRAWL_SOURCE_FILTER` — 콤마 구분 학과 ID 필터 (e.g. `skku-main,law`). **dev 오버라이드 전용** ⚠️ 프로덕션 미설정 원칙. 미설정 시 `sources.json`의 `crawlEnabled: true` 항목만 크롤링
 
-**bus 가족** (전부 시크릿. 미설정 시 production은 기동 거부, 그 외는 가족 스킵 — 단 선택된 가족이 전부 스킵되면 어디서든 거부):
+**bus 가족** (전부 시크릿. 미설정 시 production은 기동 거부, 그 외는 가족 스킵 — 단 선택된 가족이 전부 스킵되면 어디서든 거부).
+
+> ⚠️ **배포 순서**: 컨테이너는 `--module` 없이 `start`를 돌려 **모든 가족을 선택**한다. production에서 선택된 가족이 미설정이면 스킵이 아니라 기동 거부이므로, **VM의 `py/.env`에 아래 다섯 개가 먼저 들어가야 한다**. 안 그러면 배포가 non-zero로 끝나고 자동 롤백된다.
+
 
 - `MONGO_DB_NAME_BUS_CAMPUS` — bus 전용 DB. **기본값 없음** — skkuverse-server가 같은 변수를 기본값 없이 요구하고, 크롤러가 이름을 지어내면 서버가 읽지 않는 곳에 쓰게 된다(에러 없음, 앱만 빈 화면). `db_name_for()`가 환경 suffix를 붙이며 서버의 `devDbName()`과 규칙이 같다
 - `API_HSSC_NEW_PROD` / `API_HSSC_NEW_DEV` — HSSC 셔틀 엔드포인트. **URL 전체가 자격증명**이라 로그에 절대 남기지 않는다. production은 `_DEV`로 폴백하지 않는다

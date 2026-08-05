@@ -43,6 +43,11 @@ NAVER_DIRECTIONS_URL = (
 KEY_ID_HEADER = "X-NCP-APIGW-API-KEY-ID"
 KEY_HEADER = "X-NCP-APIGW-API-KEY"
 
+# campus-eta.service.ts uses `timeout: 5000` where the two realtime pollers
+# use 10000. Half the patience, stated here rather than inherited from the
+# client's default, which is the other upstreams' number.
+TIMEOUT_SECONDS = 5.0
+
 #: (payload field, (start, goal)) — 인사캠→자연캠 and back. Both the
 #: scheduled module and `bus --once` walk this table, so the two cannot
 #: end up asking for different directions or naming them differently.
@@ -135,7 +140,12 @@ def read_leg(data: Any) -> EtaLeg:
         )
 
     code = data.get("code")
-    if code != 0:
+    # `isinstance(code, bool)` first, because Python's `False == 0` is True
+    # and JavaScript's `false !== 0` is too. Without it a `code: false`
+    # response would be read as success here and as an error by the
+    # reference — the one branch where this port was more lenient than the
+    # TypeScript it replaces.
+    if isinstance(code, bool) or code != 0:
         raise CampusEtaPayloadError(
             f"Naver API error: code={code!r}, message={data.get('message')!r}"
         )

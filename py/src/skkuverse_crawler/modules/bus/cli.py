@@ -158,12 +158,14 @@ async def _collect(
         legs = {
             name: campus_eta.read_leg(
                 await fetch_json(
-                    client, campus_eta.directions_url(start, goal), headers=headers
+                    client,
+                    campus_eta.directions_url(start, goal),
+                    headers=headers,
+                    timeout=campus_eta.TIMEOUT_SECONDS,
                 )
             )
             for name, (start, goal) in campus_eta.LEGS
         }
-        data = campus_eta.EtaData(inja=legs["inja"], jain=legs["jain"])
-        return [("campus_eta", data.as_fields())]
+        return [("campus_eta", campus_eta.EtaData(**legs).as_fields())]
 
     raise click.ClickException(f"{source.value} has no --once implementation")

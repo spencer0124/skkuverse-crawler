@@ -50,12 +50,15 @@ from ...core.module import ModuleConfig
 from ...core.ports import Sink, SourceSpec
 from ...core.results import SourceResult
 from ...core.runner import run_events
+from ...shared.logger import get_logger
 from . import campus_eta, hssc, jongro
 from .client import UpstreamError, fetch_json
 from .models import CacheSnapshot
 from .registry import JongroRoute, load_routes, validate_service_key
 from .sources import BusSource, CacheKey, document_id
 from .time_ko import KoreanTimeFormatError
+
+logger = get_logger("bus")
 
 SinkFactory = Callable[[], Awaitable[Sink]]
 ResultsHook = Callable[[list[SourceResult]], Awaitable[None]]
@@ -125,9 +128,31 @@ class _BusModule:
         # converts explicitly (time_ko); passing a naive local `now` is how
         # a port like this silently drifts nine hours.
         now = now or datetime.now(timezone.utc)
-        await run_events(
-            self._events(self._http(), now=now), sink, result=result
-        )
+        try:
+            await run_events(
+                self._events(self._http(), now=now), sink, result=result
+            )
+        except Exception as exc:  # noqa: BLE001 — see below
+            # Broad on purpose, and it must stay broad. The generators catch
+            # the failures they can name; anything else — an upstream shape
+            # no parser anticipated, a Mongo blip inside the sink, a route
+            # code missing from CacheKey — would otherwise escape past
+            # _on_results, and a tick that records NO health state is worse
+            # than one that records failure: consecutiveFailures stays where
+            # it was, so the alert can never fire and the daily summary calls
+            # the module healthy while it writes nothing.
+            #
+            # modules/notices/orchestrator.py keeps the same guard for the
+            # same reason, with the same instruction not to narrow it.
+            result.errors += 1
+            result.source_down = True
+            result.last_error = f"{type(exc).__name__}: {exc}"
+            logger.warning(
+                "bus_tick_failed",
+                module=self.source.value,
+                err=type(exc).__name__,
+                err_msg=str(exc)[:200],
+            )
         if self._on_results is not None:
             await self._on_results([result])
         return {
@@ -168,6 +193,36 @@ class _BusModule:
         self, client: httpx.AsyncClient, *, now: datetime
     ) -> AsyncIterator[CrawlEvent]:  # pragma: no cover - subclass duty
         raise NotImplementedError
+
+    def _no_data_events(
+        self, envelope: jongro.Envelope, where: str, errors: list[str]
+    ) -> CrawlEvent:
+        """Classify an empty body by the header code that came with it.
+
+        `read_envelope` returns NO_DATA whenever `itemList` is not a list,
+        whatever the code — that is a faithful port of the TypeScript's
+        `if (!apiData) return;` and must not change, because the parity
+        goldens are the migration's correctness criterion.
+
+        What the header code IS allowed to change is the health signal,
+        which writes nothing either way. `"4"` means "no results" and
+        arrives every night; `"0"` means the upstream claimed success and
+        then sent no body, which is it misbehaving. Collapsing the two
+        would make a permanently empty upstream indistinguishable from 2am
+        — no alert, no log, four documents quietly going stale.
+        """
+        code = envelope.header_code
+        if code == jongro.NO_RESULTS_CODE:
+            return ItemSkipped(
+                source_id=self.source.value,
+                article_no=NO_ITEM_NUMBER,
+                reason=f"{where}: no data (headerCd={code})",
+            )
+        message = f"{where}: empty body with headerCd={code}"
+        errors.append(message)
+        return ItemFailed(
+            source_id=self.source.value, article_no=NO_ITEM_NUMBER, error=message
+        )
 
     def _finished(self, errors: Sequence[str]) -> SourceFinished:
         return SourceFinished(
@@ -336,11 +391,7 @@ class BusJongroModule(_BusModule):
                     ),
                 )
             case jongro.Outcome.NO_DATA:
-                yield ItemSkipped(
-                    source_id=sid,
-                    article_no=NO_ITEM_NUMBER,
-                    reason=f"{route.id} list: no data",
-                )
+                yield self._no_data_events(envelope, f"{route.id} list", errors)
             case jongro.Outcome.UPSTREAM_ERROR:
                 message = f"{route.id} list: headerCd={envelope.header_code}"
                 errors.append(message)
@@ -383,11 +434,7 @@ class BusJongroModule(_BusModule):
                     ),
                 )
             case jongro.Outcome.NO_DATA:
-                yield ItemSkipped(
-                    source_id=sid,
-                    article_no=NO_ITEM_NUMBER,
-                    reason=f"{route.id} loc: no data",
-                )
+                yield self._no_data_events(envelope, f"{route.id} loc", errors)
             case jongro.Outcome.UPSTREAM_ERROR:
                 message = f"{route.id} loc: headerCd={envelope.header_code}"
                 errors.append(message)
@@ -450,12 +497,17 @@ class BusCampusEtaModule(_BusModule):
 
         legs: dict[str, campus_eta.EtaLeg | None] = {}
         errors: list[str] = []
+        # Sequential rather than the TypeScript's Promise.allSettled. Two
+        # 5-second requests once every ten minutes is not worth the
+        # concurrency, and doing them in order keeps each failure attached
+        # to the direction that produced it.
         for name, (start, goal) in campus_eta.LEGS:
             try:
                 raw = await fetch_json(
                     client,
                     campus_eta.directions_url(start, goal),
                     headers=self._headers,
+                    timeout=campus_eta.TIMEOUT_SECONDS,
                 )
                 legs[name] = campus_eta.read_leg(raw)
             except (UpstreamError, campus_eta.CampusEtaPayloadError) as exc:
@@ -466,7 +518,11 @@ class BusCampusEtaModule(_BusModule):
                     source_id=sid, article_no=NO_ITEM_NUMBER, error=message
                 )
 
-        data = campus_eta.EtaData(inja=legs.get("inja"), jain=legs.get("jain"))
+        # Splatted, not `legs.get("inja")`. The LEGS table names the payload
+        # fields, and `.get` would answer None for a name that no longer
+        # exists — every tick would then write nothing while reporting
+        # success. A TypeError names the drift on the first tick instead.
+        data = campus_eta.EtaData(**legs)
         if data.complete:
             yield ItemCrawled(
                 source_id=sid,

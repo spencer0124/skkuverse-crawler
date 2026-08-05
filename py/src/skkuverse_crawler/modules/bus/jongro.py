@@ -31,7 +31,9 @@ DWELL_EXPIRY = timedelta(minutes=10)
 
 # "0" success, "4" no results (overnight, when nothing is running).
 # Anything else is the upstream telling us it is broken.
-USABLE_HEADER_CODES = frozenset({"0", "4"})
+SUCCESS_CODE = "0"
+NO_RESULTS_CODE = "4"
+USABLE_HEADER_CODES = frozenset({SUCCESS_CODE, NO_RESULTS_CODE})
 
 
 class Outcome(enum.Enum):
