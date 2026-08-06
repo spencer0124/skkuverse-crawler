@@ -34,9 +34,18 @@ from .time_ko import js_round
 SEOUL_CAMPUS = "126.993688,37.587308"
 SUWON_CAMPUS = "126.975532,37.292345"
 
-NAVER_DIRECTIONS_URL = (
-    "https://naveropenapi.apigw.ntruss.com/map-direction/v1/driving"
-)
+# Directions 5, on the CURRENT Maps host. The TypeScript this was ported
+# from still points at `naveropenapi.apigw.ntruss.com`, and that host is not
+# a synonym: an Application registered against the current host answers the
+# legacy one with `errorCode 210 / Permission Denied — A subscription to the
+# API is required`.
+#
+# Worth keeping the two apart, because NCP distinguishes them and the
+# distinction is the whole diagnosis: `210` means the credential is real but
+# this product is not enabled for it, while `200 / Invalid authentication
+# information` means the credential itself is not recognised. The key this
+# replaced returned `200` on both hosts — revoked, not unsubscribed.
+NAVER_DIRECTIONS_URL = "https://maps.apigw.ntruss.com/map-direction/v1/driving"
 
 # Header names for the two credentials. Passed as arguments from wiring —
 # `modules/` may not read the environment — and never logged.

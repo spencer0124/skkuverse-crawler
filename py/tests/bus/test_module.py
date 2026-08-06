@@ -16,6 +16,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 
 from unittest.mock import patch
+from urllib.parse import urlparse
 
 import httpx
 import pytest
@@ -27,6 +28,7 @@ from skkuverse_crawler.core.events import (
     ItemSkipped,
     ListFetchFailed,
 )
+from skkuverse_crawler.modules.bus import campus_eta
 from skkuverse_crawler.modules.bus.campus_eta import SEOUL_CAMPUS
 from skkuverse_crawler.modules.bus.module import (
     BusCampusEtaModule,
@@ -489,7 +491,11 @@ class TestJongro:
 
 # ── Campus ETA ────────────────────────────────────────────────────────────
 
-NAVER_HOST = "naveropenapi.apigw.ntruss.com"
+# Derived, not restated. Hardcoding it meant that moving the module to the
+# current Maps host left nine mocks silently pointed at the old one — the
+# tests failed, which is the good outcome, but they failed for a reason that
+# had nothing to do with the behaviour they were written to check.
+NAVER_HOST = urlparse(campus_eta.NAVER_DIRECTIONS_URL).netloc
 
 
 def _naver_ok(duration=1_800_000):
