@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 from unittest.mock import patch
+from urllib.parse import urlparse
 
 import httpx
 import pytest
@@ -22,9 +23,11 @@ import respx
 from click.testing import CliRunner
 
 from skkuverse_crawler.env import init_config
+from skkuverse_crawler.modules.bus import campus_eta
 from skkuverse_crawler.modules.bus.cli import _describe, bus_cli
 
-NAVER_HOST = "naveropenapi.apigw.ntruss.com"
+# Derived from the module rather than restated — see test_module.py.
+NAVER_HOST = urlparse(campus_eta.NAVER_DIRECTIONS_URL).netloc
 
 
 @pytest.fixture()

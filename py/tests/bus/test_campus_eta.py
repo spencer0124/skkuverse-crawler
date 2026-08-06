@@ -17,6 +17,7 @@ import pytest
 
 from skkuverse_crawler.modules.bus.campus_eta import (
     LEGS,
+    NAVER_DIRECTIONS_URL,
     SEOUL_CAMPUS,
     SUWON_CAMPUS,
     CampusEtaPayloadError,
@@ -157,3 +158,16 @@ class TestLegTable:
         url = directions_url(SEOUL_CAMPUS, SUWON_CAMPUS)
         assert "start=126.993688%2C37.587308" in url
         assert "goal=126.975532%2C37.292345" in url
+
+    def test_it_targets_the_current_maps_host(self):
+        """Not a cosmetic detail, and not interchangeable with the legacy
+        one. An Application registered against `maps.apigw.ntruss.com`
+        answers `naveropenapi.apigw.ntruss.com` with `errorCode 210 /
+        Permission Denied`, which reads like a billing problem rather than
+        a wrong URL. The TypeScript this was ported from still has the old
+        host, which is why its campus ETA stays broken on a working key.
+        """
+        assert directions_url(SEOUL_CAMPUS, SUWON_CAMPUS).startswith(
+            "https://maps.apigw.ntruss.com/map-direction/v1/driving?"
+        )
+        assert "naveropenapi" not in NAVER_DIRECTIONS_URL
