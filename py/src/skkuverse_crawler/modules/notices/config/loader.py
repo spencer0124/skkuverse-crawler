@@ -20,7 +20,14 @@ REQUIRED_SELECTORS: dict[str, list[str]] = {
     "skkumed-asp": ["listItem", "titleLink", "infoList", "detailContent", "attachmentList"],
     "jsp-dorm": ["listRow", "pinnedRow", "titleLink", "detailContent", "attachmentLink"],
     "custom-php": ["listRow", "titleLink", "category", "views", "date", "detailContent"],
-    "gnuboard": ["listRow", "titleLink", "author", "date", "detailContent", "detailAttachment"],
+    # "author" and "detailAttachment" follow the same rule as "category"
+    # above — the parser reads both with .get(), so absence means "this board
+    # has no author column" / "do not collect attachments here". saint's board
+    # has no author column at all, and its downloads sit behind a member
+    # login that no crawler session can pass, so storing attachment records
+    # would only promise the app a file the proxy can never deliver
+    # (known-issues §12).
+    "gnuboard": ["listRow", "titleLink", "date", "detailContent"],
     "gnuboard-custom": ["listRow", "titleLink", "date", "meta", "detailContent", "detailAttachment"],
     "pyxis-api": [],
     "webflow-skku": ["listItem", "listLink", "listRow", "titleCell", "regularCell", "paginationNext", "detailTitle", "detailContent"],

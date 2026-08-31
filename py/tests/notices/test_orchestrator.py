@@ -298,3 +298,67 @@ def _structlog_logger():
     from skkuverse_crawler.shared.logger import get_logger
 
     return get_logger("test_orchestrator")
+
+
+class TestPerSourceFloor:
+    """sources.json may pin a source's own floor via sinceDate.
+
+    Needed because a site that bulk-migrates its archive stamps every old
+    post with the *migration* date. saint's ~400 posts back to 2015 all read
+    2026-04-23, which sits above SERVICE_START_DATE — so the service floor
+    cannot stop the crawl and the whole archive would land under one date.
+    """
+
+    async def _collect_with_dept(self, dept, strategy, **kw):
+        return [
+            ev
+            async for ev in iter_source(
+                dept,
+                strategy,
+                mode=kw.get("mode", FullSweep()),
+                work_seed=NullWorkSeed(),
+                options=kw.get("options") or CrawlOptions(),
+                logger=MagicMock(),
+            )
+        ]
+
+    async def test_source_floor_skips_items_the_service_floor_would_keep(self):
+        dept = {**MOCK_DEPT, "sinceDate": "2026-04-24"}
+        # Both dates clear SERVICE_START_DATE (2026-03-09); only the source
+        # floor separates the migrated row from the real one.
+        page = [_make_item(1, date="2026-08-20"), _make_item(2, date="2026-04-23")]
+        events = await self._collect_with_dept(dept, _strategy([page, []]))
+
+        assert _types(events) == [
+            SourceStarted, ItemCrawled, ItemSkipped, BatchCompleted, SourceFinished,
+        ]
+        skipped = [ev for ev in events if isinstance(ev, ItemSkipped)]
+        assert skipped[0].article_no == 2
+        assert skipped[0].reason == "below_floor"
+
+    async def test_source_floor_stops_a_fully_migrated_page(self):
+        dept = {**MOCK_DEPT, "sinceDate": "2026-04-24"}
+        pages = [[_make_item(1, date="2026-08-20")], [_make_item(2, date="2026-04-23")]]
+        events = await self._collect_with_dept(dept, _strategy(pages))
+
+        assert _finished(events).stopped_by == "floor_date"
+
+    async def test_without_sincedate_the_service_floor_still_applies(self):
+        """Absence must change nothing — this is what keeps goldens stable."""
+        page = [_make_item(1, date="2026-08-20"), _make_item(2, date="2026-04-23")]
+        events = await self._collect_with_dept(MOCK_DEPT, _strategy([page, []]))
+
+        assert _types(events) == [
+            SourceStarted, ItemCrawled, ItemCrawled, BatchCompleted, SourceFinished,
+        ]
+
+    async def test_source_floor_does_not_leak_into_the_next_source(self):
+        """options is shared across sources; the override must be a copy."""
+        options = CrawlOptions()
+        before = options.since_date
+        await self._collect_with_dept(
+            {**MOCK_DEPT, "sinceDate": "2026-04-24"},
+            _strategy([[_make_item(1, date="2026-08-20")], []]),
+            options=options,
+        )
+        assert options.since_date == before
