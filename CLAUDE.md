@@ -104,6 +104,7 @@ python scripts/generate_artifacts.py    # 세 SSOT 파일 → 8개 아티팩트 
 - `crawlEnabled`: 프로덕션 크롤링 여부. `CRAWL_SOURCE_FILTER` env var 미설정 시 이 필드가 기본 필터.
 - `CRAWL_SOURCE_FILTER`: dev/디버깅용 오버라이드 **전용**. ⚠️ **절대 프로덕션 `docker-compose.yml`에 두지 말 것** — 설정 시 `sources.json`의 `crawlEnabled`를 덮어써 나머지 학과가 전부 침묵 차단됨. 컨테이너 Up 상태와 로그 무에러에도 coverage가 급락하므로 외부에서 알아채기 어려움 (2026-04-21 인시던트, `docs/known-issues.md` §7 참조).
 - `hasCategory`/`hasAuthor`: sources.json에 저장하지 않음. strategy에서 결정론적 도출 (codegen의 STRATEGY_FEATURES 룩업).
+- `sinceDate` (선택): 소스별 크롤 플로어. 없으면 `SERVICE_START_DATE`(2026-03-09). **사이트가 아카이브를 일괄 이관하면 옛 글 전부가 이관일로 찍혀** 서비스 플로어보다 뒤에 오고, 그러면 플로어가 무력해져 수백 건이 한 날짜로 들어온다 — 그때만 쓴다 (saint: `2026-04-24`, `docs/known-issues.md` §14). 크롤 설정이라 `server-sources.json`에는 안 나감.
 
 **Incremental Crawl**: title+date 변경 감지 → 변경분만 상세 fetch. 페이지 내 일반 글 전부 DB에 존재하면 early-stop. 상단 고정(공지) 행은 매 페이지 반복 노출되므로 early-stop/floor-stop 판정에서 제외 (`pinned` 플래그, skku-standard 파서가 인식). content:null 기사 자동 재크롤링.
 
