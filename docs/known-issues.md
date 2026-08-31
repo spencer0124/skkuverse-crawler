@@ -134,6 +134,27 @@ col.update_many(
 
 **적용 사례**: chem (2026-08-04). §12로 크롤이 처음 살아나면서 2026-03-09(service floor) 이후 백로그가 한 틱에 들어왔다 — 억제 후 신규 공지만 정상 푸시. cheme·nano 재활성 시에도 같은 절차가 필요하다.
 
+### ~~14. saint 사이트 CMS 전면 교체 — 404 크롤 중단~~ (2026-08-31 해결)
+
+`saint`가 948틱 연속 실패(마지막 성공 2026-08-11 14:31 ≈ 948 × 30분). `saint.skku.edu`가 Java CMS(`.do`)에서 **gnuboard5 + mod_rewrite로 통째로 재구축**되어 옛 URL이 Apache 기본 404를 반환했다.
+
+**§8/§10과 다른 계열이다.** 그쪽은 같은 SKKU CMS 안에서 `/community/` 경로만 빠진 것이고, 이건 CMS 소프트웨어 자체가 바뀐 것이다. 전략을 `skku-standard` → `gnuboard`로 옮겨야 했다.
+
+**404로 죽어준 게 다행이었다.** `source_down`은 page-0 fetch가 예외를 던질 때만 켜진다(`orchestrator.py`). 200 OK인데 파싱이 0행이면 `stopped_by="empty_page"`로 빠지고 `consecutiveFailures`가 매 틱 0으로 리셋된다 — §12c(chem)의 영구 침묵이다. 감지 체계가 잡은 게 아니라 상대 서버가 시끄럽게 죽어준 것뿐이다.
+
+**함정 ①: 설정만 바꿨으면 지금보다 나빠졌다.** 새 사이트는 rewrite가 켜져 있어 목록 링크가 `/05_03/473` 형태이고 **`wr_id=`가 없다.** 기존 `gnuboard.py`는 `wr_id` 정규식이 실패하면 `continue`하므로, 15행을 잡아놓고 전부 탈락시켜 정확히 위의 침묵 모드로 들어갔을 것이다. → `parse_article_no()`가 `wr_id=`를 먼저 보고 없으면 경로 끝 숫자를 쓴다.
+
+**함정 ②: 아카이브 전체가 마이그레이션 날짜다.** `05_03`은 28페이지 414건이고 2015년 글까지 있는데, 이관된 글은 목록·상세 양쪽 모두 `04.23 2026` / `26-04-23 19:49`로 찍혀 있다. **원본 게시일은 사이트에서 복구 불가.** `SERVICE_START_DATE`(2026-03-09)보다 *뒤*라서 서비스 플로어가 무력하다 — 방치하면 10년치가 전부 2026-04-23 날짜로 유입된다.
+→ **`sources.json`에 소스별 선택 필드 `sinceDate` 도입** (`saint: "2026-04-24"`). `iter_source`가 진입 시 `dataclasses.replace`로 `options`를 소스 전용 사본으로 바꾸므로 `page_below_floor` 두 곳과 항목별 스킵이 전부 따라온다. 크롤 설정이라 `server-sources.json`에는 넣지 않는다.
+→ 날짜 정규화(`MM.DD YYYY`)도 미관이 아니라 **안전장치**다. 파싱 실패 시 플로어가 원문 문자열을 비교해 통째로 무력화된다.
+
+**함정 ③: 첨부가 로그인 회원 전용.** 유효 세션 + Referer + 갓 발급된 `nonce`로도 `alert("다운로드 권한이 없습니다...")` 200을 준다. pharm/bio(세션+Referer면 통과, §12a)와 **다른 종류의 게이트**다. 그대로 저장하면 §12의 "받아지긴 했는데 파일이 아닌" 상태가 되고, `gnuboard`는 `validate-attachments`의 도달성 검사 면제 대상(`GNUBOARD_STRATEGIES`)이라 **검증에도 안 걸린다.**
+→ **첨부 미수집.** `detailAttachment` 셀렉터를 config에서 생략하고, 파서가 `author`·`detailAttachment`를 `.get()`으로 읽도록 바꿨다(하드 인덱싱은 `crawl_detail`의 blanket except로 떨어져 **본문까지** 잃는다). `REQUIRED_SELECTORS["gnuboard"]`에서도 둘을 뺐다.
+
+**옛 문서 처리**: 옛 CMS id(214513~223272) 19건은 새 게시판에 같은 공지가 새 id(1~473)로 존재해 중복이 된다 → 삭제하고 새 게시판을 단일 진실 원천으로 삼았다. 백필 12건은 §13 절차로 푸시 억제.
+
+**남은 노출**: 51개 소스가 아직 `/community/` 경로를 쓴다. 그중 하나가 200을 주며 개편되면 알림 없이 침묵한다 — `stopped_by="empty_page"`가 `core/runner.py`에서 버려져 `SourceResult`에 안 실리는 게 근본 원인. core 계약 변경이 필요해 이번 건과 분리했다.
+
 ### 3. `lastModified` 필드 미구현
 - 상세 페이지 `<span class="date">최종 수정일 : 2026.03.27</span>` 에서 추출 가능
 - 현재는 Notice 모델에 선언만 되어있고 값을 채우지 않음

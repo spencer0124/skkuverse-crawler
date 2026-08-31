@@ -652,26 +652,29 @@
   {
     "id": "saint",
     "name": "나노과학기술원",
-    "strategy": "skku-standard",
+    "strategy": "gnuboard",
     "campus": "nsc",
     "college": null,
     "appCategory": "general",
     "crawlAvailable": true,
     "crawlEnabled": true,
     "excludeReason": null,
-    "baseUrl": "https://saint.skku.edu/saint/community/notice.do",
+    "baseUrl": "https://saint.skku.edu/bbs/board.php",
+    "boardParam": "bo_table",
+    "boardName": "05_03",
+    "articleIdParam": "wr_id",
+    "skinType": "table",
+    "sinceDate": "2026-04-24",
     "selectors": {
-      "listItem": "dl.board-list-content-wrap",
-      "category": "span.c-board-list-category",
-      "titleLink": "dt.board-list-content-title a",
-      "infoList": "dd.board-list-content-info ul li",
-      "detailContent": "dl.board-write-box dd",
-      "attachmentList": "ul.board-view-file-wrap li a"
+      "listRow": "#bo_list .tbl_head01 table tbody tr",
+      "titleLink": "td.td_subject .bo_tit a",
+      "date": "td.td_datetime",
+      "detailContent": "#bo_v_con"
     },
     "pagination": {
-      "type": "offset",
-      "param": "article.offset",
-      "limit": 10
+      "type": "pageNum",
+      "param": "page",
+      "limit": 15
     }
   },
   {

@@ -4,7 +4,7 @@ import asyncio
 import uuid
 from collections.abc import AsyncGenerator, Mapping
 from contextlib import aclosing
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any, assert_never
 
 from ...core.crawl import CrawlMode, FullSweep, Incremental
@@ -227,6 +227,19 @@ async def iter_source(
     semantics. Break positions and log call sites are byte-pinned by the
     characterization goldens — do not reorder.
     """
+    # Per-source floor. Overriding `options` once here is what makes both
+    # page_below_floor calls and the item-level below_floor skip pick it up
+    # without threading a second argument through _emit_page. Sources that
+    # omit sinceDate keep SERVICE_START_DATE, so goldens stay byte-identical.
+    #
+    # Why a source ever needs its own floor: a site that bulk-migrates its
+    # archive stamps every old post with the migration date (saint: ~400
+    # posts back to 2015, all dated 2026-04-23), which sits *above* the
+    # service floor and so defeats it entirely.
+    source_since = dept.get("sinceDate")
+    if source_since:
+        options = replace(options, since_date=source_since)
+
     logger.info("starting_department_crawl", dept_id=dept["id"], dept_name=dept["name"])
     yield SourceStarted(source_id=dept["id"], source_name=dept["name"])
 

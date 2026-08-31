@@ -242,7 +242,7 @@
 | `skku-main` | 학부통합(학사) | both |  | O |
 | `health` | 건강센터 | both |  | O |
 | `ccrf` | 공동기기원 | nsc |  | O |
-| `saint` | 나노과학기술원 | nsc |  | O |
+| `saint` | 나노과학기술원 | nsc | gnuboard | O |
 | `skku-notice02` | 성균관대_통합(학사) | both |  | O |
 | `skku-notice03` | 성균관대_통합(입학) | both |  | O |
 | `skku-notice04` | 성균관대_통합(취업) | both |  | O |

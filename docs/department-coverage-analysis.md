@@ -9,8 +9,8 @@
 
 | 전략 | 수 |
 |------|----|
-| `skku-standard` | 128 |
-| `gnuboard` | 3 |
+| `skku-standard` | 127 |
+| `gnuboard` | 4 |
 | `pyxis-api` | 3 |
 | `jsp-dorm` | 2 |
 | `custom-php` | 2 |
@@ -192,7 +192,7 @@
 | ID | 이름 | 전략 | 활성 |
 |----|------|------|:----:|
 | `ccrf` | 공동기기원 |  | O |
-| `saint` | 나노과학기술원 |  | O |
+| `saint` | 나노과학기술원 | gnuboard | O |
 | `larc` | 실험동물센터 |  | O |
 | `dorm-nsc` | 봉룡학사 (자과캠 기숙사) | jsp-dorm | O |
 | `lib-nsc` | 삼성학술정보관 | pyxis-api | O |

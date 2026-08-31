@@ -181,7 +181,7 @@
 |----|------|--------|------|:----:|
 | `health` | 건강센터 | both |  | O |
 | `ccrf` | 공동기기원 | nsc |  | O |
-| `saint` | 나노과학기술원 | nsc |  | O |
+| `saint` | 나노과학기술원 | nsc | gnuboard | O |
 | `skku-notice03` | 성균관대_통합(입학) | both |  | O |
 | `skku-notice08` | 성균관대_통합(일반) | both |  | O |
 | `chec` | 성균인성교육센터 | hssc |  | O |

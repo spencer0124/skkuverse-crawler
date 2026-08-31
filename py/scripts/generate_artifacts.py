@@ -28,6 +28,7 @@ Usage:
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -127,6 +128,15 @@ def validate_departments(
             errors.append(f"{did}: invalid campus '{dept.get('campus')}'")
         if dept.get("appCategory") not in valid_app_categories:
             errors.append(f"{did}: invalid appCategory '{dept.get('appCategory')}'")
+
+        # sinceDate: optional per-source crawl floor, ISO date when present.
+        # Crawl config, not server contract — it stays out of
+        # server-sources.json like selectors and baseUrl do. A malformed
+        # value would not raise; it would silently string-compare against
+        # item dates and quietly change how deep the source crawls.
+        since = dept.get("sinceDate")
+        if since is not None and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(since)):
+            errors.append(f"{did}: sinceDate must be YYYY-MM-DD, got '{since}'")
 
         # crawlAvailable / crawlEnabled must be bool
         if not isinstance(dept.get("crawlAvailable"), bool):
