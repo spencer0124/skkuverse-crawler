@@ -145,9 +145,14 @@ class TestPageBelowFloor:
 NOW = datetime(2026, 9, 13, 12, 0, tzinfo=timezone.utc)
 
 
-def _seen(views: int | None, *, written_hours_ago: float | None = 0.0) -> SeenRecord:
+def _seen(
+    views: int | None,
+    *,
+    written_hours_ago: float | None = 0.0,
+    article_no: int = 4,  # 4 % JITTER == 0, so the plain interval applies
+) -> SeenRecord:
     return SeenRecord(
-        article_no=1,
+        article_no=article_no,
         title="t",
         date="2026-09-13",
         views=views,
@@ -181,6 +186,7 @@ class TestViewsRefreshDue:
         assert views_refresh_due(505, _seen(500, written_hours_ago=0.5), NOW) is False
 
     def test_small_move_writes_once_the_interval_has_passed(self):
+        # article_no 4 -> offset 0, so the bare interval applies.
         assert views_refresh_due(505, _seen(500, written_hours_ago=6), NOW) is True
 
     def test_large_absolute_jump_writes_immediately(self):
@@ -223,3 +229,68 @@ class TestViewsRefreshDue:
         # Boards do reset or correct counts; |delta| keeps that a write
         # rather than something that silently never reconciles.
         assert views_refresh_due(10, _seen(5_000, written_hours_ago=0.5), NOW) is True
+
+
+class TestViewsRefreshJitter:
+    """adr-009 amendment — the interval must be a rate, not a rhythm.
+
+    Observed on the first tick after deploy: 1 write, because the last
+    pre-deploy tick had written every page-0 document inside the same two
+    minutes, so all of them were still inside the interval. They would have
+    *left* it inside the same two minutes as well, six hours later — the
+    constant drip becoming a periodic spike of the same height. Peak ops/s
+    is the axis the Atlas tier bills on, so that would have won only half
+    the argument.
+    """
+
+    def test_offset_delays_a_document_past_the_bare_interval(self):
+        # article_no 1 -> offset 1h, so 6h is not yet due for this document
+        # even though it is due for one whose offset is 0.
+        at_six = dict(views=500, written_hours_ago=6)
+        assert views_refresh_due(505, _seen(**at_six, article_no=4), NOW) is True
+        assert views_refresh_due(505, _seen(**at_six, article_no=1), NOW) is False
+
+    def test_offset_document_becomes_due_at_its_own_slot(self):
+        assert views_refresh_due(505, _seen(500, written_hours_ago=7, article_no=1), NOW) is True
+
+    def test_documents_written_together_spread_across_the_window(self):
+        """The property that matters: a cohort written in one tick must not
+        leave the interval in one tick."""
+        cohort = range(200)
+        due_by_hour = {
+            h: sum(
+                1
+                for a in cohort
+                if views_refresh_due(505, _seen(500, written_hours_ago=h, article_no=a), NOW)
+            )
+            for h in range(6, 11)
+        }
+        # Each hour releases another slice, and no hour before the last one
+        # releases the whole cohort — that is the decoherence.
+        counts = [due_by_hour[h] for h in range(6, 10)]
+        assert counts == sorted(counts)
+        assert all(c < len(cohort) for c in counts[:-1]), due_by_hour
+        assert due_by_hour[6] > 0, "some documents must be released at the bare interval"
+        assert due_by_hour[9] == len(cohort), "all released by interval + max offset"
+        # An even spread is the point: with JITTER=4 each hour should carry
+        # roughly a quarter of the cohort, not one hour carrying most of it.
+        per_hour = [due_by_hour[h] - due_by_hour.get(h - 1, 0) for h in range(6, 10)]
+        assert max(per_hour) <= len(cohort) // 2, per_hour
+
+    def test_offset_is_stable_for_a_given_document(self):
+        # Derived from articleNo, not from the clock or a random draw — a
+        # document that reshuffled each pass could land in an earlier slot
+        # every time and never actually wait out the interval.
+        a = _seen(500, written_hours_ago=6.5, article_no=7)
+        assert [views_refresh_due(505, a, NOW) for _ in range(5)] == [
+            views_refresh_due(505, a, NOW)
+        ] * 5
+
+    def test_jitter_never_shortens_the_interval(self):
+        # The offset is additive only. A document must never become due
+        # earlier than VIEWS_REFRESH_MIN_INTERVAL_HOURS.
+        for a in range(50):
+            assert (
+                views_refresh_due(505, _seen(500, written_hours_ago=5.9, article_no=a), NOW)
+                is False
+            )
