@@ -7,6 +7,8 @@ contract — importing this module must never pull in motor/pymongo
 
 from __future__ import annotations
 
+from datetime import datetime
+
 import enum
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
@@ -29,6 +31,10 @@ class SeenRecord:
     reason: a document written before the field existed must not raise. Note
     that None is deliberately NOT equal to 0 — an absent counter compares
     unequal to any observed count and so writes once, which backfills it.
+
+    crawled_at is when the document was last written, which is what lets a
+    module rate-limit a refresh it would otherwise do on every pass. None
+    means "never seen a write we know of", which reads as due.
     """
 
     article_no: int
@@ -36,6 +42,7 @@ class SeenRecord:
     date: str
     content_hash: str | None = None
     views: int | None = None
+    crawled_at: datetime | None = None
 
 
 @dataclass(frozen=True)

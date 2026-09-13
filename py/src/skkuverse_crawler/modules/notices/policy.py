@@ -12,9 +12,15 @@ dedup.py / orchestrator.py (plan 위험 ③: 이동과 수정을 같은 커밋�
 from __future__ import annotations
 
 from collections.abc import Mapping
+from datetime import datetime, timedelta, timezone
 
 from ...core.ports import SeenRecord
-from .constants import SERVICE_START_DATE
+from .constants import (
+    SERVICE_START_DATE,
+    VIEWS_REFRESH_MIN_DELTA,
+    VIEWS_REFRESH_MIN_INTERVAL_HOURS,
+    VIEWS_REFRESH_MIN_RATIO,
+)
 from .models import NoticeListItem
 
 
@@ -36,6 +42,55 @@ def has_changed(item: NoticeListItem, previous: SeenRecord) -> bool:
         if prefix and old_title.startswith(prefix):
             return False
     return True
+
+
+def views_refresh_due(
+    new_views: int | None,
+    previous: SeenRecord,
+    now: datetime | None = None,
+) -> bool:
+    """Whether an otherwise-unchanged notice is worth a write for its view
+    counter alone.
+
+    Gating only on "did it change" barely helps: a counter moves on most
+    page-0 notices within any 30-minute tick, so ~809 of 1,455 touched
+    documents would still write every time (prod, 2026-09-13). Two bounds
+    turn that into an occasional write:
+
+    - **at most once per VIEWS_REFRESH_MIN_INTERVAL_HOURS.** This is what
+      caps the cost — the whole page-0 set costs roughly (docs / interval)
+      writes per tick instead of one each, regardless of how busy the board
+      is.
+    - **unless the jump is large**, so a fast-moving notice is not pinned to
+      a visibly wrong number for the whole interval. The app renders the
+      count at full precision, so the staleness is real and worth bounding
+      in relative terms.
+
+    A previously-absent counter is always due: that write backfills it, and
+    it happens once.
+    """
+    if new_views is None:
+        return False
+    old_views = previous.views
+    if old_views is None:
+        return True
+
+    delta = abs(new_views - old_views)
+    if delta == 0:
+        return False
+    if delta >= max(VIEWS_REFRESH_MIN_DELTA, old_views * VIEWS_REFRESH_MIN_RATIO):
+        return True
+
+    last_written = previous.crawled_at
+    if last_written is None:
+        return True
+    # Stored datetimes may be naive (Mongo returns UTC without a tzinfo).
+    # Comparing a naive to an aware datetime raises, and that exception would
+    # surface as a per-item crawl error rather than anything legible.
+    if last_written.tzinfo is None:
+        last_written = last_written.replace(tzinfo=timezone.utc)
+    reference = now or datetime.now(timezone.utc)
+    return reference - last_written >= timedelta(hours=VIEWS_REFRESH_MIN_INTERVAL_HOURS)
 
 
 def should_continue(

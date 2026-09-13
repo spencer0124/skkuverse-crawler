@@ -28,7 +28,12 @@ from ...core.results import SourceResult
 from ...shared.fetcher import Fetcher
 from ...shared.logger import get_logger
 from .constants import SERVICE_START_DATE
-from .policy import has_changed, page_below_floor, should_continue
+from .policy import (
+    has_changed,
+    page_below_floor,
+    should_continue,
+    views_refresh_due,
+)
 from .models import NoticeListItem
 from .normalizer import build_notice, source_url_for
 from .stages import DEFAULT_PIPELINE, derive_content_fields
@@ -400,12 +405,17 @@ async def _emit_page(
             existing = existing_meta.get(item.articleNo)
 
             if existing and not has_changed(item, existing):
-                # Empty `fields` when the view counter has not moved: the
-                # sink then has nothing to write and skips the row entirely.
-                # This is the whole cost fix (skkuverse#52) — the touch used
-                # to rewrite every page-0 notice every tick to refresh a
-                # counter and a timestamp, ~99.7% of Atlas write volume for
-                # a change no reader could see.
+                # Empty `fields` when the view counter is not worth a write:
+                # the sink then has nothing to store and skips the row.
+                # This is the cost fix (skkuverse#52) — the touch used to
+                # rewrite every page-0 notice every tick to refresh a counter
+                # and a timestamp, ~99.7% of Atlas write volume for a change
+                # no reader could see.
+                #
+                # "Worth a write" is not just "it changed": counters move on
+                # most page-0 rows within a tick, so equality alone left ~56%
+                # of the writes in place. views_refresh_due carries the real
+                # policy (rate limit + large-jump escape); see adr-009.
                 #
                 # The comparison lives here and NOT in has_changed(): that
                 # predicate decides whether to re-fetch the DETAIL PAGE, and
@@ -417,7 +427,7 @@ async def _emit_page(
                     article_no=item.articleNo,
                     fields=(
                         {"views": item.views}
-                        if item.views != existing.views
+                        if views_refresh_due(item.views, existing)
                         else {}
                     ),
                 )

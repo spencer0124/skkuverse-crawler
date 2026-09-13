@@ -72,6 +72,7 @@
       "projection": {
         "articleNo": 1,
         "contentHash": 1,
+        "crawledAt": 1,
         "date": 1,
         "title": 1,
         "views": 1
