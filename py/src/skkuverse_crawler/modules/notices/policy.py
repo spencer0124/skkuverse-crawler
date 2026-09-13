@@ -17,10 +17,11 @@ from datetime import datetime, timedelta, timezone
 from ...core.ports import SeenRecord
 from .constants import (
     SERVICE_START_DATE,
-    VIEWS_REFRESH_JITTER_HOURS,
+    VIEWS_REFRESH_JITTER_TICKS,
     VIEWS_REFRESH_MIN_DELTA,
     VIEWS_REFRESH_MIN_INTERVAL_HOURS,
     VIEWS_REFRESH_MIN_RATIO,
+    VIEWS_REFRESH_TICK_MINUTES,
 )
 from .models import NoticeListItem
 
@@ -98,8 +99,14 @@ def views_refresh_due(
     # articleNo, not a random draw or a hash of the clock: the offset has to
     # be stable across restarts and re-crawls, or a document could shuffle
     # into an earlier slot on every pass and defeat the interval entirely.
-    offset = previous.article_no % VIEWS_REFRESH_JITTER_HOURS
-    due_after = timedelta(hours=VIEWS_REFRESH_MIN_INTERVAL_HOURS + offset)
+    #
+    # Measured in ticks because a write can only land on a tick — an offset
+    # quantised coarser than the tick period just yields fewer, bigger lumps.
+    offset_ticks = previous.article_no % VIEWS_REFRESH_JITTER_TICKS
+    due_after = timedelta(
+        hours=VIEWS_REFRESH_MIN_INTERVAL_HOURS,
+        minutes=offset_ticks * VIEWS_REFRESH_TICK_MINUTES,
+    )
     return reference - last_written >= due_after
 
 
