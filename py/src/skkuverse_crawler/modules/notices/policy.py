@@ -17,6 +17,7 @@ from datetime import datetime, timedelta, timezone
 from ...core.ports import SeenRecord
 from .constants import (
     SERVICE_START_DATE,
+    VIEWS_REFRESH_JITTER_HOURS,
     VIEWS_REFRESH_MIN_DELTA,
     VIEWS_REFRESH_MIN_INTERVAL_HOURS,
     VIEWS_REFRESH_MIN_RATIO,
@@ -57,10 +58,14 @@ def views_refresh_due(
     documents would still write every time (prod, 2026-09-13). Two bounds
     turn that into an occasional write:
 
-    - **at most once per VIEWS_REFRESH_MIN_INTERVAL_HOURS.** This is what
-      caps the cost — the whole page-0 set costs roughly (docs / interval)
-      writes per tick instead of one each, regardless of how busy the board
-      is.
+    - **at most once per VIEWS_REFRESH_MIN_INTERVAL_HOURS, plus a per-document
+      offset.** The interval caps the cost — the whole page-0 set costs
+      roughly (docs / interval) writes per tick instead of one each. The
+      offset is what makes that a *rate* rather than a *rhythm*: without it
+      every document that was written in the same tick also leaves the
+      interval in the same tick, and the constant drip becomes a periodic
+      spike of the same height. Peak is the axis the Atlas tier bills on, so
+      a flat interval would have won only half the argument.
     - **unless the jump is large**, so a fast-moving notice is not pinned to
       a visibly wrong number for the whole interval. The app renders the
       count at full precision, so the staleness is real and worth bounding
@@ -90,7 +95,12 @@ def views_refresh_due(
     if last_written.tzinfo is None:
         last_written = last_written.replace(tzinfo=timezone.utc)
     reference = now or datetime.now(timezone.utc)
-    return reference - last_written >= timedelta(hours=VIEWS_REFRESH_MIN_INTERVAL_HOURS)
+    # articleNo, not a random draw or a hash of the clock: the offset has to
+    # be stable across restarts and re-crawls, or a document could shuffle
+    # into an earlier slot on every pass and defeat the interval entirely.
+    offset = previous.article_no % VIEWS_REFRESH_JITTER_HOURS
+    due_after = timedelta(hours=VIEWS_REFRESH_MIN_INTERVAL_HOURS + offset)
+    return reference - last_written >= due_after
 
 
 def should_continue(

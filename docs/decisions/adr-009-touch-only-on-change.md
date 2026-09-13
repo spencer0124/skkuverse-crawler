@@ -1,6 +1,6 @@
 # ADR-009: 무변경 공지는 쓰지 않는다 — `crawledAt`은 "마지막 관측"이 아니라 "마지막 변경"
 
-- **상태**: 채택됨 (2026-09-13)
+- **상태**: 채택됨 (2026-09-13) · **개정됨 (2026-09-13 — per-document jitter, 아래 참조)**
 - **관련**: [skkuverse#52](https://github.com/spencer0124/skkuverse/issues/52),
   [adr-006](adr-006-core-plugin-split.md) (위험 ② — `bulk_touch_notices`가 조용히 증발하는 것),
   서버 [ADR 0007](https://github.com/spencer0124/skkuverse-server/blob/main/docs/decisions/0007-notice-ordering-key.md) ·
@@ -79,6 +79,28 @@ page-0 부분집합만 `now`로 올리니 **같은 날짜 공지 두 건의 상�
 같은 추정기로 이 규칙을 재계산: **예상 119건/틱** — 1,264건 대비 **약 92% 감소**.
 이슈가 제시한 ~139건/틱 바닥보다도 낮다.
 
+### 2026-09-13 개정 — 평평한 interval은 평균만 고치고 peak은 못 고친다
+
+배포 직후 첫 틱(12:00Z) 실측: **139개 학과 / 32,757건 조회 / 쓰기 1건.** 숫자는 좋지만
+**그건 정상 상태가 아니라 사이클의 골짜기였다.** 배포 직전 틱(11:30Z)이 모든 page-0 문서를
+같은 2분 안에 써버렸기 때문에, 12:00에는 전부 interval 안쪽이었다.
+
+문제는 그 다음이다. 같은 2분 안에 쓰인 문서들은 **같은 2분 안에 interval을 빠져나간다** —
+6시간 뒤 ~1,455건이 한 틱에 몰린다. 즉 평평한 interval은 48회/일 잔물결을 **4회/일 같은
+높이의 스파이크**로 바꿀 뿐이다. Atlas 티어가 과금하는 축은 peak ops/s이므로
+([이슈 §5 option 3](https://github.com/spencer0124/skkuverse/issues/52)이 바로 그 논지였다)
+이건 논쟁의 절반만 이긴 것이다.
+
+**`VIEWS_REFRESH_JITTER_HOURS = 4`** — `articleNo % 4` 시간을 interval에 **더한다**.
+
+- `articleNo` 기반이라 **저장 상태도 스키마 변경도 필요 없고**, 재시작·재크롤에도 같은
+  문서는 항상 같은 슬롯에 떨어진다. 매 패스마다 슬롯이 바뀌면 문서가 계속 이른 슬롯으로
+  미끄러져 interval 자체가 무력화된다.
+- **가산만 한다** — 어떤 문서도 `VIEWS_REFRESH_MIN_INTERVAL_HOURS`보다 일찍 due가 되지
+  않는다 (테스트가 50개 articleNo에 대해 명시).
+- 200개 코호트 시뮬레이션: 6/7/8/9시간에 50/100/150/200건 누적 — 시간당 정확히 25%씩
+  풀린다. 배포 후 **한 사이클이면 herd가 영구히 흩어진다.**
+
 **앱은 조회수를 전체 자릿수로 렌더한다** (`formatViews`는 천 단위 구분자만 넣는다 —
 "1.2k" 반올림이 아니다). 즉 이 staleness는 **눈에 보인다**. 감추는 게 아니라 상대
 오차로 묶는 것이 위 두 임계값의 목적이다: 최대 6시간, 또는 10%(최소 50) 이내.
@@ -124,6 +146,9 @@ page-0 부분집합만 `now`로 올리니 **같은 날짜 공지 두 건의 상�
 ## 재검토 조건
 
 - 조회수 staleness가 제품 이슈로 올라올 때 — `VIEWS_REFRESH_MIN_INTERVAL_HOURS`를 낮추면
-  선형으로 쓰기가 늘어난다 (6h → 3h면 틱당 ~119 → ~230). 두 임계값 모두
+  선형으로 쓰기가 늘어난다 (6h → 3h면 틱당 ~119 → ~230). 세 상수 모두
   `modules/notices/constants.py`가 SSOT.
+- interval을 바꿀 때 **jitter도 같이 보라.** 최대 staleness는 interval + jitter이고
+  (지금은 6~10h), jitter가 interval보다 크게 남으면 분산은 좋아져도 staleness 상한이
+  흐려진다.
 - 소스 수가 크게 늘어 "실제로 움직이는 행"만으로도 틱당 쓰기가 다시 수백 건이 될 때.
