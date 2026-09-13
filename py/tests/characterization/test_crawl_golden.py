@@ -41,7 +41,7 @@ async def test_std_three_rounds():
     """cold → warm-unchanged → warm-title-tampered on ONE collection.
 
     Round 2 is the highest-value golden in the plan: all_known first-page
-    early-stop + has_changed()→False + exactly one bulk_touch per page —
+    early-stop + has_changed()→False + NO write at all when nothing moved —
     the path with zero coverage before this suite (위험 ②).
     """
     collection = FakeCollection()
@@ -55,11 +55,20 @@ async def test_std_three_rounds():
     run2 = await run_golden(depts.SKKU_STD_DEPT, warm_router, collection=collection)
     run2.snapshot_all("std_three_rounds", "round2_warm")
 
-    # 위험 ② direct assertion, independent of snapshot review: the unchanged
-    # page produces EXACTLY one bulk_write carrying all 4 rows' touches.
-    bulk_ops = [op for op in run2.ops_delta() if op[0] == "bulk_write"]
-    assert len(bulk_ops) == 1
-    assert len(bulk_ops[0][1]["ops"]) == 4
+    # 위험 ② direct assertion, independent of snapshot review. This used to
+    # assert "exactly one bulk_write carrying all 4 rows' touches" — the
+    # behaviour skkuverse#52 removed. Re-crawling a page where nothing moved
+    # must now write NOTHING; the four rows are still emitted as events (the
+    # runner counts them skipped), they just carry no payload.
+    #
+    # The inversion is the point: 위험 ② was "the touch silently stops
+    # happening". It is now "the touch silently starts happening again", and
+    # a regression that reintroduces the per-tick write fails right here.
+    assert [op for op in run2.ops_delta() if op[0] == "bulk_write"] == []
+    # ...while the four rows are still counted. "Wrote nothing" and "saw
+    # nothing" must stay distinguishable, or a genuinely broken crawl looks
+    # identical to a healthy quiet one.
+    assert run2.result()[0]["skipped"] == 4
 
     # Warm, one title tampered: only article 101 gets a detail re-fetch.
     tampered_router = (

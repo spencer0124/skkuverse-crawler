@@ -4,7 +4,7 @@
 
 ### 1. ~~Incremental crawl에서 1페이지 상세 fetch를 매번 수행~~ (해결됨)
 - **해결**: `findExistingMeta()`로 DB의 title/date와 비교, 변경된 글만 상세 fetch
-- **변경 없는 글**: `touchNotice()`로 views + crawledAt만 갱신 (상세 fetch 생략)
+- **변경 없는 글**: 상세 fetch 생략. 2026-09-13 [adr-009](decisions/adr-009-touch-only-on-change.md)까지는 매 틱 views + crawledAt을 다시 썼으나, 이제 **조회수가 실제로 움직였을 때만** 쓴다 (틱당 1,264건 → 실변경분).
 - **효과**: 변경 없을 시 목록 1회 + DB 쿼리 1회로 끝남 (5.1초 → 0.4초)
 
 ### 2. 첨부파일이 없는 글이 대다수

@@ -180,6 +180,52 @@ class TestTouchBufferAndFlush:
         assert mock_collection.bulk_write.await_count == 1
 
 
+class TestEmptyPayloadWritesNothing:
+    """skkuverse#52 — an ItemUnchanged with no fields must cost no write.
+
+    This is the cost fix. The sink used to buffer every unchanged item and
+    bulk-touch `crawledAt`, which for notices meant rewriting every page-0
+    document every 30 minutes: ~99.7% of Atlas write volume changing nothing
+    a reader could see.
+    """
+
+    def _empty(self, article_no: int) -> ItemUnchanged:
+        return ItemUnchanged(source_id="test-dept", article_no=article_no, fields={})
+
+    async def test_empty_fields_are_not_buffered(self, mock_collection):
+        sink = MongoSink(mock_collection)
+        assert await sink.accept(self._empty(1)) is None
+        await sink.flush()
+        mock_collection.bulk_write.assert_not_awaited()
+        mock_collection.update_one.assert_not_awaited()
+
+    async def test_only_moved_rows_reach_the_bulk_write(self, mock_collection):
+        """The mixed case is the one that matters: a page is mostly static
+        with a couple of counters ticking, and only those may be written."""
+        sink = MongoSink(mock_collection)
+        await sink.accept(self._empty(1))
+        await sink.accept(
+            ItemUnchanged(source_id="test-dept", article_no=2, fields={"views": 42})
+        )
+        await sink.accept(self._empty(3))
+
+        await sink.flush()
+
+        assert mock_collection.bulk_write.await_count == 1
+        ops = mock_collection.bulk_write.call_args[0][0]
+        assert len(ops) == 1
+        assert ops[0]._filter == {"articleNo": 2, "sourceId": "test-dept"}
+        assert ops[0]._doc["$set"]["views"] == 42
+        # crawledAt still rides along on a row that IS being written — the
+        # field did not disappear, it just stopped meaning "last observed".
+        assert isinstance(ops[0]._doc["$set"]["crawledAt"], datetime)
+
+    async def test_still_returns_none_so_the_sink_contract_holds(self, mock_collection):
+        # core/testing.py's contract suite asserts accept() -> None for
+        # ItemUnchanged. Skipping the buffer must not change that.
+        assert await MongoSink(mock_collection).accept(self._empty(1)) is None
+
+
 class TestPrepare:
     async def test_creates_both_indexes_in_order(self, mock_collection):
         await MongoSink(mock_collection).prepare(SourceSpec(source_id="a"))

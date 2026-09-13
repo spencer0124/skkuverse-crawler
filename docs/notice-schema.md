@@ -22,7 +22,7 @@ class Notice:
     detailPath: str           # 내부 재크롤용 (앱 노출 불필요)
     sourceId: str         # sources.json의 id (e.g. "skku-main")
     cleanMarkdown: str | None # cleanHtml → GFM 변환 결과 (None 가능)
-    crawledAt: datetime       # 마지막 크롤링 시각 (UTC)
+    crawledAt: datetime       # 마지막 '변경' 시각 (UTC) — 관측 시각이 아니다 (adr-009)
     lastModified: str | None  # 예약 필드 (현재 미사용)
     contentHash: str | None   # cleanHtml SHA256 (null = 컨텐츠 없음)
     editHistory: list[dict]   # 최근 20개 수정 이력

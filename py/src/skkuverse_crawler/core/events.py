@@ -85,14 +85,25 @@ class ItemCrawled(CrawlEvent):
 
 @dataclass(frozen=True)
 class ItemUnchanged(CrawlEvent):
-    """A known, unmodified item — the sink batches these and emits one
-    bulk touch per flush (crawledAt refresh; plan 위험 ②).
+    """A known, unmodified item. A sink batches the ones carrying a payload
+    and emits one bulk write per flush (plan 위험 ②).
 
     ``fields`` carries whatever the module wants refreshed on an otherwise
-    untouched document. Notices puts ``{"views": n}`` there; it used to be
-    a ``views: int`` field on this class, which made a notices-specific
-    column part of the core vocabulary. Modules with no such counter pass
-    an empty mapping and still get the crawledAt touch.
+    untouched document. Notices puts ``{"views": n}`` there, and only when
+    the counter actually moved; it used to be a ``views: int`` field on this
+    class, which made a notices-specific column part of the core vocabulary.
+
+    **An empty ``fields`` means "write nothing".** It used to mean "write
+    nothing but still bump ``crawledAt``", and that promise is what made an
+    unchanged item cost a write on every single tick — for notices, ~99.7%
+    of Atlas write volume changing nothing a reader could see
+    (skkuverse#52). The event is still emitted either way, so runners keep
+    counting the item as skipped; only the storage side stops.
+
+    A module that wants a liveness stamp on every observation must now ask
+    for it explicitly by putting one in ``fields``. That is the point: the
+    write is visible at the call site instead of being an invisible property
+    of the event type.
     """
 
     article_no: int

@@ -22,7 +22,17 @@ class MongoSeenIndex:
     ) -> Mapping[int, SeenRecord]:
         cursor = self._collection.find(
             {"sourceId": source_id, "articleNo": {"$in": article_nos}},
-            {"articleNo": 1, "title": 1, "date": 1, "contentHash": 1},
+            # `views` rides along on a find that already runs — no extra
+            # round trip. It lets the caller skip the touch write for an
+            # item whose counter has not moved (adr-009).
+            {
+                "articleNo": 1,
+                "title": 1,
+                "date": 1,
+                "contentHash": 1,
+                "views": 1,
+                "crawledAt": 1,
+            },
         )
         result: dict[int, SeenRecord] = {}
         async for doc in cursor:
@@ -31,5 +41,7 @@ class MongoSeenIndex:
                 title=doc["title"],
                 date=doc["date"],
                 content_hash=doc.get("contentHash"),
+                views=doc.get("views"),
+                crawled_at=doc.get("crawledAt"),
             )
         return result

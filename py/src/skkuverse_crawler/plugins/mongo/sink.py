@@ -85,12 +85,23 @@ class MongoSink:
             case ItemCrawled(item=notice, change=ChangeInfo() as change):
                 await self._update_with_history(notice, _edit_entry(change))
                 return Outcome.UPDATED
-            case ItemUnchanged():
+            case ItemUnchanged() if event.fields:
                 self._touches.append({
                     "articleNo": event.article_no,
                     "sourceId": event.source_id,
                     "fields": dict(event.fields),
                 })
+                return None
+            case ItemUnchanged():
+                # Nothing to write. This used to buffer a bare `crawledAt`
+                # touch, which is what made an unchanged notice cost a write
+                # every 30 minutes (skkuverse#52). `crawledAt` now means
+                # last-*changed*, matching what update_checker.py already did
+                # on the tier-2 path — it has always skipped the no-change
+                # case. See adr-009.
+                #
+                # Still returns None, so the sink contract (core/testing.py)
+                # is unaffected; the runner still counts this as skipped.
                 return None
             case ContentRefreshed(ref=ref, fields=fields):
                 await self._collection.update_one(

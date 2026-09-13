@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
+
 from skkuverse_crawler.core.ports import SeenRecord
 from skkuverse_crawler.modules.notices.models import NoticeListItem
 from skkuverse_crawler.modules.notices.policy import (
     has_changed,
     page_below_floor,
     should_continue,
+    views_refresh_due,
 )
 
 
@@ -137,3 +140,86 @@ class TestPageBelowFloor:
         items = [_make_list_item(articleNo=1, date="2026-04-01")]
         assert page_below_floor(items, since="2026-05-01") is True
         assert page_below_floor(items, since="2026-03-01") is False
+
+
+NOW = datetime(2026, 9, 13, 12, 0, tzinfo=timezone.utc)
+
+
+def _seen(views: int | None, *, written_hours_ago: float | None = 0.0) -> SeenRecord:
+    return SeenRecord(
+        article_no=1,
+        title="t",
+        date="2026-09-13",
+        views=views,
+        crawled_at=(
+            None if written_hours_ago is None
+            else NOW - timedelta(hours=written_hours_ago)
+        ),
+    )
+
+
+class TestViewsRefreshDue:
+    """adr-009 — when an otherwise-unchanged notice earns a write.
+
+    Gating on "did the counter change" alone was measured to leave ~56% of
+    the per-tick writes in place, because counters move on most page-0 rows
+    within 30 minutes. The rate limit is what actually cuts the cost; the
+    magnitude escape is what keeps a busy notice from showing a visibly
+    wrong number for the whole interval.
+    """
+
+    def test_unchanged_counter_never_writes(self):
+        assert views_refresh_due(500, _seen(500), NOW) is False
+
+    def test_unchanged_counter_never_writes_even_when_long_stale(self):
+        # The rate limit opens a window; it does not manufacture a reason.
+        assert views_refresh_due(500, _seen(500, written_hours_ago=999), NOW) is False
+
+    def test_small_move_inside_the_interval_is_skipped(self):
+        # This is the case that pays for the change: a busy notice ticking
+        # over between crawls used to cost a write every 30 minutes.
+        assert views_refresh_due(505, _seen(500, written_hours_ago=0.5), NOW) is False
+
+    def test_small_move_writes_once_the_interval_has_passed(self):
+        assert views_refresh_due(505, _seen(500, written_hours_ago=6), NOW) is True
+
+    def test_large_absolute_jump_writes_immediately(self):
+        # A fresh notice is inserted with a single-digit count; 10% of that
+        # is meaningless, so the absolute floor is what rescues it.
+        assert views_refresh_due(60, _seen(5, written_hours_ago=0.5), NOW) is True
+
+    def test_large_relative_jump_writes_immediately(self):
+        # 10% of 10,000 is 1,000, which clears the absolute floor of 50 —
+        # so the ratio, not the floor, is the binding constraint up here.
+        assert views_refresh_due(11_200, _seen(10_000, written_hours_ago=0.5), NOW) is True
+
+    def test_ratio_binds_above_the_floor(self):
+        # +200 on 10,000 beats the absolute floor but is under 10%, so it
+        # waits for the interval rather than writing.
+        assert views_refresh_due(10_200, _seen(10_000, written_hours_ago=0.5), NOW) is False
+
+    def test_absent_stored_counter_always_writes(self):
+        # Backfills a document written before `views` existed. Happens once.
+        assert views_refresh_due(7, _seen(None, written_hours_ago=0.0), NOW) is True
+
+    def test_absent_scraped_counter_writes_nothing(self):
+        # A source that does not publish counts must not thrash the field.
+        assert views_refresh_due(None, _seen(500), NOW) is False
+
+    def test_unknown_last_write_is_treated_as_due(self):
+        assert views_refresh_due(501, _seen(500, written_hours_ago=None), NOW) is True
+
+    def test_naive_stored_datetime_does_not_raise(self):
+        # Mongo hands back UTC without a tzinfo. Subtracting a naive from an
+        # aware datetime raises TypeError, and the runner would count that as
+        # a per-item crawl error rather than surfacing anything legible.
+        naive = SeenRecord(
+            article_no=1, title="t", date="2026-09-13", views=500,
+            crawled_at=datetime(2026, 9, 13, 0, 0),  # no tzinfo
+        )
+        assert views_refresh_due(501, naive, NOW) is True
+
+    def test_counter_going_backwards_is_a_real_move(self):
+        # Boards do reset or correct counts; |delta| keeps that a write
+        # rather than something that silently never reconciles.
+        assert views_refresh_due(10, _seen(5_000, written_hours_ago=0.5), NOW) is True
