@@ -146,7 +146,7 @@ notice = build_notice(item, detail, ...)            # 5가지 출력 생성
 |------|------|
 | 새 공지 | `upsert_notice()` — `articleNo + sourceId` 기준 insert |
 | 변경된 공지 | `update_with_history()` — 본문 업데이트 + `editHistory` 배열에 변경 이력 기록 (최대 20건) |
-| 변경 없는 공지 | `bulk_touch_notices()` — 조회수(`views`)와 `crawledAt`만 갱신 |
+| 변경 없는 공지 | **조회수가 움직였으면** 그 행만 bulk write(`views` + `crawledAt`), 아니면 **쓰기 없음** ([adr-009](decisions/adr-009-touch-only-on-change.md)) |
 
 ---
 

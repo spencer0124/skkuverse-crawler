@@ -400,10 +400,26 @@ async def _emit_page(
             existing = existing_meta.get(item.articleNo)
 
             if existing and not has_changed(item, existing):
+                # Empty `fields` when the view counter has not moved: the
+                # sink then has nothing to write and skips the row entirely.
+                # This is the whole cost fix (skkuverse#52) — the touch used
+                # to rewrite every page-0 notice every tick to refresh a
+                # counter and a timestamp, ~99.7% of Atlas write volume for
+                # a change no reader could see.
+                #
+                # The comparison lives here and NOT in has_changed(): that
+                # predicate decides whether to re-fetch the DETAIL PAGE, and
+                # a view bump there would trigger a full detail crawl per
+                # tick — a network regression far worse than the writes this
+                # removes.
                 yield ItemUnchanged(
                     source_id=dept["id"],
                     article_no=item.articleNo,
-                    fields={"views": item.views},
+                    fields=(
+                        {"views": item.views}
+                        if item.views != existing.views
+                        else {}
+                    ),
                 )
                 continue
 

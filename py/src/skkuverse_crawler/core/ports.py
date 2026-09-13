@@ -23,12 +23,19 @@ class SeenRecord:
     content_hash defaults to None because stored documents may pre-date
     hashing — a required field would turn key absence into a mid-crawl
     TypeError silently counted as an item error (plan 위험 ⑥).
+
+    views is the stored view counter, carried so a module can tell whether an
+    otherwise-unchanged item is worth writing at all. Same None default, same
+    reason: a document written before the field existed must not raise. Note
+    that None is deliberately NOT equal to 0 — an absent counter compares
+    unequal to any observed count and so writes once, which backfills it.
     """
 
     article_no: int
     title: str
     date: str
     content_hash: str | None = None
+    views: int | None = None
 
 
 @dataclass(frozen=True)
