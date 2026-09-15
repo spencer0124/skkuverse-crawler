@@ -4,6 +4,10 @@ from datetime import datetime, timedelta, timezone
 
 from skkuverse_crawler.core.ports import SeenRecord
 from skkuverse_crawler.modules.notices.models import NoticeListItem
+from skkuverse_crawler.modules.notices.constants import (
+    VIEWS_REFRESH_JITTER_TICKS,
+    VIEWS_REFRESH_TICK_MINUTES,
+)
 from skkuverse_crawler.modules.notices.policy import (
     has_changed,
     page_below_floor,
@@ -149,7 +153,7 @@ def _seen(
     views: int | None,
     *,
     written_hours_ago: float | None = 0.0,
-    article_no: int = 4,  # 4 % JITTER == 0, so the plain interval applies
+    article_no: int = 8,  # 8 % JITTER_TICKS == 0, so the plain interval applies
 ) -> SeenRecord:
     return SeenRecord(
         article_no=article_no,
@@ -186,7 +190,7 @@ class TestViewsRefreshDue:
         assert views_refresh_due(505, _seen(500, written_hours_ago=0.5), NOW) is False
 
     def test_small_move_writes_once_the_interval_has_passed(self):
-        # article_no 4 -> offset 0, so the bare interval applies.
+        # article_no 8 -> offset 0 ticks, so the bare interval applies.
         assert views_refresh_due(505, _seen(500, written_hours_ago=6), NOW) is True
 
     def test_large_absolute_jump_writes_immediately(self):
@@ -244,38 +248,49 @@ class TestViewsRefreshJitter:
     """
 
     def test_offset_delays_a_document_past_the_bare_interval(self):
-        # article_no 1 -> offset 1h, so 6h is not yet due for this document
+        # article_no 1 -> offset 1 tick (30 min), so 6h is not yet due for it
         # even though it is due for one whose offset is 0.
         at_six = dict(views=500, written_hours_ago=6)
-        assert views_refresh_due(505, _seen(**at_six, article_no=4), NOW) is True
+        assert views_refresh_due(505, _seen(**at_six, article_no=8), NOW) is True
         assert views_refresh_due(505, _seen(**at_six, article_no=1), NOW) is False
 
     def test_offset_document_becomes_due_at_its_own_slot(self):
-        assert views_refresh_due(505, _seen(500, written_hours_ago=7, article_no=1), NOW) is True
+        assert views_refresh_due(505, _seen(500, written_hours_ago=6.5, article_no=1), NOW) is True
 
-    def test_documents_written_together_spread_across_the_window(self):
+    def test_offset_is_quantised_to_the_tick_not_the_hour(self):
+        """A write can only land on a tick, so an offset coarser than the
+        tick period just makes fewer, bigger lumps. article_no 1 must come
+        due half an hour after the bare interval, not a full hour."""
+        assert views_refresh_due(505, _seen(500, written_hours_ago=6.4, article_no=1), NOW) is False
+        assert views_refresh_due(505, _seen(500, written_hours_ago=6.5, article_no=1), NOW) is True
+
+    def test_documents_written_together_spread_across_every_tick(self):
         """The property that matters: a cohort written in one tick must not
-        leave the interval in one tick."""
-        cohort = range(200)
-        due_by_hour = {
-            h: sum(
+        leave the interval in one tick — and must spread across TICKS, not
+        just hours. At hourly granularity this cohort released into 4 slots
+        and left the other 8 in its window empty."""
+        cohort = range(400)
+        # Tick-by-tick from the bare interval to interval + max offset.
+        slots = [6.0 + t * 0.5 for t in range(VIEWS_REFRESH_JITTER_TICKS)]
+        cumulative = [
+            sum(
                 1
                 for a in cohort
                 if views_refresh_due(505, _seen(500, written_hours_ago=h, article_no=a), NOW)
             )
-            for h in range(6, 11)
-        }
-        # Each hour releases another slice, and no hour before the last one
-        # releases the whole cohort — that is the decoherence.
-        counts = [due_by_hour[h] for h in range(6, 10)]
-        assert counts == sorted(counts)
-        assert all(c < len(cohort) for c in counts[:-1]), due_by_hour
-        assert due_by_hour[6] > 0, "some documents must be released at the bare interval"
-        assert due_by_hour[9] == len(cohort), "all released by interval + max offset"
-        # An even spread is the point: with JITTER=4 each hour should carry
-        # roughly a quarter of the cohort, not one hour carrying most of it.
-        per_hour = [due_by_hour[h] - due_by_hour.get(h - 1, 0) for h in range(6, 10)]
-        assert max(per_hour) <= len(cohort) // 2, per_hour
+            for h in slots
+        ]
+        released = [cumulative[0]] + [
+            cumulative[i] - cumulative[i - 1] for i in range(1, len(cumulative))
+        ]
+
+        assert cumulative == sorted(cumulative)
+        assert cumulative[-1] == len(cohort), "all released by interval + max offset"
+        # Every tick in the window carries part of the cohort — none is idle,
+        # which is exactly what the hourly version got wrong.
+        assert all(r > 0 for r in released), released
+        # ...and none carries a disproportionate share.
+        assert max(released) <= 2 * (len(cohort) // VIEWS_REFRESH_JITTER_TICKS), released
 
     def test_offset_is_stable_for_a_given_document(self):
         # Derived from articleNo, not from the clock or a random draw — a
@@ -285,6 +300,11 @@ class TestViewsRefreshJitter:
         assert [views_refresh_due(505, a, NOW) for _ in range(5)] == [
             views_refresh_due(505, a, NOW)
         ] * 5
+
+    def test_max_staleness_envelope_is_unchanged_from_the_hourly_version(self):
+        # 8 ticks x 30 min == the 4 hours the hourly offset spanned, so this
+        # refinement buys smoothness without widening the staleness bound.
+        assert VIEWS_REFRESH_JITTER_TICKS * VIEWS_REFRESH_TICK_MINUTES == 4 * 60
 
     def test_jitter_never_shortens_the_interval(self):
         # The offset is additive only. A document must never become due

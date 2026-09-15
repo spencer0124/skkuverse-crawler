@@ -23,7 +23,17 @@ VIEWS_REFRESH_MIN_INTERVAL_HOURS = 6
 # derived from articleNo, so it needs no stored state and no schema change,
 # and it survives restarts and re-crawls: the same document always lands in
 # the same slot. One cycle after deploy the herd is decohered for good.
-VIEWS_REFRESH_JITTER_HOURS = 4
+#
+# Counted in CRAWL TICKS, not hours. Writes can only land when a tick runs,
+# so an offset quantised to anything coarser than the tick period just makes
+# fewer, bigger lumps: at `% 4` hours the cohort released into 4 of the 12
+# ticks in its window and left the other 8 empty. The tick is 30 minutes
+# (modules/notices/module.py, `*/30 * * * *`), so the offset is too.
+#
+# 8 ticks spans the same 4 hours the hourly version did — identical staleness
+# envelope of 6-10h — across twice as many slots.
+VIEWS_REFRESH_TICK_MINUTES = 30
+VIEWS_REFRESH_JITTER_TICKS = 8
 
 # ...and the escape hatch, so a fast-moving notice is not stuck showing a
 # stale number for six hours. The app renders the count at full precision
